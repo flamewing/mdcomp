@@ -19,6 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+#include <iomanip>
+#include <bitset>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -78,22 +81,28 @@ private:
 	node *child1;
 	// This goes through the tree, starting with the current node, generating
 	// a map associating a nibble run with its code.
-	void traverse_internal(unsigned char code, unsigned char nbits,
-	                       std::map<nibble_run, std::pair<unsigned char, unsigned char> >& codemap) const
+	void traverse_internal(size_t code, unsigned char nbits,
+	                       std::map<nibble_run, std::pair<size_t, unsigned char> >& codemap) const
 	{
-		if (code == 0x3F || nbits >= 9)
+		if ((nbits == 6 && code == 0x3F) || nbits >= 9)
 		{	
+			std::cout << std::hex << std::setw(5) << std::setfill('0') << code
+				 << "\t" << std::bitset<20>(code << (20 - nbits)) << std::dec
+				 << "\t" << std::setw(2) << std::setfill(' ') << (int)nbits
+				 << "\t{" << std::hex << (int)value.get_nibble()
+				 << ", " << std::dec << (int)value.get_count()
+				 << "}\t" << std::setw(6) << std::setfill(' ') << weight << "\t(invalid)" << std::endl;
 			// This stops the recursion as we reach the %111111 pattern, which
 			// indicates inline RLE in Nemesis format, or have exceeded the
 			// allotted number of bits per nibble.
 			return;
 		}
-		else if (child0)
+		else if (!is_leaf())
 		{
 			code <<= 1;
 			nbits++;
 			if (child0)
-				child0->traverse_internal(code, nbits, codemap);
+				child0->traverse_internal(code  , nbits, codemap);
 			if (child1)
 				child1->traverse_internal(code|1, nbits, codemap);
 		}
@@ -105,7 +114,15 @@ private:
 		// to specify the code (0x80 | nibble), but there is enough leeway to
 		// dilute the extra byte in the figures below.
 		else if ((nbits < 6 && weight > 1) || (nbits < 8 && weight > 2) || weight > 3)
-			codemap[value] = std::pair<unsigned char, unsigned char>(code, nbits);
+		{
+			std::cout << std::hex << std::setw(5) << std::setfill('0') << code
+				 << "\t" << std::bitset<20>(code << (20 - nbits)) << std::dec
+				 << "\t" << std::setw(2) << std::setfill(' ') << (int)nbits
+				 << "\t{" << std::hex << (int)value.get_nibble()
+				 << ", " << std::dec << (int)value.get_count()
+				 << "}\t" << std::setw(6) << std::setfill(' ') << weight << std::endl;
+			codemap[value] = std::pair<size_t, unsigned char>(code, nbits);
+		}
 	}
 	// Trims a branch node into its highest-weight leaf node.
 	void trim()
@@ -135,9 +152,9 @@ private:
 		child0 = 0;
 	}
 	// Optimizes the tree for Nemesis encoding.
-	void optimize_internal(unsigned char code, unsigned char nbits)
+	void optimize_internal(size_t code, unsigned char nbits)
 	{
-		if (code == 0x3F || nbits >= 9)
+		if ((nbits == 6 && code == 0x3F) || nbits >= 9)
 		{	
 			// This stops the recursion as we reach the %111111 pattern, which
 			// indicates inline RLE in Nemesis format, or have exceeded the
@@ -154,10 +171,18 @@ private:
 			// We do not want codes longer than 8 bits.
 			if (nbits == 8)
 			{
-				if (child0)
+				if (child0 && child1)
+				{
 					child0->trim();
-				if (child1)
 					child1->trim();
+					if (child1->get_weight() > child0->get_weight())
+						std::swap(child0, child1);
+				}
+				else if (child1)
+				{
+					std::swap(child0, child1);
+					child0->trim();
+				}
 			}
 			// And neither do we want codes with bit pattern %111111 as prefix.
 			else if (nbits == 6 && code == 0x3E)
@@ -174,8 +199,7 @@ private:
 				else if (child1)
 					std::swap(child0, child1);
 
-				if (child0)
-					child0->optimize_internal(code, nbits);
+				child0->optimize_internal(code, nbits);
 			}
 			else
 			{
@@ -183,8 +207,30 @@ private:
 					child0->optimize_internal(code, nbits);
 				if (child1)
 					child1->optimize_internal(code|1, nbits);
+				if (child0 && child1)
+				{
+					if (child1->is_leaf() && (!child0->is_leaf() ||
+					                          child0->weight < child1->weight))
+						std::swap(child0, child1);
+					size_t bitmask = (size_t(1) << nbits) - size_t(1);
+					if (child1->is_leaf() && (code|1) == bitmask)
+						child1 = new node(child1, 0);
+				}
+				else if (child1 && child1->is_leaf())
+					std::swap(child0, child1);
 			}
 		}
+	}
+	unsigned char max_code_len_internal(unsigned char len) const
+	{
+		if (is_leaf())
+			return len;
+		unsigned char c0 = 0, c1 = 0;
+		if (child0)
+			c0 = child0->max_code_len_internal(len + 1);
+		if (child1)
+			c1 = child1->max_code_len_internal(len + 1);
+		return std::max(c0,c1);
 	}
 public:
 	// Construct a new leaf node for character c.
@@ -195,9 +241,17 @@ public:
 	node(node *c0, node *c1)
 	{
 		value = nibble_run();
-		weight = c0->weight + c1->weight;
-		child0 = c0;
-		child1 = c1;
+		weight = (c0 ? c0->weight : 0) + (c1 ? c1->weight : 0);
+		if (c1 && c1->is_leaf() && (!c0 || !c0->is_leaf() || c0->weight < c1->weight))
+		{
+			child0 = c1;
+			child1 = c0;
+		}
+		else
+		{
+			child0 = c0;
+			child1 = c1;
+		}
 	}
 	// Free the memory used by the child nodes.
 	void prune(bool del)
@@ -237,11 +291,13 @@ public:
 	{	value = v;	}
 	// This goes through the tree, starting with the current node, generating
 	// a map associating a nibble run with its code.
-	void traverse(std::map<nibble_run, std::pair<unsigned char, unsigned char> >& codemap) const
+	void traverse(std::map<nibble_run, std::pair<size_t, unsigned char> >& codemap) const
 	{	traverse_internal(0, 0, codemap);	}
 	// Optimizes the tree for Nemesis encoding.
 	void optimize()
 	{	optimize_internal(0, 0);	}
+	unsigned char max_code_len() const
+	{	return max_code_len_internal(0);	}
 };
 
 void nemesis::decode_header(std::istream& Src, std::ostream& Dst,
@@ -402,10 +458,16 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// No longer needed.
 	unpack.clear();
 
+	size_t max = counts.size();
+	node tree(nibble_run(0, 0));
+
 	std::priority_queue<node, std::vector<node>, std::greater<node> > q;
 	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
-	     it != counts.end(); ++it)
+		 it != counts.end(); ++it)
 		q.push(node(it->first, it->second));
+
+	// No longer needed.
+	counts.clear();
 
 	// This loop removes the two smallest nodes from the
 	// queue.  It creates a new internal node that has
@@ -415,9 +477,9 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// is complete.
 	while (q.size() > 1)
 	{
-		node *child0 = new node(q.top());
-		q.pop();
 		node *child1 = new node(q.top());
+		q.pop();
+		node *child0 = new node(q.top());
 		q.pop();
 		q.push(node(child0, child1));
 	}
@@ -425,7 +487,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// The first phase of the Huffman encoding is now done: we have a binary
 	// tree from which we can construct the prefix-free bit codes for the
 	// nibble runs in the file.
-	node tree = q.top();
+	tree = q.top();
 	q.pop();
 
 	// Optimize for Nemesis encoding: all codes end in 0, bit pattern %111111
@@ -434,7 +496,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	tree.optimize();
 
 	// Time now to walk through the Huffman tree and build the code map.
-	std::map<nibble_run, std::pair<unsigned char, unsigned char> > codemap;
+	std::map<nibble_run, std::pair<size_t, unsigned char> > codemap;
 	tree.traverse(codemap);
 	tree.prune(false);
 
@@ -443,7 +505,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// Write header.
 	BigEndian::Write2(Dst, (mode << 15) | (sz >> 5));
 	unsigned char lastnibble = 0xff;
-	for (std::map<nibble_run, std::pair<unsigned char, unsigned char> >::iterator it = codemap.begin();
+	for (std::map<nibble_run, std::pair<size_t, unsigned char> >::iterator it = codemap.begin();
 	     it != codemap.end(); ++it)
 	{
 		nibble_run const& run = it->first;
@@ -453,7 +515,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			Write1(Dst, 0x80 | run.get_nibble());
 			lastnibble = run.get_nibble();
 		}
-		unsigned char code = (it->second).first, len = (it->second).second;
+		size_t code = (it->second).first, len = (it->second).second;
 		Write1(Dst, (run.get_count() << 4) | (len));
 		Write1(Dst, code);
 	}
@@ -472,7 +534,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	     it != rleSrc.end(); ++it)
 	{
 		nibble_run const& run = *it;
-		std::map<nibble_run, std::pair<unsigned char, unsigned char> >::iterator val =
+		std::map<nibble_run, std::pair<size_t, unsigned char> >::iterator val =
 			codemap.find(run);
 		if (val != codemap.end())
 		{
@@ -496,8 +558,7 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 	// buffers for the padded Nemesis input.
 	std::stringstream mode0buf(std::ios::in|std::ios::out|std::ios::binary),
 	                  mode1buf(std::ios::in|std::ios::out|std::ios::binary),
-	                  src(std::ios::in|std::ios::out|std::ios::binary),
-	                  alt(std::ios::in|std::ios::out|std::ios::binary);
+	                  src(std::ios::in|std::ios::out|std::ios::binary);
 
 	// Get original source length.
 	Src.seekg(0, std::ios::end);
@@ -522,13 +583,16 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 	// Now we will build the alternating bit stream for mode 1 compression.
 	src.clear();
 	src.seekg(0);
-	unsigned long in = LittleEndian::Read4(src);
-	LittleEndian::Write4(alt, in);
-	while (src.tellg() < sz)
+
+	std::string sin = src.str();
+	for (size_t i = sin.size() - 4; i > 0; i -=4)
 	{
-		in ^= LittleEndian::Read4(src);
-		LittleEndian::Write4(alt, in);
+		sin[i + 0] ^= sin[i - 4];
+		sin[i + 1] ^= sin[i - 3];
+		sin[i + 2] ^= sin[i - 2];
+		sin[i + 3] ^= sin[i - 1];
 	}
+	std::stringstream alt(sin, std::ios::in|std::ios::out|std::ios::binary);
 
 	// Reposition input streams to the beginning.
 	src.clear();
@@ -538,6 +602,7 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 
 	// Encode in both modes.
 	encode_internal(src, mode0buf, 0, sz);
+	std::cout << "==============================================================" << std::endl;
 	encode_internal(alt, mode1buf, 1, sz);
 	
 	// Reposition output streams to the start.
