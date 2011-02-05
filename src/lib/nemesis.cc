@@ -19,9 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <iomanip>
-#include <bitset>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -85,18 +82,10 @@ private:
 	                       std::map<nibble_run, std::pair<size_t, unsigned char> >& codemap) const
 	{
 		if ((nbits == 6 && code == 0x3F) || nbits >= 9)
-		{	
-			std::cout << std::hex << std::setw(5) << std::setfill('0') << code
-				 << "\t" << std::bitset<20>(code << (20 - nbits)) << std::dec
-				 << "\t" << std::setw(2) << std::setfill(' ') << (int)nbits
-				 << "\t{" << std::hex << (int)value.get_nibble()
-				 << ", " << std::dec << (int)value.get_count()
-				 << "}\t" << std::setw(6) << std::setfill(' ') << weight << "\t(invalid)" << std::endl;
 			// This stops the recursion as we reach the %111111 pattern, which
 			// indicates inline RLE in Nemesis format, or have exceeded the
 			// allotted number of bits per nibble.
 			return;
-		}
 		else if (!is_leaf())
 		{
 			code <<= 1;
@@ -114,15 +103,7 @@ private:
 		// to specify the code (0x80 | nibble), but there is enough leeway to
 		// dilute the extra byte in the figures below.
 		else if ((nbits < 6 && weight > 1) || (nbits < 8 && weight > 2) || weight > 3)
-		{
-			std::cout << std::hex << std::setw(5) << std::setfill('0') << code
-				 << "\t" << std::bitset<20>(code << (20 - nbits)) << std::dec
-				 << "\t" << std::setw(2) << std::setfill(' ') << (int)nbits
-				 << "\t{" << std::hex << (int)value.get_nibble()
-				 << ", " << std::dec << (int)value.get_count()
-				 << "}\t" << std::setw(6) << std::setfill(' ') << weight << std::endl;
 			codemap[value] = std::pair<size_t, unsigned char>(code, nbits);
-		}
 	}
 	// Trims a branch node into its highest-weight leaf node.
 	void trim()
@@ -203,9 +184,9 @@ private:
 			}
 			else
 			{
-				if (child0)
+				if (child0 && !child0->is_leaf())
 					child0->optimize_internal(code, nbits);
-				if (child1)
+				if (child1 && !child1->is_leaf())
 					child1->optimize_internal(code|1, nbits);
 				if (child0 && child1)
 				{
@@ -242,6 +223,24 @@ public:
 	{
 		value = nibble_run();
 		weight = (c0 ? c0->weight : 0) + (c1 ? c1->weight : 0);
+		node const *temp = c0;
+		while (temp && !temp->is_leaf())
+			temp = temp->child1;
+		if (temp && temp->value.get_nibble() == 0xff)
+		{
+			child0 = c1;
+			child1 = c0;
+			return;
+		}
+		temp = c1;
+		while (temp && !temp->is_leaf())
+			temp = temp->child1;
+		if (temp && temp->value.get_nibble() == 0xff)
+		{
+			child0 = c0;
+			child1 = c1;
+			return;
+		}
 		if (c1 && c1->is_leaf() && (!c0 || !c0->is_leaf() || c0->weight < c1->weight))
 		{
 			child0 = c1;
@@ -298,6 +297,16 @@ public:
 	{	optimize_internal(0, 0);	}
 	unsigned char max_code_len() const
 	{	return max_code_len_internal(0);	}
+	node const *node_for_code(size_t code, unsigned char nbits) const
+	{
+		if (nbits == 0)
+			return this;
+		nbits--;
+		if (((code >> nbits) & 1) != 0)
+			return child1 ? child1->node_for_code(code, nbits) : 0;
+		else
+			return child0 ? child0->node_for_code(code, nbits) : 0;
+	}
 };
 
 void nemesis::decode_header(std::istream& Src, std::ostream& Dst,
@@ -458,16 +467,45 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// No longer needed.
 	unpack.clear();
 
-	size_t max = counts.size();
-	node tree(nibble_run(0, 0));
-
+	// Build priority map.
 	std::priority_queue<node, std::vector<node>, std::greater<node> > q;
 	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
 		 it != counts.end(); ++it)
-		q.push(node(it->first, it->second));
+		// No point in including anything with weight less than 2, as they
+		// would actually increase compressed file size if it were used.
+		if (it->second > 1)
+			q.push(node(it->first, it->second));
 
 	// No longer needed.
 	counts.clear();
+
+	node const *invnode = 0;
+	int wgt = -1;
+	for (size_t i = 0; i < 100; i++)
+	{
+		std::priority_queue<node, std::vector<node>, std::greater<node> > q0 = q;
+
+		if (invnode)
+			q0.push(node(nibble_run(0xff,0), wgt = invnode->get_weight()));
+		while (q0.size() > 1)
+		{
+			node *child1 = new node(q0.top());
+			q0.pop();
+			node *child0 = new node(q0.top());
+			q0.pop();
+			q0.push(node(child0, child1));
+		}
+		node tree0 = q0.top();
+		q0.pop();
+
+		node const *newinvnode = tree0.node_for_code(0x3f, 6);
+		if (!newinvnode || newinvnode->get_value().get_nibble() == 0xff)
+			break;
+		invnode = newinvnode;
+	}
+
+	if (wgt >= 0)
+		q.push(node(nibble_run(0xff,0), wgt));
 
 	// This loop removes the two smallest nodes from the
 	// queue.  It creates a new internal node that has
@@ -487,7 +525,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// The first phase of the Huffman encoding is now done: we have a binary
 	// tree from which we can construct the prefix-free bit codes for the
 	// nibble runs in the file.
-	tree = q.top();
+	node tree = q.top();
 	q.pop();
 
 	// Optimize for Nemesis encoding: all codes end in 0, bit pattern %111111
@@ -602,7 +640,6 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 
 	// Encode in both modes.
 	encode_internal(src, mode0buf, 0, sz);
-	std::cout << "==============================================================" << std::endl;
 	encode_internal(alt, mode1buf, 1, sz);
 	
 	// Reposition output streams to the start.
