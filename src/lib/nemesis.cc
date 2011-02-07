@@ -103,7 +103,7 @@ private:
 		// to specify the code (0x80 | nibble), but there is enough leeway to
 		// dilute the extra byte in the figures below.
 		else if ((nbits < 6 && weight > 1) || (nbits < 8 && weight > 2) || weight > 3)
-			codemap[value] = std::pair<size_t, unsigned char>(code, nbits);
+				codemap[value] = std::pair<size_t, unsigned char>(code, nbits);
 	}
 	// Trims a branch node into its highest-weight leaf node.
 	void trim()
@@ -479,9 +479,11 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// No longer needed.
 	counts.clear();
 
+	node tree(nibble_run(0,0));
 	node const *invnode = 0;
 	int wgt = -1;
-	for (size_t i = 0; i < 100; i++)
+	// Should converge pretty quickly.
+	for (size_t i = 0; i < 10; i++)
 	{
 		std::priority_queue<node, std::vector<node>, std::greater<node> > q0 = q;
 
@@ -500,33 +502,12 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 
 		node const *newinvnode = tree0.node_for_code(0x3f, 6);
 		if (!newinvnode || newinvnode->get_value().get_nibble() == 0xff)
+		{
+			tree = tree0;
 			break;
+		}
 		invnode = newinvnode;
 	}
-
-	if (wgt >= 0)
-		q.push(node(nibble_run(0xff,0), wgt));
-
-	// This loop removes the two smallest nodes from the
-	// queue.  It creates a new internal node that has
-	// those two nodes as children. The new internal node
-	// is then inserted into the priority queue.  When there
-	// is only one node in the priority queue, the tree
-	// is complete.
-	while (q.size() > 1)
-	{
-		node *child1 = new node(q.top());
-		q.pop();
-		node *child0 = new node(q.top());
-		q.pop();
-		q.push(node(child0, child1));
-	}
-
-	// The first phase of the Huffman encoding is now done: we have a binary
-	// tree from which we can construct the prefix-free bit codes for the
-	// nibble runs in the file.
-	node tree = q.top();
-	q.pop();
 
 	// Optimize for Nemesis encoding: all codes end in 0, bit pattern %111111
 	// is forbidden (as are codes starting with it), maximum code length is
@@ -557,7 +538,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 		Write1(Dst, (run.get_count() << 4) | (len));
 		Write1(Dst, code);
 	}
-
+	
 	// Mark end of header.
 	Write1(Dst, 0xff);
 
