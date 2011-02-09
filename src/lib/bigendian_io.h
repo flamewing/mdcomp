@@ -31,7 +31,7 @@ inline size_t Read1(std::istream& in)
 	return c;
 }
 
-inline size_t Read1(char *& in)
+inline size_t Read1(char const *& in)
 {
 	size_t c = static_cast<unsigned char>(*in++);
 	return c;
