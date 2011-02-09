@@ -33,7 +33,7 @@ void kosinski::decode_internal(std::istream& Src, std::iostream& Dst, size_t &De
 	std::stringstream in(std::ios::in|std::ios::out|std::ios::binary);
 	std::streamsize loc = Src.tellg();
 	Src.seekg(0, std::ios::end);
-	std::streamsize sz = Src.tellg() - loc;
+	std::streamsize sz = std::streamsize(Src.tellg()) - loc;
 	Src.seekg(loc);
 	char *buf = new char[sz];
 	Src.read(buf, sz);

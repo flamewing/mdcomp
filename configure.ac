@@ -3,6 +3,7 @@ dnl Created by Anjuta application wizard.
 
 AC_INIT(mdcomp, 0.1)
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_HEADERS([config.h])
