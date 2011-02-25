@@ -28,23 +28,8 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 
-void kosinski::decode_internal(std::istream& Src, std::iostream& Dst, size_t &DecBytes)
+void kosinski::decode_internal(std::istream& in, std::iostream& Dst, size_t &DecBytes)
 {
-	std::stringstream in(std::ios::in|std::ios::out|std::ios::binary);
-	std::streamsize loc = Src.tellg();
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = std::streamsize(Src.tellg()) - loc;
-	Src.seekg(loc);
-	char *buf = new char[sz];
-	Src.read(buf, sz);
-	in.write(buf, sz);
-	// Pad to even length, for safety.
-	if ((sz & 1) != 0)
-		in.put(0x00);
-	delete [] buf;
-
-	in.seekg(0);
-
 	ibitstream<unsigned short, littleendian<unsigned short> > bits(in);
 
 	while (true)
@@ -107,22 +92,34 @@ bool kosinski::decode(std::istream& Src, std::iostream& Dst,
                       std::streampos Location, bool Moduled)
 {
 	size_t DecBytes = 0;
+
+	Src.seekg(0, std::ios::end);
+	std::streamsize sz = std::streamsize(Src.tellg()) - Location;
 	Src.seekg(Location);
+
+	std::stringstream in(std::ios::in|std::ios::out|std::ios::binary);
+	in << Src.rdbuf();
+
+	// Pad to even length, for safety.
+	if ((sz & 1) != 0)
+		in.put(0x00);
+
+	in.seekg(0);
 
 	if (Moduled)
 	{
-		size_t FullSize = BigEndian::Read2(Src);
+		size_t FullSize = BigEndian::Read2(in);
 		while (true)
 		{
-			decode_internal(Src, Dst, DecBytes);
+			decode_internal(in, Dst, DecBytes);
 			if (DecBytes >= FullSize)
 				break;
-			Src.ignore((size_t)(-1), 0);
-			Src.unget();
+			while (in.peek() == 0)
+				in.ignore(1);
 		}
 	}
 	else
-		decode_internal(Src, Dst, DecBytes);
+		decode_internal(in, Dst, DecBytes);
 	
 	return true;
 }

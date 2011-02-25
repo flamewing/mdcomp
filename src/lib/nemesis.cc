@@ -341,7 +341,7 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 
 	// Set bit I/O streams.
 	ibitstream<unsigned char> bits(Src);
-	obitstream<unsigned char> out(alt_out ? dst : Dst);
+	obitstream<unsigned char> out(dst);
 	unsigned char code = bits.get();
 
 	// When to stop decoding: number of tiles * $20 bytes per tile * 8 bits per byte.
@@ -406,18 +406,18 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 	{
 		// For alternating decoding, we must now incrementally XOR and output
 		// the lines.
-		dst.seekg(0, std::ios::end);
-		std::streampos sz = dst.tellg();
 		dst.seekg(0);
 		dst.clear();
 		unsigned long in = LittleEndian::Read4(dst);
 		LittleEndian::Write4(Dst, in);
-		while (dst.tellg() < sz)
+		while (dst.tellg() < rtiles << 5)
 		{
 			in ^= LittleEndian::Read4(dst);
 			LittleEndian::Write4(Dst, in);
 		}
 	}
+	else
+		Dst.write(dst.str().c_str(), rtiles << 5);
 }
 
 bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Location)
@@ -472,7 +472,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
 		 it != counts.end(); ++it)
 		// No point in including anything with weight less than 2, as they
-		// would actually increase compressed file size if it were used.
+		// would actually increase compressed file size if used.
 		if (it->second > 1)
 			q.push(node(it->first, it->second));
 
@@ -585,8 +585,7 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 	Src.seekg(0);
 
 	// Copy to buffer.
-	while (Src.tellg() < sz)
-		Write1(src, Read1(Src));
+	src << Src.rdbuf();
 
 	// Is the source length a multiple of 32 bits?
 	if ((sz & 0x1f) != 0)
@@ -622,17 +621,18 @@ bool nemesis::encode(std::istream& Src, std::ostream& Dst)
 	// Encode in both modes.
 	encode_internal(src, mode0buf, 0, sz);
 	encode_internal(alt, mode1buf, 1, sz);
+
+	// We will pick the smallest resulting stream as output.
+	size_t sz0 = mode0buf.str().size(), sz1 = mode1buf.str().size();
 	
 	// Reposition output streams to the start.
 	mode0buf.seekg(0);
 	mode1buf.seekg(0);
 
-	// We will pick the smallest resulting stream as output.
-	size_t sz0 = mode0buf.str().size(), sz1 = mode1buf.str().size();
 	if (sz0 <= sz1)
-		Dst.write(mode0buf.str().c_str(), mode0buf.str().size());
+		Dst << mode0buf.rdbuf();
 	else
-		Dst.write(mode1buf.str().c_str(), mode1buf.str().size());
+		Dst << mode1buf.rdbuf();
 
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0)

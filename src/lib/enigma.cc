@@ -103,13 +103,10 @@ base_flag_io *base_flag_io::create(size_t n)
 void enigma::decode_internal(std::istream& Src, std::ostream& Dst, std::streamsize sz)
 {
 	std::stringstream in(std::ios::in|std::ios::out|std::ios::binary);
-	char *buf = new char[sz];
-	Src.read(buf, sz);
-	in.write(buf, sz);
+	in << Src.rdbuf();
 	// Pad to even length.
 	if ((sz & 1) != 0)
 		in.put(0xff);
-	delete [] buf;
 
 	in.seekg(0);
 

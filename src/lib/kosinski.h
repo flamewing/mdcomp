@@ -27,7 +27,7 @@ class ostream;
 class kosinski
 {
 private:
-	static void decode_internal(std::istream& Src, std::iostream& Dst, size_t &DecBytes);
+	static void decode_internal(std::istream& in, std::iostream& Dst, size_t &DecBytes);
 	static void encode_internal(std::ostream& Dst, unsigned char const *&Buffer,
 	                            std::streamoff SlideWin, std::streamoff RecLen,
 	                            std::streamsize const BSize);
