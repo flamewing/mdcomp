@@ -19,12 +19,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tr1/memory>
 #include <istream>
 #include <ostream>
 #include <sstream>
-#include <algorithm>
-#include <functional>
 #include <map>
+#include <set>
 #include <queue>
 #include <string>
 #include <vector>
@@ -55,6 +55,13 @@ public:
 	// Sorting operator.
 	bool operator<(nibble_run const& other) const
 	{	return (nibble < other.nibble) || (nibble == other.nibble && count < other.count);	}
+	// Sorting operator.
+	bool operator>(nibble_run const& other) const
+	{	return other < *this;	}
+	bool operator==(nibble_run const& other) const
+	{   return !(*this < other) && !(other < *this);	}
+	bool operator!=(nibble_run const& other) const
+	{   return !(*this == other);	}
 	// Getters/setters for all properties.
 	unsigned char get_nibble() const
 	{	return nibble;	}
@@ -69,199 +76,35 @@ public:
 // Slightly based on code by Mark Nelson for Huffman encoding.
 // http://marknelson.us/1996/01/01/priority-queues/
 // This represents a node (leaf or branch) in the Huffman encoding tree.
-class node
+class node : public std::tr1::enable_shared_from_this<node>
 {
 private:
+	std::tr1::shared_ptr<node> child0, child1;
 	int weight;
 	nibble_run value;
-	node *child0;
-	node *child1;
-	// This goes through the tree, starting with the current node, generating
-	// a map associating a nibble run with its code.
-	void traverse_internal(size_t code, unsigned char nbits,
-	                       std::map<nibble_run, std::pair<size_t, unsigned char> >& codemap) const
-	{
-		if ((nbits == 6 && code == 0x3F) || nbits >= 9)
-			// This stops the recursion as we reach the %111111 pattern, which
-			// indicates inline RLE in Nemesis format, or have exceeded the
-			// allotted number of bits per nibble.
-			return;
-		else if (!is_leaf())
-		{
-			code <<= 1;
-			nbits++;
-			if (child0)
-				child0->traverse_internal(code  , nbits, codemap);
-			if (child1)
-				child1->traverse_internal(code|1, nbits, codemap);
-		}
-		// Now if the child is worth it, put the code into the codemap.
-		// This determination uses 2 bytes to specify the code, plus nbits bits
-		// each time the code is used versus 13 bits (6 + 7) to specify the same
-		// nibble run inlined, each time it is used.
-		// It is slightly unoptimal, in that an additional byte might be needed
-		// to specify the code (0x80 | nibble), but there is enough leeway to
-		// dilute the extra byte in the figures below.
-		else if ((nbits < 6 && weight > 1) || (nbits < 8 && weight > 2) || weight > 3)
-				codemap[value] = std::pair<size_t, unsigned char>(code, nbits);
-	}
-	// Trims a branch node into its highest-weight leaf node.
-	void trim()
-	{
-		if (is_leaf())
-			return;
-		else if (child0 && child1)
-		{
-			child0->trim();
-			child1->trim();
-			if (child0->get_weight() < child1->get_weight())
-				std::swap(child0, child1);
-			set_weight(child0->get_weight());
-			set_value(child0->get_value());
-			child0->prune(true);
-			child1->prune(true);
-			child0 = child1 = 0;
-			return;
-		}
-		else if (child1)
-			std::swap(child0, child1);
-
-		child0->trim();
-		set_weight(child0->get_weight());
-		set_value(child0->get_value());
-		child0->prune(true);
-		child0 = 0;
-	}
-	// Optimizes the tree for Nemesis encoding.
-	void optimize_internal(size_t code, unsigned char nbits)
-	{
-		if ((nbits == 6 && code == 0x3F) || nbits >= 9)
-		{	
-			// This stops the recursion as we reach the %111111 pattern, which
-			// indicates inline RLE in Nemesis format, or have exceeded the
-			// allotted number of bits per nibble.
-			prune(false);
-			return;
-		}
-		else if (is_leaf())
-			return;
-		else
-		{
-			code <<= 1;
-			nbits++;
-			// We do not want codes longer than 8 bits.
-			if (nbits == 8)
-			{
-				if (child0 && child1)
-				{
-					child0->trim();
-					child1->trim();
-					if (child1->get_weight() > child0->get_weight())
-						std::swap(child0, child1);
-				}
-				else if (child1)
-				{
-					std::swap(child0, child1);
-					child0->trim();
-				}
-			}
-			// And neither do we want codes with bit pattern %111111 as prefix.
-			else if (nbits == 6 && code == 0x3E)
-			{
-				// We only want the child ending in 0.
-				// Prune the lowest-weight of the child nodes.
-				if (child0 && child1)
-				{
-					if (child1->get_weight() > child0->get_weight())
-						std::swap(child0, child1);
-					child1->prune(true);
-					child1 = 0;
-				}
-				else if (child1)
-					std::swap(child0, child1);
-
-				child0->optimize_internal(code, nbits);
-			}
-			else
-			{
-				if (child0 && !child0->is_leaf())
-					child0->optimize_internal(code, nbits);
-				if (child1 && !child1->is_leaf())
-					child1->optimize_internal(code|1, nbits);
-				if (child0 && child1)
-				{
-					if (child1->is_leaf() && (!child0->is_leaf() ||
-					                          child0->weight < child1->weight))
-						std::swap(child0, child1);
-					size_t bitmask = (size_t(1) << nbits) - size_t(1);
-					if (child1->is_leaf() && (code|1) == bitmask)
-						child1 = new node(child1, 0);
-				}
-				else if (child1 && child1->is_leaf())
-					std::swap(child0, child1);
-			}
-		}
-	}
-	unsigned char max_code_len_internal(unsigned char len) const
-	{
-		if (is_leaf())
-			return len;
-		unsigned char c0 = 0, c1 = 0;
-		if (child0)
-			c0 = child0->max_code_len_internal(len + 1);
-		if (child1)
-			c1 = child1->max_code_len_internal(len + 1);
-		return std::max(c0,c1);
-	}
 public:
 	// Construct a new leaf node for character c.
 	node(nibble_run const& val, int wgt = -1)
-	: value (val), weight(wgt), child0(0), child1(0)
+	: weight(wgt), value (val)
 	{      }
 	// Construct a new internal node that has children c1 and c2.
-	node(node *c0, node *c1)
+	node(std::tr1::shared_ptr<node> c0, std::tr1::shared_ptr<node> c1)
 	{
 		value = nibble_run();
-		weight = (c0 ? c0->weight : 0) + (c1 ? c1->weight : 0);
-		node const *temp = c0;
-		while (temp && !temp->is_leaf())
-			temp = temp->child1;
-		if (temp && temp->value.get_nibble() == 0xff)
-		{
-			child0 = c1;
-			child1 = c0;
-			return;
-		}
-		temp = c1;
-		while (temp && !temp->is_leaf())
-			temp = temp->child1;
-		if (temp && temp->value.get_nibble() == 0xff)
-		{
-			child0 = c0;
-			child1 = c1;
-			return;
-		}
-		if (c1 && c1->is_leaf() && (!c0 || !c0->is_leaf() || c0->weight < c1->weight))
-		{
-			child0 = c1;
-			child1 = c0;
-		}
-		else
-		{
-			child0 = c0;
-			child1 = c1;
-		}
+		weight = c0->weight + c1->weight;
+		child0 = c0;
+		child1 = c1;
+	}
+	~node()
+	{
+		child0.reset();
+		child1.reset();
 	}
 	// Free the memory used by the child nodes.
-	void prune(bool del)
+	void prune()
 	{
-		if (child0)
-			child0->prune(true);
-		if (child1)
-			child1->prune(true);
-		child0 = child1 = 0;
-		if (del)
-			delete this;
+		child0.reset();
+		child1.reset();
 	}
 	// Comparison operators.
 	bool operator<(node const& other) const
@@ -272,40 +115,66 @@ public:
 	bool is_leaf() const
 	{   return child0 == 0 && child1 == 0;  }
 	// Getters/setters for all properties.
-	node const *get_child0() const
+	std::tr1::shared_ptr<node const> get_child0() const
 	{	return child0;	}
-	node const *get_child1() const
+	std::tr1::shared_ptr<node const> get_child1() const
 	{	return child1;	}
 	int get_weight() const
 	{	return weight;	}
 	nibble_run const& get_value() const
 	{	return value;	}
-	void set_child0(node *c0)
+	void set_child0(std::tr1::shared_ptr<node> c0)
 	{	child0 = c0;	}
-	void set_child1(node *c1)
+	void set_child1(std::tr1::shared_ptr<node> c1)
 	{	child1 = c1;	}
 	void set_weight(int w)
 	{	weight = w;	}
 	void set_value(nibble_run const& v)
 	{	value = v;	}
 	// This goes through the tree, starting with the current node, generating
-	// a map associating a nibble run with its code.
-	void traverse(std::map<nibble_run, std::pair<size_t, unsigned char> >& codemap) const
-	{	traverse_internal(0, 0, codemap);	}
-	// Optimizes the tree for Nemesis encoding.
-	void optimize()
-	{	optimize_internal(0, 0);	}
-	unsigned char max_code_len() const
-	{	return max_code_len_internal(0);	}
-	node const *node_for_code(size_t code, unsigned char nbits) const
+	// a map associating a nibble run with its code length.
+	void traverse(std::map<nibble_run, size_t>& sizemap) const
 	{
-		if (nbits == 0)
-			return this;
-		nbits--;
-		if (((code >> nbits) & 1) != 0)
-			return child1 ? child1->node_for_code(code, nbits) : 0;
+		if (is_leaf())
+			sizemap[value] += 1;
 		else
-			return child0 ? child0->node_for_code(code, nbits) : 0;
+		{
+			if (child0)
+				child0->traverse(sizemap);
+			if (child1)
+				child1->traverse(sizemap);
+		}
+	}
+};
+
+struct Compare_size
+{
+	bool operator()(std::pair<size_t,std::pair<size_t,nibble_run> > const& lhs,
+	                std::pair<size_t,std::pair<size_t,nibble_run> > const& rhs)
+	{
+		if (lhs.first < rhs.first)
+			return true;
+		else if (lhs.first > rhs.first)
+			return false;
+		//rhs.first == lhs.first
+		if (lhs.second.first > rhs.second.first)
+			return true;
+		else if (lhs.second.first < rhs.second.first)
+			return false;
+		//rhs.second == lhs.second
+		nibble_run const& left = lhs.second.second, right = rhs.second.second;
+		return (left.get_nibble() < right.get_nibble() ||
+		        (left.get_nibble() == right.get_nibble() &&
+		         left.get_count() > right.get_count()));
+	}
+};
+
+struct Compare_node
+{
+	bool operator()(std::tr1::shared_ptr<node> const& lhs,
+	                std::tr1::shared_ptr<node> const& rhs)
+	{
+		return *lhs > *rhs;
 	}
 };
 
@@ -467,57 +336,211 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// No longer needed.
 	unpack.clear();
 
-	// Build priority map.
-	std::priority_queue<node, std::vector<node>, std::greater<node> > q;
+	// We will use the Package-merge algorithm to build the optimal length-limited
+	// Huffman code for the current file. To do this, we must map the current
+	// problem onto the Coin Collector's problem.
+	// Build the basic coin collection.
+	std::priority_queue<std::tr1::shared_ptr<node>,
+		     std::vector<std::tr1::shared_ptr<node> >, Compare_node> qt;
 	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
 		 it != counts.end(); ++it)
 		// No point in including anything with weight less than 2, as they
 		// would actually increase compressed file size if used.
 		if (it->second > 1)
-			q.push(node(it->first, it->second));
+			qt.push(std::tr1::shared_ptr<node>(new node(it->first, it->second)));
 
-	// No longer needed.
-	counts.clear();
+	// The base coin collection for the length-limited Huffman coding has
+	// one coin list per character in length of the limmitation. Each coin list
+	// has a constant "face value", and each coin in a list has its own
+	// "numismatic value". The "face value" is unimportant in the way the code
+	// is structured below; the "numismatic value" of each coin is the number
+	// of times the underlying nibble run appears in the source file.
+	
+	// This will hold the Huffman code map.
+	std::map<nibble_run, std::pair<size_t, unsigned char> > codemap;
+	// Size estimate. This is used to build the optimal compressed file.
+	size_t size_est = 0xffffffff;
 
-	node tree(nibble_run(0,0));
-	node const *invnode = 0;
-	int wgt = -1;
-	// Should converge pretty quickly.
-	for (size_t i = 0; i < 10; i++)
+	// We will solve the Coin Collector's problem several times, each time
+	// ignoring more of the least frequent nibble runs. This allows us to find
+	// *the* lowest file size.
+	for (size_t i = 0; i < qt.size() - 1; i++)
 	{
-		std::priority_queue<node, std::vector<node>, std::greater<node> > q0 = q;
-
-		if (invnode)
-			q0.push(node(nibble_run(0xff,0), wgt = invnode->get_weight()));
-		while (q0.size() > 1)
-		{
-			node *child1 = new node(q0.top());
+		// Make a copy of the basic coin collection.
+		std::priority_queue<std::tr1::shared_ptr<node>,
+				 std::vector<std::tr1::shared_ptr<node> >, Compare_node> q0(qt);
+		// Ignore the lowest weighted items. Could probably be sped up by doing
+		// a binary search if it can be proven that there is a single global
+		// minimum and no local minima for file size.
+		for (size_t j = 0; j < i; j++)
 			q0.pop();
-			node *child0 = new node(q0.top());
-			q0.pop();
-			q0.push(node(child0, child1));
-		}
-		node tree0 = q0.top();
-		q0.pop();
 
-		node const *newinvnode = tree0.node_for_code(0x3f, 6);
-		if (!newinvnode || newinvnode->get_value().get_nibble() == 0xff)
+		// We now solve the Coin collector's problem using the Package-merge
+		// algorithm. The solution goes here.
+		std::vector<std::tr1::shared_ptr<node> > solution;
+		// This holds the packages from the last iteration.
+		std::priority_queue<std::tr1::shared_ptr<node>,
+				 std::vector<std::tr1::shared_ptr<node> >, Compare_node> q(q0);
+		int target = (q0.size() - 1) << 8, idx = 0;
+		while (target != 0)
 		{
-			tree = tree0;
-			break;
+			// Gets lowest bit set in its proper place:
+			int val = (target & -target), r = 1 << idx;
+			// Is the current denomination equal to the least denomination?
+			if (r == val)
+			{
+				// If yes, take the least valuable node and put it into the solution.
+				solution.push_back(q.top());
+				q.pop();
+				target -= r;
+			}
+
+			// The coin collection has coins of values 1 to 8; copy from the
+			// original in those cases for the next step.
+			std::priority_queue<std::tr1::shared_ptr<node>,
+				 std::vector<std::tr1::shared_ptr<node> >, Compare_node> q1;
+			if (idx < 7)
+				q1 = q0;
+		
+			// Split the current list into pairs and insert the packages into
+			// the next list.
+			while (q.size() > 1)
+			{
+				std::tr1::shared_ptr<node> child1 = q.top();
+				q.pop();
+				std::tr1::shared_ptr<node> child0 = q.top();
+				q.pop();
+				q1.push(std::tr1::shared_ptr<node>(new node(child0, child1)));
+			}
+			idx++;
+			q = q1;
 		}
-		invnode = newinvnode;
+		
+		// The Coin Collector's problem has been solved. Now it is time to
+		// map the solution back into the length-limited Huffman coding problem.
+		
+		// To do that, we iterate through the solution and count how many times
+		// each nibble run has been used (remember that the coin collection had
+		// had multiple coins associated with each nibble run) -- this number
+		// is the optimal bit length for the nibble run.
+		std::map<nibble_run, size_t> basesizemap;
+		for (std::vector<std::tr1::shared_ptr<node> >::iterator it = solution.begin();
+			 it != solution.end(); ++it)
+			(*it)->traverse(basesizemap);
+
+		// With the length-limited Huffman coding problem solved, it is now time
+		// to build the code table. As input, we have a map associating a nibble
+		// run to its optimal encoded bit length. We will build the codes using
+		// the canonical Huffman code.
+		
+		// To do that, we must invert the size map so we can sort it by code size.
+		std::multiset<size_t> sizeonlymap;
+		// This map contains lots more information, and is used to associate
+		// the nibble run with its optimal code. It is sorted by code size,
+		// then by frequency of the nibble run, then by the nibble run.
+		std::multiset<std::pair<size_t,std::pair<size_t,nibble_run> >,
+			            Compare_size> sizemap;
+		for (std::map<nibble_run, size_t>::iterator it = basesizemap.begin();
+			 it != basesizemap.end(); ++it)
+		{
+			size_t size = it->second;
+			sizeonlymap.insert(size);
+			sizemap.insert(std::make_pair(size,
+				                     std::make_pair(counts[it->first], it->first)));
+		}
+
+		// We now build thecanonical Huffman code table.
+		// "base" is the code for the first nibble run with a given bit length.
+		// "carry" is how many nibble runs were demoted to a higher bit length
+		// at an earlier step.
+		// "cnt" is how many nibble runs have a given bit length.
+		size_t base = 0, carry = 0, cnt;
+		// This vector contains the codes sorted by size.
+		std::vector<std::pair<size_t,unsigned char> > codes;
+		for (unsigned char i = 1; i <= 8; i++)
+		{
+			// How many nibble runs have the desired bit length.
+			cnt = sizeonlymap.count(i) + carry;
+			carry = 0;
+			for (size_t j = 0; j < cnt; j++)
+			{
+				// Sequential binary numbers for codes.
+				size_t code = base + j;
+				size_t mask = (size_t(1) << i) - 1;
+				// We do not want any codes composed solely of 1's or which
+				// start with 111111, as that sequence is reserved.
+				if ((i <= 6 && code == mask) ||
+					(i > 6 && code == (mask & ~((size_t(1) << (i - 6)) - 1))))
+				{
+					// We must demote this many nibble runs to a longer code.
+					carry = cnt - j;
+					cnt = j;
+					break;
+				}
+				else
+					codes.push_back(std::make_pair(code, i));
+			}
+			// This is the beginning bit pattern for the next bit length.
+			base = (base + cnt) << 1;
+		}
+
+		// With the canonical table build, the codemap can finally be built.
+		std::map<nibble_run, std::pair<size_t, unsigned char> > tempcodemap;
+		size_t pos = 0;
+		for (std::multiset<std::pair<size_t,std::pair<size_t,nibble_run> >,
+			            Compare_size>::iterator it = sizemap.begin();
+			 it != sizemap.end() && pos < codes.size(); ++it, pos++)
+			tempcodemap[it->second.second] = codes[pos];
+
+		// We now compute the final file size for this code table.
+		// 2 bytes at the start of the file, plus 1 byte at the end of the
+		// code table.
+		size_t tempsize_est = 3 * 8;
+		size_t last = 0xff;
+		// Start with any nibble runs with their own code.
+		for (std::map<nibble_run, std::pair<size_t, unsigned char> >::iterator it = tempcodemap.begin();
+			 it != tempcodemap.end(); ++it)
+		{
+			// Each new nibble needs an extra byte.
+			if (last != it->first.get_nibble())
+				tempsize_est += 8;
+			// 2 bytes per nibble run in the table.
+			tempsize_est += 2 * 8;
+			// How many bits this nibble run uses in the file.
+			tempsize_est += counts[it->first] * it->second.second;
+		}
+
+		// Now we will compute the size requirements for inline nibble runs.
+		for (std::map<nibble_run,size_t>::iterator it = counts.begin();
+			 it != counts.end(); ++it)
+		{
+			// Find out if this nibble run has a code for it.
+			std::map<nibble_run, std::pair<size_t, unsigned char >
+			        >::iterator it2 = tempcodemap.find(it->first);
+			// If it does not, then we need 13 bits for each time the
+			// nibble run appears.
+			if (it2 == tempcodemap.end())
+				tempsize_est += (6 + 7) * counts[it->first];
+		}
+
+		// Round up to a full byte.
+		if ((tempsize_est & 7) != 0)
+			tempsize_est = (tempsize_est & ~7) + 8;
+
+		// Round up to even size.
+		tempsize_est += (tempsize_est&1);
+
+		// Is this iteration better than the best?
+		if (tempsize_est < size_est)
+		{
+			// If yes, save the codemap and file size.
+			codemap = tempcodemap;
+			size_est = tempsize_est;
+		}
 	}
 
-	// Optimize for Nemesis encoding: all codes end in 0, bit pattern %111111
-	// is forbidden (as are codes starting with it), maximum code length is
-	// 8 bits.
-	tree.optimize();
-
-	// Time now to walk through the Huffman tree and build the code map.
-	std::map<nibble_run, std::pair<size_t, unsigned char> > codemap;
-	tree.traverse(codemap);
-	tree.prune(false);
+	// This is no longer needed.
+	counts.clear();
 
 	// We now have a prefix-free code map associating the RLE-encoded nibble
 	// runs with their code. Now we write the file.
