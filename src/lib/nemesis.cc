@@ -179,7 +179,7 @@ struct Compare_node
 };
 
 void nemesis::decode_header(std::istream& Src, std::ostream& Dst,
-                            std::map<unsigned char, nibble_run>& codemap)
+                            Codemap& codemap)
 {
 	// storage for output value to decompression buffer
 	size_t out_val = 0;
@@ -196,13 +196,14 @@ void nemesis::decode_header(std::istream& Src, std::ostream& Dst,
 
 		nibble_run run(out_val, ((in_val & 0x70) >> 4) + 1);
 
+		unsigned char code = Read1(Src), len = in_val & 0xf;
 		// Read the run's code from stream.
-		codemap[Read1(Src)] = run;
+		codemap[std::make_pair(code, len)] = run;
 	}
 }
 
 void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
-                              std::map<unsigned char, nibble_run>& codemap,
+                              Codemap& codemap,
                               size_t rtiles, bool alt_out)
 {
 	// This buffer is used for alternating mode decoding.
@@ -211,13 +212,13 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 	// Set bit I/O streams.
 	ibitstream<unsigned char> bits(Src);
 	obitstream<unsigned char> out(dst);
-	unsigned char code = bits.get();
+	unsigned char code = bits.get(), len = 1;
 
 	// When to stop decoding: number of tiles * $20 bytes per tile * 8 bits per byte.
 	size_t total_bits = rtiles << 8, bits_written = 0;
 	while (bits_written < total_bits)
 	{
-		if (code == 0x3f)
+		if (code == 0x3f && len == 6)
 		{
 			// Bit pattern %111111; inline RLE.
 			// First 3 bits are repetition count, followed by the inlined nibble.
@@ -236,11 +237,12 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 
 			// Read next bit, replacing previous data.
 			code = bits.get();
+			len = 1;
 		}
 		else
 		{
 			// Find out if the data so far is a nibble code.
-			std::map<unsigned char, nibble_run>::const_iterator it = codemap.find(code);
+			Codemap::const_iterator it = codemap.find(std::make_pair(code, len));
 			if (it != codemap.end())
 			{
 				// If it is, then it is time to output the encoded nibble run.
@@ -261,10 +263,14 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 
 				// Read next bit, replacing previous data.
 				code = bits.get();
+				len = 1;
 			}
 			else
+			{
 				// Read next bit and append to current data.
 				code = (code << 1) | bits.get();
+				len++;
+			}
 		}
 	}
 
@@ -293,7 +299,7 @@ bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Locati
 {
 	Src.seekg(Location);
 
-	std::map<unsigned char, nibble_run> codemap;
+	Codemap codemap;
 	size_t rtiles = BigEndian::Read2(Src);
 	// sets the output mode based on the value of the first bit
 	bool alt_out = (rtiles & 0x8000) != 0;
@@ -364,16 +370,16 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// We will solve the Coin Collector's problem several times, each time
 	// ignoring more of the least frequent nibble runs. This allows us to find
 	// *the* lowest file size.
-	for (size_t i = 0; i < qt.size() - 1; i++)
+	while (qt.size() > 1)
 	{
 		// Make a copy of the basic coin collection.
 		std::priority_queue<std::tr1::shared_ptr<node>,
 				 std::vector<std::tr1::shared_ptr<node> >, Compare_node> q0(qt);
-		// Ignore the lowest weighted items. Could probably be sped up by doing
-		// a binary search if it can be proven that there is a single global
-		// minimum and no local minima for file size.
-		for (size_t j = 0; j < i; j++)
-			q0.pop();
+		// Ignore the lowest weighted item. Will only affect the next iteration
+		// of the loop. If it can be proven that there is a single global
+		// minimum (and no local minima for file size), then this could be
+		// simplified to a binary search.
+		qt.pop();
 
 		// We now solve the Coin collector's problem using the Package-merge
 		// algorithm. The solution goes here.
@@ -421,8 +427,8 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 		
 		// To do that, we iterate through the solution and count how many times
 		// each nibble run has been used (remember that the coin collection had
-		// had multiple coins associated with each nibble run) -- this number
-		// is the optimal bit length for the nibble run.
+		// multiple coins associated with each nibble run) -- this number is the
+		// optimal bit length for the nibble run for the current coin collection.
 		std::map<nibble_run, size_t> basesizemap;
 		for (std::vector<std::tr1::shared_ptr<node> >::iterator it = solution.begin();
 			 it != solution.end(); ++it)
@@ -526,9 +532,6 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 		// Round up to a full byte.
 		if ((tempsize_est & 7) != 0)
 			tempsize_est = (tempsize_est & ~7) + 8;
-
-		// Round up to even size.
-		tempsize_est += (tempsize_est&1);
 
 		// Is this iteration better than the best?
 		if (tempsize_est < size_est)

@@ -27,13 +27,15 @@ class istream;
 class ostream;
 class nibble_run;
 
+typedef std::map<std::pair<unsigned char,unsigned char>, nibble_run> Codemap;
+
 class nemesis
 {
 private:
 	static void decode_header(std::istream& Src, std::ostream& Dst,
-	                          std::map<unsigned char, nibble_run>& codemap);
+	                          Codemap& codemap);
 	static void decode_internal(std::istream& Src, std::ostream& Dst,
-	                            std::map<unsigned char, nibble_run>& codemap,
+	                            Codemap& codemap,
 	                            size_t rtiles, bool alt_out = false);
 	static void encode_internal(std::istream& Src, std::ostream& Dst, int mode, size_t sz);
 public:
