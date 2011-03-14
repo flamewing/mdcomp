@@ -104,10 +104,6 @@ void enigma::decode_internal(std::istream& Src, std::ostream& Dst, std::streamsi
 {
 	std::stringstream in(std::ios::in|std::ios::out|std::ios::binary);
 	in << Src.rdbuf();
-	// Pad to even length.
-	if ((sz & 1) != 0)
-		in.put(0xff);
-
 	in.seekg(0);
 
 	// Read header.
@@ -119,7 +115,7 @@ void enigma::decode_internal(std::istream& Src, std::ostream& Dst, std::streamsi
 	ibitstream<unsigned short> bits(in);
 
 	// Lets put in a safe termination condition here.
-	while (in.tellg() < sz)
+	while (in.good())
 	{
 		if (bits.get())
 		{
@@ -339,13 +335,10 @@ void enigma::encode_internal(std::istream& Src, std::ostream& Dst, std::streamsi
 			size_t cnt = 0;
 			for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++)
 			{
-				if (next == unpack[i])
-				{
-					next++;
-					cnt++;
-				}
-				else
+				if (next != unpack[i])
 					break;
+				next++;
+				cnt++;
 			}
 			bits.write(0x00 | cnt, 6);
 			incrementing_value = next;
@@ -365,27 +358,22 @@ void enigma::encode_internal(std::istream& Src, std::ostream& Dst, std::streamsi
 			bits.write(0x10 | cnt, 6);
 			pos += cnt;
 		}
-		else if (pos + 1 < unpack.size())
+		else
 		{
-			unsigned short next = unpack[pos+1];
+			unsigned short next = unpack[pos + 1];
 			int delta = int(next) - int(v);
-			if (delta == -1 || delta == 0 || delta == 1)
+			if (pos + 1 < unpack.size() && next != incrementing_value &&
+			    (delta == -1 || delta == 0 || delta == 1))
 			{
 				flush_buffer(buf, bits, mask, packet_length);
 				size_t cnt = 1;
-				unsigned short prev = next;
 				next += delta;
 				for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++)
 				{
-					if (next == unpack[i])
-					{
-						if (delta == 1 && prev == incrementing_value)
-							break;
-						next += delta;
-						cnt++;
-					}
-					else
+					if (next != unpack[i] || next == incrementing_value)
 						break;
+					next += delta;
+					cnt++;
 				}
 
 				if (delta == -1)
@@ -404,13 +392,6 @@ void enigma::encode_internal(std::istream& Src, std::ostream& Dst, std::streamsi
 
 				buf.push_back(v);
 			}
-		}
-		else
-		{
-			if (buf.size() >= 0xf)
-				flush_buffer(buf, bits, mask, packet_length);
-
-			buf.push_back(v);
 		}
 		pos++;
 	}
