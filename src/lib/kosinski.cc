@@ -69,7 +69,7 @@ void kosinski::decode_internal(std::istream& in, std::iostream& Dst, size_t &Dec
 				unsigned char Low  = bits.pop(),
 				              High = bits.pop();
 
-				Count = ((size_t)Low)*2 + ((size_t)High) + 1;
+				Count = ((((size_t)Low) << 1) | ((size_t)High)) + 1;
 
 				Offset = Read1(in);
 				Offset |= (~((std::streamoff)0xFF));

@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	std::fstream fout(argv[optind+1], std::ios::out|std::ios::binary);
+	std::fstream fout(argv[optind+1], std::ios::in|std::ios::out|std::ios::binary|std::ios::trunc);
 	if (!fout.good())
 	{
 		std::cerr << "Output file '" << argv[optind+1] << "' could not be opened." << std::endl << std::endl;
