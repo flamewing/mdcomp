@@ -310,6 +310,51 @@ bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Locati
 	return true;
 }
 
+static size_t estimate_file_size
+	(
+	 std::map<nibble_run, std::pair<size_t, unsigned char> >& tempcodemap,
+	 std::map<nibble_run,size_t>& counts
+	)
+{
+	// We now compute the final file size for this code table.
+	// 2 bytes at the start of the file, plus 1 byte at the end of the
+	// code table.
+	size_t tempsize_est = 3 * 8;
+	size_t last = 0xff;
+	// Start with any nibble runs with their own code.
+	for (std::map<nibble_run, std::pair<size_t, unsigned char>
+	             >::iterator it = tempcodemap.begin();
+		 it != tempcodemap.end(); ++it)
+	{
+		// Each new nibble needs an extra byte.
+		if (last != it->first.get_nibble())
+			tempsize_est += 8;
+		// 2 bytes per nibble run in the table.
+		tempsize_est += 2 * 8;
+		// How many bits this nibble run uses in the file.
+		tempsize_est += counts[it->first] * it->second.second;
+	}
+
+	// Now we will compute the size requirements for inline nibble runs.
+	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
+		 it != counts.end(); ++it)
+	{
+		// Find out if this nibble run has a code for it.
+		std::map<nibble_run, std::pair<size_t, unsigned char >
+		        >::iterator it2 = tempcodemap.find(it->first);
+		// If it does not, then we need 13 bits for each time the
+		// nibble run appears.
+		if (it2 == tempcodemap.end())
+			tempsize_est += (6 + 7) * counts[it->first];
+	}
+
+	// Round up to a full byte.
+	if ((tempsize_est & 7) != 0)
+		tempsize_est = (tempsize_est & ~7) + 8;
+
+	return tempsize_est;
+}
+
 void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, size_t sz)
 {
 	// Unpack source so we don't have to deal with nibble IO after.
@@ -449,10 +494,12 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 		for (std::map<nibble_run, size_t>::iterator it = basesizemap.begin();
 			 it != basesizemap.end(); ++it)
 		{
-			size_t size = it->second;
+			size_t size = it->second, count = counts[it->first];
+			if ((6 + 7) * count < 16 + size * count)
+				continue;
 			sizeonlymap.insert(size);
 			sizemap.insert(std::make_pair(size,
-				                     std::make_pair(counts[it->first], it->first)));
+				                     std::make_pair(count, it->first)));
 		}
 
 		// We now build thecanonical Huffman code table.
@@ -501,37 +548,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 		// We now compute the final file size for this code table.
 		// 2 bytes at the start of the file, plus 1 byte at the end of the
 		// code table.
-		size_t tempsize_est = 3 * 8;
-		size_t last = 0xff;
-		// Start with any nibble runs with their own code.
-		for (std::map<nibble_run, std::pair<size_t, unsigned char> >::iterator it = tempcodemap.begin();
-			 it != tempcodemap.end(); ++it)
-		{
-			// Each new nibble needs an extra byte.
-			if (last != it->first.get_nibble())
-				tempsize_est += 8;
-			// 2 bytes per nibble run in the table.
-			tempsize_est += 2 * 8;
-			// How many bits this nibble run uses in the file.
-			tempsize_est += counts[it->first] * it->second.second;
-		}
-
-		// Now we will compute the size requirements for inline nibble runs.
-		for (std::map<nibble_run,size_t>::iterator it = counts.begin();
-			 it != counts.end(); ++it)
-		{
-			// Find out if this nibble run has a code for it.
-			std::map<nibble_run, std::pair<size_t, unsigned char >
-			        >::iterator it2 = tempcodemap.find(it->first);
-			// If it does not, then we need 13 bits for each time the
-			// nibble run appears.
-			if (it2 == tempcodemap.end())
-				tempsize_est += (6 + 7) * counts[it->first];
-		}
-
-		// Round up to a full byte.
-		if ((tempsize_est & 7) != 0)
-			tempsize_est = (tempsize_est & ~7) + 8;
+		size_t tempsize_est = estimate_file_size(tempcodemap, counts);
 
 		// Is this iteration better than the best?
 		if (tempsize_est < size_est)
@@ -541,7 +558,22 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			size_est = tempsize_est;
 		}
 	}
+	// Special case.
+	if (qt.size() == 1)
+	{
+		std::map<nibble_run, std::pair<size_t, unsigned char> > tempcodemap;
+		std::tr1::shared_ptr<node> child = qt.top();
+		tempcodemap[child->get_value()] = std::pair<size_t, unsigned char>(0, 1);
+		size_t tempsize_est = estimate_file_size(tempcodemap, counts);
 
+		// Is this iteration better than the best?
+		if (tempsize_est < size_est)
+		{
+			// If yes, save the codemap and file size.
+			codemap = tempcodemap;
+			size_est = tempsize_est;
+		}
+	}
 	// This is no longer needed.
 	counts.clear();
 
