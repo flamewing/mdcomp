@@ -213,6 +213,9 @@ void kosinski::encode_internal(std::ostream& Dst, unsigned char const *&Buffer,
 	push(bits, 0, Dst, Data);
 	push(bits, 1, Dst, Data);
 
+	if (!bits.have_waiting_bits())
+		BigEndian::Write2(Data, 0);
+
 	Write1(Data, static_cast<unsigned char>(0x00));
 	Write1(Data, static_cast<unsigned char>(0xF0));
 	Write1(Data, static_cast<unsigned char>(0x00));

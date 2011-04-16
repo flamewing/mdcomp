@@ -191,6 +191,8 @@ public:
 		}
 		return false;
 	}
+	int have_waiting_bits() const
+	{	return waitingbits;	}
 };
 
 #endif // _BITSTREAM_H_
