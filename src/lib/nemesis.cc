@@ -328,13 +328,21 @@ static size_t estimate_file_size
 	{
 		// Each new nibble needs an extra byte.
 		if (last != it->first.get_nibble())
+		{
 			tempsize_est += 8;
+			// Be sure to SET the last nibble to the current nibble... this
+			// fixes a bug that caused file sizes to increase in some cases.
+			last = it->first.get_nibble();
+		}
 		// 2 bytes per nibble run in the table.
 		tempsize_est += 2 * 8;
 		// How many bits this nibble run uses in the file.
 		tempsize_est += counts[it->first] * it->second.second;
 	}
 
+	// Supplementary code map for the nibble runs that can be broken up into
+	// shorter nibble runs with a smaller bit length than inlining.
+	std::map<nibble_run, std::pair<size_t, unsigned char> > supcodemap;
 	// Now we will compute the size requirements for inline nibble runs.
 	for (std::map<nibble_run,size_t>::iterator it = counts.begin();
 		 it != counts.end(); ++it)
@@ -342,11 +350,181 @@ static size_t estimate_file_size
 		// Find out if this nibble run has a code for it.
 		std::map<nibble_run, std::pair<size_t, unsigned char >
 		        >::iterator it2 = tempcodemap.find(it->first);
-		// If it does not, then we need 13 bits for each time the
-		// nibble run appears.
 		if (it2 == tempcodemap.end())
-			tempsize_est += (6 + 7) * counts[it->first];
+		{
+			// Nibble run does not have its own code. We need to find out if
+			// we can break it up into smaller nibble runs with total code
+			// size less than 13 bits or if we need to inline it (13 bits).
+			if (it->first.get_count() == 0)
+				// If this is a nibble run with zero repeats, we can't break
+				// it up into smaller runs, so we inline it.
+				tempsize_est += (6 + 7) * counts[it->first];
+			else if (it->first.get_count() == 1)
+			{
+				// We stand a chance of breaking the nibble run.
+				
+				// This case is rather trivial, so we hard-code it.
+				// We can break this up only as 2 consecutive runs of a nibble
+				// run with count == 0.
+				nibble_run trg(it->first.get_nibble(),0);
+				it2 = tempcodemap.find(trg);
+				if (it2 == tempcodemap.end() || it2->second.second > 6)
+				{
+					// The smaller nibble run either does not have its own code
+					// or it results in a longer bit code when doubled up than
+					// would result from inlining the run. In either case, we
+					// inline the nibble run.
+					tempsize_est += (6 + 7) * counts[it->first];
+				}
+				else
+				{
+					// The smaller nibble run has a small enough code that it is
+					// more efficient to use it twice than to inline our nibble
+					// run. So we do exactly that, by adding a (temporary) entry
+					// in the supplementary codemap, which will later be merged
+					// into the main codemap.
+					size_t code = it2->second.first;
+					unsigned char len = it2->second.second;
+					code = (code << len) | code;
+					len <<= 1;
+					tempsize_est += len * counts[it->first];
+					supcodemap.insert(std::make_pair(it->first, std::make_pair(code, 0x80|len)));
+				}
+			}
+			else
+			{
+				// We stand a chance of breaking it the nibble run.
+				
+				// This is a linear optimization problem subjected to 2
+				// constraints. If the number of repeats of the current nibble
+				// run is N, then we have N dimensions.
+				// Pointer to table of linear coefficients. This table has
+				// N columns for each line.
+				size_t *linear_coeffs;
+				// Here are some hard-coded tables, obtained by brute-force:
+				static size_t linear_coeffs2[ 2][2] = {{3,0}, {1,1}};
+				static size_t linear_coeffs3[ 4][3] = {{4,0,0}, {2,1,0}, {1,0,1}, {0,2,0}};
+				static size_t linear_coeffs4[ 6][4] = {{5,0,0,0}, {3,1,0,0}, {2,0,1,0},
+				                                       {1,2,0,0}, {1,0,0,1}, {0,1,1,0}};
+				static size_t linear_coeffs5[10][5] = {{6,0,0,0,0}, {4,1,0,0,0}, {3,0,1,0,0}, {2,2,0,0,0}, {2,0,0,1,0},
+				                                       {1,1,1,0,0}, {1,0,0,0,1}, {0,3,0,0,0}, {0,1,0,1,0}, {0,0,2,0,0}};
+				static size_t linear_coeffs6[14][6] = {{7,0,0,0,0,0}, {5,1,0,0,0,0}, {4,0,1,0,0,0}, {3,2,0,0,0,0}, {3,0,0,1,0,0},
+				                                       {2,1,1,0,0,0}, {2,0,0,0,1,0}, {1,3,0,0,0,0}, {1,1,0,1,0,0}, {1,0,2,0,0,0},
+				                                       {1,0,0,0,0,1}, {0,2,1,0,0,0}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
+				static size_t linear_coeffs7[21][7] = {{8,0,0,0,0,0,0}, {6,1,0,0,0,0,0}, {5,0,1,0,0,0,0}, {4,2,0,0,0,0,0},
+				                                       {4,0,0,1,0,0,0}, {3,1,1,0,0,0,0}, {3,0,0,0,1,0,0}, {2,3,0,0,0,0,0},
+				                                       {2,1,0,1,0,0,0}, {2,0,2,0,0,0,0}, {2,0,0,0,0,1,0}, {1,2,1,0,0,0,0},
+				                                       {1,1,0,0,1,0,0}, {1,0,1,1,0,0,0}, {1,0,0,0,0,0,1}, {0,4,0,0,0,0,0},
+				                                       {0,2,0,1,0,0,0}, {0,1,2,0,0,0,0}, {0,1,0,0,0,1,0}, {0,0,1,0,1,0,0},
+				                                       {0,0,0,2,0,0,0}};
+				size_t n = it->first.get_count(), rows;
+				// Get correct coefficient table:
+				switch (n)
+				{
+					case 2: linear_coeffs = &linear_coeffs2[0][0]; rows =  2; break;
+					case 3: linear_coeffs = &linear_coeffs3[0][0]; rows =  4; break;
+					case 4: linear_coeffs = &linear_coeffs4[0][0]; rows =  6; break;
+					case 5: linear_coeffs = &linear_coeffs5[0][0]; rows = 10; break;
+					case 6: linear_coeffs = &linear_coeffs6[0][0]; rows = 14; break;
+					case 7: linear_coeffs = &linear_coeffs7[0][0]; rows = 21; break;
+				}
+
+				unsigned char nibble = it->first.get_nibble();
+				// Vector containing the code length of each nibble run, or 13
+				// if the nibble run is not in the codemap.
+				std::vector<size_t> runlen;
+				// Init vector.
+				for (size_t i = 0; i < n; i++)
+				{
+					// Is this run in the codemap?
+					nibble_run trg(nibble,i);
+					std::map<nibble_run, std::pair<size_t, unsigned char >
+							>::iterator it3 = tempcodemap.find(trg);
+					if (it3 == tempcodemap.end())
+						// It is not.
+						// Put inline length in the vector.
+						runlen.push_back(6+7);
+					else
+						// It is.
+						// Put code length in the vector.
+						runlen.push_back(it3->second.second);
+				}
+
+				// Now go through the linear coefficient table and tally up
+				// the total code size, looking for the best case.
+				// The best size is initialized to be the inlined case.
+				size_t best_size = 6 + 7;
+				int best_line = -1;
+				size_t base = 0;
+				for (size_t i = 0; i < rows; i++, base += n)
+				{
+					// Tally up the code length for this coefficient line.
+					size_t len = 0;
+					for (size_t j = 0; j < n; j++)
+					{
+						size_t c = linear_coeffs[base + j];
+						if (!c)
+							continue;
+						
+						len += c * runlen[j];
+					}
+					// Is the length better than the best yet?
+					if (len < best_size)
+					{
+						// If yes, store it as the best.
+						best_size = len;
+						best_line = base;
+					}
+				}
+				// Have we found a better code than inlining?
+				if (best_line >= 0)
+				{
+					// We have; use it. To do so, we have to build the code
+					// and add it to the supplementary code table.
+					size_t code = 0, len = 0;
+					for (size_t i = 0; i < n; i++)
+					{
+						size_t c = linear_coeffs[best_line + i];
+						if (!c)
+							continue;
+						// Is this run in the codemap?
+						nibble_run trg(nibble,i);
+						std::map<nibble_run, std::pair<size_t, unsigned char >
+								>::iterator it3 = tempcodemap.find(trg);
+						if (it3 != tempcodemap.end())
+						{
+							// It is; it MUST be, as the other case is impossible
+							// by construction.
+							for (int j = 0; j < c; j++)
+							{
+								len += it3->second.second;
+								code <<= it3->second.second;
+								code |= it3->second.first;
+							}
+						}
+					}
+					if (len != best_size)
+					{
+						// ERROR! DANGER! THIS IS IMPOSSIBLE!
+						// But just in case...
+						tempsize_est += (6 + 7) * counts[it->first];
+					}
+					else
+					{
+						// By construction, best_size is at most 12.
+						unsigned char c = best_size;
+						// Add it to supplementary code map.
+						supcodemap.insert(std::make_pair(it->first, std::make_pair(code, 0x80|c)));
+						tempsize_est += best_size * counts[it->first];
+					}
+				}
+				else
+					// No, we will have to inline it.
+					tempsize_est += (6 + 7) * counts[it->first];
+			}
+		}
 	}
+	tempcodemap.insert(supcodemap.begin(), supcodemap.end());
 
 	// Round up to a full byte.
 	if ((tempsize_est & 7) != 0)
@@ -502,7 +680,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 				                     std::make_pair(count, it->first)));
 		}
 
-		// We now build thecanonical Huffman code table.
+		// We now build the canonical Huffman code table.
 		// "base" is the code for the first nibble run with a given bit length.
 		// "carry" is how many nibble runs were demoted to a higher bit length
 		// at an earlier step.
@@ -586,13 +764,18 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	     it != codemap.end(); ++it)
 	{
 		nibble_run const& run = it->first;
+		size_t code = (it->second).first, len = (it->second).second;
+		// len with bit 7 set is a special device for further reducing file size, and
+		// should NOT be on the table.
+		if ((len & 0x80) != 0)
+			continue;
 		if (run.get_nibble() != lastnibble)
 		{
 			// 0x80 marks byte as setting a new nibble.
 			Write1(Dst, 0x80 | run.get_nibble());
 			lastnibble = run.get_nibble();
 		}
-		size_t code = (it->second).first, len = (it->second).second;
+
 		Write1(Dst, (run.get_count() << 4) | (len));
 		Write1(Dst, code);
 	}
@@ -615,8 +798,21 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			codemap.find(run);
 		if (val != codemap.end())
 		{
-			unsigned char code = (val->second).first, len = (val->second).second;
-			bits.write(code, len);
+			size_t code = (val->second).first;
+			unsigned char len = (val->second).second;
+			// len with bit 7 set is a device to bypass the code table at the
+			// start of the file. We need to clear the bit here before writing
+			// the code to the file.
+			len &= 0x7f;
+			// We can have codes in the 9-12 range due to the break up of large
+			// inlined runs into smaller non-inlined runs. Deal with those high
+			// bits first, if needed.
+			if (len > 8)
+			{
+				bits.write(static_cast<unsigned char>((code >> 8) & 0xff), len-8);
+				len = 8;
+			}
+			bits.write(static_cast<unsigned char>(code & 0xff), len);
 		}
 		else
 		{
