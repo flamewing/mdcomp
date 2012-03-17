@@ -21,10 +21,11 @@
 
 static void usage()
 {
-	std::cerr << "Usage: koscmp [-x|--extract [{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: koscmp [-x|--extract [{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled [{size}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K)." << std::endl;
+	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << std::endl
+	          << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << std::endl;
 	std::cerr << "\t-r\t\tSet recursion length (default: 256)" << std::endl;
 	std::cerr << "\t-s\t\tSets sliding window size (default: 8192)" << std::endl << std::endl;
 }
@@ -33,12 +34,12 @@ int main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
-		{"moduled", no_argument      , 0, 'm'},
+		{"moduled", optional_argument, 0, 'm'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, moduled = false;
-	std::streamsize pointer = 0, slidewin = 8192, reclen = 256;
+	std::streamsize pointer = 0, slidewin = 8192, reclen = 256, modulesize = 0x1000;
 
 	while (true)
 	{
@@ -58,6 +59,8 @@ int main(int argc, char *argv[])
 				
 			case 'm':
 				moduled = true;
+				if (optarg)
+					modulesize = strtoul(optarg, 0, 0);
 				break;
 
 			case 'r':
@@ -101,7 +104,7 @@ int main(int argc, char *argv[])
 	if (extract)
 		kosinski::decode(fin, fout, pointer, moduled);
 	else
-		kosinski::encode(fin, fout, slidewin, reclen, moduled);
+		kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize);
 	
 	return 0;
 }

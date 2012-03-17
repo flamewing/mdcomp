@@ -35,11 +35,12 @@ private:
 	static void decode_header(std::istream& Src, std::ostream& Dst,
 	                          Codemap& codemap);
 	static void decode_internal(std::istream& Src, std::ostream& Dst,
-	                            Codemap& codemap,
-	                            size_t rtiles, bool alt_out = false);
+	                            Codemap& codemap, size_t rtiles,
+	                            bool alt_out = false, int *endptr = 0);
 	static void encode_internal(std::istream& Src, std::ostream& Dst, int mode, size_t sz);
 public:
-	static bool decode(std::istream& Src, std::ostream& Dst, std::streampos Location = 0);
+	static bool decode(std::istream& Src, std::ostream& Dst, std::streampos Location = 0,
+	                   int *endptr = 0);
 	static bool encode(std::istream& Src, std::ostream& Dst);
 };
 

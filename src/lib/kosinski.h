@@ -36,7 +36,7 @@ public:
 	                  std::streampos Location = 0, bool Moduled = false);
 	static bool encode(std::istream& Src, std::ostream& Dst,
 	                   std::streamoff SlideWin = 8192, std::streamoff RecLen = 256,
-	                   bool Moduled = false);
+	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000);
 };
 
 #endif // _KOSINSKI_H_

@@ -20,8 +20,7 @@
 #ifndef _BIGENDIAN_IO_H_
 #define _BIGENDIAN_IO_H_
 
-class istream;
-class ostream;
+#include <iosfwd>
 class string;
 class vector;
 

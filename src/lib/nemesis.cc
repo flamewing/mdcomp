@@ -203,8 +203,8 @@ void nemesis::decode_header(std::istream& Src, std::ostream& Dst,
 }
 
 void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
-                              Codemap& codemap,
-                              size_t rtiles, bool alt_out)
+                              Codemap& codemap, size_t rtiles,
+                              bool alt_out, int *endptr)
 {
 	// This buffer is used for alternating mode decoding.
 	std::stringstream dst(std::ios::in|std::ios::out|std::ios::binary);
@@ -235,6 +235,9 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 			for (size_t i = 0; i < cnt; i++)
 				out.write(nibble, 8);
 
+			if (bits_written >= total_bits)
+				break;
+			
 			// Read next bit, replacing previous data.
 			code = bits.get();
 			len = 1;
@@ -261,6 +264,9 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 				for (size_t i = 0; i < cnt; i++)
 					out.write(nibble, 8);
 
+				if (bits_written >= total_bits)
+					break;
+
 				// Read next bit, replacing previous data.
 				code = bits.get();
 				len = 1;
@@ -273,6 +279,9 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 			}
 		}
 	}
+
+	if (endptr)
+		*endptr = Src.tellg();
 
 	// Write out any remaining bits, padding with zeroes.
 	out.flush();
@@ -295,7 +304,8 @@ void nemesis::decode_internal(std::istream& Src, std::ostream& Dst,
 		Dst.write(dst.str().c_str(), rtiles << 5);
 }
 
-bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Location)
+bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Location,
+                     int *endptr)
 {
 	Src.seekg(Location);
 
@@ -305,8 +315,13 @@ bool nemesis::decode(std::istream& Src, std::ostream& Dst, std::streampos Locati
 	bool alt_out = (rtiles & 0x8000) != 0;
 	rtiles &= 0x7fff;
 
-	decode_header(Src, Dst, codemap);
-	decode_internal(Src, Dst, codemap, rtiles, alt_out);
+	if (rtiles > 0)
+	{
+		decode_header(Src, Dst, codemap);
+		decode_internal(Src, Dst, codemap, rtiles, alt_out, endptr);
+	}
+	else if (endptr)
+		*endptr = Src.tellg();
 	return true;
 }
 
@@ -358,7 +373,7 @@ static size_t estimate_file_size
 			if (it->first.get_count() == 0)
 				// If this is a nibble run with zero repeats, we can't break
 				// it up into smaller runs, so we inline it.
-				tempsize_est += (6 + 7) * counts[it->first];
+				tempsize_est += (6 + 7) * it->second;
 			else if (it->first.get_count() == 1)
 			{
 				// We stand a chance of breaking the nibble run.
@@ -374,7 +389,7 @@ static size_t estimate_file_size
 					// or it results in a longer bit code when doubled up than
 					// would result from inlining the run. In either case, we
 					// inline the nibble run.
-					tempsize_est += (6 + 7) * counts[it->first];
+					tempsize_est += (6 + 7) * it->second;
 				}
 				else
 				{
@@ -387,7 +402,7 @@ static size_t estimate_file_size
 					unsigned char len = it2->second.second;
 					code = (code << len) | code;
 					len <<= 1;
-					tempsize_est += len * counts[it->first];
+					tempsize_est += len * it->second;
 					supcodemap.insert(std::make_pair(it->first, std::make_pair(code, 0x80|len)));
 				}
 			}
@@ -507,7 +522,7 @@ static size_t estimate_file_size
 					{
 						// ERROR! DANGER! THIS IS IMPOSSIBLE!
 						// But just in case...
-						tempsize_est += (6 + 7) * counts[it->first];
+						tempsize_est += (6 + 7) * it->second;
 					}
 					else
 					{
@@ -515,12 +530,12 @@ static size_t estimate_file_size
 						unsigned char c = best_size;
 						// Add it to supplementary code map.
 						supcodemap.insert(std::make_pair(it->first, std::make_pair(code, 0x80|c)));
-						tempsize_est += best_size * counts[it->first];
+						tempsize_est += best_size * it->second;
 					}
 				}
 				else
 					// No, we will have to inline it.
-					tempsize_est += (6 + 7) * counts[it->first];
+					tempsize_est += (6 + 7) * it->second;
 			}
 		}
 	}

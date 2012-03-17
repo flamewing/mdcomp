@@ -114,8 +114,10 @@ bool kosinski::decode(std::istream& Src, std::iostream& Dst,
 			decode_internal(in, Dst, DecBytes);
 			if (DecBytes >= FullSize)
 				break;
-			while (in.peek() == 0)
-				in.ignore(1);
+
+			// Skip padding between modules
+			size_t paddingEnd = (((size_t(in.tellp()) - 2) + 0xf) & ~0xf) + 2;
+			in.seekg(paddingEnd);
 		}
 	}
 	else
@@ -225,7 +227,7 @@ void kosinski::encode_internal(std::ostream& Dst, unsigned char const *&Buffer,
 }
 
 bool kosinski::encode(std::istream& Src, std::ostream& Dst, std::streamoff SlideWin,
-                      std::streamoff RecLen, bool Moduled)
+                      std::streamoff RecLen, bool Moduled, std::streamoff ModuleSize)
 {
 	Src.seekg(0, std::ios::end);
 	std::streamsize BSize = Src.tellg();
@@ -236,34 +238,37 @@ bool kosinski::encode(std::istream& Src, std::ostream& Dst, std::streamoff Slide
 
 	if (Moduled)
 	{
-		if (BSize > 65535)
+		if (BSize > 65535)  // Decompressed size would fill RAM or VRAM. 
 			return false;
 
 		std::streamoff FullSize = BSize, CompBytes = 0;
 
-		if (BSize > 0x1000)
-			BSize = 0x1000;
+		if (BSize > ModuleSize)
+			BSize = ModuleSize;
 
 		BigEndian::Write2(Dst, FullSize);
 
 		while (true)
 		{
 			encode_internal(Dst, ptr, SlideWin, RecLen, BSize);
-			std::streampos n = 16 - ((size_t(Dst.tellp()) - 2) % 16);
+
+			CompBytes += BSize;
+			ptr += BSize;
+
+			if (CompBytes >= FullSize)
+				break;
 			
+			// Padding between modules
+			size_t paddingEnd = (((size_t(Dst.tellp()) - 2) + 0xf) & ~0xf) + 2;
+			std::streampos n = paddingEnd - size_t(Dst.tellp());
+
 			if (n)
 			{
 				char const c = 0;
 				Dst.write(&c, n);
 			}
 			
-			CompBytes += BSize;
-			ptr += BSize;
-
-			if (CompBytes >= FullSize)
-				break;
-
-			BSize = std::min((std::streamoff)0x1000, FullSize - CompBytes);
+			BSize = std::min(ModuleSize, FullSize - CompBytes);
 		}
 	}
 	else

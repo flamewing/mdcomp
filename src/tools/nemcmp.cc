@@ -13,6 +13,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cstdlib>
 
@@ -21,8 +22,9 @@
 
 static void usage()
 {
-	std::cerr << "Usage: nemcmp [-x|--extract [{pointer}]] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: nemcmp [-i] [-x|--extract [{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
+	std::cerr << "\t-i\tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl << std::endl;
 }
 
@@ -33,19 +35,22 @@ int main(int argc, char *argv[])
 		{0, 0, 0, 0}
 	};
 
-	bool extract = false;
+	bool extract = false, printend = false;
 	std::streamsize pointer = 0;
 
 	while (true)
 	{
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::",
+		int c = getopt_long(argc, argv, "x::i",
                             long_options, &option_index);
 		if (c == -1)
 			break;
 		
 		switch (c)
 		{
+			case 'i':
+				printend = true;
+				break;
 			case 'x':
 				extract = true;
 				if (optarg)
@@ -75,7 +80,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (extract)
-		nemesis::decode(fin, fout, pointer);
+	{
+		int endptr = 0;
+		nemesis::decode(fin, fout, pointer, &endptr);
+		if (printend)
+			std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0') << std::uppercase << std::right << endptr << std::endl;
+	}
 	else
 		nemesis::encode(fin, fout);
 	
