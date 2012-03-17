@@ -594,7 +594,7 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			qt.push(std::tr1::shared_ptr<node>(new node(it->first, it->second)));
 
 	// The base coin collection for the length-limited Huffman coding has
-	// one coin list per character in length of the limmitation. Each coin list
+	// one coin list per character in length of the limitation. Each coin list
 	// has a constant "face value", and each coin in a list has its own
 	// "numismatic value". The "face value" is unimportant in the way the code
 	// is structured below; the "numismatic value" of each coin is the number
@@ -708,15 +708,15 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			// How many nibble runs have the desired bit length.
 			cnt = sizeonlymap.count(i) + carry;
 			carry = 0;
+			size_t mask  = (size_t(1) << i) - 1,
+			       mask2 = (i > 6) ? (mask & ~((size_t(1) << (i - 6)) - 1)) : 0;
 			for (size_t j = 0; j < cnt; j++)
 			{
 				// Sequential binary numbers for codes.
 				size_t code = base + j;
-				size_t mask = (size_t(1) << i) - 1;
 				// We do not want any codes composed solely of 1's or which
 				// start with 111111, as that sequence is reserved.
-				if ((i <= 6 && code == mask) ||
-					(i > 6 && code == (mask & ~((size_t(1) << (i - 6)) - 1))))
+				if ((i <= 6 && code == mask) || (i > 6 && code == mask2))
 				{
 					// We must demote this many nibble runs to a longer code.
 					carry = cnt - j;

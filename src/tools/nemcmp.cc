@@ -15,39 +15,40 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 
 #include "getopt.h"
 #include "nemesis.h"
 
-static void usage()
-{
-	std::cerr << "Usage: nemcmp [-i] [-x|--extract [{pointer}]] {input_filename} {output_filename}" << std::endl;
+static void usage() {
+	std::cerr << "Usage: nemcmp [-i] [-c|--crunch|-x|--extract [{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-i\tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl << std::endl;
+	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
+	std::cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and recompress to output file." << std::endl;
+	std::cerr << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl;
+	std::cerr << "\t            \tto input_filename." << std::endl << std::endl;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	static struct option long_options[] = {
-		{"extract", optional_argument, 0, 'x'},
+		{"extract"   , optional_argument, 0, 'x'},
+		{"crunch"    , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
-	bool extract = false, printend = false;
+	bool extract = false, printend = false, crunch = false;
 	std::streamsize pointer = 0;
 
-	while (true)
-	{
+	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::i",
+		int c = getopt_long(argc, argv, "x::ic",
                             long_options, &option_index);
 		if (c == -1)
 			break;
 		
-		switch (c)
-		{
+		switch (c) {
 			case 'i':
 				printend = true;
 				break;
@@ -56,38 +57,62 @@ int main(int argc, char *argv[])
 				if (optarg)
 					pointer = strtoul(optarg, 0, 0);
 				break;
+			case 'c':
+				crunch = true;
+				break;
 		}
 	}
 
-	if (argc - optind < 2)
-	{
+	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
 		usage();
 		return 1;
 	}
 
+	if (extract && crunch) {
+		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		return 4;
+	}
+	else if (printend && !extract) {
+		std::cerr << "Error: -i must be used with --extract." << std::endl << std::endl;
+		return 5;
+	}
+
+	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind+1];
+
 	std::ifstream fin(argv[optind], std::ios::in|std::ios::binary);
-	if (!fin.good())
-	{
+	if (!fin.good()) {
 		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
 		return 2;
 	}
 
-	std::ofstream fout(argv[optind+1], std::ios::out|std::ios::binary);
-	if (!fout.good())
-	{
-		std::cerr << "Output file '" << argv[optind+1] << "' could not be opened." << std::endl << std::endl;
-		return 3;
-	}
+	if (crunch) {
+		int endptr = 0;
+		std::stringstream buffer(std::ios::in|std::ios::out|std::ios::binary);
+		nemesis::decode(fin, buffer, pointer, &endptr);
+		fin.close();
+		buffer.seekg(0);
 
-	if (extract)
-	{
+		std::ofstream fout(outfile, std::ios::out|std::ios::binary);
+		if (!fout.good()) {
+			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
+			return 3;
+		}
+		nemesis::encode(buffer, fout);
+	} else {
+		std::ofstream fout(outfile, std::ios::out|std::ios::binary);
+		if (!fout.good()) {
+			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
+			return 3;
+		}
+
+		if (extract) {
 		int endptr = 0;
 		nemesis::decode(fin, fout, pointer, &endptr);
 		if (printend)
 			std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0') << std::uppercase << std::right << endptr << std::endl;
+		}
+		else
+			nemesis::encode(fin, fout);
 	}
-	else
-		nemesis::encode(fin, fout);
-	
 	return 0;
 }
