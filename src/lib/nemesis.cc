@@ -1,4 +1,4 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
+/* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * Nemesis encoder/decoder
  * Copyright (C) Flamewing 2011 <flamewing.sonic@gmail.com>
@@ -110,7 +110,7 @@ public:
 	bool operator<(node const& other) const
 	{	return weight < other.weight;	}
 	bool operator>(node const& other) const
-	{	return weight > other.weight;	}
+	{	return other < *this;	}
 	// This tells if the node is a leaf or a branch.
 	bool is_leaf() const
 	{   return child0 == 0 && child1 == 0;  }
@@ -542,8 +542,7 @@ static size_t estimate_file_size
 	tempcodemap.insert(supcodemap.begin(), supcodemap.end());
 
 	// Round up to a full byte.
-	if ((tempsize_est & 7) != 0)
-		tempsize_est = (tempsize_est & ~7) + 8;
+	tempsize_est = (tempsize_est + 7) & ~7;
 
 	return tempsize_est;
 }
@@ -601,6 +600,9 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 	// of times the underlying nibble run appears in the source file.
 	
 	// This will hold the Huffman code map.
+	// NOTE: while the codes that will be written in the header will not be
+	// longer than 8 bits, it is possible that a supplementary code map will
+	// add "fake" codes that are longer than 8 bits.
 	std::map<nibble_run, std::pair<size_t, unsigned char> > codemap;
 	// Size estimate. This is used to build the optimal compressed file.
 	size_t size_est = 0xffffffff;
@@ -688,8 +690,6 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			 it != basesizemap.end(); ++it)
 		{
 			size_t size = it->second, count = counts[it->first];
-			if ((6 + 7) * count < 16 + size * count)
-				continue;
 			sizeonlymap.insert(size);
 			sizemap.insert(std::make_pair(size,
 				                     std::make_pair(count, it->first)));
@@ -739,8 +739,6 @@ void nemesis::encode_internal(std::istream& Src, std::ostream& Dst, int mode, si
 			tempcodemap[it->second.second] = codes[pos];
 
 		// We now compute the final file size for this code table.
-		// 2 bytes at the start of the file, plus 1 byte at the end of the
-		// code table.
 		size_t tempsize_est = estimate_file_size(tempcodemap, counts);
 
 		// Is this iteration better than the best?
