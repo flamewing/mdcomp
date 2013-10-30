@@ -1,20 +1,19 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Nemesis encoder/decoder
- * Copyright (C) Flamewing 2011 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
  * Loosely based on code by Roger Sanders (AKA Nemesis) and William Sanders
  * (AKA Milamber)
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,21 +26,20 @@ class istream;
 class ostream;
 class nibble_run;
 
-typedef std::map<std::pair<unsigned char,unsigned char>, nibble_run> Codemap;
+typedef std::map<std::pair<unsigned char, unsigned char>, nibble_run> Codemap;
 
-class nemesis
-{
+class nemesis {
 private:
-	static void decode_header(std::istream& Src, std::ostream& Dst,
-	                          Codemap& codemap);
-	static void decode_internal(std::istream& Src, std::ostream& Dst,
-	                            Codemap& codemap, size_t rtiles,
+	static void decode_header(std::istream &Src, std::ostream &Dst,
+	                          Codemap &codemap);
+	static void decode_internal(std::istream &Src, std::ostream &Dst,
+	                            Codemap &codemap, size_t rtiles,
 	                            bool alt_out = false, int *endptr = 0);
-	static void encode_internal(std::istream& Src, std::ostream& Dst, int mode, size_t sz);
+	static void encode_internal(std::istream &Src, std::ostream &Dst, int mode, size_t sz);
 public:
-	static bool decode(std::istream& Src, std::ostream& Dst, std::streampos Location = 0,
+	static bool decode(std::istream &Src, std::ostream &Dst, std::streampos Location = 0,
 	                   int *endptr = 0);
-	static bool encode(std::istream& Src, std::ostream& Dst);
+	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 
 #endif // _NEMESIS_H_

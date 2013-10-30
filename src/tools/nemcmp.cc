@@ -1,17 +1,20 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-// 
-// You should have received a copy of the GNU Lesser General Public
-// License along with main.c; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
+/*
+ * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <iostream>
 #include <iomanip>
@@ -45,10 +48,10 @@ int main(int argc, char *argv[]) {
 	while (true) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, "x::ic",
-                            long_options, &option_index);
+		                    long_options, &option_index);
 		if (c == -1)
 			break;
-		
+
 		switch (c) {
 			case 'i':
 				printend = true;
@@ -72,15 +75,14 @@ int main(int argc, char *argv[]) {
 	if (extract && crunch) {
 		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
 		return 4;
-	}
-	else if (printend && !extract) {
+	} else if (printend && !extract) {
 		std::cerr << "Error: -i must be used with --extract." << std::endl << std::endl;
 		return 5;
 	}
 
-	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind+1];
+	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-	std::ifstream fin(argv[optind], std::ios::in|std::ios::binary);
+	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
 	if (!fin.good()) {
 		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
 		return 2;
@@ -88,31 +90,30 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		int endptr = 0;
-		std::stringstream buffer(std::ios::in|std::ios::out|std::ios::binary);
+		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
 		nemesis::decode(fin, buffer, pointer, &endptr);
 		fin.close();
 		buffer.seekg(0);
 
-		std::ofstream fout(outfile, std::ios::out|std::ios::binary);
+		std::ofstream fout(outfile, std::ios::out | std::ios::binary);
 		if (!fout.good()) {
 			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
 			return 3;
 		}
 		nemesis::encode(buffer, fout);
 	} else {
-		std::ofstream fout(outfile, std::ios::out|std::ios::binary);
+		std::ofstream fout(outfile, std::ios::out | std::ios::binary);
 		if (!fout.good()) {
 			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
 			return 3;
 		}
 
 		if (extract) {
-		int endptr = 0;
-		nemesis::decode(fin, fout, pointer, &endptr);
-		if (printend)
-			std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0') << std::uppercase << std::right << endptr << std::endl;
-		}
-		else
+			int endptr = 0;
+			nemesis::decode(fin, fout, pointer, &endptr);
+			if (printend)
+				std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0') << std::uppercase << std::right << endptr << std::endl;
+		} else
 			nemesis::encode(fin, fout);
 	}
 	return 0;
