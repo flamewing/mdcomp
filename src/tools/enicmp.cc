@@ -24,7 +24,7 @@
 #include "enigma.h"
 
 static void usage() {
-	std::cerr << "Usage: enicmp [-x|--extract [{pointer}]] [-p|--padding] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: enicmp [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
 	std::cerr << "\t-p,--padding\tAdd or remove padding. Use this only for Sonic 1 Special Stage files in 80x80 block mode" << std::endl << std::endl;

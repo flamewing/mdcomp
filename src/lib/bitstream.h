@@ -25,9 +25,6 @@
 template <typename T>
 class bigendian {
 public:
-	enum {
-		unchanged = 0
-	};
 	size_t read(std::istream &src) {
 		return BigEndian::ReadN<std::istream &, sizeof(T)>(src);
 	}
@@ -39,9 +36,6 @@ public:
 template <typename T>
 class littleendian {
 public:
-	enum {
-		unchanged = 1
-	};
 	size_t read(std::istream &src) {
 		return LittleEndian::ReadN<std::istream &, sizeof(T)>(src);
 	}
@@ -170,7 +164,7 @@ public:
 	}
 	// Flushes remaining bits (if any) to the buffer, completing the byte by
 	// padding with zeroes.
-	bool flush(bool unchanged = Writer::unchanged) {
+	bool flush(bool unchanged = false) {
 		if (waitingbits) {
 			if (!unchanged)
 				bitbuffer <<= ((sizeof(T) * 8) - waitingbits);

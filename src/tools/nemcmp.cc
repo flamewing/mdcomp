@@ -26,13 +26,13 @@
 #include "nemesis.h"
 
 static void usage() {
-	std::cerr << "Usage: nemcmp [-i] [-c|--crunch|-x|--extract [{pointer}]] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: nemcmp [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
-	std::cerr << "\t-i\tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
+	std::cerr << "\t-i          \tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and recompress to output file." << std::endl;
-	std::cerr << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl;
-	std::cerr << "\t            \tto input_filename." << std::endl << std::endl;
+	std::cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and recompress to output file." << std::endl
+	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
+	          << "\t            \tto input_filename." << std::endl << std::endl;
 }
 
 int main(int argc, char *argv[]) {

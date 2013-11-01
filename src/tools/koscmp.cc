@@ -18,29 +18,36 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 
 #include "getopt.h"
 #include "kosinski.h"
 
 static void usage() {
-	std::cerr << "Usage: koscmp [-x|--extract [{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled [{size}]] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: koscmp [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
+	std::cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << std::endl
+	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
+	          << "\t            \tto input_filename. All parameters affect only the output file, except" << std::endl
+	          << "\t            \tfor the -m parameter, which makes both input and output files moduled" << std::endl
+	          << "\t            \t(but the optional module size affects only the output file)." << std::endl;
 	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << std::endl
 	          << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << std::endl;
-	std::cerr << "\t-r\t\tSet recursion length (default: 256)" << std::endl;
-	std::cerr << "\t-s\t\tSets sliding window size (default: 8192)" << std::endl << std::endl;
+	std::cerr << "\t-r          \tSet recursion length (default/maximum: 256)" << std::endl;
+	std::cerr << "\t-s          \tSets sliding window size (default/maximum: 8192)" << std::endl << std::endl;
 }
 
 int main(int argc, char *argv[]) {
 	static struct option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
 		{"moduled", optional_argument, 0, 'm'},
+		{"crunch" , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
-	bool extract = false, moduled = false;
+	bool extract = false, moduled = false, crunch = false;
 	std::streamsize pointer = 0, slidewin = 8192, reclen = 256, modulesize = 0x1000;
 
 	while (true) {
@@ -56,35 +63,42 @@ int main(int argc, char *argv[]) {
 				if (optarg)
 					pointer = strtoul(optarg, 0, 0);
 				break;
-
+			case 'c':
+				crunch = true;
+				break;
 			case 'm':
 				moduled = true;
 				if (optarg)
 					modulesize = strtoul(optarg, 0, 0);
+				if (!modulesize)
+					modulesize = 0x1000;
 				break;
-
 			case 'r':
 				if (optarg)
 					reclen = strtoul(optarg, 0, 0);
-
-				if (!reclen)
+				if (!reclen || reclen > 256)
 					reclen = 256;
 				break;
-
 			case 's':
 				if (optarg)
 					slidewin = strtoul(optarg, 0, 0);
-
-				if (!slidewin)
+				if (!slidewin || slidewin > 8192)
 					slidewin = 8192;
 				break;
 		}
 	}
 
-	if (argc - optind < 2) {
+	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
 		usage();
 		return 1;
 	}
+
+	if (extract && crunch) {
+		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		return 4;
+	}
+
+	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
 	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
 	if (!fin.good()) {
@@ -92,16 +106,30 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	std::fstream fout(argv[optind + 1], std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-	if (!fout.good()) {
-		std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
-		return 3;
-	}
+	if (crunch) {
+		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
+		kosinski::decode(fin, buffer, pointer, moduled);
+		fin.close();
+		buffer.seekg(0);
 
-	if (extract)
-		kosinski::decode(fin, fout, pointer, moduled);
-	else
-		kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize);
+		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!fout.good()) {
+			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			return 3;
+		}
+		kosinski::encode(buffer, fout, slidewin, reclen, moduled, modulesize);
+	} else {
+		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!fout.good()) {
+			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			return 3;
+		}
+
+		if (extract)
+			kosinski::decode(fin, fout, pointer, moduled);
+		else
+			kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize);
+	}
 
 	return 0;
 }

@@ -16,7 +16,8 @@ libkosinski_la_SOURCES = \
 	bigendian_io.h  \
 	bitstream.h  \
 	kosinski.cc  \
-	kosinski.h
+	kosinski.h  \
+	lzss.h
 
 libkosinski_la_LIBADD =
 
