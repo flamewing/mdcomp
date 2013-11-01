@@ -30,6 +30,7 @@ DISTCLEANFILES = intltool-extract \
 	po/.intltool-merge-cache
 
 include_HEADERS = \
+	src/lib/comper.h \
 	src/lib/enigma.h \
 	src/lib/kosinski.h \
 	src/lib/nemesis.h

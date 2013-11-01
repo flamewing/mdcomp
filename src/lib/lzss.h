@@ -86,12 +86,21 @@ public:
  * The template parameter is an adaptor class/structure with the following
  * members:
  * struct LZSSAdaptor {
+ * 	typedef unsigned char  stream_t;
+ * 	typedef unsigned short descriptor_t;
+ * 	typedef littleendian<descriptor_t> descriptor_endian_t;
  * 	enum {
  * 		// Number of bits on descriptor bitfield.
- * 		NumDescBits = 16,
+ * 		NumDescBits = sizeof(descriptor_t) * 8,
  * 		// Number of bits used in descriptor bitfield to signal the end-of-file
  * 		// marker sequence.
- * 		NumTermBits = 2
+ * 		NumTermBits = 2,
+ * 		// Flag that tells the compressor that new descriptor fields are needed
+ * 		// as soon as the last bit in the previous one is used up.
+ * 		NeedEarlyDescriptor = 1,
+ * 		// Flag that marks the descriptor bits as being in little-endian bit
+ * 		// order (that is, lowest bits come out first).
+ * 		DescriptorLittleEndianBits = 1
  * 	};
  * 	// Computes the cost of covering all of the "len" vertices starting from
  * 	// "off" vertices ago.
@@ -109,7 +118,7 @@ public:
 private:
 	typedef std::vector<AdjListNode> MatchVector;
 	// Source file data and its size; one node per character in source file.
-	unsigned char const *data;
+	typename Adaptor::stream_t const *data;
 	size_t const nlen;
 	// Parameters for LZSS encoder: sliding window size and maximum record
 	// length to use when encoding.
@@ -162,7 +171,9 @@ public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(unsigned char const *dt, size_t const size,
 	          size_t const win, size_t const rec)
-		: data(dt), nlen(size), SlideWin(win), RecLen(rec) {
+		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
+		  nlen(size / sizeof(typename Adaptor::stream_t)), SlideWin(win),
+		  RecLen(rec) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		// First node is special.
@@ -221,11 +232,13 @@ public:
 					desccost += Adaptor::NumTermBits;
 					desccost %= Adaptor::NumDescBits;
 					// If the descriptor bitfield had exactly 0 bits left after
-					// this, we need to emit a new descriptor bitfield (the full
-					// Adaptor::NumDescBits bits). Otherwise, we need to pads
-					// the last descriptor bitfield to full size. This line
+					// this, we may need to emit a new descriptor bitfield (the
+					// full Adaptor::NumDescBits bits). Otherwise, we need to
+					// pads the last descriptor bitfield to full size. This line
 					// accomplishes both.
-					wgt += (Adaptor::NumDescBits - desccost);
+					if (Adaptor::NeedEarlyDescriptor != 0 || desccost > 0) {
+						wgt += (Adaptor::NumDescBits - desccost);
+					}
 				}
 				// Is the cost to reach the target node through this edge less
 				// than the current cost?
@@ -260,18 +273,19 @@ public:
  * by buffering the bytes until a descriptor field is full, at which point it
  * writes the descriptor field and flushes the output buffer.
  */
-template <typename T, typename BitWriter = bigendian<T>,
-          bool little_endian_bits = false>
+template <typename Adaptor>
 class LZSSOStream {
 private:
+	typedef typename Adaptor::descriptor_t descriptor_t;
+	typedef typename Adaptor::descriptor_endian_t BitWriter;
 	// Where we will output to.
 	std::ostream &out;
 	// Internal bitstream output buffer.
-	obitstream<T, BitWriter> bits;
+	obitstream<descriptor_t, BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;
-	bool putbit(T bit) {
-		if (little_endian_bits)
+	bool putbit(descriptor_t bit) {
+		if (Adaptor::DescriptorLittleEndianBits != 0)
 			return bits.push(bit);
 		else
 			return bits.put(bit);
@@ -289,10 +303,10 @@ public:
 		// First, save current state.
 		bool needdummydesc = !bits.have_waiting_bits();
 		// Now, flush the queue if needed.
-		bits.flush(little_endian_bits);
-		if (needdummydesc) {
+		bits.flush(Adaptor::DescriptorLittleEndianBits != 0);
+		if (Adaptor::NeedEarlyDescriptor != 0 && needdummydesc) {
 			// We need to add a dummy descriptor field; so add it.
-			for (size_t ii = 0; ii < sizeof(T); ii++) {
+			for (size_t ii = 0; ii < sizeof(descriptor_t); ii++) {
 				out.put(0x00);
 			}
 		}
@@ -301,10 +315,18 @@ public:
 	}
 	// Writes a bit to the descriptor bitfield. When the descriptor field is
 	// full, outputs it and the output parameter buffer.
-	void descbit(T bit) {
-		if (putbit(bit)) {
-			out.write(buffer.c_str(), buffer.size());
-			buffer.clear();
+	void descbit(descriptor_t bit) {
+		if (Adaptor::NeedEarlyDescriptor != 0) {
+			if (putbit(bit)) {
+				out.write(buffer.c_str(), buffer.size());
+				buffer.clear();
+			}
+		} else {
+			if (!bits.have_waiting_bits()) {
+				out.write(buffer.c_str(), buffer.size());
+				buffer.clear();
+			}
+			putbit(bit);
 		}
 	}
 	// Puts a byte in the output buffer.

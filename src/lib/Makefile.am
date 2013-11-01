@@ -2,7 +2,17 @@
 lib_LTLIBRARIES = \
 	libenigma.la\
 	libkosinski.la \
-	libnemesis.la
+	libnemesis.la \
+	libcomper.la 
+
+libcomper_la_SOURCES =  \
+	comper.cc \
+	comper.h \
+	lzss.h \
+	bitstream.h \
+	bigendian_io.h
+
+libcomper_la_LIBADD =
 
 libnemesis_la_SOURCES = \
 	bigendian_io.h \

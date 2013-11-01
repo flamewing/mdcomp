@@ -2,7 +2,15 @@
 bin_PROGRAMS = \
 	enicmp\
 	koscmp \
-	nemcmp
+	nemcmp \
+	compcmp
+
+compcmp_SOURCES =  \
+	compcmp.cc
+
+compcmp_CXXFLAGS = -I$(srcdir)/../lib 
+
+compcmp_LDFLAGS = $(builddir)/../lib/libcomper.la 
 
 nemcmp_SOURCES = \
 	nemcmp.cc

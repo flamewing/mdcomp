@@ -117,13 +117,22 @@ bool kosinski::decode(std::istream &Src, std::iostream &Dst,
 }
 
 // NOTE: This has to be changed for other LZSS-based compression schemes.
-struct KosisnkiAdaptor {
+struct KosinskiAdaptor {
+	typedef unsigned char  stream_t;
+	typedef unsigned short descriptor_t;
+	typedef littleendian<descriptor_t> descriptor_endian_t;
 	enum {
 		// Number of bits on descriptor bitfield.
-		NumDescBits = 16,
+		NumDescBits = sizeof(descriptor_t) * 8,
 		// Number of bits used in descriptor bitfield to signal the end-of-file
 		// marker sequence.
-		NumTermBits = 2
+		NumTermBits = 2,
+		// Flag that tells the compressor that new descriptor fields are needed
+		// as soon as the last bit in the previous one is used up.
+		NeedEarlyDescriptor = 1,
+		// Flag that marks the descriptor bits as being in little-endian bit
+		// order (that is, lowest bits come out first).
+		DescriptorLittleEndianBits = 1
 	};
 	// Computes the cost of covering all of the "len" vertices starting from
 	// "off" vertices ago.
@@ -158,8 +167,8 @@ struct KosisnkiAdaptor {
 	}
 };
 
-typedef LZSSGraph<KosisnkiAdaptor> KosGraph;
-typedef LZSSOStream<unsigned short, littleendian<unsigned short>, true> KosOStream;
+typedef LZSSGraph<KosinskiAdaptor> KosGraph;
+typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
 void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                                std::streamoff SlideWin, std::streamoff RecLen,
@@ -187,26 +196,27 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 				// Inline RLE.
 				out.descbit(0);
 				out.descbit(0);
-				out.descbit(((len - 2) >> 1) & 1);
-				out.descbit((len - 2) & 1);
-				out.putbyte(~(dist - 1));
+				len -= 2;
+				out.descbit((len >> 1) & 1);
+				out.descbit(len & 1);
+				out.putbyte(-dist);
 				break;
 			case 18:
 			case 26: {
 				// Separate RLE.
 				out.descbit(0);
 				out.descbit(1);
-				dist--;
-				unsigned short distance = static_cast<unsigned short>(~((dist << 8) | (dist >> 5)) & 0xFFF8);
+				dist = (-dist) & 0x1FFF;
+				unsigned short high = (dist >> 5) & 0xF8,
+				               low  = (dist & 0xFF);
 				if (edge.get_weight() == 18) {
 					// 2-byte RLE.
-					distance |= static_cast<unsigned char>(len - 2);
-					out.putbyte(distance >> 8);
-					out.putbyte(distance & 0xff);
+					out.putbyte(low);
+					out.putbyte(high | (len - 2));
 				} else {
 					// 3-byte RLE.
-					out.putbyte(distance >> 8);
-					out.putbyte(distance & 0xff);
+					out.putbyte(low);
+					out.putbyte(high);
 					out.putbyte(len - 1);
 				}
 				break;

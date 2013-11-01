@@ -22,37 +22,30 @@
 #include <cstdlib>
 
 #include "getopt.h"
-#include "kosinski.h"
+#include "comper.h"
 
 static void usage() {
-	std::cerr << "Usage: koscmp [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: compcmp [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << std::endl
+	std::cerr << "\t-c,--crunch \tAssume input file is Comper-compressed and recompress to output file." << std::endl
 	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
-	          << "\t            \tto input_filename. All parameters affect only the output file, except" << std::endl
-	          << "\t            \tfor the -m parameter, which makes both input and output files moduled" << std::endl
-	          << "\t            \t(but the optional module size affects only the output file)." << std::endl;
-	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << std::endl
-	          << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << std::endl;
-	std::cerr << "\t-r          \tSet recursion length (default/maximum: 256)" << std::endl;
-	std::cerr << "\t-s          \tSets sliding window size (default/maximum: 8192)" << std::endl << std::endl;
+	          << "\t            \tto input_filename." << std::endl << std::endl;
 }
 
 int main(int argc, char *argv[]) {
 	static struct option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
-		{"moduled", optional_argument, 0, 'm'},
 		{"crunch" , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
-	bool extract = false, moduled = false, crunch = false;
-	std::streamsize pointer = 0, slidewin = 8192, reclen = 256, modulesize = 0x1000;
+	bool extract = false, crunch = false;
+	std::streamsize pointer = 0;
 
 	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::m::cr:s:",
+		int c = getopt_long(argc, argv, "x::c",
 		                    long_options, &option_index);
 		if (c == -1)
 			break;
@@ -65,25 +58,6 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'c':
 				crunch = true;
-				break;
-			case 'm':
-				moduled = true;
-				if (optarg)
-					modulesize = strtoul(optarg, 0, 0);
-				if (!modulesize)
-					modulesize = 0x1000;
-				break;
-			case 'r':
-				if (optarg)
-					reclen = strtoul(optarg, 0, 0);
-				if (!reclen || reclen > 256)
-					reclen = 256;
-				break;
-			case 's':
-				if (optarg)
-					slidewin = strtoul(optarg, 0, 0);
-				if (!slidewin || slidewin > 8192)
-					slidewin = 8192;
 				break;
 		}
 	}
@@ -108,7 +82,7 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-		kosinski::decode(fin, buffer, pointer, moduled);
+		comper::decode(fin, buffer, pointer);
 		fin.close();
 		buffer.seekg(0);
 
@@ -117,7 +91,7 @@ int main(int argc, char *argv[]) {
 			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
 			return 3;
 		}
-		kosinski::encode(buffer, fout, slidewin, reclen, moduled, modulesize);
+		comper::encode(buffer, fout);
 	} else {
 		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 		if (!fout.good()) {
@@ -126,9 +100,9 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract)
-			kosinski::decode(fin, fout, pointer, moduled);
+			comper::decode(fin, fout, pointer);
 		else
-			kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize);
+			comper::encode(fin, fout);
 	}
 
 	return 0;
