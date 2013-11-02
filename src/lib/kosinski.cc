@@ -160,9 +160,10 @@ struct KosinskiAdaptor {
 		return edge.get_weight() & 7;
 	}
 	// Kosinski finds no additional matches over normal LZSS.
-	static void extra_matches(stream_t const *data, size_t basenode,
-	                          size_t ubound, size_t lbound,
-	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) {
+	static void extra_matches(stream_t const *UNUSED(data),
+	                          size_t UNUSED(basenode),
+	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
+	                          LZSSGraph<KosinskiAdaptor>::MatchVector &UNUSED(matches)) {
 	}
 };
 
@@ -270,10 +271,13 @@ bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff Slide
 
 			// Padding between modules
 			size_t paddingEnd = (((size_t(Dst.tellp()) - 2) + 0xf) & ~0xf) + 2;
-			std::streampos n = paddingEnd - size_t(Dst.tellp());
+			size_t pos = size_t(Dst.tellp());
+			if (paddingEnd > pos) {
+				size_t n = paddingEnd - pos;
 
-			for (size_t ii = 0; ii < n; ii++) {
-				Dst.put(0x00);
+				for (size_t ii = 0; ii < n; ii++) {
+					Dst.put(0x00);
+				}
 			}
 
 			BSize = std::min(ModuleSize, FullSize - CompBytes);

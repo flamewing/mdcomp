@@ -26,6 +26,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include "enigma.h"
 #include "bigendian_io.h"
@@ -73,7 +74,7 @@ public:
 
 // Selects the appropriate template instance to be used.
 base_flag_io *base_flag_io::create(size_t n) {
-	switch (n) {
+	switch ((n & 0x1F)) {
 		case 0x00:
 			return new flag_io<0x00>;
 		case 0x01:
@@ -138,10 +139,13 @@ base_flag_io *base_flag_io::create(size_t n) {
 			return new flag_io<0x1e>;
 		case 0x1f:
 			return new flag_io<0x1f>;
+		default:
+			std::cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << std::endl;
+			return NULL;
 	}
 }
 
-void enigma::decode_internal(std::istream &Src, std::ostream &Dst, std::streamsize sz) {
+void enigma::decode_internal(std::istream &Src, std::ostream &Dst) {
 	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
 	in << Src.rdbuf();
 	in.seekg(0);
@@ -205,13 +209,11 @@ void enigma::decode_internal(std::istream &Src, std::ostream &Dst, std::streamsi
 
 bool enigma::decode(std::istream &Src, std::ostream &Dst, std::streampos Location,
                     bool padding) {
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = Src.tellg() - Location;
 	Src.seekg(Location);
 	if (padding) {
 		// This is a plane map into a full pattern name table.
 		std::stringstream out(std::ios::in | std::ios::out | std::ios::binary);
-		decode_internal(Src, out, sz);
+		decode_internal(Src, out);
 		out.clear();
 		out.seekg(0);
 
@@ -227,7 +229,7 @@ bool enigma::decode(std::istream &Src, std::ostream &Dst, std::streampos Locatio
 		}
 		Dst.write(pad.c_str(), 0x80 * 0x20);
 	} else
-		decode_internal(Src, Dst, sz);
+		decode_internal(Src, Dst);
 	return true;
 }
 
@@ -264,7 +266,7 @@ static inline void flush_buffer(std::vector<unsigned short>& buf,
 	if (!buf.size())
 		return;
 
-	bits.write(0x70 | (buf.size() - 1) & 0xf, 7);
+	bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
 	for (std::vector<unsigned short>::iterator it = buf.begin();
 	        it != buf.end(); ++it) {
 		unsigned short v = *it;
@@ -274,7 +276,7 @@ static inline void flush_buffer(std::vector<unsigned short>& buf,
 	buf.clear();
 }
 
-void enigma::encode_internal(std::istream &Src, std::ostream &Dst, std::streamsize sz) {
+void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	// To unpack source into 2-byte words.
 	std::vector<unsigned short> unpack;
 	// Frequency map.
@@ -426,9 +428,9 @@ bool enigma::encode(std::istream &Src, std::ostream &Dst, bool padding) {
 			src.write(buf, sizeof(buf));
 			Src.ignore(0x20);
 		}
-		encode_internal(src, Dst, 0x1000);
+		encode_internal(src, Dst);
 	} else {
-		encode_internal(Src, Dst, sz);
+		encode_internal(Src, Dst);
 		// Pad to even size.
 		if ((Dst.tellp() & 1) != 0)
 			Dst.put(0);

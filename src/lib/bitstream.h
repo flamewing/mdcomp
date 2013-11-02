@@ -123,7 +123,7 @@ class obitstream {
 private:
 	std::ostream &dst;
 	Writer w;
-	int waitingbits;
+	unsigned int waitingbits;
 	T bitbuffer;
 public:
 	obitstream(std::ostream &d) : dst(d), waitingbits(0), bitbuffer(0) {

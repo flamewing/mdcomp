@@ -117,7 +117,7 @@ struct SaxmanAdaptor {
 	// "off" vertices ago.
 	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t calc_weight(size_t dist, size_t len) {
+	static size_t calc_weight(size_t UNUSED(dist), size_t len) {
 		// Preconditions:
 		// len != 0 && len <= RecLen && dist != 0 && dist <= SlideWin
 		if (len == 1)
@@ -130,13 +130,13 @@ struct SaxmanAdaptor {
 			return 1 + 12 + 4;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &edge) {
+	static size_t desc_bits(AdjListNode const &UNUSED(edge)) {
 		// Saxman always uses a single bit descriptor.
 		return 1;
 	}
 	// Saxman allows encoding of a sequence of zeroes with no previous match.
 	static void extra_matches(stream_t const *data, size_t basenode,
-	                          size_t ubound, size_t lbound,
+	                          size_t ubound, size_t UNUSED(lbound),
 	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) {
 		// Can't encode zero match after this point.
 		if (basenode >= 0xFFF)
@@ -175,14 +175,14 @@ void saxman::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 		size_t len = edge.get_length(), dist = edge.get_distance();
 		// The weight of each edge uniquely identifies how it should be written.
 		// NOTE: This needs to be changed for other LZSS schemes.
-		if (edge.get_length() == 1) {
+		if (len == 1) {
 			// Literal.
 			out.descbit(1);
 			out.putbyte(Buffer[pos]);
 		} else {
 			// RLE.
 			out.descbit(0);
-			size_t low = pos - edge.get_distance(), high = edge.get_length();
+			size_t low = pos - dist, high = len;
 			low = (low - 0x12) & 0xFFF;
 			high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
 			low &= 0xFF;

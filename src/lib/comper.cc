@@ -51,6 +51,7 @@ void comper::decode_internal(std::istream &in, std::iostream &Dst) {
 
 bool comper::decode(std::istream &Src, std::iostream &Dst,
                     std::streampos Location) {
+	Src.seekg(Location);
 	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
 	in << Src.rdbuf();
 
@@ -81,7 +82,7 @@ struct ComperAdaptor {
 	// "off" vertices ago.
 	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t calc_weight(size_t dist, size_t len) {
+	static size_t calc_weight(size_t UNUSED(dist), size_t len) {
 		// Preconditions:
 		// len != 0 && len <= RecLen && dist != 0 && dist <= SlideWin
 		if (len == 1)
@@ -92,14 +93,15 @@ struct ComperAdaptor {
 			return 1 + 8 + 8;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &edge) {
+	static size_t desc_bits(AdjListNode const &UNUSED(edge)) {
 		// Comper always uses a single bit descriptor.
 		return 1;
 	}
 	// Comper finds no additional matches over normal LZSS.
-	static void extra_matches(stream_t const *data, size_t basenode,
-	                          size_t ubound, size_t lbound,
-	                          LZSSGraph<ComperAdaptor>::MatchVector &matches) {
+	static void extra_matches(stream_t const *UNUSED(data),
+	                          size_t UNUSED(basenode),
+	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
+	                          LZSSGraph<ComperAdaptor>::MatchVector &UNUSED(matches)) {
 	}
 };
 
@@ -121,7 +123,7 @@ void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 		size_t len = edge.get_length(), dist = edge.get_distance();
 		// The weight of each edge uniquely identifies how it should be written.
 		// NOTE: This needs to be changed for other LZSS schemes.
-		if (edge.get_length() == 1) {
+		if (len == 1) {
 			// Literal.
 			out.descbit(0);
 			out.putbyte(Buffer[pos]);
@@ -129,8 +131,8 @@ void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 		} else {
 			// RLE.
 			out.descbit(1);
-			out.putbyte(-edge.get_distance());
-			out.putbyte(edge.get_length() - 1);
+			out.putbyte(-dist);
+			out.putbyte(len - 1);
 		}
 		// Go to next position.
 		pos = edge.get_dest() * 2;

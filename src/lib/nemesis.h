@@ -30,8 +30,7 @@ typedef std::map<std::pair<unsigned char, unsigned char>, nibble_run> Codemap;
 
 class nemesis {
 private:
-	static void decode_header(std::istream &Src, std::ostream &Dst,
-	                          Codemap &codemap);
+	static void decode_header(std::istream &Src, Codemap &codemap);
 	static void decode_internal(std::istream &Src, std::ostream &Dst,
 	                            Codemap &codemap, size_t rtiles,
 	                            bool alt_out = false, int *endptr = 0);

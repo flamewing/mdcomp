@@ -47,12 +47,12 @@ private:
 public:
 	// Constructors.
 	AdjListNode()
-		: destnode(1), distance(1), length(1),
-		  weight(std::numeric_limits<size_t>::max()) {
+		: destnode(1), weight(std::numeric_limits<size_t>::max()), distance(1),
+		  length(1) {
 	}
 	AdjListNode(size_t dest, size_t dist, size_t len,
 	            size_t wgt)
-		: destnode(dest), distance(dist), length(len), weight(wgt) {
+		: destnode(dest), weight(wgt), distance(dist), length(len) {
 	}
 	// Getters.
 	size_t get_dest() const {

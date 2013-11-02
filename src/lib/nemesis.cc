@@ -187,8 +187,7 @@ struct Compare_node {
 	}
 };
 
-void nemesis::decode_header(std::istream &Src, std::ostream &Dst,
-                            Codemap &codemap) {
+void nemesis::decode_header(std::istream &Src, Codemap &codemap) {
 	// storage for output value to decompression buffer
 	size_t out_val = 0;
 
@@ -291,7 +290,7 @@ void nemesis::decode_internal(std::istream &Src, std::ostream &Dst,
 		dst.clear();
 		unsigned long in = LittleEndian::Read4(dst);
 		LittleEndian::Write4(Dst, in);
-		while (dst.tellg() < rtiles << 5) {
+		while (size_t(dst.tellg()) < rtiles << 5) {
 			in ^= LittleEndian::Read4(dst);
 			LittleEndian::Write4(Dst, in);
 		}
@@ -310,7 +309,7 @@ bool nemesis::decode(std::istream &Src, std::ostream &Dst, std::streampos Locati
 	rtiles &= 0x7fff;
 
 	if (rtiles > 0) {
-		decode_header(Src, Dst, codemap);
+		decode_header(Src, codemap);
 		decode_internal(Src, Dst, codemap, rtiles, alt_out, endptr);
 	} else if (endptr)
 		*endptr = Src.tellg();
@@ -505,7 +504,7 @@ static size_t estimate_file_size
 						if (it3 != tempcodemap.end()) {
 							// It is; it MUST be, as the other case is impossible
 							// by construction.
-							for (int j = 0; j < c; j++) {
+							for (size_t j = 0; j < c; j++) {
 								len += it3->second.second;
 								code <<= it3->second.second;
 								code |= it3->second.first;
