@@ -25,8 +25,8 @@
 #include "getopt.h"
 #include "nemesis.h"
 
-static void usage() {
-	std::cerr << "Usage: nemcmp [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
+static void usage(char *prog) {
+	std::cerr << "Usage: " << prog << " [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-i          \tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
-		usage();
+		usage(argv[0]);
 		return 1;
 	}
 

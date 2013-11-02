@@ -24,8 +24,8 @@
 #include "getopt.h"
 #include "saxman.h"
 
-static void usage() {
-	std::cerr << "Usage: saxcmp [-s size|-S] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
+static void usage(char *prog) {
+	std::cerr << "Usage: " << prog << " [-s size|-S] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
 	std::cerr << "\t-c,--crunch \tAssume input file is Saxman-compressed and recompress to output file." << std::endl
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
-		usage();
+		usage(argv[0]);
 		return 1;
 	}
 

@@ -23,8 +23,8 @@
 #include "getopt.h"
 #include "enigma.h"
 
-static void usage() {
-	std::cerr << "Usage: enicmp [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << std::endl;
+static void usage(char *prog) {
+	std::cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
 	std::cerr << "\t-p,--padding\tAdd or remove padding. Use this only for Sonic 1 Special Stage files in 80x80 block mode" << std::endl << std::endl;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (argc - optind < 2) {
-		usage();
+		usage(argv[0]);
 		return 1;
 	}
 
