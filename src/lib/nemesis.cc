@@ -440,6 +440,7 @@ static size_t estimate_file_size
 						rows = 14;
 						break;
 					case 7:
+					default:
 						linear_coeffs = &linear_coeffs7[0][0];
 						rows = 21;
 						break;
