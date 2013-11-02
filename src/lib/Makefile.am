@@ -3,7 +3,8 @@ lib_LTLIBRARIES = \
 	libenigma.la\
 	libkosinski.la \
 	libnemesis.la \
-	libcomper.la 
+	libcomper.la \
+	libsaxman.la
 
 libcomper_la_SOURCES =  \
 	comper.cc \
@@ -13,6 +14,15 @@ libcomper_la_SOURCES =  \
 	bigendian_io.h
 
 libcomper_la_LIBADD =
+
+libsaxman_la_SOURCES =  \
+	saxman.cc \
+	saxman.h \
+	bigendian_io.h \
+	lzss.h \
+	bitstream.h
+
+libsaxman_la_LIBADD =
 
 libnemesis_la_SOURCES = \
 	bigendian_io.h \

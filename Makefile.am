@@ -33,7 +33,8 @@ include_HEADERS = \
 	src/lib/comper.h \
 	src/lib/enigma.h \
 	src/lib/kosinski.h \
-	src/lib/nemesis.h
+	src/lib/nemesis.h \
+	src/lib/saxman.h
 
 # Remove doc directory on uninstall
 uninstall-local:

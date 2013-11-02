@@ -20,8 +20,7 @@
 #define _BIGENDIAN_IO_H_
 
 #include <iosfwd>
-class string;
-class vector;
+#include <string>
 
 inline size_t Read1(std::istream &in) {
 	size_t c = static_cast<unsigned char>(in.get());

@@ -3,7 +3,8 @@ bin_PROGRAMS = \
 	enicmp\
 	koscmp \
 	nemcmp \
-	compcmp
+	compcmp \
+	saxcmp
 
 compcmp_SOURCES =  \
 	compcmp.cc
@@ -11,6 +12,13 @@ compcmp_SOURCES =  \
 compcmp_CXXFLAGS = -I$(srcdir)/../lib 
 
 compcmp_LDFLAGS = $(builddir)/../lib/libcomper.la 
+
+saxcmp_SOURCES =  \
+	saxcmp.cc
+
+saxcmp_CXXFLAGS = -I$(srcdir)/../lib 
+
+saxcmp_LDFLAGS = $(builddir)/../lib/libsaxman.la 
 
 nemcmp_SOURCES = \
 	nemcmp.cc

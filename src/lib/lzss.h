@@ -1,6 +1,6 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2013 <flamewing.sonic@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -21,7 +21,10 @@
 
 #include <iosfwd>
 #include <limits>
+#include <list>
 #include <string>
+#include <vector>
+
 #include "bigendian_io.h"
 #include "bitstream.h"
 
@@ -109,14 +112,19 @@ public:
  * 	static size_t calc_weight(size_t dist, size_t len);
  * 	// Given an edge, computes how many bits are used in the descriptor field.
  * 	static size_t desc_bits(AdjListNode const &edge);
+ * 	// Function that finds extra matches in the data that are specific to the
+ * 	// given encoder and not general LZSS dictionary matches.
+ * 	static void extra_matches(stream_t const *data, size_t basenode,
+ * 	                          size_t ubound, size_t lbound,
+ * 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches);
  * };
  */
 template<typename Adaptor>
 class LZSSGraph {
 public:
 	typedef std::list<AdjListNode> AdjList;
-private:
 	typedef std::vector<AdjListNode> MatchVector;
+private:
 	// Source file data and its size; one node per character in source file.
 	typename Adaptor::stream_t const *data;
 	size_t const nlen;
@@ -143,6 +151,8 @@ private:
 		// Start with the "literal" match of the current node into the next.
 		size_t wgt = Adaptor::calc_weight(0, 1);
 		matches[0] = AdjListNode(basenode + 1, 0, 1, wgt);
+		// Get extra matches dependent on specific encoder.
+		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		do {
 			// Keep looking for matches.
 			size_t jj = 0;

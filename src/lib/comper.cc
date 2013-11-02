@@ -1,7 +1,6 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
- * Copyright (C) 2002-2004 The KENS Project Development Team
+ * Copyright (C) Flamewing 2013 <flamewing.sonic@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -19,13 +18,7 @@
 
 #include <istream>
 #include <ostream>
-#include <string>
 #include <sstream>
-#include <algorithm>
-#include <vector>
-#include <list>
-#include <map>
-#include <limits>
 
 #include "comper.h"
 #include "bigendian_io.h"
@@ -58,18 +51,8 @@ void comper::decode_internal(std::istream &in, std::iostream &Dst) {
 
 bool comper::decode(std::istream &Src, std::iostream &Dst,
                     std::streampos Location) {
-	size_t DecBytes = 0;
-
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = std::streamsize(Src.tellg()) - Location;
-	Src.seekg(Location);
-
 	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
 	in << Src.rdbuf();
-
-	// Pad to even length, for safety.
-	if ((sz & 1) != 0)
-		in.put(0x00);
 
 	in.seekg(0);
 	decode_internal(in, Dst);
@@ -112,6 +95,11 @@ struct ComperAdaptor {
 	static size_t desc_bits(AdjListNode const &edge) {
 		// Comper always uses a single bit descriptor.
 		return 1;
+	}
+	// Comper finds no additional matches over normal LZSS.
+	static void extra_matches(stream_t const *data, size_t basenode,
+	                          size_t ubound, size_t lbound,
+	                          LZSSGraph<ComperAdaptor>::MatchVector &matches) {
 	}
 };
 

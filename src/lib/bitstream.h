@@ -87,6 +87,14 @@ public:
 		check_buffer();
 		return bit;
 	}
+	// Like pop, but gets a new bit buffer at the same time as get.
+	T popd() {
+		check_buffer();
+		--readbits;
+		T bit = bitbuffer & 1;
+		bitbuffer >>= 1;
+		return bit;
+	}
 	// Reads up to sizeof(T) * 8 bits from the stream. Remembers previously read bits,
 	// and gets a character from the actual stream once all bits in the current
 	// byte have been read.

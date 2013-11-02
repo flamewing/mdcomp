@@ -19,13 +19,7 @@
 
 #include <istream>
 #include <ostream>
-#include <string>
 #include <sstream>
-#include <algorithm>
-#include <vector>
-#include <list>
-#include <map>
-#include <limits>
 
 #include "kosinski.h"
 #include "bigendian_io.h"
@@ -164,6 +158,11 @@ struct KosinskiAdaptor {
 		// Since Kosinski non-descriptor data is always 1, 2 or 3 bytes, this is
 		// a quick way to compute it.
 		return edge.get_weight() & 7;
+	}
+	// Kosinski finds no additional matches over normal LZSS.
+	static void extra_matches(stream_t const *data, size_t basenode,
+	                          size_t ubound, size_t lbound,
+	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) {
 	}
 };
 
