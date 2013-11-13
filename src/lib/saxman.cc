@@ -27,74 +27,6 @@
 #include "bitstream.h"
 #include "lzss.h"
 
-void saxman::decode_internal(std::istream &in, std::iostream &Dst,
-                             std::streamsize const BSize) {
-	ibitstream<unsigned char, littleendian<unsigned char> > bits(in);
-
-	// Loop while the file is good and we haven't gone over the declared length.
-	while (in.good() && in.tellg() < BSize) {
-		if (bits.popd()) {
-			// Literal.
-			if (in.peek() == EOF)
-				break;
-			Write1(Dst, Read1(in));
-		} else {
-			if (in.peek() == EOF)
-				break;
-			// Offset and length of match.
-			size_t offset = Read1(in);
-			size_t length = Read1(in);
-
-			// The high 4 bits of length are actually part of the offset.
-			offset |= (length << 4) & 0xF00;
-			// And there is an additional 0x12 bytes added to offset.
-			offset = (offset + 0x12) & 0xFFF;
-			// Also, a part of the offset is determined by the current output
-			// position.
-			size_t basedest = Dst.tellp();
-			offset |= basedest & 0xF000;
-			if (offset >= basedest) {
-				// But don't overshoot the destination.
-				offset -= 0x1000;
-				offset &= 0xFFFF;
-			}
-			
-			// Length is low 4 bits plus 3.
-			length = (length & 0xF) + 3;
-
-			if (offset < basedest) {
-				// If the offset is before the current output position, we copy
-				// bytes from the given location.
-				for (size_t src = offset; src < offset + length; src++) {
-					std::streampos Pointer = Dst.tellp();
-					Dst.seekg(src);
-					unsigned short Byte = Read1(Dst);
-					Dst.seekp(Pointer);
-					Write1(Dst, Byte);
-				}
-			} else {
-				// Otherwise, it is a zero fill.
-				for (size_t ii = 0; ii < length; ii++) {
-					Write1(Dst, 0x00);
-				}
-			}
-		}
-	}
-}
-
-bool saxman::decode(std::istream &Src, std::iostream &Dst,
-                    std::streampos Location, std::streamsize const BSize) {
-	Src.seekg(Location);
-	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
-
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
-	in << Src.rdbuf();
-
-	in.seekg(0);
-	decode_internal(in, Dst, size);
-	return true;
-}
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct SaxmanAdaptor {
 	typedef unsigned char stream_t;
@@ -106,8 +38,9 @@ struct SaxmanAdaptor {
 		// Number of bits used in descriptor bitfield to signal the end-of-file
 		// marker sequence.
 		NumTermBits = 0,
-		// Flag that tells the compressor that new descriptor fields are needed
-		// as soon as the last bit in the previous one is used up.
+		// Flag that tells the compressor that new descriptor fields is needed
+		// when a new bit is needed and all bits in the previous one have been
+		// used up.
 		NeedEarlyDescriptor = 0,
 		// Flag that marks the descriptor bits as being in little-endian bit
 		// order (that is, lowest bits come out first).
@@ -159,6 +92,75 @@ struct SaxmanAdaptor {
 
 typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
 typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
+typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
+
+void saxman::decode_internal(std::istream &in, std::iostream &Dst,
+                             std::streamsize const BSize) {
+	SaxIStream src(in);
+
+	// Loop while the file is good and we haven't gone over the declared length.
+	while (in.good() && in.tellg() < BSize) {
+		if (src.descbit()) {
+			// Literal.
+			if (in.peek() == EOF)
+				break;
+			Write1(Dst, src.getbyte());
+		} else {
+			if (in.peek() == EOF)
+				break;
+			// Offset and length of match.
+			size_t offset = src.getbyte();
+			size_t length = src.getbyte();
+
+			// The high 4 bits of length are actually part of the offset.
+			offset |= (length << 4) & 0xF00;
+			// And there is an additional 0x12 bytes added to offset.
+			offset = (offset + 0x12) & 0xFFF;
+			// Also, a part of the offset is determined by the current output
+			// position.
+			size_t basedest = Dst.tellp();
+			offset |= basedest & 0xF000;
+			if (offset >= basedest) {
+				// But don't overshoot the destination.
+				offset -= 0x1000;
+				offset &= 0xFFFF;
+			}
+			
+			// Length is low 4 bits plus 3.
+			length = (length & 0xF) + 3;
+
+			if (offset < basedest) {
+				// If the offset is before the current output position, we copy
+				// bytes from the given location.
+				for (size_t src = offset; src < offset + length; src++) {
+					std::streampos Pointer = Dst.tellp();
+					Dst.seekg(src);
+					unsigned short Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					Write1(Dst, Byte);
+				}
+			} else {
+				// Otherwise, it is a zero fill.
+				for (size_t ii = 0; ii < length; ii++) {
+					Write1(Dst, 0x00);
+				}
+			}
+		}
+	}
+}
+
+bool saxman::decode(std::istream &Src, std::iostream &Dst,
+                    std::streampos Location, std::streamsize const BSize) {
+	Src.seekg(Location);
+	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
+
+	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	in << Src.rdbuf();
+
+	in.seekg(0);
+	decode_internal(in, Dst, size);
+	return true;
+}
 
 void saxman::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                              std::streamsize const BSize) {

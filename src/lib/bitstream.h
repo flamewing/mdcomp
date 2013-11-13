@@ -44,19 +44,37 @@ public:
 	}
 };
 
+template<typename T>
+static T reverseBits(T val) {
+	unsigned int sz = sizeof(T) * 8; // bit size; must be power of 2 
+	T mask = ~0;
+	while ((sz >>= 1) > 0) {
+		mask ^= (mask << sz);
+		val = ((val >> sz) & mask) | ((val << sz) & ~mask);
+	}
+	return val;
+}
+
 // This class allows reading bits from a stream.
-template <typename T, typename Reader = bigendian<T> >
+// "EarlyRead" means, in this context, to read a new T as soon as the old one
+// runs out of bits; the alternative is to read when a new bit is needed.
+template <typename T, bool EarlyRead, bool LittleEndianBits = false,
+          typename Reader = bigendian<T> >
 class ibitstream {
 private:
 	std::istream &src;
 	Reader r;
 	int readbits;
 	T bitbuffer;
+	T read_bits() {
+		T bits = r.read(src);
+		return LittleEndianBits ? reverseBits(bits) : bits;
+	}
 	void check_buffer() {
 		if (readbits)
 			return;
 
-		bitbuffer = r.read(src);
+		bitbuffer = read_bits();
 		if (src.good())
 			readbits = sizeof(T) * 8;
 		else
@@ -64,105 +82,85 @@ private:
 	}
 public:
 	ibitstream(std::istream &s) : src(s), readbits(sizeof(T) * 8) {
-		bitbuffer = r.read(src);
+		bitbuffer = read_bits();
 	}
-	// Gets a single bit from the stream. Remembers previously read bits,
-	// and gets a character from the actual stream once all bits in the current
-	// byte have been read.
-	T get() {
-		check_buffer();
+	// Gets a single bit from the stream. Remembers previously read bits, and
+	// gets a new T from the actual stream once all bits in the current T has
+	// been used up.
+	T pop() {
+		if (!EarlyRead)
+			check_buffer();
 		--readbits;
 		T bit = (bitbuffer >> readbits) & 1;
 		bitbuffer ^= (bit << readbits);
+		if (EarlyRead)
+			check_buffer();
 		return bit;
 	}
-	// Gets a single bit from the stream. Remembers previously read bits,
-	// and gets a character from the actual stream once all bits in the current
-	// byte have been read.
-	// Treats bits as being in the reverse order of the get function.
-	T pop() {
-		--readbits;
-		T bit = bitbuffer & 1;
-		bitbuffer >>= 1;
-		check_buffer();
-		return bit;
-	}
-	// Like pop, but gets a new bit buffer at the same time as get.
-	T popd() {
-		check_buffer();
-		--readbits;
-		T bit = bitbuffer & 1;
-		bitbuffer >>= 1;
-		return bit;
-	}
-	// Reads up to sizeof(T) * 8 bits from the stream. Remembers previously read bits,
-	// and gets a character from the actual stream once all bits in the current
-	// byte have been read.
+	// Reads up to sizeof(T) * 8 bits from the stream. This remembers previously
+	// read bits, and gets another T from the actual stream once all bits in the
+	// current T have been read.
 	T read(unsigned char cnt) {
-		check_buffer();
+		if (!EarlyRead)
+			check_buffer();
+		T bits;
 		if (readbits < cnt) {
 			int delta = (cnt - readbits);
-			T bits = bitbuffer << delta;
-			bitbuffer = r.read(src);
+			bits = bitbuffer << delta;
+			bitbuffer = read_bits();
 			readbits = (sizeof(T) * 8) - delta;
 			T newbits = (bitbuffer >> readbits);
 			bitbuffer ^= (newbits << readbits);
-			return bits | newbits;
+			bits |= newbits;
 		} else {
 			readbits -= cnt;
-			T bits = bitbuffer >> readbits;
+			bits = bitbuffer >> readbits;
 			bitbuffer ^= (bits << readbits);
-			return bits;
 		}
+		if (EarlyRead)
+			check_buffer();
+		return bits;
 	}
 };
 
 // This class allows outputting bits into a stream.
-template <typename T, typename Writer = bigendian<T> >
+template <typename T, bool LittleEndianBits = false,
+         typename Writer = bigendian<T> >
 class obitstream {
 private:
 	std::ostream &dst;
 	Writer w;
 	unsigned int waitingbits;
 	T bitbuffer;
+	void write_bits(T bits) {
+		w.write(dst, LittleEndianBits ? reverseBits(bits) : bits);
+	}
 public:
 	obitstream(std::ostream &d) : dst(d), waitingbits(0), bitbuffer(0) {
 	}
-	// Puts a single bit into the stream. Remembers previously written bits,
-	// and outputs a character to the actual stream once there are at least
-	// sizeof(T) * 8 bits stored in the buffer.
-	bool put(T data) {
+	// Puts a single bit into the stream. Remembers previously written bits, and
+	// outputs a T to the actual stream once there are at least sizeof(T) * 8
+	// bits stored in the buffer.
+	bool push(T data) {
 		bitbuffer = (bitbuffer << 1) | (data & 1);
 		if (++waitingbits >= sizeof(T) * 8) {
-			w.write(dst, bitbuffer);
-			waitingbits = 0;
-			return true;
-		}
-		return false;
-	}
-	// Puts a single bit into the stream. Remembers previously written bits,
-	// and outputs a character to the actual stream once there are at least
-	// sizeof(T) * 8 bits stored in the buffer.
-	// Treats bits as being in the reverse order of the put function.
-	bool push(T data) {
-		bitbuffer |= ((data & 1) << waitingbits);
-		if (++waitingbits >= sizeof(T) * 8) {
-			w.write(dst, bitbuffer);
+			write_bits(bitbuffer);
 			waitingbits = 0;
 			bitbuffer = 0;
 			return true;
 		}
 		return false;
 	}
-	// Writes up to sizeof(T) * 8 bits to the stream. Remembers previously written bits,
-	// and outputs a character to the actual stream once there are at least
-	// sizeof(T) * 8 bits stored in the buffer.
+	// Writes up to sizeof(T) * 8 bits to the stream. This remembers previously
+	// written bits, and outputs a T to the actual stream once there are at
+	// least sizeof(T) * 8 bits stored in the buffer.
 	bool write(T data, unsigned char size) {
 		if (waitingbits + size >= sizeof(T) * 8) {
 			int delta = (sizeof(T) * 8 - waitingbits);
 			waitingbits = (waitingbits + size) % (sizeof(T) * 8);
-			w.write(dst, (bitbuffer << delta) | (data >> waitingbits));
-			bitbuffer = data;
+			T bits = (bitbuffer << delta) | (data >> waitingbits);
+			write_bits(bits);
+			bitbuffer = (data & (T(~0) >> (sizeof(T) * 8 - waitingbits)));
 			return true;
 		} else {
 			bitbuffer = (bitbuffer << size) | data;
@@ -172,11 +170,10 @@ public:
 	}
 	// Flushes remaining bits (if any) to the buffer, completing the byte by
 	// padding with zeroes.
-	bool flush(bool unchanged = false) {
+	bool flush() {
 		if (waitingbits) {
-			if (!unchanged)
-				bitbuffer <<= ((sizeof(T) * 8) - waitingbits);
-			w.write(dst, bitbuffer);
+			bitbuffer <<= ((sizeof(T) * 8) - waitingbits);
+			write_bits(bitbuffer);
 			waitingbits = 0;
 			return true;
 		}

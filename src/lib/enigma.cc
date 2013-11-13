@@ -32,43 +32,46 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 
+typedef ibitstream<unsigned short, true> EniIBitstream;
+typedef obitstream<unsigned short> EniOBitstream;
+
 // Pure virtual base class.
 class base_flag_io {
 public:
 	static base_flag_io *create(size_t n);
-	virtual unsigned short read_bitfield(ibitstream<unsigned short>& bits) const = 0;
-	virtual void write_bitfield(obitstream<unsigned short>& bits, unsigned short flags) const = 0;
+	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
+	virtual void write_bitfield(EniOBitstream &bits, unsigned short flags) const = 0;
 };
 
 // Templated for blazing speed.
 template<int const N>
 class flag_io : public base_flag_io {
 public:
-	virtual unsigned short read_bitfield(ibitstream<unsigned short>& bits) const {
+	virtual unsigned short read_bitfield(EniIBitstream &bits) const {
 		unsigned short flags = 0;
 		if ((N & (1 << 4)) != 0)
-			flags |= bits.get() << 15;
+			flags |= bits.pop() << 15;
 		if ((N & (1 << 3)) != 0)
-			flags |= bits.get() << 14;
+			flags |= bits.pop() << 14;
 		if ((N & (1 << 2)) != 0)
-			flags |= bits.get() << 13;
+			flags |= bits.pop() << 13;
 		if ((N & (1 << 1)) != 0)
-			flags |= bits.get() << 12;
+			flags |= bits.pop() << 12;
 		if ((N & (1 << 0)) != 0)
-			flags |= bits.get() << 11;
+			flags |= bits.pop() << 11;
 		return flags;
 	}
-	virtual void write_bitfield(obitstream<unsigned short>& bits, unsigned short flags) const {
+	virtual void write_bitfield(EniOBitstream &bits, unsigned short flags) const {
 		if ((N & (1 << 4)) != 0)
-			bits.put((flags >> 15) & 1);
+			bits.push((flags >> 15) & 1);
 		if ((N & (1 << 3)) != 0)
-			bits.put((flags >> 14) & 1);
+			bits.push((flags >> 14) & 1);
 		if ((N & (1 << 2)) != 0)
-			bits.put((flags >> 13) & 1);
+			bits.push((flags >> 13) & 1);
 		if ((N & (1 << 1)) != 0)
-			bits.put((flags >> 12) & 1);
+			bits.push((flags >> 12) & 1);
 		if ((N & (1 << 0)) != 0)
-			bits.put((flags >> 11) & 1);
+			bits.push((flags >> 11) & 1);
 	}
 };
 
@@ -156,11 +159,11 @@ void enigma::decode_internal(std::istream &Src, std::ostream &Dst) {
 	size_t incrementing_value = BigEndian::Read2(in);
 	size_t const common_value = BigEndian::Read2(in);
 
-	ibitstream<unsigned short> bits(in);
+	ibitstream<unsigned short, true> bits(in);
 
 	// Lets put in a safe termination condition here.
 	while (in.good()) {
-		if (bits.get()) {
+		if (bits.pop()) {
 			int mode = bits.read(2);
 			switch (mode) {
 				case 2:
@@ -194,7 +197,7 @@ void enigma::decode_internal(std::istream &Src, std::ostream &Dst) {
 				}
 			}
 		} else {
-			if (!bits.get()) {
+			if (!bits.pop()) {
 				size_t cnt = bits.read(4) + 1;
 				for (size_t i = 0; i < cnt; i++)
 					BigEndian::Write2(Dst, incrementing_value++);
@@ -252,15 +255,15 @@ static inline unsigned char log2(unsigned short v) {
 
 // Comparison functor, see below.
 struct Compare_count {
-	bool operator()(std::pair<unsigned short const, size_t>& it1,
-	                std::pair<unsigned short const, size_t>& it2) {
+	bool operator()(std::pair<unsigned short const, size_t> &it1,
+	                std::pair<unsigned short const, size_t> &it2) {
 		return (it1.second < it2.second);
 	}
 };
 
 // This flushes (if needed) the contents of the inlined data buffer.
-static inline void flush_buffer(std::vector<unsigned short>& buf,
-                                obitstream<unsigned short>& bits,
+static inline void flush_buffer(std::vector<unsigned short> &buf,
+                                EniOBitstream &bits,
                                 base_flag_io *&mask,
                                 unsigned short const packet_length) {
 	if (!buf.size())
@@ -343,7 +346,7 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	BigEndian::Write2(Dst, common_value);
 
 	// Time now to compress the file.
-	obitstream<unsigned short> bits(Dst);
+	EniOBitstream bits(Dst);
 	std::vector<unsigned short> buf;
 	size_t pos = 0;
 	while (pos < unpack.size()) {

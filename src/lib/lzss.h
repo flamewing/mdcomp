@@ -141,7 +141,7 @@ private:
 	 * to reach all possible nodes reachable from the basenode and inserts them
 	 * into a map.
 	 */
-	MatchVector find_matches(size_t basenode) {
+	MatchVector find_matches(size_t basenode) const {
 		// Upper and lower bounds for sliwing window, starting node.
 		size_t ubound = std::min(RecLen, nlen - basenode),
 		       lbound = basenode > SlideWin ? basenode - SlideWin : 0,
@@ -152,7 +152,11 @@ private:
 		size_t wgt = Adaptor::calc_weight(0, 1);
 		matches[0] = AdjListNode(basenode + 1, 0, 1, wgt);
 		// Get extra matches dependent on specific encoder.
-		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
+		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);		
+		// First node is special.		
+		if (basenode == 0) {
+			return matches;
+		}
 		do {
 			// Keep looking for matches.
 			size_t jj = 0;
@@ -160,14 +164,11 @@ private:
 				++jj;
 				// We have found a match that links (basenode) with
 				// (basenode + jj) with length (jj) and distance (basenode-ii).
-				// Add it to the list.
+				// Add it to the list if it is a better match.
 				size_t wgt = Adaptor::calc_weight(basenode - ii, jj);
-				if (wgt != std::numeric_limits<size_t>::max()) {
-					AdjListNode &best = matches[jj - 1];
-					if (wgt < best.get_weight()) {
-						best = AdjListNode(basenode + jj, basenode - ii, jj,
-						                   wgt);
-					}
+				AdjListNode &best = matches[jj - 1];
+				if (wgt < best.get_weight()) {
+					best = AdjListNode(basenode + jj, basenode - ii, jj, wgt);
 				}
 				// We can find no more matches with the current starting node.
 				if (jj >= ubound)
@@ -186,9 +187,7 @@ public:
 		  RecLen(rec) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
-		// First node is special.
-		adjs[0].push_front(AdjListNode(1, 1, 1, Adaptor::calc_weight(1, 1)));
-		for (size_t ii = 1; ii < nlen; ii++) {
+		for (size_t ii = 0; ii < nlen; ii++) {
 			// Find all matches for all subsequent nodes.
 			MatchVector const matches = find_matches(ii);
 			for (MatchVector::const_iterator it = matches.begin();
@@ -291,15 +290,10 @@ private:
 	// Where we will output to.
 	std::ostream &out;
 	// Internal bitstream output buffer.
-	obitstream<descriptor_t, BitWriter> bits;
+	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits != 0,
+	           BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;
-	bool putbit(descriptor_t bit) {
-		if (Adaptor::DescriptorLittleEndianBits != 0)
-			return bits.push(bit);
-		else
-			return bits.put(bit);
-	}
 public:
 	// Constructor.
 	LZSSOStream(std::ostream &Dst) : out(Dst), bits(out) {
@@ -313,7 +307,7 @@ public:
 		// First, save current state.
 		bool needdummydesc = !bits.have_waiting_bits();
 		// Now, flush the queue if needed.
-		bits.flush(Adaptor::DescriptorLittleEndianBits != 0);
+		bits.flush();
 		if (Adaptor::NeedEarlyDescriptor != 0 && needdummydesc) {
 			// We need to add a dummy descriptor field; so add it.
 			for (size_t ii = 0; ii < sizeof(descriptor_t); ii++) {
@@ -327,7 +321,7 @@ public:
 	// full, outputs it and the output parameter buffer.
 	void descbit(descriptor_t bit) {
 		if (Adaptor::NeedEarlyDescriptor != 0) {
-			if (putbit(bit)) {
+			if (bits.push(bit)) {
 				out.write(buffer.c_str(), buffer.size());
 				buffer.clear();
 			}
@@ -336,12 +330,48 @@ public:
 				out.write(buffer.c_str(), buffer.size());
 				buffer.clear();
 			}
-			putbit(bit);
+			bits.push(bit);
 		}
 	}
 	// Puts a byte in the output buffer.
 	void putbyte(size_t c) {
 		Write1(buffer, c);
+	}
+};
+
+/*
+ * This class abstracts away an LZSS input stream composed of one or more bytes
+ * in a descriptor bitfield, followed by byte parameters. It manages the input
+ * by reading a descriptor field when one is required (as defined by the adaptor
+ * class), so that bytes can be read when needed from the input stream.
+ */
+template <typename Adaptor>
+class LZSSIStream {
+private:
+	typedef typename Adaptor::descriptor_t descriptor_t;
+	typedef typename Adaptor::descriptor_endian_t BitWriter;
+	// Where we will input to.
+	std::istream &in;
+	// Internal bitstream input buffer.
+	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor != 0,
+	           Adaptor::DescriptorLittleEndianBits != 0, BitWriter> bits;
+	// Internal parameter buffer.
+	std::string buffer;
+public:
+	// Constructor.
+	LZSSIStream(std::istream &Src) : in(Src), bits(in) {
+	}
+	// Destructor: writes anything that hasn't been written.
+	~LZSSIStream() {
+	}
+	// Writes a bit to the descriptor bitfield. When the descriptor field is
+	// full, inputs it and the input parameter buffer.
+	descriptor_t descbit() {
+		return bits.pop();
+	}
+	// Puts a byte in the input buffer.
+	unsigned char getbyte() {
+		return Read1(in);
 	}
 };
 

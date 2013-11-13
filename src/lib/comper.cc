@@ -25,41 +25,6 @@
 #include "bitstream.h"
 #include "lzss.h"
 
-void comper::decode_internal(std::istream &in, std::iostream &Dst) {
-	ibitstream<unsigned short, bigendian<unsigned short> > bits(in);
-
-	while (in.good()) {
-		if (!bits.get()) {
-			BigEndian::Write2(Dst, BigEndian::Read2(in));
-		} else {
-			// Distance and length of match.
-			size_t distance = (0x100 - Read1(in)) * 2, length = Read1(in);
-			if (length == 0) {
-				break;
-			}
-
-			for (size_t i = 0; i <= length; i++) {
-				std::streampos Pointer = Dst.tellp();
-				Dst.seekg(std::streamoff(Pointer) - distance);
-				unsigned short Word = BigEndian::Read2(Dst);
-				Dst.seekp(Pointer);
-				BigEndian::Write2(Dst, Word);
-			}
-		}
-	}
-}
-
-bool comper::decode(std::istream &Src, std::iostream &Dst,
-                    std::streampos Location) {
-	Src.seekg(Location);
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
-	in << Src.rdbuf();
-
-	in.seekg(0);
-	decode_internal(in, Dst);
-	return true;
-}
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct ComperAdaptor {
 	typedef unsigned short stream_t;
@@ -71,11 +36,12 @@ struct ComperAdaptor {
 		// Number of bits used in descriptor bitfield to signal the end-of-file
 		// marker sequence.
 		NumTermBits = 1,
-		// Flag that tells the compressor that new descriptor fields are needed
-		// as soon as the last bit in the previous one is used up.
+		// Flag that tells the compressor that new descriptor fields is needed
+		// when a new bit is needed and all bits in the previous one have been
+		// used up.
 		NeedEarlyDescriptor = 0,
-		// Flag that marks the descriptor bits as being in little-endian bit
-		// order (that is, lowest bits come out first).
+		// Flag that marks the descriptor bits as being in big-endian bit
+		// order (that is, highest bits come out first).
 		DescriptorLittleEndianBits = 0
 	};
 	// Computes the cost of covering all of the "len" vertices starting from
@@ -107,6 +73,43 @@ struct ComperAdaptor {
 
 typedef LZSSGraph<ComperAdaptor> CompGraph;
 typedef LZSSOStream<ComperAdaptor> CompOStream;
+typedef LZSSIStream<ComperAdaptor> CompIStream;
+
+void comper::decode_internal(std::istream &in, std::iostream &Dst) {
+	CompIStream src(in);
+
+	while (in.good()) {
+		if (!src.descbit()) {
+			BigEndian::Write2(Dst, BigEndian::Read2(in));
+		} else {
+			// Distance and length of match.
+			size_t distance = (0x100 - src.getbyte()) * 2,
+			       length = src.getbyte();
+			if (length == 0) {
+				break;
+			}
+
+			for (size_t i = 0; i <= length; i++) {
+				std::streampos Pointer = Dst.tellp();
+				Dst.seekg(std::streamoff(Pointer) - distance);
+				unsigned short Word = BigEndian::Read2(Dst);
+				Dst.seekp(Pointer);
+				BigEndian::Write2(Dst, Word);
+			}
+		}
+	}
+}
+
+bool comper::decode(std::istream &Src, std::iostream &Dst,
+                    std::streampos Location) {
+	Src.seekg(Location);
+	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	in << Src.rdbuf();
+
+	in.seekg(0);
+	decode_internal(in, Dst);
+	return true;
+}
 
 void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                              std::streamsize const BSize) {

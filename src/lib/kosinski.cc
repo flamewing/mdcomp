@@ -17,98 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#define COUNT_FREQUENCIES 1
+
 #include <istream>
 #include <ostream>
 #include <sstream>
+
+#ifdef COUNT_FREQUENCIES
+#include <iostream>
+#endif
 
 #include "kosinski.h"
 #include "bigendian_io.h"
 #include "bitstream.h"
 #include "lzss.h"
-
-void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
-	ibitstream<unsigned short, littleendian<unsigned short> > bits(in);
-
-	while (in.good()) {
-		if (bits.pop()) {
-			Write1(Dst, Read1(in));
-			++DecBytes;
-		} else {
-			// Count and distance
-			size_t Count = 0;
-			std::streamoff distance = 0;
-
-			if (bits.pop()) {
-				unsigned char Low = Read1(in), High = Read1(in);
-
-				Count = (size_t)(High & 0x07);
-
-				if (!Count) {
-					Count = Read1(in);
-					if (!Count)
-						break;
-					else if (Count == 1)
-						continue;
-				} else {
-					Count += 1;
-				}
-
-				distance = (~((std::streamoff)0x1FFF)) | ((std::streamoff)(0xF8 & High) << 5) | (std::streamoff)Low;
-			} else {
-				unsigned char Low  = bits.pop(),
-				              High = bits.pop();
-
-				Count = ((((size_t)Low) << 1) | ((size_t)High)) + 1;
-
-				distance = Read1(in);
-				distance |= (~((std::streamoff)0xFF));
-			}
-
-			for (size_t i = 0; i <= Count; i++) {
-				std::streampos Pointer = Dst.tellp();
-				Dst.seekg(Pointer + distance);
-				unsigned char Byte = Read1(Dst);
-				Dst.seekp(Pointer);
-				Write1(Dst, Byte);
-			}
-			DecBytes += (Count + 1);
-		}
-	}
-}
-
-bool kosinski::decode(std::istream &Src, std::iostream &Dst,
-                      std::streampos Location, bool Moduled) {
-	size_t DecBytes = 0;
-
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = std::streamsize(Src.tellg()) - Location;
-	Src.seekg(Location);
-
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
-	in << Src.rdbuf();
-
-	// Pad to even length, for safety.
-	if ((sz & 1) != 0)
-		in.put(0x00);
-
-	in.seekg(0);
-
-	if (Moduled) {
-		size_t FullSize = BigEndian::Read2(in);
-		while (true) {
-			decode_internal(in, Dst, DecBytes);
-			if (DecBytes >= FullSize)
-				break;
-
-			// Skip padding between modules
-			size_t paddingEnd = (((size_t(in.tellg()) - 2) + 0xf) & ~0xf) + 2;
-			in.seekg(paddingEnd);
-		}
-	} else
-		decode_internal(in, Dst, DecBytes);
-
-	return true;
-}
 
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct KosinskiAdaptor {
@@ -169,6 +91,92 @@ struct KosinskiAdaptor {
 
 typedef LZSSGraph<KosinskiAdaptor> KosGraph;
 typedef LZSSOStream<KosinskiAdaptor> KosOStream;
+typedef LZSSIStream<KosinskiAdaptor> KosIStream;
+
+void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+	KosIStream src(in);
+
+	while (in.good()) {
+		if (src.descbit()) {
+			Write1(Dst, src.getbyte());
+			++DecBytes;
+		} else {
+			// Count and distance
+			size_t Count = 0;
+			std::streamoff distance = 0;
+
+			if (src.descbit()) {
+				unsigned char Low = src.getbyte(), High = src.getbyte();
+
+				Count = size_t(High & 0x07);
+
+				if (!Count) {
+					Count = src.getbyte();
+					if (!Count)
+						break;
+					else if (Count == 1)
+						continue;
+					Count += 1;
+				} else {
+					Count += 2;
+				}
+
+				distance = (~((std::streamoff)0x1FFF)) | ((std::streamoff)(0xF8 & High) << 5) | (std::streamoff)Low;
+			} else {
+				unsigned char Low  = src.descbit(),
+				              High = src.descbit();
+
+				Count = ((((size_t)Low) << 1) | ((size_t)High)) + 2;
+
+				distance = src.getbyte();
+				distance |= (~((std::streamoff)0xFF));
+			}
+
+			for (size_t i = 0; i < Count; i++) {
+				std::streampos Pointer = Dst.tellp();
+				Dst.seekg(Pointer + distance);
+				unsigned char Byte = Read1(Dst);
+				Dst.seekp(Pointer);
+				Write1(Dst, Byte);
+			}
+			DecBytes += Count;
+		}
+	}
+}
+
+bool kosinski::decode(std::istream &Src, std::iostream &Dst,
+                      std::streampos Location, bool Moduled) {
+	size_t DecBytes = 0;
+
+	Src.seekg(0, std::ios::end);
+	std::streamsize sz = std::streamsize(Src.tellg()) - Location;
+	Src.seekg(Location);
+
+	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	in << Src.rdbuf();
+
+	// Pad to even length, for safety.
+	if ((sz & 1) != 0)
+		in.put(0x00);
+
+	in.seekg(0);
+
+	if (Moduled) {
+		size_t FullSize = BigEndian::Read2(in);
+		while (true) {
+			decode_internal(in, Dst, DecBytes);
+			if (DecBytes >= FullSize)
+				break;
+
+			// Skip padding between modules
+			size_t paddingEnd = (((size_t(in.tellg()) - 2) + 0xf) & ~0xf) + 2;
+			in.seekg(paddingEnd);
+		}
+	} else
+		decode_internal(in, Dst, DecBytes);
+
+	return true;
+}
 
 void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                                std::streamoff SlideWin, std::streamoff RecLen,
@@ -177,6 +185,9 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	KosGraph enc(Buffer, BSize, SlideWin, RecLen);
 	KosGraph::AdjList list = enc.find_optimal_parse();
 	KosOStream out(Dst);
+#ifdef COUNT_FREQUENCIES
+	size_t nliteral = 0, ninline = 0, nrle = 0;
+#endif
 
 	std::streamoff pos = 0;
 	// Go through each edge in the optimal path.
@@ -191,6 +202,9 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 				// Literal.
 				out.descbit(1);
 				out.putbyte(Buffer[pos]);
+#ifdef COUNT_FREQUENCIES
+				++nliteral;
+#endif
 				break;
 			case 12:
 				// Inline RLE.
@@ -200,6 +214,9 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 				out.descbit((len >> 1) & 1);
 				out.descbit(len & 1);
 				out.putbyte(-dist);
+#ifdef COUNT_FREQUENCIES
+				++ninline;
+#endif
 				break;
 			case 18:
 			case 26: {
@@ -219,16 +236,26 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 					out.putbyte(high);
 					out.putbyte(len - 1);
 				}
+#ifdef COUNT_FREQUENCIES
+				++nrle;
+#endif
 				break;
 			}
 			default:
 				// This should be unreachable.
-				//std::cerr << "Divide by cucumber error: impossible token length!" << std::endl;
+#ifdef COUNT_FREQUENCIES
+				std::cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << std::endl;
+#endif
 				break;
 		}
 		// Go to next position.
 		pos = edge.get_dest();
 	}
+
+#ifdef COUNT_FREQUENCIES
+	++nrle;
+	std::cout << "[1]: " << nliteral << ";\t[00]: " << ninline << ";\t[01]: " << nrle << std::endl;
+#endif
 
 	// Push descriptor for end-of-file marker.
 	out.descbit(0);

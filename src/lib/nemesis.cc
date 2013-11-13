@@ -148,7 +148,7 @@ public:
 	}
 	// This goes through the tree, starting with the current node, generating
 	// a map associating a nibble run with its code length.
-	void traverse(std::map<nibble_run, size_t>& sizemap) const {
+	void traverse(std::map<nibble_run, size_t> &sizemap) const {
 		if (is_leaf())
 			sizemap[value] += 1;
 		else {
@@ -183,7 +183,15 @@ struct Compare_size {
 struct Compare_node {
 	bool operator()(std::tr1::shared_ptr<node> const &lhs,
 	                std::tr1::shared_ptr<node> const &rhs) {
+#if 1
+		if (*lhs > *rhs)
+			return true;
+		else if (*lhs < *rhs)
+			return false;
+		return lhs->get_value().get_count() < rhs->get_value().get_count();
+#else
 		return *lhs > *rhs;
+#endif
 	}
 };
 
@@ -214,9 +222,9 @@ void nemesis::decode_internal(std::istream &Src, std::ostream &Dst,
 	std::stringstream dst(std::ios::in | std::ios::out | std::ios::binary);
 
 	// Set bit I/O streams.
-	ibitstream<unsigned char> bits(Src);
+	ibitstream<unsigned char, true> bits(Src);
 	obitstream<unsigned char> out(dst);
-	unsigned char code = bits.get(), len = 1;
+	unsigned char code = bits.pop(), len = 1;
 
 	// When to stop decoding: number of tiles * $20 bytes per tile * 8 bits per byte.
 	size_t total_bits = rtiles << 8, bits_written = 0;
@@ -241,7 +249,7 @@ void nemesis::decode_internal(std::istream &Src, std::ostream &Dst,
 				break;
 
 			// Read next bit, replacing previous data.
-			code = bits.get();
+			code = bits.pop();
 			len = 1;
 		} else {
 			// Find out if the data so far is a nibble code.
@@ -267,11 +275,11 @@ void nemesis::decode_internal(std::istream &Src, std::ostream &Dst,
 					break;
 
 				// Read next bit, replacing previous data.
-				code = bits.get();
+				code = bits.pop();
 				len = 1;
 			} else {
 				// Read next bit and append to current data.
-				code = (code << 1) | bits.get();
+				code = (code << 1) | bits.pop();
 				len++;
 			}
 		}
@@ -318,8 +326,8 @@ bool nemesis::decode(std::istream &Src, std::ostream &Dst, std::streampos Locati
 
 static size_t estimate_file_size
 (
-    std::map<nibble_run, std::pair<size_t, unsigned char> >& tempcodemap,
-    std::map<nibble_run, size_t>& counts
+    std::map<nibble_run, std::pair<size_t, unsigned char> > &tempcodemap,
+    std::map<nibble_run, size_t> &counts
 ) {
 	// We now compute the final file size for this code table.
 	// 2 bytes at the start of the file, plus 1 byte at the end of the
