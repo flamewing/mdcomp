@@ -27,6 +27,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "nemesis.h"
 #include "bigendian_io.h"
@@ -182,7 +183,7 @@ struct Compare_size {
 
 struct Compare_node {
 	bool operator()(std::tr1::shared_ptr<node> const &lhs,
-	                std::tr1::shared_ptr<node> const &rhs) {
+	                std::tr1::shared_ptr<node> const &rhs) const {
 #if 1
 		if (*lhs > *rhs)
 			return true;
@@ -193,7 +194,70 @@ struct Compare_node {
 		return *lhs > *rhs;
 #endif
 	}
+	// Just discard the lowest weighted item.
+	void update(std::vector<std::tr1::shared_ptr<node> > &qt,
+	            std::map<nibble_run, std::pair<size_t, unsigned char> > &UNUSED(codes)) const {
+		std::pop_heap(qt.begin(), qt.end(), *this);
+		qt.pop_back();
+	}
 };
+
+struct Compare_node2 {
+	static std::map<nibble_run, std::pair<size_t, unsigned char> > codemap;
+	bool operator()(std::tr1::shared_ptr<node> const &lhs,
+	                std::tr1::shared_ptr<node> const &rhs) const {
+		if (codemap.empty()) {
+			if (*lhs < *rhs)
+				return true;
+			else if (*lhs > *rhs)
+				return false;
+			return lhs->get_value().get_count() > rhs->get_value().get_count();
+		}
+		nibble_run const lnib = lhs->get_value();
+		nibble_run const rnib = rhs->get_value();
+
+		size_t lclen, rclen;
+		std::map<nibble_run, std::pair<size_t, unsigned char> >::const_iterator lit, rit;
+		lit = codemap.find(lnib);
+		rit = codemap.find(rnib);
+		if (lit == codemap.end()) {
+			lclen = (6 + 7) * lhs->get_weight();
+		} else {
+			size_t bitcnt = (lit->second).second;
+			lclen = (bitcnt & 0x7f) * lhs->get_weight() + 16;
+		}
+		if (rit == codemap.end()) {
+			rclen = (6 + 7) * rhs->get_weight();
+		} else {
+			size_t bitcnt = (rit->second).second;
+			rclen = (bitcnt & 0x7f) * rhs->get_weight() + 16;
+		}
+		if (lclen > rclen)
+			return true;
+		else if (lclen < rclen)
+			return false;
+
+		size_t lblen, rblen;
+		lblen = (lnib.get_count() + 1) * lhs->get_weight();
+		rblen = (rnib.get_count() + 1) * rhs->get_weight();
+		if (lblen < rblen)
+			return true;
+		else if (lblen > rblen)
+			return false;
+		return lnib.get_count() < rnib.get_count();
+	}
+	// Resort the heap using weights from the previous iteration, then discards
+	// the lowest weighted item.
+	void update(std::vector<std::tr1::shared_ptr<node> > &qt,
+	            std::map<nibble_run, std::pair<size_t, unsigned char> > &codes) const {
+		codemap = codes;
+		std::make_heap(qt.begin(), qt.end(), *this);
+		std::pop_heap(qt.begin(), qt.end(), *this);
+		qt.pop_back();
+	}
+};
+
+std::map<nibble_run, std::pair<size_t, unsigned char> > Compare_node2::codemap;
 
 void nemesis::decode_header(std::istream &Src, Codemap &codemap) {
 	// storage for output value to decompression buffer
@@ -545,7 +609,12 @@ static size_t estimate_file_size
 	return tempsize_est;
 }
 
-void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, size_t sz) {
+template <typename Compare>
+size_t nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode,
+                                size_t sz, Compare const &comp) {
+	// Seek to start and clear all errors.
+	Src.clear();
+	Src.seekg(0);
 	// Unpack source so we don't have to deal with nibble IO after.
 	std::vector<unsigned char> unpack;
 	for (size_t i = 0; i < sz; i++) {
@@ -572,19 +641,24 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 	// No longer needed.
 	unpack.clear();
 
+	Compare_node2::codemap.clear();
+
 	// We will use the Package-merge algorithm to build the optimal length-limited
 	// Huffman code for the current file. To do this, we must map the current
 	// problem onto the Coin Collector's problem.
 	// Build the basic coin collection.
-	std::priority_queue < std::tr1::shared_ptr<node>,
-	    std::vector<std::tr1::shared_ptr<node> >, Compare_node > qt;
+	std::vector<std::tr1::shared_ptr<node> > qt;
+	qt.reserve(counts.size());
 	for (std::map<nibble_run, size_t>::iterator it = counts.begin();
 	        it != counts.end(); ++it)
 		// No point in including anything with weight less than 2, as they
 		// would actually increase compressed file size if used.
 		if (it->second > 1)
-			qt.push(std::tr1::shared_ptr<node>(new node(it->first, it->second)));
-
+			qt.push_back(std::tr1::shared_ptr<node>(new node(it->first, it->second)));
+	// This may seem useless, but my tests all indicate that this reduces the
+	// average file size. I haven't the foggiest idea why. 
+	std::make_heap(qt.begin(), qt.end(), comp);
+	
 	// The base coin collection for the length-limited Huffman coding has
 	// one coin list per character in length of the limitation. Each coin list
 	// has a constant "face value", and each coin in a list has its own
@@ -606,19 +680,14 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 	while (qt.size() > 1) {
 		// Make a copy of the basic coin collection.
 		std::priority_queue < std::tr1::shared_ptr<node>,
-		    std::vector<std::tr1::shared_ptr<node> >, Compare_node > q0(qt);
-		// Ignore the lowest weighted item. Will only affect the next iteration
-		// of the loop. If it can be proven that there is a single global
-		// minimum (and no local minima for file size), then this could be
-		// simplified to a binary search.
-		qt.pop();
+		    std::vector<std::tr1::shared_ptr<node> >, Compare_node> q0(qt.begin(), qt.end());
 
 		// We now solve the Coin collector's problem using the Package-merge
 		// algorithm. The solution goes here.
 		std::vector<std::tr1::shared_ptr<node> > solution;
 		// This holds the packages from the last iteration.
-		std::priority_queue < std::tr1::shared_ptr<node>,
-		    std::vector<std::tr1::shared_ptr<node> >, Compare_node > q(q0);
+		std::priority_queue<std::tr1::shared_ptr<node>,
+		    std::vector<std::tr1::shared_ptr<node> >, Compare_node> q(q0);
 		int target = (q0.size() - 1) << 8, idx = 0;
 		while (target != 0) {
 			// Gets lowest bit set in its proper place:
@@ -633,8 +702,8 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 
 			// The coin collection has coins of values 1 to 8; copy from the
 			// original in those cases for the next step.
-			std::priority_queue < std::tr1::shared_ptr<node>,
-			    std::vector<std::tr1::shared_ptr<node> >, Compare_node > q1;
+			std::priority_queue<std::tr1::shared_ptr<node>,
+			    std::vector<std::tr1::shared_ptr<node> >, Compare_node> q1;
 			if (idx < 7)
 				q1 = q0;
 
@@ -673,8 +742,8 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 		// This map contains lots more information, and is used to associate
 		// the nibble run with its optimal code. It is sorted by code size,
 		// then by frequency of the nibble run, then by the nibble run.
-		std::multiset < std::pair<size_t, std::pair<size_t, nibble_run> >,
-		    Compare_size > sizemap;
+		std::multiset<std::pair<size_t, std::pair<size_t, nibble_run> >,
+		    Compare_size> sizemap;
 		for (std::map<nibble_run, size_t>::iterator it = basesizemap.begin();
 		        it != basesizemap.end(); ++it) {
 			size_t size = it->second, count = counts[it->first];
@@ -717,13 +786,17 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 		// With the canonical table build, the codemap can finally be built.
 		std::map<nibble_run, std::pair<size_t, unsigned char> > tempcodemap;
 		size_t pos = 0;
-		for (std::multiset < std::pair<size_t, std::pair<size_t, nibble_run> >,
-		        Compare_size >::iterator it = sizemap.begin();
+		for (std::multiset <std::pair<size_t, std::pair<size_t, nibble_run> >,
+		        Compare_size>::iterator it = sizemap.begin();
 		        it != sizemap.end() && pos < codes.size(); ++it, pos++)
 			tempcodemap[it->second.second] = codes[pos];
 
 		// We now compute the final file size for this code table.
 		size_t tempsize_est = estimate_file_size(tempcodemap, counts);
+
+		// This may resort the items. After that, it will discard the lowest
+		// weighted item.
+		comp.update(qt, tempcodemap);
 
 		// Is this iteration better than the best?
 		if (tempsize_est < size_est) {
@@ -735,7 +808,7 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 	// Special case.
 	if (qt.size() == 1) {
 		std::map<nibble_run, std::pair<size_t, unsigned char> > tempcodemap;
-		std::tr1::shared_ptr<node> child = qt.top();
+		std::tr1::shared_ptr<node> child = qt.front();
 		tempcodemap[child->get_value()] = std::pair<size_t, unsigned char>(0, 1);
 		size_t tempsize_est = estimate_file_size(tempcodemap, counts);
 
@@ -810,14 +883,13 @@ void nemesis::encode_internal(std::istream &Src, std::ostream &Dst, int mode, si
 	}
 	// Fill remainder of last byte with zeroes and write if needed.
 	bits.flush();
+	return Dst.tellp();
 }
 
 bool nemesis::encode(std::istream &Src, std::ostream &Dst) {
 	// We will use these as output buffers, as well as an input/output
 	// buffers for the padded Nemesis input.
-	std::stringstream mode0buf(std::ios::in | std::ios::out | std::ios::binary),
-	    mode1buf(std::ios::in | std::ios::out | std::ios::binary),
-	    src(std::ios::in | std::ios::out | std::ios::binary);
+	std::stringstream src(std::ios::in | std::ios::out | std::ios::binary);
 
 	// Get original source length.
 	Src.seekg(0, std::ios::end);
@@ -849,27 +921,26 @@ bool nemesis::encode(std::istream &Src, std::ostream &Dst) {
 	}
 	std::stringstream alt(sin, std::ios::in | std::ios::out | std::ios::binary);
 
-	// Reposition input streams to the beginning.
-	src.clear();
-	alt.clear();
-	src.seekg(0);
-	alt.seekg(0);
+	std::stringstream buffers[4];
+	size_t sizes[4];
 
-	// Encode in both modes.
-	encode_internal(src, mode0buf, 0, sz);
-	encode_internal(alt, mode1buf, 1, sz);
+	// Four different attempts to encode, for improved file size.
+	sizes[0] = encode_internal(src, buffers[0], false, sz, Compare_node ());
+	sizes[1] = encode_internal(src, buffers[1], false, sz, Compare_node2());
+	sizes[2] = encode_internal(alt, buffers[2], true , sz, Compare_node ());
+	sizes[3] = encode_internal(alt, buffers[3], true , sz, Compare_node2());
 
-	// We will pick the smallest resulting stream as output.
-	size_t sz0 = mode0buf.str().size(), sz1 = mode1buf.str().size();
+	// Figure out what was the best encoding.
+	size_t bestsz = ~0ull, beststream = 0;
+	for (size_t ii = 0; ii < sizeof(sizes) / sizeof(sizes[0]); ii++) {
+		if (sizes[ii] < bestsz) {
+			bestsz = sizes[ii];
+			beststream = ii;
+		}
+	}
 
-	// Reposition output streams to the start.
-	mode0buf.seekg(0);
-	mode1buf.seekg(0);
-
-	if (sz0 <= sz1)
-		Dst << mode0buf.rdbuf();
-	else
-		Dst << mode1buf.rdbuf();
+	buffers[beststream].seekg(0);
+	Dst << buffers[beststream].rdbuf();
 
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0)

@@ -69,6 +69,10 @@ struct ComperAdaptor {
 	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
 	                          LZSSGraph<ComperAdaptor>::MatchVector &UNUSED(matches)) {
 	}
+	// Comper needs no additional padding at the end-of-file.
+	static size_t get_padding(size_t UNUSED(totallen)) {
+		return 0;
+	}
 };
 
 typedef LZSSGraph<ComperAdaptor> CompGraph;

@@ -25,7 +25,9 @@ class ostream;
 
 class kosinski {
 private:
+	template <typename Adaptor>
 	static void decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes);
+	template <typename Adaptor>
 	static void encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	                            std::streamoff SlideWin, std::streamoff RecLen,
 	                            std::streamsize const BSize);

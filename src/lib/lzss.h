@@ -248,6 +248,8 @@ public:
 					if (Adaptor::NeedEarlyDescriptor != 0 || desccost > 0) {
 						wgt += (Adaptor::NumDescBits - desccost);
 					}
+					// Compensate for the Adaptor's padding, if any. 
+					wgt += Adaptor::get_padding(costs[ii] + wgt);
 				}
 				// Is the cost to reach the target node through this edge less
 				// than the current cost?

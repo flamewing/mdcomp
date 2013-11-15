@@ -87,13 +87,58 @@ struct KosinskiAdaptor {
 	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &UNUSED(matches)) {
 	}
+	// Kosinski needs no additional padding at the end-of-file.
+	static size_t get_padding(size_t UNUSED(totallen)) {
+		return 0;
+	}
 };
 
-typedef LZSSGraph<KosinskiAdaptor> KosGraph;
-typedef LZSSOStream<KosinskiAdaptor> KosOStream;
-typedef LZSSIStream<KosinskiAdaptor> KosIStream;
+// NOTE: This has to be changed for other LZSS-based compression schemes.
+struct KosinskiMAdaptor {
+	typedef unsigned char  stream_t;
+	typedef unsigned short descriptor_t;
+	typedef littleendian<descriptor_t> descriptor_endian_t;
+	enum {
+		// Number of bits on descriptor bitfield.
+		NumDescBits = sizeof(descriptor_t) * 8,
+		// Number of bits used in descriptor bitfield to signal the end-of-file
+		// marker sequence.
+		NumTermBits = 2,
+		// Flag that tells the compressor that new descriptor fields are needed
+		// as soon as the last bit in the previous one is used up.
+		NeedEarlyDescriptor = 1,
+		// Flag that marks the descriptor bits as being in little-endian bit
+		// order (that is, lowest bits come out first).
+		DescriptorLittleEndianBits = 1
+	};
+	// Computes the cost of covering all of the "len" vertices starting from
+	// "off" vertices ago.
+	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
+	// or "no edge".
+	static size_t calc_weight(size_t dist, size_t len) {
+		return KosinskiAdaptor::calc_weight(dist, len);
+	}
+	// Given an edge, computes how many bits are used in the descriptor field.
+	static size_t desc_bits(AdjListNode const &edge) {
+		return KosinskiAdaptor::desc_bits(edge);
+	}
+	// KosinskiM finds no additional matches over normal LZSS.
+	static void extra_matches(stream_t const *UNUSED(data),
+	                          size_t UNUSED(basenode),
+	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
+	                          LZSSGraph<KosinskiAdaptor>::MatchVector &UNUSED(matches)) {
+	}
+	// KosinskiM needs to pad each module to a multiple of 16 bytes.
+	static size_t get_padding(size_t totallen) {
+		size_t padding = totallen;
+		return ((padding + 0x7f) & ~0x7f) - totallen;
+	}
+};
 
+template <typename Adaptor>
 void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+	typedef LZSSIStream<Adaptor> KosIStream;
+
 	KosIStream src(in);
 
 	while (in.good()) {
@@ -163,8 +208,11 @@ bool kosinski::decode(std::istream &Src, std::iostream &Dst,
 
 	if (Moduled) {
 		size_t FullSize = BigEndian::Read2(in);
+		if (FullSize == 0xA000)
+			FullSize = 0x8000;
+		
 		while (true) {
-			decode_internal(in, Dst, DecBytes);
+			decode_internal<KosinskiMAdaptor>(in, Dst, DecBytes);
 			if (DecBytes >= FullSize)
 				break;
 
@@ -173,17 +221,21 @@ bool kosinski::decode(std::istream &Src, std::iostream &Dst,
 			in.seekg(paddingEnd);
 		}
 	} else
-		decode_internal(in, Dst, DecBytes);
+		decode_internal<KosinskiAdaptor>(in, Dst, DecBytes);
 
 	return true;
 }
 
+template <typename Adaptor>
 void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                                std::streamoff SlideWin, std::streamoff RecLen,
                                std::streamsize const BSize) {
+	typedef LZSSGraph<Adaptor> KosGraph;
+	typedef LZSSOStream<Adaptor> KosOStream;
+
 	// Compute optimal Kosinski parsing of input file.
 	KosGraph enc(Buffer, BSize, SlideWin, RecLen);
-	KosGraph::AdjList list = enc.find_optimal_parse();
+	typename KosGraph::AdjList list = enc.find_optimal_parse();
 	KosOStream out(Dst);
 #ifdef COUNT_FREQUENCIES
 	size_t nliteral = 0, ninline = 0, nrle = 0;
@@ -191,7 +243,7 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 
 	std::streamoff pos = 0;
 	// Go through each edge in the optimal path.
-	for (KosGraph::AdjList::const_iterator it = list.begin();
+	for (typename KosGraph::AdjList::const_iterator it = list.begin();
 	        it != list.end(); ++it) {
 		AdjListNode const &edge = *it;
 		size_t len = edge.get_length(), dist = edge.get_distance();
@@ -288,7 +340,12 @@ bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff Slide
 		BigEndian::Write2(Dst, FullSize);
 
 		while (true) {
-			encode_internal(Dst, ptr, SlideWin, RecLen, BSize);
+			// We want to manage internal padding for all modules...
+			if (CompBytes + BSize < ModuleSize)
+				encode_internal<KosinskiMAdaptor>(Dst, ptr, SlideWin, RecLen, BSize);
+			else
+				// ... except the last, as it would only increase file size.
+				encode_internal<KosinskiAdaptor>(Dst, ptr, SlideWin, RecLen, BSize);
 
 			CompBytes += BSize;
 			ptr += BSize;
@@ -310,7 +367,7 @@ bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff Slide
 			BSize = std::min(ModuleSize, FullSize - CompBytes);
 		}
 	} else
-		encode_internal(Dst, ptr, SlideWin, RecLen, BSize);
+		encode_internal<KosinskiAdaptor>(Dst, ptr, SlideWin, RecLen, BSize);
 
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0)

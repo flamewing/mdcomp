@@ -88,6 +88,10 @@ struct SaxmanAdaptor {
 			                              jj, 1 + 12 + 4);
 		}
 	}
+	// Saxman needs no additional padding at the end-of-file.
+	static size_t get_padding(size_t UNUSED(totallen)) {
+		return 0;
+	}
 };
 
 typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
