@@ -130,7 +130,8 @@ struct KosinskiMAdaptor {
 	}
 	// KosinskiM needs to pad each module to a multiple of 16 bytes.
 	static size_t get_padding(size_t totallen) {
-		size_t padding = totallen;
+		// Add in the size of the end-of-file marker.
+		size_t padding = totallen + 3 * 8;
 		return ((padding + 0x7f) & ~0x7f) - totallen;
 	}
 };
