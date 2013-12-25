@@ -31,7 +31,7 @@ static void usage(char *prog) {
 	std::cerr << "\t-c,--crunch \tAssume input file is Saxman-compressed and recompress to output file." << std::endl
 	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
 	          << "\t            \tto input_filename." << std::endl
-	          << "\t-s size     \tAssume input file does not have a file size anduse value given instead." << std::endl
+	          << "\t-s size     \tAssume input file does not have a file size and use value given instead." << std::endl
 	          << "\t            \tOnly affects decompression." << std::endl
 	          << "\t-S          \tCauses the compressor to not output a file size. Only affects compression." << std::endl << std::endl;
 }
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
+	if ((!crunch && argc - optind < 2) || (crunch && argc - optind < 1)) {
 		usage(argv[0]);
 		return 1;
 	}

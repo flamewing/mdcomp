@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (argc - optind < 2 || (crunch && argc - optind < 1)) {
+	if ((!crunch && argc - optind < 2) || (crunch && argc - optind < 1)) {
 		usage(argv[0]);
 		return 1;
 	}

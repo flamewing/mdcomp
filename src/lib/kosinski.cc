@@ -126,7 +126,7 @@ struct KosinskiMAdaptor {
 	static void extra_matches(stream_t const *UNUSED(data),
 	                          size_t UNUSED(basenode),
 	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
-	                          LZSSGraph<KosinskiAdaptor>::MatchVector &UNUSED(matches)) {
+	                          LZSSGraph<KosinskiMAdaptor>::MatchVector &UNUSED(matches)) {
 	}
 	// KosinskiM needs to pad each module to a multiple of 16 bytes.
 	static size_t get_padding(size_t totallen) {
