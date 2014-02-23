@@ -132,6 +132,8 @@ private:
 	// length to use when encoding.
 	size_t const SlideWin;
 	size_t const RecLen;
+	// Account for padding at end of file, if any.
+	size_t const Padding;
 	// Adjacency lists for all the nodes in the graph.
 	std::vector<AdjList> adjs;
 
@@ -181,10 +183,11 @@ private:
 public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(unsigned char const *dt, size_t const size,
-	          size_t const win, size_t const rec)
+	          size_t const win, size_t const rec,
+	          size_t const pad)
 		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
 		  nlen(size / sizeof(typename Adaptor::stream_t)), SlideWin(win),
-		  RecLen(rec) {
+		  RecLen(rec), Padding(pad * 8 - 1) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		for (size_t ii = 0; ii < nlen; ii++) {
@@ -249,7 +252,7 @@ public:
 						wgt += (Adaptor::NumDescBits - desccost);
 					}
 					// Compensate for the Adaptor's padding, if any. 
-					wgt += Adaptor::get_padding(costs[ii] + wgt);
+					wgt += Adaptor::get_padding(costs[ii] + wgt, Padding);
 				}
 				// Is the cost to reach the target node through this edge less
 				// than the current cost?

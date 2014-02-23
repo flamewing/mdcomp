@@ -25,18 +25,19 @@ class ostream;
 
 class kosinski {
 private:
-	template <typename Adaptor>
 	static void decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes);
-	template <typename Adaptor>
 	static void encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	                            std::streamoff SlideWin, std::streamoff RecLen,
-	                            std::streamsize const BSize);
+	                            std::streamsize const BSize,
+	                            std::streamsize const Padding);
 public:
 	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   std::streampos Location = 0, bool Moduled = false);
+	                   std::streampos Location = 0, bool Moduled = false,
+	                   std::streamsize const ModulePadding = 16u);
 	static bool encode(std::istream &Src, std::ostream &Dst,
 	                   std::streamoff SlideWin = 8192, std::streamoff RecLen = 256,
-	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000);
+	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000,
+	                   std::streamsize const ModulePadding = 16u);
 };
 
 #endif // _KOSINSKI_H_

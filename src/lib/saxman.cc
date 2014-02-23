@@ -89,7 +89,7 @@ struct SaxmanAdaptor {
 		}
 	}
 	// Saxman needs no additional padding at the end-of-file.
-	static size_t get_padding(size_t UNUSED(totallen)) {
+	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) {
 		return 0;
 	}
 };
@@ -169,7 +169,7 @@ bool saxman::decode(std::istream &Src, std::iostream &Dst,
 void saxman::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                              std::streamsize const BSize) {
 	// Compute optimal Saxman parsing of input file.
-	SaxGraph enc(Buffer, BSize, 0x1000, 0x12);
+	SaxGraph enc(Buffer, BSize, 0x1000, 0x12, 1u);
 	SaxGraph::AdjList list = enc.find_optimal_parse();
 	SaxOStream out(Dst);
 

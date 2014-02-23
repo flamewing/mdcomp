@@ -25,7 +25,7 @@
 #include "kosinski.h"
 
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] {input_filename} {output_filename}" << std::endl;
+	std::cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << std::endl;
 	std::cerr << std::endl;
 	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
 	std::cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << std::endl
@@ -35,6 +35,9 @@ static void usage(char *prog) {
 	          << "\t            \t(but the optional module size affects only the output file)." << std::endl;
 	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << std::endl
 	          << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << std::endl;
+	std::cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << std::endl
+	          << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << std::endl
+	          << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << std::endl;
 	std::cerr << "\t-r          \tSet recursion length (default/maximum: 256)" << std::endl;
 	std::cerr << "\t-s          \tSets sliding window size (default/maximum: 8192)" << std::endl << std::endl;
 }
@@ -44,15 +47,17 @@ int main(int argc, char *argv[]) {
 		{"extract", optional_argument, 0, 'x'},
 		{"moduled", optional_argument, 0, 'm'},
 		{"crunch" , no_argument      , 0, 'c'},
+		{"padding", required_argument, 0, 'p'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	std::streamsize pointer = 0, slidewin = 8192, reclen = 256, modulesize = 0x1000;
+	std::streamsize pointer = 0, slidewin = 8192, reclen = 256,
+	                modulesize = 0x1000, padding = 16;
 
 	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::m::cr:s:",
+		int c = getopt_long(argc, argv, "x::m::cr:s:p:",
 		                    long_options, &option_index);
 		if (c == -1)
 			break;
@@ -85,6 +90,12 @@ int main(int argc, char *argv[]) {
 				if (!slidewin || slidewin > 8192)
 					slidewin = 8192;
 				break;
+			case 'p':
+				if (optarg)
+					padding = strtoul(optarg, 0, 0);
+				if (!padding || (padding & (padding - 1)) != 0)
+					padding = 16;
+				break;
 		}
 	}
 
@@ -108,7 +119,7 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-		kosinski::decode(fin, buffer, pointer, moduled);
+		kosinski::decode(fin, buffer, pointer, moduled, padding);
 		fin.close();
 		buffer.seekg(0);
 
@@ -117,7 +128,7 @@ int main(int argc, char *argv[]) {
 			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
 			return 3;
 		}
-		kosinski::encode(buffer, fout, slidewin, reclen, moduled, modulesize);
+		kosinski::encode(buffer, fout, slidewin, reclen, moduled, modulesize, padding);
 	} else {
 		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 		if (!fout.good()) {
@@ -126,9 +137,9 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract)
-			kosinski::decode(fin, fout, pointer, moduled);
+			kosinski::decode(fin, fout, pointer, moduled, padding);
 		else
-			kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize);
+			kosinski::encode(fin, fout, slidewin, reclen, moduled, modulesize, padding);
 	}
 
 	return 0;

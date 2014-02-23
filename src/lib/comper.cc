@@ -70,7 +70,7 @@ struct ComperAdaptor {
 	                          LZSSGraph<ComperAdaptor>::MatchVector &UNUSED(matches)) {
 	}
 	// Comper needs no additional padding at the end-of-file.
-	static size_t get_padding(size_t UNUSED(totallen)) {
+	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) {
 		return 0;
 	}
 };
@@ -118,7 +118,7 @@ bool comper::decode(std::istream &Src, std::iostream &Dst,
 void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
                              std::streamsize const BSize) {
 	// Compute optimal Comper parsing of input file.
-	CompGraph enc(Buffer, BSize, 256, 256);
+	CompGraph enc(Buffer, BSize, 256, 256, 1u);
 	CompGraph::AdjList list = enc.find_optimal_parse();
 	CompOStream out(Dst);
 
