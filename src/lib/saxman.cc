@@ -118,20 +118,15 @@ void saxman::decode_internal(std::istream &in, std::iostream &Dst,
 
 			// The high 4 bits of length are actually part of the offset.
 			offset |= (length << 4) & 0xF00;
-			// And there is an additional 0x12 bytes added to offset.
-			offset = (offset + 0x12) & 0xFFF;
-			// Also, a part of the offset is determined by the current output
-			// position.
-			size_t basedest = Dst.tellp();
-			offset |= basedest & 0xF000;
-			if (offset >= basedest) {
-				// But don't overshoot the destination.
-				offset -= 0x1000;
-				offset &= 0xFFFF;
-			}
-			
 			// Length is low 4 bits plus 3.
 			length = (length & 0xF) + 3;
+			// And there is an additional 0x12 bytes added to offset.
+			offset = (offset + 0x12) & 0xFFF;
+			// The offset is stored as being absolute within current 0x1000-byte
+			// block, with part of it being remapped to the end of the previous
+			// 0x1000-byte block. We just rebase it around basedest.
+			size_t basedest = Dst.tellp();
+			offset = ((offset - basedest) & 0x0FFF) + basedest - 0x1000;
 
 			if (offset < basedest) {
 				// If the offset is before the current output position, we copy

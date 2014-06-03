@@ -144,7 +144,7 @@ private:
 	 * into a map.
 	 */
 	MatchVector find_matches(size_t basenode) const {
-		// Upper and lower bounds for sliwing window, starting node.
+		// Upper and lower bounds for sliding window, starting node.
 		size_t ubound = std::min(RecLen, nlen - basenode),
 		       lbound = basenode > SlideWin ? basenode - SlideWin : 0,
 		       ii = basenode - 1;
