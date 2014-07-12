@@ -32,12 +32,15 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 
+using namespace std;
+
 typedef ibitstream<unsigned short, true> EniIBitstream;
 typedef obitstream<unsigned short> EniOBitstream;
 
 // Pure virtual base class.
 class base_flag_io {
 public:
+	virtual ~base_flag_io() {}
 	static base_flag_io *create(size_t n);
 	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
 	virtual void write_bitfield(EniOBitstream &bits, unsigned short flags) const = 0;
@@ -143,13 +146,13 @@ base_flag_io *base_flag_io::create(size_t n) {
 		case 0x1f:
 			return new flag_io<0x1f>;
 		default:
-			std::cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << std::endl;
+			cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << endl;
 			return NULL;
 	}
 }
 
-void enigma::decode_internal(std::istream &Src, std::ostream &Dst) {
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+void enigma::decode_internal(istream &Src, ostream &Dst) {
+	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 	in.seekg(0);
 
@@ -210,17 +213,17 @@ void enigma::decode_internal(std::istream &Src, std::ostream &Dst) {
 	}
 }
 
-bool enigma::decode(std::istream &Src, std::ostream &Dst, std::streampos Location,
+bool enigma::decode(istream &Src, ostream &Dst, streampos Location,
                     bool padding) {
 	Src.seekg(Location);
 	if (padding) {
 		// This is a plane map into a full pattern name table.
-		std::stringstream out(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream out(ios::in | ios::out | ios::binary);
 		decode_internal(Src, out);
 		out.clear();
 		out.seekg(0);
 
-		std::string pad(0x80 * 0x20, (char)0);
+		string pad(0x80 * 0x20, char(0));
 		char buf[0x40];
 		// Add a lot of padding (plane map).
 		Dst.write(pad.c_str(), 0x80 * 0x20);
@@ -237,8 +240,8 @@ bool enigma::decode(std::istream &Src, std::ostream &Dst, std::streampos Locatio
 }
 
 // Blazing fast function that gives the index of the MSB.
-static inline unsigned char log2(unsigned short v) {
-	register unsigned char r; // result of log2(v) will go here
+static inline unsigned char slog2(unsigned short v) {
+	register unsigned char r; // result of slog2(v) will go here
 	register unsigned char shift;
 
 	r = (v > 0xFF) << 3;
@@ -255,14 +258,14 @@ static inline unsigned char log2(unsigned short v) {
 
 // Comparison functor, see below.
 struct Compare_count {
-	bool operator()(std::pair<unsigned short const, size_t> &it1,
-	                std::pair<unsigned short const, size_t> &it2) {
+	bool operator()(pair<unsigned short const, size_t> &it1,
+	                pair<unsigned short const, size_t> &it2) {
 		return (it1.second < it2.second);
 	}
 };
 
 // This flushes (if needed) the contents of the inlined data buffer.
-static inline void flush_buffer(std::vector<unsigned short> &buf,
+static inline void flush_buffer(vector<unsigned short> &buf,
                                 EniOBitstream &bits,
                                 base_flag_io *&mask,
                                 unsigned short const packet_length) {
@@ -270,8 +273,8 @@ static inline void flush_buffer(std::vector<unsigned short> &buf,
 		return;
 
 	bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
-	for (std::vector<unsigned short>::iterator it = buf.begin();
-	        it != buf.end(); ++it) {
+	for (vector<unsigned short>::iterator it = buf.begin();
+	     it != buf.end(); ++it) {
 		unsigned short v = *it;
 		mask->write_bitfield(bits, v);
 		bits.write(v & 0x7ff, packet_length);
@@ -279,13 +282,13 @@ static inline void flush_buffer(std::vector<unsigned short> &buf,
 	buf.clear();
 }
 
-void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
+void enigma::encode_internal(istream &Src, ostream &Dst) {
 	// To unpack source into 2-byte words.
-	std::vector<unsigned short> unpack;
+	vector<unsigned short> unpack;
 	// Frequency map.
-	std::map<unsigned short, size_t> counts;
+	map<unsigned short, size_t> counts;
 	// Presence map.
-	std::set<unsigned short> elems;
+	set<unsigned short> elems;
 
 	// Unpack source into array. Along the way, build frequency and presence maps.
 	unsigned short maskval = 0;
@@ -302,12 +305,12 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	}
 
 	base_flag_io *mask = base_flag_io::create(maskval >> 11);
-	unsigned short const packet_length = log2(maskval & 0x7ff) + 1;
+	unsigned short const packet_length = slog2(maskval & 0x7ff) + 1;
 
 	// Find the most common 2-byte value.
 	Compare_count cmp;
-	std::map<unsigned short, size_t>::iterator high =
-	    max_element(counts.begin(), counts.end(), cmp);
+	map<unsigned short, size_t>::iterator high = max_element(counts.begin(),
+	                                                         counts.end(), cmp);
 	unsigned short const common_value = high->first;
 	// No longer needed.
 	counts.clear();
@@ -315,14 +318,14 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	// Find incrementing (not neccessarily contiguous) runs.
 	// The original algorithm does this for all 65536 2-byte words, while
 	// this version only checks the 2-byte words actually in the file.
-	std::map<unsigned short, size_t> runs;
-	for (std::set<unsigned short>::iterator it = elems.begin();
-	        it != elems.end(); ++it) {
+	map<unsigned short, size_t> runs;
+	for (set<unsigned short>::iterator it = elems.begin();
+	     it != elems.end(); ++it) {
 		unsigned short next = *it;
-		std::map<unsigned short, size_t>::iterator val =
-		    runs.insert(std::pair<unsigned short, size_t>(next, 0)).first;
-		for (std::vector<unsigned short>::iterator it2 = unpack.begin();
-		        it2 != unpack.end(); ++it2) {
+		map<unsigned short, size_t>::iterator val =
+		    runs.insert(pair<unsigned short, size_t>(next, 0)).first;
+		for (vector<unsigned short>::iterator it2 = unpack.begin();
+		     it2 != unpack.end(); ++it2) {
 			if (*it2 == next) {
 				next++;
 				val->second += 1;
@@ -333,8 +336,8 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	elems.clear();
 
 	// Find the starting 2-byte value with the longest incrementing run.
-	std::map<unsigned short, size_t>::iterator incr =
-	    max_element(runs.begin(), runs.end(), cmp);
+	map<unsigned short, size_t>::iterator incr = max_element(runs.begin(),
+	                                                         runs.end(), cmp);
 	unsigned short incrementing_value = incr->first;
 	// No longer needed.
 	runs.clear();
@@ -347,7 +350,7 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 
 	// Time now to compress the file.
 	EniOBitstream bits(Dst);
-	std::vector<unsigned short> buf;
+	vector<unsigned short> buf;
 	size_t pos = 0;
 	while (pos < unpack.size()) {
 		unsigned short v = unpack[pos];
@@ -415,14 +418,14 @@ void enigma::encode_internal(std::istream &Src, std::ostream &Dst) {
 	bits.flush();
 }
 
-bool enigma::encode(std::istream &Src, std::ostream &Dst, bool padding) {
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = Src.tellg();
+bool enigma::encode(istream &Src, ostream &Dst, bool padding) {
+	Src.seekg(0, ios::end);
+	streamsize sz = Src.tellg();
 	Src.seekg(0);
 
 	// Remove padding associated with S1 special stages in 80x80 block version.
 	if (padding && sz >= 0x3000) {
-		std::stringstream src(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream src(ios::in | ios::out | ios::binary);
 		Src.ignore(0x80 * 0x20);
 		char buf[0x40];
 		for (size_t i = 0; i < 0x20; i++) {

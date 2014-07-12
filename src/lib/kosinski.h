@@ -20,9 +20,7 @@
 #ifndef _KOSINSKI_H_
 #define _KOSINSKI_H_
 
-class istream;
-class ostream;
-
+#include <iosfwd>
 class kosinski {
 private:
 	static void decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes);

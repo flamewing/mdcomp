@@ -24,27 +24,29 @@
 #include "getopt.h"
 #include "saxman.h"
 
+using namespace std;
+
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-s size|-S] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
-	std::cerr << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Saxman-compressed and recompress to output file." << std::endl
-	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
-	          << "\t            \tto input_filename." << std::endl
-	          << "\t-s size     \tAssume input file does not have a file size and use value given instead." << std::endl
-	          << "\t            \tOnly affects decompression." << std::endl
-	          << "\t-S          \tCauses the compressor to not output a file size. Only affects compression." << std::endl << std::endl;
+	cerr << "Usage: " << prog << " [-s size|-S] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
+	cerr << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
+	cerr << "\t-c,--crunch \tAssume input file is Saxman-compressed and recompress to output file." << endl
+	     << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << endl
+	     << "\t            \tto input_filename." << endl
+	     << "\t-s size     \tAssume input file does not have a file size and use value given instead." << endl
+	     << "\t            \tOnly affects decompression." << endl
+	     << "\t-S          \tCauses the compressor to not output a file size. Only affects compression." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
-	static struct option long_options[] = {
+	static option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
 		{"crunch" , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, crunch = false, WithSize = true;
-	std::streamsize pointer = 0, BSize = 0;
+	streamsize pointer = 0, BSize = 0;
 	
 	while (true) {
 		int option_index = 0;
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
 			case 's':
 				BSize = strtoul(optarg, 0, 0);
 				if (BSize == 0) {
-					std::cerr << "Error: specified size must be a positive number." << std::endl << std::endl;
+					cerr << "Error: specified size must be a positive number." << endl << endl;
 					return 4;
 				}
 				break;
@@ -81,34 +83,34 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (extract && crunch) {
-		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		cerr << "Error: --extract and --crunch can't be used at the same time." << endl << endl;
 		return 4;
 	}
 
 	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
+	ifstream fin(argv[optind], ios::in | ios::binary);
 	if (!fin.good()) {
-		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
 		return 2;
 	}
 
 	if (crunch) {
-		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream buffer(ios::in | ios::out | ios::binary);
 		saxman::decode(fin, buffer, pointer);
 		fin.close();
 		buffer.seekg(0);
 
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 		saxman::encode(buffer, fout);
 	} else {
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 

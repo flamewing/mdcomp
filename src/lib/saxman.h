@@ -19,8 +19,7 @@
 #ifndef _SAXMAN_H_
 #define _SAXMAN_H_
 
-class istream;
-class ostream;
+#include <iosfwd>
 
 class saxman {
 private:

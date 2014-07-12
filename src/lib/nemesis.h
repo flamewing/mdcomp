@@ -21,18 +21,18 @@
 #ifndef _NEMESIS_H_
 #define _NEMESIS_H_
 
+#include <iosfwd>
 #include <map>
-class istream;
-class ostream;
-class nibble_run;
 
-typedef std::map<std::pair<unsigned char, unsigned char>, nibble_run> Codemap;
+struct Code;
+class nibble_run;
+typedef std::map<Code, nibble_run> CodeNibbleMap;
 
 class nemesis {
 private:
-	static void decode_header(std::istream &Src, Codemap &codemap);
+	static void decode_header(std::istream &Src, CodeNibbleMap &codemap);
 	static void decode_internal(std::istream &Src, std::ostream &Dst,
-	                            Codemap &codemap, size_t rtiles,
+	                            CodeNibbleMap &codemap, size_t rtiles,
 	                            bool alt_out = false, int *endptr = 0);
 	template<typename Compare>
 	static size_t encode_internal(std::istream &Src, std::ostream &Dst, int mode,

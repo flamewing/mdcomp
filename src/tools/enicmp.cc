@@ -23,22 +23,24 @@
 #include "getopt.h"
 #include "enigma.h"
 
+using namespace std;
+
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << std::endl;
-	std::cerr << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-p,--padding\tAdd or remove padding. Use this only for Sonic 1 Special Stage files in 80x80 block mode" << std::endl << std::endl;
+	cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << endl;
+	cerr << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
+	cerr << "\t-p,--padding\tAdd or remove padding. Use this only for Sonic 1 Special Stage files in 80x80 block mode" << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
-	static struct option long_options[] = {
+	static option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
 		{"padding", no_argument      , 0, 'p'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, padding = false;
-	std::streamsize pointer = 0;
+	streamsize pointer = 0;
 
 	while (true) {
 		int option_index = 0;
@@ -65,15 +67,15 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
+	ifstream fin(argv[optind], ios::in | ios::binary);
 	if (!fin.good()) {
-		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
 		return 2;
 	}
 
-	std::ofstream fout(argv[optind + 1], std::ios::out | std::ios::binary);
+	ofstream fout(argv[optind + 1], ios::out | ios::binary);
 	if (!fout.good()) {
-		std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 		return 3;
 	}
 

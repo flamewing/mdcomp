@@ -1,12 +1,12 @@
 
 lib_LTLIBRARIES = \
-	libenigma.la\
+	libenigma.la \
 	libkosinski.la \
 	libnemesis.la \
 	libcomper.la \
 	libsaxman.la
 
-libcomper_la_SOURCES =  \
+libcomper_la_SOURCES = \
 	comper.cc \
 	comper.h \
 	lzss.h \
@@ -15,7 +15,7 @@ libcomper_la_SOURCES =  \
 
 libcomper_la_LIBADD =
 
-libsaxman_la_SOURCES =  \
+libsaxman_la_SOURCES = \
 	saxman.cc \
 	saxman.h \
 	bigendian_io.h \
@@ -33,10 +33,10 @@ libnemesis_la_SOURCES = \
 libnemesis_la_LIBADD =
 
 libkosinski_la_SOURCES = \
-	bigendian_io.h  \
-	bitstream.h  \
-	kosinski.cc  \
-	kosinski.h  \
+	bigendian_io.h \
+	bitstream.h \
+	kosinski.cc \
+	kosinski.h \
 	lzss.h
 
 libkosinski_la_LIBADD =

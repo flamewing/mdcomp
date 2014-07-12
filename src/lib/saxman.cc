@@ -27,6 +27,8 @@
 #include "bitstream.h"
 #include "lzss.h"
 
+using namespace std;
+
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct SaxmanAdaptor {
 	typedef unsigned char stream_t;
@@ -48,7 +50,7 @@ struct SaxmanAdaptor {
 	};
 	// Computes the cost of covering all of the "len" vertices starting from
 	// "off" vertices ago.
-	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
+	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
 	static size_t calc_weight(size_t UNUSED(dist), size_t len) {
 		// Preconditions:
@@ -57,7 +59,7 @@ struct SaxmanAdaptor {
 			// Literal: 1-bit descriptor, 8-bit length.
 			return 1 + 8;
 		else if (len == 2)
-			return std::numeric_limits<size_t>::max();	// "infinite"
+			return numeric_limits<size_t>::max();	// "infinite"
 		else
 			// RLE: 1-bit descriptor, 12-bit offset, 4-bit length.
 			return 1 + 12 + 4;
@@ -84,7 +86,7 @@ struct SaxmanAdaptor {
 		if (jj >= 3) {
 			// Got them, so add them to the list.
 			matches[jj - 1] = AdjListNode(basenode + jj,
-			                              std::numeric_limits<size_t>::max(),
+			                              numeric_limits<size_t>::max(),
 			                              jj, 1 + 12 + 4);
 		}
 	}
@@ -98,8 +100,8 @@ typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
 typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
 typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
 
-void saxman::decode_internal(std::istream &in, std::iostream &Dst,
-                             std::streamsize const BSize) {
+void saxman::decode_internal(istream &in, iostream &Dst,
+                             streamsize const BSize) {
 	SaxIStream src(in);
 
 	// Loop while the file is good and we haven't gone over the declared length.
@@ -132,7 +134,7 @@ void saxman::decode_internal(std::istream &in, std::iostream &Dst,
 				// If the offset is before the current output position, we copy
 				// bytes from the given location.
 				for (size_t src = offset; src < offset + length; src++) {
-					std::streampos Pointer = Dst.tellp();
+					streampos Pointer = Dst.tellp();
 					Dst.seekg(src);
 					unsigned short Byte = Read1(Dst);
 					Dst.seekp(Pointer);
@@ -148,12 +150,12 @@ void saxman::decode_internal(std::istream &in, std::iostream &Dst,
 	}
 }
 
-bool saxman::decode(std::istream &Src, std::iostream &Dst,
-                    std::streampos Location, std::streamsize const BSize) {
+bool saxman::decode(istream &Src, iostream &Dst,
+                    streampos Location, streamsize const BSize) {
 	Src.seekg(Location);
 	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
 
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 
 	in.seekg(0);
@@ -161,14 +163,14 @@ bool saxman::decode(std::istream &Src, std::iostream &Dst,
 	return true;
 }
 
-void saxman::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
-                             std::streamsize const BSize) {
+void saxman::encode_internal(ostream &Dst, unsigned char const *&Buffer,
+                             streamsize const BSize) {
 	// Compute optimal Saxman parsing of input file.
 	SaxGraph enc(Buffer, BSize, 0x1000, 0x12, 1u);
 	SaxGraph::AdjList list = enc.find_optimal_parse();
 	SaxOStream out(Dst);
 
-	std::streamoff pos = 0;
+	streamoff pos = 0;
 	// Go through each edge in the optimal path.
 	for (SaxGraph::AdjList::const_iterator it = list.begin();
 	        it != list.end(); ++it) {
@@ -195,19 +197,19 @@ void saxman::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	}
 }
 
-bool saxman::encode(std::istream &Src, std::ostream &Dst, bool WithSize) {
-	Src.seekg(0, std::ios::end);
-	std::streamsize BSize = Src.tellg();
+bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
+	Src.seekg(0, ios::end);
+	streamsize BSize = Src.tellg();
 	Src.seekg(0);
-	unsigned char *const Buffer = new unsigned char[BSize];
-	unsigned char const *ptr = Buffer;
-	Src.read((char *)ptr, BSize);
+	char *const Buffer = new char[BSize];
+	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
+	Src.read(Buffer, BSize);
 
 	// Internal buffer.
-	std::stringstream outbuff(std::ios::in | std::ios::out | std::ios::binary);
+	stringstream outbuff(ios::in | ios::out | ios::binary);
 	encode_internal(outbuff, ptr, BSize);
 	if (WithSize) {
-		outbuff.seekg(0, std::ios::end);
+		outbuff.seekg(0, ios::end);
 		LittleEndian::Write2(Dst, outbuff.tellg());
 	}
 	outbuff.seekg(0);

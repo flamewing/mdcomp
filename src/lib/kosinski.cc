@@ -32,6 +32,8 @@
 #include "bitstream.h"
 #include "lzss.h"
 
+using namespace std;
+
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct KosinskiAdaptor {
 	typedef unsigned char  stream_t;
@@ -52,7 +54,7 @@ struct KosinskiAdaptor {
 	};
 	// Computes the cost of covering all of the "len" vertices starting from
 	// "off" vertices ago.
-	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
+	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
 	static size_t calc_weight(size_t dist, size_t len) {
 		// Preconditions:
@@ -62,7 +64,7 @@ struct KosinskiAdaptor {
 			return 1 + 8;
 		else if (len == 2 && dist > 256)
 			// Can't represent this except by inlining both nodes.
-			return std::numeric_limits<size_t>::max();	// "infinite"
+			return numeric_limits<size_t>::max();	// "infinite"
 		else if (len <= 5 && dist <= 256)
 			// Inline RLE: 2-bit descriptor, 2-bit count, 8-bit distance.
 			return 2 + 2 + 8;
@@ -98,7 +100,7 @@ struct KosinskiAdaptor {
 	}
 };
 
-void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+void kosinski::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
 	typedef LZSSIStream<KosinskiAdaptor> KosIStream;
 
 	KosIStream src(in);
@@ -110,7 +112,7 @@ void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &Dec
 		} else {
 			// Count and distance
 			size_t Count = 0;
-			std::streamoff distance = 0;
+			size_t distance = 0;
 
 			if (src.descbit()) {
 				unsigned char Low = src.getbyte(), High = src.getbyte();
@@ -128,19 +130,19 @@ void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &Dec
 					Count += 2;
 				}
 
-				distance = (~((std::streamoff)0x1FFF)) | ((std::streamoff)(0xF8 & High) << 5) | (std::streamoff)Low;
+				distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 			} else {
 				unsigned char Low  = src.descbit(),
 				              High = src.descbit();
 
-				Count = ((((size_t)Low) << 1) | ((size_t)High)) + 2;
+				Count = ((size_t(Low) << 1) | size_t(High)) + 2;
 
 				distance = src.getbyte();
-				distance |= (~((std::streamoff)0xFF));
+				distance |= ~size_t(0xFF);
 			}
 
 			for (size_t i = 0; i < Count; i++) {
-				std::streampos Pointer = Dst.tellp();
+				size_t Pointer = Dst.tellp();
 				Dst.seekg(Pointer + distance);
 				unsigned char Byte = Read1(Dst);
 				Dst.seekp(Pointer);
@@ -151,16 +153,16 @@ void kosinski::decode_internal(std::istream &in, std::iostream &Dst, size_t &Dec
 	}
 }
 
-bool kosinski::decode(std::istream &Src, std::iostream &Dst,
-                      std::streampos Location, bool Moduled,
-                      std::streamsize const ModulePadding) {
+bool kosinski::decode(istream &Src, iostream &Dst,
+                      streampos Location, bool Moduled,
+                      streamsize const ModulePadding) {
 	size_t DecBytes = 0;
 
-	Src.seekg(0, std::ios::end);
-	std::streamsize sz = std::streamsize(Src.tellg()) - Location;
+	Src.seekg(0, ios::end);
+	streamsize sz = streamsize(Src.tellg()) - Location;
 	Src.seekg(Location);
 
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 
 	// Pad to even length, for safety.
@@ -170,7 +172,7 @@ bool kosinski::decode(std::istream &Src, std::iostream &Dst,
 	in.seekg(0);
 
 	if (Moduled) {
-		std::streamsize const PadMask = ModulePadding - 1;
+		streamsize const PadMask = ModulePadding - 1;
 		size_t FullSize = BigEndian::Read2(in);
 		if (FullSize == 0xA000)
 			FullSize = 0x8000;
@@ -190,10 +192,10 @@ bool kosinski::decode(std::istream &Src, std::iostream &Dst,
 	return true;
 }
 
-void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
-                               std::streamoff SlideWin, std::streamoff RecLen,
-                               std::streamsize const BSize,
-                               std::streamsize const Padding) {
+void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
+                               streamoff SlideWin, streamoff RecLen,
+                               streamsize const BSize,
+                               streamsize const Padding) {
 	typedef LZSSGraph<KosinskiAdaptor> KosGraph;
 	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
@@ -205,7 +207,7 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	size_t nliteral = 0, ninline = 0, nrle = 0;
 #endif
 
-	std::streamoff pos = 0;
+	streamoff pos = 0;
 	// Go through each edge in the optimal path.
 	for (typename KosGraph::AdjList::const_iterator it = list.begin();
 	        it != list.end(); ++it) {
@@ -260,7 +262,7 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 			default:
 				// This should be unreachable.
 #ifdef COUNT_FREQUENCIES
-				std::cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << std::endl;
+				cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << endl;
 #endif
 				break;
 		}
@@ -270,7 +272,7 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 
 #ifdef COUNT_FREQUENCIES
 	++nrle;
-	std::cout << "[1]: " << nliteral << ";\t[00]: " << ninline << ";\t[01]: " << nrle << std::endl;
+	cout << "[1]: " << nliteral << ";\t[00]: " << ninline << ";\t[01]: " << nrle << endl;
 #endif
 
 	// Push descriptor for end-of-file marker.
@@ -283,22 +285,22 @@ void kosinski::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	out.putbyte(0x00);
 }
 
-bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff SlideWin,
-                      std::streamoff RecLen, bool Moduled, std::streamoff ModuleSize,
-                      std::streamsize const ModulePadding) {
-	Src.seekg(0, std::ios::end);
-	std::streamsize BSize = Src.tellg();
+bool kosinski::encode(istream &Src, ostream &Dst, streamoff SlideWin,
+                      streamoff RecLen, bool Moduled, streamoff ModuleSize,
+                      streamsize const ModulePadding) {
+	Src.seekg(0, ios::end);
+	streamsize BSize = Src.tellg();
 	Src.seekg(0);
-	unsigned char *const Buffer = new unsigned char[BSize];
-	unsigned char const *ptr = Buffer;
-	Src.read((char *)ptr, BSize);
+	char *const Buffer = new char[BSize];
+	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
+	Src.read(Buffer, BSize);
 
 	if (Moduled) {
 		if (BSize > 65535)  // Decompressed size would fill RAM or VRAM.
 			return false;
 
-		std::streamoff FullSize = BSize, CompBytes = 0;
-		std::streamsize const PadMask = ModulePadding - 1;
+		streamoff FullSize = BSize, CompBytes = 0;
+		streamsize const PadMask = ModulePadding - 1;
 
 		if (BSize > ModuleSize)
 			BSize = ModuleSize;
@@ -308,7 +310,7 @@ bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff Slide
 		while (true) {
 			// We want to manage internal padding for all modules but the last.
 			CompBytes += BSize;
-			std::streamsize const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
+			streamsize const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
 			encode_internal(Dst, ptr, SlideWin, RecLen, BSize, Padding);
 
 			ptr += BSize;
@@ -327,7 +329,7 @@ bool kosinski::encode(std::istream &Src, std::ostream &Dst, std::streamoff Slide
 				}
 			}
 
-			BSize = std::min(ModuleSize, FullSize - CompBytes);
+			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else
 		encode_internal(Dst, ptr, SlideWin, RecLen, BSize, 1u);

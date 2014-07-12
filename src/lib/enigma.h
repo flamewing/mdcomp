@@ -21,8 +21,7 @@
 #ifndef _ENIGMA_H_
 #define _ENIGMA_H_
 
-class istream;
-class ostream;
+#include <iosfwd>
 
 class enigma {
 private:

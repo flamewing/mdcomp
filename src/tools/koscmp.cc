@@ -24,26 +24,28 @@
 #include "getopt.h"
 #include "kosinski.h"
 
+using namespace std;
+
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << std::endl;
-	std::cerr << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << std::endl
-	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
-	          << "\t            \tto input_filename. All parameters affect only the output file, except" << std::endl
-	          << "\t            \tfor the -m parameter, which makes both input and output files moduled" << std::endl
-	          << "\t            \t(but the optional module size affects only the output file)." << std::endl;
-	std::cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << std::endl
-	          << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << std::endl;
-	std::cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << std::endl
-	          << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << std::endl
-	          << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << std::endl;
-	std::cerr << "\t-r          \tSet recursion length (default/maximum: 256)" << std::endl;
-	std::cerr << "\t-s          \tSets sliding window size (default/maximum: 8192)" << std::endl << std::endl;
+	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-r {reclen}] [-s {slidewin}] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << endl;
+	cerr << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
+	cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << endl
+	     << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << endl
+	     << "\t            \tto input_filename. All parameters affect only the output file, except" << endl
+	     << "\t            \tfor the -m parameter, which makes both input and output files moduled" << endl
+	     << "\t            \t(but the optional module size affects only the output file)." << endl;
+	cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << endl
+	     << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << endl;
+	cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << endl
+	     << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << endl
+	     << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << endl;
+	cerr << "\t-r          \tSet recursion length (default/maximum: 256)" << endl;
+	cerr << "\t-s          \tSets sliding window size (default/maximum: 8192)" << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
-	static struct option long_options[] = {
+	static option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
 		{"moduled", optional_argument, 0, 'm'},
 		{"crunch" , no_argument      , 0, 'c'},
@@ -52,8 +54,8 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	std::streamsize pointer = 0, slidewin = 8192, reclen = 256,
-	                modulesize = 0x1000, padding = 16;
+	streamsize pointer = 0, slidewin = 8192, reclen = 256,
+	           modulesize = 0x1000, padding = 16;
 
 	while (true) {
 		int option_index = 0;
@@ -105,34 +107,34 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (extract && crunch) {
-		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		cerr << "Error: --extract and --crunch can't be used at the same time." << endl << endl;
 		return 4;
 	}
 
 	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
+	ifstream fin(argv[optind], ios::in | ios::binary);
 	if (!fin.good()) {
-		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
 		return 2;
 	}
 
 	if (crunch) {
-		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream buffer(ios::in | ios::out | ios::binary);
 		kosinski::decode(fin, buffer, pointer, moduled, padding);
 		fin.close();
 		buffer.seekg(0);
 
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 		kosinski::encode(buffer, fout, slidewin, reclen, moduled, modulesize, padding);
 	} else {
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 

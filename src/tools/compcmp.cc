@@ -24,24 +24,26 @@
 #include "getopt.h"
 #include "comper.h"
 
+using namespace std;
+
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
-	std::cerr << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Comper-compressed and recompress to output file." << std::endl
-	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
-	          << "\t            \tto input_filename." << std::endl << std::endl;
+	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
+	cerr << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
+	cerr << "\t-c,--crunch \tAssume input file is Comper-compressed and recompress to output file." << endl
+	     << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << endl
+	     << "\t            \tto input_filename." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
-	static struct option long_options[] = {
+	static option long_options[] = {
 		{"extract", optional_argument, 0, 'x'},
 		{"crunch" , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, crunch = false;
-	std::streamsize pointer = 0;
+	streamsize pointer = 0;
 
 	while (true) {
 		int option_index = 0;
@@ -68,34 +70,34 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (extract && crunch) {
-		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		cerr << "Error: --extract and --crunch can't be used at the same time." << endl << endl;
 		return 4;
 	}
 
 	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
+	ifstream fin(argv[optind], ios::in | ios::binary);
 	if (!fin.good()) {
-		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
 		return 2;
 	}
 
 	if (crunch) {
-		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream buffer(ios::in | ios::out | ios::binary);
 		comper::decode(fin, buffer, pointer);
 		fin.close();
 		buffer.seekg(0);
 
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 		comper::encode(buffer, fout);
 	} else {
-		std::fstream fout(outfile, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
 

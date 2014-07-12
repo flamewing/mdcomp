@@ -25,25 +25,27 @@
 #include "getopt.h"
 #include "nemesis.h"
 
+using namespace std;
+
 static void usage(char *prog) {
-	std::cerr << "Usage: " << prog << " [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << std::endl;
-	std::cerr << std::endl;
-	std::cerr << "\t-i          \tWhen extracting, print out the position where the Nemesis data ends." << std::endl;
-	std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-	std::cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and recompress to output file." << std::endl
-	          << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << std::endl
-	          << "\t            \tto input_filename." << std::endl << std::endl;
+	cerr << "Usage: " << prog << " [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
+	cerr << endl;
+	cerr << "\t-i          \tWhen extracting, print out the position where the Nemesis data ends." << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
+	cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and recompress to output file." << endl
+	     << "\t            \tIf --chunch is in effect, a missing output_filename means recompress" << endl
+	     << "\t            \tto input_filename." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
-	static struct option long_options[] = {
+	static option long_options[] = {
 		{"extract"   , optional_argument, 0, 'x'},
 		{"crunch"    , no_argument      , 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
 	bool extract = false, printend = false, crunch = false;
-	std::streamsize pointer = 0;
+	streamsize pointer = 0;
 
 	while (true) {
 		int option_index = 0;
@@ -73,38 +75,38 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (extract && crunch) {
-		std::cerr << "Error: --extract and --crunch can't be used at the same time." << std::endl << std::endl;
+		cerr << "Error: --extract and --crunch can't be used at the same time." << endl << endl;
 		return 4;
 	} else if (printend && !extract) {
-		std::cerr << "Error: -i must be used with --extract." << std::endl << std::endl;
+		cerr << "Error: -i must be used with --extract." << endl << endl;
 		return 5;
 	}
 
 	char *outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-	std::ifstream fin(argv[optind], std::ios::in | std::ios::binary);
+	ifstream fin(argv[optind], ios::in | ios::binary);
 	if (!fin.good()) {
-		std::cerr << "Input file '" << argv[optind] << "' could not be opened." << std::endl << std::endl;
+		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
 		return 2;
 	}
 
 	if (crunch) {
 		int endptr = 0;
-		std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
+		stringstream buffer(ios::in | ios::out | ios::binary);
 		nemesis::decode(fin, buffer, pointer, &endptr);
 		fin.close();
 		buffer.seekg(0);
 
-		std::ofstream fout(outfile, std::ios::out | std::ios::binary);
+		ofstream fout(outfile, ios::out | ios::binary);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << outfile << "' could not be opened." << endl << endl;
 			return 3;
 		}
 		nemesis::encode(buffer, fout);
 	} else {
-		std::ofstream fout(outfile, std::ios::out | std::ios::binary);
+		ofstream fout(outfile, ios::out | ios::binary);
 		if (!fout.good()) {
-			std::cerr << "Output file '" << outfile << "' could not be opened." << std::endl << std::endl;
+			cerr << "Output file '" << outfile << "' could not be opened." << endl << endl;
 			return 3;
 		}
 
@@ -112,7 +114,7 @@ int main(int argc, char *argv[]) {
 			int endptr = 0;
 			nemesis::decode(fin, fout, pointer, &endptr);
 			if (printend)
-				std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0') << std::uppercase << std::right << endptr << std::endl;
+				cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right << endptr << endl;
 		} else
 			nemesis::encode(fin, fout);
 	}

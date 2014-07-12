@@ -25,6 +25,8 @@
 #include "bitstream.h"
 #include "lzss.h"
 
+using namespace std;
+
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct ComperAdaptor {
 	typedef unsigned short stream_t;
@@ -46,7 +48,7 @@ struct ComperAdaptor {
 	};
 	// Computes the cost of covering all of the "len" vertices starting from
 	// "off" vertices ago.
-	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
+	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
 	static size_t calc_weight(size_t UNUSED(dist), size_t len) {
 		// Preconditions:
@@ -79,7 +81,7 @@ typedef LZSSGraph<ComperAdaptor> CompGraph;
 typedef LZSSOStream<ComperAdaptor> CompOStream;
 typedef LZSSIStream<ComperAdaptor> CompIStream;
 
-void comper::decode_internal(std::istream &in, std::iostream &Dst) {
+void comper::decode_internal(istream &in, iostream &Dst) {
 	CompIStream src(in);
 
 	while (in.good()) {
@@ -94,8 +96,8 @@ void comper::decode_internal(std::istream &in, std::iostream &Dst) {
 			}
 
 			for (size_t i = 0; i <= length; i++) {
-				std::streampos Pointer = Dst.tellp();
-				Dst.seekg(std::streamoff(Pointer) - distance);
+				streampos Pointer = Dst.tellp();
+				Dst.seekg(streamoff(Pointer) - distance);
 				unsigned short Word = BigEndian::Read2(Dst);
 				Dst.seekp(Pointer);
 				BigEndian::Write2(Dst, Word);
@@ -104,10 +106,9 @@ void comper::decode_internal(std::istream &in, std::iostream &Dst) {
 	}
 }
 
-bool comper::decode(std::istream &Src, std::iostream &Dst,
-                    std::streampos Location) {
+bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
 	Src.seekg(Location);
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 
 	in.seekg(0);
@@ -115,14 +116,14 @@ bool comper::decode(std::istream &Src, std::iostream &Dst,
 	return true;
 }
 
-void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
-                             std::streamsize const BSize) {
+void comper::encode_internal(ostream &Dst, unsigned char const *&Buffer,
+                             streamsize const BSize) {
 	// Compute optimal Comper parsing of input file.
 	CompGraph enc(Buffer, BSize, 256, 256, 1u);
 	CompGraph::AdjList list = enc.find_optimal_parse();
 	CompOStream out(Dst);
 
-	std::streamoff pos = 0;
+	streamoff pos = 0;
 	// Go through each edge in the optimal path.
 	for (CompGraph::AdjList::const_iterator it = list.begin();
 	        it != list.end(); ++it) {
@@ -152,13 +153,13 @@ void comper::encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
 	out.putbyte(0x00);
 }
 
-bool comper::encode(std::istream &Src, std::ostream &Dst) {
-	Src.seekg(0, std::ios::end);
-	std::streamsize BSize = Src.tellg();
+bool comper::encode(istream &Src, ostream &Dst) {
+	Src.seekg(0, ios::end);
+	streamsize BSize = Src.tellg();
 	Src.seekg(0);
-	unsigned char *const Buffer = new unsigned char[BSize];
-	unsigned char const *ptr = Buffer;
-	Src.read((char *)ptr, BSize);
+	char *const Buffer = new char[BSize];
+	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
+	Src.read(Buffer, BSize);
 
 	encode_internal(Dst, ptr, BSize);
 

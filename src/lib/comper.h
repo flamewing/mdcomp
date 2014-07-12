@@ -20,8 +20,7 @@
 #ifndef _COMPER_H_
 #define _COMPER_H_
 
-class istream;
-class ostream;
+#include <iosfwd>
 
 class comper {
 private:
