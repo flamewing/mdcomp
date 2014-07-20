@@ -6,12 +6,15 @@ AC_INIT(mdcomp, 0.2.0)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([1.14])
+AM_INIT_AUTOMAKE([1.11])
 
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE
 
 AC_PROG_CXX
+AC_LANG([C++])
+AX_CXX_COMPILE_STDCXX_11([],[mandatory])
+AC_HEADER_STDC
 
 CXXFLAGS="$CXXFLAGS -Wall -Wextra -pedantic -Wcast-qual -Wold-style-cast"
 CXXFLAGS="$CXXFLAGS -Wwrite-strings -Wredundant-decls -fcheck-new"
