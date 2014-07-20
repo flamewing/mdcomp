@@ -21,7 +21,8 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "getopt.h"
+#include <getopt.h>
+
 #include "kosinski.h"
 
 using namespace std;

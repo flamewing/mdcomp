@@ -20,7 +20,8 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "getopt.h"
+#include <getopt.h>
+
 #include "enigma.h"
 
 using namespace std;

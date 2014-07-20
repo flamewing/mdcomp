@@ -22,7 +22,8 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "getopt.h"
+#include <getopt.h>
+
 #include "nemesis.h"
 
 using namespace std;

@@ -19,8 +19,7 @@
 #ifndef _BITSTREAM_H_
 #define _BITSTREAM_H_
 
-#include <istream>
-#include <ostream>
+#include <iosfwd>
 
 template <typename T>
 class bigendian {
@@ -120,6 +119,9 @@ public:
 		if (EarlyRead)
 			check_buffer();
 		return bits;
+	}
+	int have_waiting_bits() const {
+		return readbits;
 	}
 };
 

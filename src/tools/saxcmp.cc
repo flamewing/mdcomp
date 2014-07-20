@@ -21,7 +21,8 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "getopt.h"
+#include <getopt.h>
+
 #include "saxman.h"
 
 using namespace std;

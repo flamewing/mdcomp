@@ -20,6 +20,7 @@
 #define _BIGENDIAN_IO_H_
 
 #include <iosfwd>
+#include <iterator>
 #include <string>
 
 #ifdef UNUSED
@@ -48,6 +49,11 @@ inline size_t Read1(unsigned char const *& in) {
 	return c;
 }
 
+inline size_t Read1(std::istream_iterator<unsigned char>& in) {
+	size_t c = *in++;
+	return c;
+}
+
 inline void Write1(std::ostream &out, size_t c) {
 	out.put(static_cast<char>(c & 0xff));
 }
@@ -62,6 +68,10 @@ inline void Write1(unsigned char *&out, size_t c) {
 
 inline void Write1(std::string &out, size_t c) {
 	out.push_back(static_cast<char>(c & 0xff));
+}
+
+inline void Write1(std::ostream_iterator<unsigned char>&out, size_t c) {
+	*out++ = static_cast<char>(c & 0xff);
 }
 
 namespace BigEndian {
