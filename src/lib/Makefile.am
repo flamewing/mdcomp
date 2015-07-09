@@ -4,7 +4,9 @@ lib_LTLIBRARIES = \
 	libkosinski.la \
 	libnemesis.la \
 	libcomper.la \
-	libsaxman.la
+	libsaxman.la \
+	libkosplus.la \
+	libmegakosinski.la
 
 libcomper_la_SOURCES = \
 	comper.cc \
@@ -26,6 +28,16 @@ libsaxman_la_SOURCES = \
 
 libsaxman_la_LIBADD =
 
+libmegakosinski_la_SOURCES = \
+	mkosinski.cc \
+	mkosinski.h \
+	lzss.h \
+	bigendian_io.h \
+	bitstream.h \
+	ignore_unused_variable_warning.h
+
+libmegakosinski_la_LIBADD = 
+
 libnemesis_la_SOURCES = \
 	bigendian_io.h \
 	bitstream.h \
@@ -43,6 +55,16 @@ libkosinski_la_SOURCES = \
 	lzss.h
 
 libkosinski_la_LIBADD =
+
+libkosplus_la_SOURCES = \
+	bigendian_io.h	\
+	bitstream.h \
+	kosplus.cc \
+	kosplus.h \
+	lzss.h \
+	ignore_unused_variable_warning.h
+
+libkosplus_la_LIBADD = 
 
 libenigma_la_SOURCES = \
 	bigendian_io.h\
