@@ -49,7 +49,7 @@ struct ComperAdaptor {
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
-		// Literal: 1-bit descriptor, 16-bit length.
+		// Symbolwise match: 1-bit descriptor, 16-bit length.
 		return 1 + 16;
 	}
 	// Computes the cost of covering all of the "len" vertices starting from
@@ -58,8 +58,8 @@ struct ComperAdaptor {
 	// or "no edge".
 	constexpr static size_t dictionary_weight(size_t UNUSED(dist), size_t UNUSED(len)) {
 		// Preconditions:
-		// len > 1 && len <= RecLen && dist != 0 && dist <= SlideWin
-		// RLE: 1-bit descriptor, 8-bit distance, 8-bit length.
+		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
+		// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
 		return 1 + 8 + 8;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
@@ -88,8 +88,10 @@ void comper::decode_internal(istream &in, iostream &Dst) {
 
 	while (in.good()) {
 		if (!src.descbit()) {
+			// Symbolwise match.
 			BigEndian::Write2(Dst, BigEndian::Read2(in));
 		} else {
+			// Dictionary match.
 			// Distance and length of match.
 			size_t distance = (0x100 - src.getbyte()) * 2,
 			       length = src.getbyte();
@@ -134,12 +136,12 @@ void comper::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 		// The weight of each edge uniquely identifies how it should be written.
 		// NOTE: This needs to be changed for other LZSS schemes.
 		if (len == 1) {
-			// Literal.
+			// Symbolwise match.
 			out.descbit(0);
 			out.putbyte(Buffer[pos]);
 			out.putbyte(Buffer[pos + 1]);
 		} else {
-			// RLE.
+			// Dictionary match.
 			out.descbit(1);
 			out.putbyte(-dist);
 			out.putbyte(len - 1);

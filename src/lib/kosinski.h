@@ -25,7 +25,7 @@ class kosinski {
 private:
 	static void decode_internal(std::istream &in, std::iostream &Dst, size_t &DecBytes);
 	static void encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
-	                            std::streamoff SlideWin, std::streamoff RecLen,
+	                            std::streamoff szSearchBuffer, std::streamoff szLookAhead,
 	                            std::streamsize const BSize,
 	                            std::streamsize const Padding);
 public:
@@ -33,7 +33,7 @@ public:
 	                   std::streampos Location = 0, bool Moduled = false,
 	                   std::streamsize const ModulePadding = 16u);
 	static bool encode(std::istream &Src, std::ostream &Dst,
-	                   std::streamoff SlideWin = 8192, std::streamoff RecLen = 256,
+	                   std::streamoff szSearchBuffer = 8192, std::streamoff szLookAhead = 256,
 	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000,
 	                   std::streamsize const ModulePadding = 16u);
 };

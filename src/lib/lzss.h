@@ -136,8 +136,8 @@ private:
 	size_t const nlen;
 	// Parameters for LZSS encoder: sliding window size and maximum record
 	// length to use when encoding.
-	size_t const SlideWin;
-	size_t const RecLen;
+	size_t const szSearchBuffer;
+	size_t const szLookAhead;
 	// Account for padding at end of file, if any.
 	size_t const Padding;
 	// Adjacency lists for all the nodes in the graph.
@@ -151,22 +151,22 @@ private:
 	 */
 	MatchVector find_matches(size_t basenode) const noexcept {
 		// Upper and lower bounds for sliding window, starting node.
-		size_t ubound = std::min(RecLen, nlen - basenode),
-		       lbound = basenode > SlideWin ? basenode - SlideWin : 0,
+		size_t ubound = std::min(szLookAhead, nlen - basenode),
+		       lbound = basenode > szSearchBuffer ? basenode - szSearchBuffer : 0,
 		       ii = basenode - 1;
 		// This is what we produce.
 		MatchVector matches(ubound);
-		// Start with the "literal" match of the current node into the next.
+		// Start with the literal/symbolwise encoding of the current node.
 		size_t wgt = Adaptor::symbolwise_weight();
 		matches[0] = AdjListNode(basenode + 1, 0, 1, wgt);
-		// Get extra matches dependent on specific encoder.
+		// Get extra dictionary matches dependent on specific encoder.
 		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
 		if (basenode == 0) {
 			return matches;
 		}
 		do {
-			// Keep looking for matches.
+			// Keep looking for dictionary matches.
 			size_t jj = 0;
 			while (data[ii + jj] == data[basenode + jj]) {
 				++jj;
@@ -189,11 +189,11 @@ private:
 public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(unsigned char const *dt, size_t const size,
-	          size_t const win, size_t const rec,
+	          size_t const srchbuf, size_t const lkhead,
 	          size_t const pad) noexcept
 		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
-		  nlen(size / sizeof(typename Adaptor::stream_t)), SlideWin(win),
-		  RecLen(rec), Padding(pad * 8 - 1) {
+		  nlen(size / sizeof(typename Adaptor::stream_t)), szSearchBuffer(srchbuf),
+		  szLookAhead(lkhead), Padding(pad * 8 - 1) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		for (size_t ii = 0; ii < nlen; ii++) {

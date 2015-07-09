@@ -55,7 +55,7 @@ struct KosinskiAdaptor {
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
-		// Literal: 1-bit descriptor, 8-bit length.
+		// Symbolwise match: 1-bit descriptor, 8-bit length.
 		return 1 + 8;
 	}
 	// Computes the cost of covering all of the "len" vertices starting from
@@ -64,26 +64,26 @@ struct KosinskiAdaptor {
 	// or "no edge".
 	static size_t dictionary_weight(size_t dist, size_t len) {
 		// Preconditions:
-		// len > 1 && len <= RecLen && dist != 0 && dist <= SlideWin
+		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
 		if (len == 2 && dist > 256)
 			// Can't represent this except by inlining both nodes.
 			return numeric_limits<size_t>::max();	// "infinite"
 		else if (len <= 5 && dist <= 256)
-			// Inline RLE: 2-bit descriptor, 2-bit count, 8-bit distance.
+			// Inline dictionary match: 2-bit descriptor, 2-bit count, 8-bit distance.
 			return 2 + 2 + 8;
 		else if (len >= 3 && len <= 9)
-			// Separate RLE, short form: 2-bit descriptor, 13-bit distance,
+			// Separate dictionary match, short form: 2-bit descriptor, 13-bit distance,
 			// 3-bit length.
 			return 2 + 13 + 3;
 		else //if (len >= 3 && len <= 256)
-			// Separate RLE, long form: 2-bit descriptor, 13-bit distance,
+			// Separate dictionary match, long form: 2-bit descriptor, 13-bit distance,
 			// 3-bit marker (zero), 8-bit length.
 			return 2 + 13 + 8 + 3;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
 	static size_t desc_bits(AdjListNode const &edge) noexcept {
-		// Since Kosinski non-descriptor data is always 1, 2 or 3 bytes, this is
-		// a quick way to compute it.
+		// Since Kosinski non-descriptor data is always 1, 2 or 3 bytes in length,
+		// this is a quick way to compute it.
 		return edge.get_weight() & 7;
 	}
 	// Kosinski finds no additional matches over normal LZSS.
@@ -110,19 +110,23 @@ void kosinski::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
 
 	while (in.good()) {
 		if (src.descbit()) {
+			// Symbolwise match.
 			Write1(Dst, src.getbyte());
 			++DecBytes;
 		} else {
+			// Dictionary matches.
 			// Count and distance
 			size_t Count = 0;
 			size_t distance = 0;
 
 			if (src.descbit()) {
+				// Separate dictionary match.
 				unsigned char Low = src.getbyte(), High = src.getbyte();
 
 				Count = size_t(High & 0x07);
 
 				if (!Count) {
+					// 3-byte dictionary match.
 					Count = src.getbyte();
 					if (!Count)
 						break;
@@ -130,11 +134,13 @@ void kosinski::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
 						continue;
 					Count += 1;
 				} else {
+					// 2-byte dictionary match.
 					Count += 2;
 				}
 
 				distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 			} else {
+				// Inline dictionary match.
 				unsigned char Low  = src.descbit(),
 				              High = src.descbit();
 
@@ -196,14 +202,14 @@ bool kosinski::decode(istream &Src, iostream &Dst,
 }
 
 void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                               streamoff SlideWin, streamoff RecLen,
+                               streamoff szSearchBuffer, streamoff szLookAhead,
                                streamsize const BSize,
                                streamsize const Padding) {
 	typedef LZSSGraph<KosinskiAdaptor> KosGraph;
 	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
 	// Compute optimal Kosinski parsing of input file.
-	KosGraph enc(Buffer, BSize, SlideWin, RecLen, Padding);
+	KosGraph enc(Buffer, BSize, szSearchBuffer, szLookAhead, Padding);
 	typename KosGraph::AdjList list = enc.find_optimal_parse();
 	KosOStream out(Dst);
 #ifdef COUNT_FREQUENCIES
@@ -220,7 +226,7 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 		// NOTE: This needs to be changed for other LZSS schemes.
 		switch (edge.get_weight()) {
 			case 9:
-				// Literal.
+				// Symbolwise match.
 				out.descbit(1);
 				out.putbyte(Buffer[pos]);
 #ifdef COUNT_FREQUENCIES
@@ -228,7 +234,7 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 #endif
 				break;
 			case 12:
-				// Inline RLE.
+				// Inline dictionary match.
 				out.descbit(0);
 				out.descbit(0);
 				len -= 2;
@@ -241,18 +247,18 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 				break;
 			case 18:
 			case 26: {
-				// Separate RLE.
+				// Separate dictionary match.
 				out.descbit(0);
 				out.descbit(1);
 				dist = (-dist) & 0x1FFF;
 				unsigned short high = (dist >> 5) & 0xF8,
 				               low  = (dist & 0xFF);
 				if (edge.get_weight() == 18) {
-					// 2-byte RLE.
+					// 2-byte dictionary match.
 					out.putbyte(low);
 					out.putbyte(high | (len - 2));
 				} else {
-					// 3-byte RLE.
+					// 3-byte dictionary match.
 					out.putbyte(low);
 					out.putbyte(high);
 					out.putbyte(len - 1);
@@ -288,8 +294,8 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 	out.putbyte(0x00);
 }
 
-bool kosinski::encode(istream &Src, ostream &Dst, streamoff SlideWin,
-                      streamoff RecLen, bool Moduled, streamoff ModuleSize,
+bool kosinski::encode(istream &Src, ostream &Dst, streamoff szSearchBuffer,
+                      streamoff szLookAhead, bool Moduled, streamoff ModuleSize,
                       streamsize const ModulePadding) {
 	Src.seekg(0, ios::end);
 	streamsize BSize = Src.tellg();
@@ -314,7 +320,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, streamoff SlideWin,
 			// We want to manage internal padding for all modules but the last.
 			CompBytes += BSize;
 			streamsize const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
-			encode_internal(Dst, ptr, SlideWin, RecLen, BSize, Padding);
+			encode_internal(Dst, ptr, szSearchBuffer, szLookAhead, BSize, Padding);
 
 			ptr += BSize;
 
@@ -335,7 +341,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, streamoff SlideWin,
 			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else
-		encode_internal(Dst, ptr, SlideWin, RecLen, BSize, 1u);
+		encode_internal(Dst, ptr, szSearchBuffer, szLookAhead, BSize, 1u);
 
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0)

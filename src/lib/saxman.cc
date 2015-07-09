@@ -51,7 +51,7 @@ struct SaxmanAdaptor {
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
-		// Literal: 1-bit descriptor, 8-bit length.
+		// Symbolwise match: 1-bit descriptor, 8-bit length.
 		return 1 + 8;
 	}
 	// Computes the cost of covering all of the "len" vertices starting from
@@ -60,11 +60,11 @@ struct SaxmanAdaptor {
 	// or "no edge".
 	static size_t dictionary_weight(size_t UNUSED(dist), size_t len) noexcept {
 		// Preconditions:
-		// len > 1 && len <= RecLen && dist != 0 && dist <= SlideWin
+		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
 		if (len == 2)
 			return numeric_limits<size_t>::max();	// "infinite"
 		else
-			// RLE: 1-bit descriptor, 12-bit offset, 4-bit length.
+			// Dictionary match: 1-bit descriptor, 12-bit offset, 4-bit length.
 			return 1 + 12 + 4;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
@@ -110,13 +110,14 @@ void saxman::decode_internal(istream &in, iostream &Dst,
 	// Loop while the file is good and we haven't gone over the declared length.
 	while (in.good() && in.tellg() < BSize) {
 		if (src.descbit()) {
-			// Literal.
+			// Symbolwise match.
 			if (in.peek() == EOF)
 				break;
 			Write1(Dst, src.getbyte());
 		} else {
 			if (in.peek() == EOF)
 				break;
+			// Dictionary match.
 			// Offset and length of match.
 			size_t offset = src.getbyte();
 			size_t length = src.getbyte();
@@ -182,11 +183,11 @@ void saxman::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 		// The weight of each edge uniquely identifies how it should be written.
 		// NOTE: This needs to be changed for other LZSS schemes.
 		if (len == 1) {
-			// Literal.
+			// Symbolwise match.
 			out.descbit(1);
 			out.putbyte(Buffer[pos]);
 		} else {
-			// RLE.
+			// Dictionary match.
 			out.descbit(0);
 			size_t low = pos - dist, high = len;
 			low = (low - 0x12) & 0xFFF;
