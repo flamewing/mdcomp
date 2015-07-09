@@ -95,40 +95,37 @@ public:
  * 	typedef unsigned char  stream_t;
  * 	typedef unsigned short descriptor_t;
  * 	typedef littleendian<descriptor_t> descriptor_endian_t;
- * 	enum {
- * 		// Number of bits on descriptor bitfield.
- * 		NumDescBits = sizeof(descriptor_t) * 8,
- * 		// Number of bits used in descriptor bitfield to signal the end-of-file
- * 		// marker sequence.
- * 		NumTermBits = 2,
- * 		// Flag that tells the compressor that new descriptor fields are needed
- * 		// as soon as the last bit in the previous one is used up.
- * 		NeedEarlyDescriptor = 1,
- * 		// Flag that marks the descriptor bits as being in little-endian bit
- * 		// order (that is, lowest bits come out first).
- * 		DescriptorLittleEndianBits = 1,
- * 		// Size of the search buffer.
- * 		SearchBufSize = 8192,
- * 		// Size of the look-ahead buffer.
- * 		LookAheadBufSize = 256,
- * 		// Total size of the sliding window.
- * 		SlidingWindowSize = SearchBufSize + LookAheadBufSize
- * 	};
+ * 	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+ * 	// Number of bits used in descriptor bitfield to signal the end-of-file
+ * 	// marker sequence.
+ * 	constexpr static size_t NumTermBits = 2;
+ * 	// Flag that tells the compressor that new descriptor fields are needed
+ * 	// as soon as the last bit in the previous one is used up.
+ * 	constexpr static size_t NeedEarlyDescriptor = 1;
+ * 	// Flag that marks the descriptor bits as being in little-endian bit
+ * 	// order (that is, lowest bits come out first).
+ * 	constexpr static size_t DescriptorLittleEndianBits = 1;
+ * 	// Size of the search buffer.
+ * 	constexpr static size_t SearchBufSize = 8192;
+ * 	// Size of the look-ahead buffer.
+ * 	constexpr static size_t LookAheadBufSize = 256;
+ * 	// Total size of the sliding window.
+ * 	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
  * 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
  * 	// one single symbol..
- * 	constexpr static size_t symbolwise_weight() noexcept {
+ * 	constexpr static size_t symbolwise_weight() noexcept;
  * 	// Computes the cost of covering all of the "len" vertices starting from
  * 	// "off" vertices ago, for matches with len > 1.
  * 	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
  * 	// or "no edge".
- * 	static size_t dictionary_weight(size_t dist, size_t len)noexcept ;
+ * 	static size_t dictionary_weight(size_t dist, size_t len) noexcept;
  * 	// Given an edge, computes how many bits are used in the descriptor field.
- * 	static size_t desc_bits(AdjListNode const &edge)noexcept ;
+ * 	static size_t desc_bits(AdjListNode const &edge) noexcept;
  * 	// Function that finds extra matches in the data that are specific to the
  * 	// given encoder and not general LZSS dictionary matches.
  * 	static void extra_matches(stream_t const *data, size_t basenode,
  * 	                          size_t ubound, size_t lbound,
- * 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches)noexcept ;
+ * 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) noexcept;
  * };
  */
 template<typename Adaptor>
