@@ -1,6 +1,6 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2011-2015 <flamewing.sonic@gmail.com>
  * Copyright (C) 2002-2004 The KENS Project Development Team
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ struct KosinskiAdaptor {
 	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t dictionary_weight(size_t dist, size_t len) {
+	static size_t dictionary_weight(size_t dist, size_t len) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		if (len == 2 && dist > 256)

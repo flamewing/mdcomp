@@ -1,6 +1,6 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2013 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2011-2015 <flamewing.sonic@gmail.com>
  * Copyright (C) 2002-2004 The KENS Project Development Team
  * Copyright (C) 2002-2003 Roger Sanders (AKA Nemesis)
  *
