@@ -1,0 +1,80 @@
+*.bak
+*~
+*.sw[a-z]
+.deps
+.libs
+Makefile
+Makefile.in
+
+
+##### C/C++ #####
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lo
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+
+##### Autotools #####
+# http://www.gnu.org/software/automake
+
+Makefile.in
+config.h.in
+
+# http://www.gnu.org/software/autoconf
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+/stamp-h1
+
+##### Anjuta #####
+# Local configuration folder and symbol database
+/.anjuta/
+/.anjuta_sym_db.db
+/Debug
+/Optimized
+/Profiling
+
+##### INTL #####
+/intltool-extract.in
+/intltool-merge.in
+/intltool-update.in
+/libtool
+/ltmain.sh
