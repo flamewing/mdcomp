@@ -106,15 +106,21 @@ public:
  * 		NeedEarlyDescriptor = 1,
  * 		// Flag that marks the descriptor bits as being in little-endian bit
  * 		// order (that is, lowest bits come out first).
- * 		DescriptorLittleEndianBits = 1
+ * 		DescriptorLittleEndianBits = 1,
+ * 		// Size of the search buffer.
+ * 		SearchBufSize = 8192,
+ * 		// Size of the look-ahead buffer.
+ * 		LookAheadBufSize = 256,
+ * 		// Total size of the sliding window.
+ * 		SlidingWindowSize = SearchBufSize + LookAheadBufSize
  * 	};
- *	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
- *	// one single symbol..
- *	constexpr static size_t symbolwise_weight() noexcept {
- *	// Computes the cost of covering all of the "len" vertices starting from
- *	// "off" vertices ago, for matches with len > 1.
- *  // A return of "std::numeric_limits<size_t>::max()" means "infinite",
- *  // or "no edge".
+ * 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+ * 	// one single symbol..
+ * 	constexpr static size_t symbolwise_weight() noexcept {
+ * 	// Computes the cost of covering all of the "len" vertices starting from
+ * 	// "off" vertices ago, for matches with len > 1.
+ * 	// A return of "std::numeric_limits<size_t>::max()" means "infinite",
+ * 	// or "no edge".
  * 	static size_t dictionary_weight(size_t dist, size_t len)noexcept ;
  * 	// Given an edge, computes how many bits are used in the descriptor field.
  * 	static size_t desc_bits(AdjListNode const &edge)noexcept ;
@@ -134,10 +140,6 @@ private:
 	// Source file data and its size; one node per character in source file.
 	typename Adaptor::stream_t const *data;
 	size_t const nlen;
-	// Parameters for LZSS encoder: sliding window size and maximum record
-	// length to use when encoding.
-	size_t const szSearchBuffer;
-	size_t const szLookAhead;
 	// Account for padding at end of file, if any.
 	size_t const Padding;
 	// Adjacency lists for all the nodes in the graph.
@@ -151,8 +153,8 @@ private:
 	 */
 	MatchVector find_matches(size_t basenode) const noexcept {
 		// Upper and lower bounds for sliding window, starting node.
-		size_t ubound = std::min(szLookAhead, nlen - basenode),
-		       lbound = basenode > szSearchBuffer ? basenode - szSearchBuffer : 0,
+		size_t ubound = std::min(Adaptor::LookAheadBufSize, nlen - basenode),
+		       lbound = basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0,
 		       ii = basenode - 1;
 		// This is what we produce.
 		MatchVector matches(ubound);
@@ -189,11 +191,9 @@ private:
 public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(unsigned char const *dt, size_t const size,
-	          size_t const srchbuf, size_t const lkhead,
 	          size_t const pad) noexcept
 		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
-		  nlen(size / sizeof(typename Adaptor::stream_t)), szSearchBuffer(srchbuf),
-		  szLookAhead(lkhead), Padding(pad * 8 - 1) {
+		  nlen(size / sizeof(typename Adaptor::stream_t)), Padding(pad * 8 - 1) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		for (size_t ii = 0; ii < nlen; ii++) {

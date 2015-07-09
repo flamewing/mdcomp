@@ -28,7 +28,7 @@
 using namespace std;
 
 static void usage(char *prog) {
-	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-r {lookahead}] [-s {searchbuffer}] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << endl;
+	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << endl;
 	cerr << endl;
 	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
 	cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << endl
@@ -40,9 +40,7 @@ static void usage(char *prog) {
 	     << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << endl;
 	cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << endl
 	     << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << endl
-	     << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << endl;
-	cerr << "\t-r          \tSet size of lookahead buffer (default/maximum: 256)" << endl;
-	cerr << "\t-s          \tSets size of search buffer (default/maximum: 8192)" << endl << endl;
+	     << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -55,8 +53,7 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	streamsize pointer = 0, szSearchBuffer = 8192, szLookAhead = 256,
-	           modulesize = 0x1000, padding = 16;
+	streamsize pointer = 0, modulesize = 0x1000, padding = 16;
 
 	while (true) {
 		int option_index = 0;
@@ -80,18 +77,6 @@ int main(int argc, char *argv[]) {
 					modulesize = strtoul(optarg, 0, 0);
 				if (!modulesize)
 					modulesize = 0x1000;
-				break;
-			case 'r':
-				if (optarg)
-					szLookAhead = strtoul(optarg, 0, 0);
-				if (!szLookAhead || szLookAhead > 256)
-					szLookAhead = 256;
-				break;
-			case 's':
-				if (optarg)
-					szSearchBuffer = strtoul(optarg, 0, 0);
-				if (!szSearchBuffer || szSearchBuffer > 8192)
-					szSearchBuffer = 8192;
 				break;
 			case 'p':
 				if (optarg)
@@ -131,7 +116,7 @@ int main(int argc, char *argv[]) {
 			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
-		kosinski::encode(buffer, fout, szSearchBuffer, szLookAhead, moduled, modulesize, padding);
+		kosinski::encode(buffer, fout, moduled, modulesize, padding);
 	} else {
 		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
@@ -142,7 +127,7 @@ int main(int argc, char *argv[]) {
 		if (extract)
 			kosinski::decode(fin, fout, pointer, moduled, padding);
 		else
-			kosinski::encode(fin, fout, szSearchBuffer, szLookAhead, moduled, modulesize, padding);
+			kosinski::encode(fin, fout, moduled, modulesize, padding);
 	}
 
 	return 0;

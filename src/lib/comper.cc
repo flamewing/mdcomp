@@ -32,20 +32,24 @@ struct ComperAdaptor {
 	typedef unsigned short stream_t;
 	typedef unsigned short descriptor_t;
 	typedef bigendian<descriptor_t> descriptor_endian_t;
-	enum {
-		// Number of bits on descriptor bitfield.
-		NumDescBits = sizeof(descriptor_t) * 8,
-		// Number of bits used in descriptor bitfield to signal the end-of-file
-		// marker sequence.
-		NumTermBits = 1,
-		// Flag that tells the compressor that new descriptor fields is needed
-		// when a new bit is needed and all bits in the previous one have been
-		// used up.
-		NeedEarlyDescriptor = 0,
-		// Flag that marks the descriptor bits as being in big-endian bit
-		// order (that is, highest bits come out first).
-		DescriptorLittleEndianBits = 0
-	};
+	// Number of bits on descriptor bitfield.
+	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+	// Number of bits used in descriptor bitfield to signal the end-of-file
+	// marker sequence.
+	constexpr static size_t NumTermBits = 1;
+	// Flag that tells the compressor that new descriptor fields is needed
+	// when a new bit is needed and all bits in the previous one have been
+	// used up.
+	constexpr static size_t NeedEarlyDescriptor = 0;
+	// Flag that marks the descriptor bits as being in big-endian bit
+	// order (that is, highest bits come out first).
+	constexpr static size_t DescriptorLittleEndianBits = 0;
+	// Size of the search buffer.
+	constexpr static size_t SearchBufSize = 256;
+	// Size of the look-ahead buffer.
+	constexpr static size_t LookAheadBufSize = 256;
+	// Total size of the sliding window.
+	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
@@ -58,7 +62,7 @@ struct ComperAdaptor {
 	// or "no edge".
 	constexpr static size_t dictionary_weight(size_t UNUSED(dist), size_t UNUSED(len)) {
 		// Preconditions:
-		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
+		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
 		return 1 + 8 + 8;
 	}
@@ -123,7 +127,7 @@ bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
 void comper::encode_internal(ostream &Dst, unsigned char const *&Buffer,
                              streamsize const BSize) {
 	// Compute optimal Comper parsing of input file.
-	CompGraph enc(Buffer, BSize, 256, 256, 1u);
+	CompGraph enc(Buffer, BSize, 1u);
 	CompGraph::AdjList list = enc.find_optimal_parse();
 	CompOStream out(Dst);
 

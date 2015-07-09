@@ -39,19 +39,23 @@ struct KosinskiAdaptor {
 	typedef unsigned char  stream_t;
 	typedef unsigned short descriptor_t;
 	typedef littleendian<descriptor_t> descriptor_endian_t;
-	enum {
-		// Number of bits on descriptor bitfield.
-		NumDescBits = sizeof(descriptor_t) * 8,
-		// Number of bits used in descriptor bitfield to signal the end-of-file
-		// marker sequence.
-		NumTermBits = 2,
-		// Flag that tells the compressor that new descriptor fields are needed
-		// as soon as the last bit in the previous one is used up.
-		NeedEarlyDescriptor = 1,
-		// Flag that marks the descriptor bits as being in little-endian bit
-		// order (that is, lowest bits come out first).
-		DescriptorLittleEndianBits = 1
-	};
+	// Number of bits on descriptor bitfield.
+	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+	// Number of bits used in descriptor bitfield to signal the end-of-file
+	// marker sequence.
+	constexpr static size_t NumTermBits = 2;
+	// Flag that tells the compressor that new descriptor fields are needed
+	// as soon as the last bit in the previous one is used up.
+	constexpr static size_t NeedEarlyDescriptor = 1;
+	// Flag that marks the descriptor bits as being in little-endian bit
+	// order (that is, lowest bits come out first).
+	constexpr static size_t DescriptorLittleEndianBits = 1;
+	// Size of the search buffer.
+	constexpr static size_t SearchBufSize = 8192;
+	// Size of the look-ahead buffer.
+	constexpr static size_t LookAheadBufSize = 256;
+	// Total size of the sliding window.
+	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
@@ -64,7 +68,7 @@ struct KosinskiAdaptor {
 	// or "no edge".
 	static size_t dictionary_weight(size_t dist, size_t len) {
 		// Preconditions:
-		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
+		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		if (len == 2 && dist > 256)
 			// Can't represent this except by inlining both nodes.
 			return numeric_limits<size_t>::max();	// "infinite"
@@ -202,14 +206,12 @@ bool kosinski::decode(istream &Src, iostream &Dst,
 }
 
 void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                               streamoff szSearchBuffer, streamoff szLookAhead,
-                               streamsize const BSize,
-                               streamsize const Padding) {
+                               streamsize const BSize, streamsize const Padding) {
 	typedef LZSSGraph<KosinskiAdaptor> KosGraph;
 	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
 	// Compute optimal Kosinski parsing of input file.
-	KosGraph enc(Buffer, BSize, szSearchBuffer, szLookAhead, Padding);
+	KosGraph enc(Buffer, BSize, Padding);
 	typename KosGraph::AdjList list = enc.find_optimal_parse();
 	KosOStream out(Dst);
 #ifdef COUNT_FREQUENCIES
@@ -294,8 +296,7 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 	out.putbyte(0x00);
 }
 
-bool kosinski::encode(istream &Src, ostream &Dst, streamoff szSearchBuffer,
-                      streamoff szLookAhead, bool Moduled, streamoff ModuleSize,
+bool kosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleSize,
                       streamsize const ModulePadding) {
 	Src.seekg(0, ios::end);
 	streamsize BSize = Src.tellg();
@@ -320,7 +321,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, streamoff szSearchBuffer,
 			// We want to manage internal padding for all modules but the last.
 			CompBytes += BSize;
 			streamsize const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
-			encode_internal(Dst, ptr, szSearchBuffer, szLookAhead, BSize, Padding);
+			encode_internal(Dst, ptr, BSize, Padding);
 
 			ptr += BSize;
 
@@ -341,7 +342,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, streamoff szSearchBuffer,
 			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else
-		encode_internal(Dst, ptr, szSearchBuffer, szLookAhead, BSize, 1u);
+		encode_internal(Dst, ptr, BSize, 1u);
 
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0)

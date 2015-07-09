@@ -34,20 +34,24 @@ struct SaxmanAdaptor {
 	typedef unsigned char stream_t;
 	typedef unsigned char descriptor_t;
 	typedef littleendian<descriptor_t> descriptor_endian_t;
-	enum {
-		// Number of bits on descriptor bitfield.
-		NumDescBits = sizeof(descriptor_t) * 8,
-		// Number of bits used in descriptor bitfield to signal the end-of-file
-		// marker sequence.
-		NumTermBits = 0,
-		// Flag that tells the compressor that new descriptor fields is needed
-		// when a new bit is needed and all bits in the previous one have been
-		// used up.
-		NeedEarlyDescriptor = 0,
-		// Flag that marks the descriptor bits as being in little-endian bit
-		// order (that is, lowest bits come out first).
-		DescriptorLittleEndianBits = 1
-	};
+	// Number of bits on descriptor bitfield.
+	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+	// Number of bits used in descriptor bitfield to signal the end-of-file
+	// marker sequence.
+	constexpr static size_t NumTermBits = 0;
+	// Flag that tells the compressor that new descriptor fields is needed
+	// when a new bit is needed and all bits in the previous one have been
+	// used up.
+	constexpr static size_t NeedEarlyDescriptor = 0;
+	// Flag that marks the descriptor bits as being in little-endian bit
+	// order (that is, lowest bits come out first).
+	constexpr static size_t DescriptorLittleEndianBits = 1;
+	// Size of the search buffer.
+	constexpr static size_t SearchBufSize = 4096;
+	// Size of the look-ahead buffer.
+	constexpr static size_t LookAheadBufSize = 18;
+	// Total size of the sliding window.
+	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
@@ -60,7 +64,7 @@ struct SaxmanAdaptor {
 	// or "no edge".
 	static size_t dictionary_weight(size_t UNUSED(dist), size_t len) noexcept {
 		// Preconditions:
-		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
+		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		if (len == 2)
 			return numeric_limits<size_t>::max();	// "infinite"
 		else
@@ -170,7 +174,7 @@ bool saxman::decode(istream &Src, iostream &Dst,
 void saxman::encode_internal(ostream &Dst, unsigned char const *&Buffer,
                              streamsize const BSize) {
 	// Compute optimal Saxman parsing of input file.
-	SaxGraph enc(Buffer, BSize, 0x1000, 0x12, 1u);
+	SaxGraph enc(Buffer, BSize, 1u);
 	SaxGraph::AdjList list = enc.find_optimal_parse();
 	SaxOStream out(Dst);
 
