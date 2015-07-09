@@ -48,31 +48,34 @@ struct SaxmanAdaptor {
 		// order (that is, lowest bits come out first).
 		DescriptorLittleEndianBits = 1
 	};
+	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+	// one single symbol..
+	constexpr static size_t symbolwise_weight() noexcept {
+		// Literal: 1-bit descriptor, 8-bit length.
+		return 1 + 8;
+	}
 	// Computes the cost of covering all of the "len" vertices starting from
-	// "off" vertices ago.
+	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t calc_weight(size_t UNUSED(dist), size_t len) {
+	static size_t dictionary_weight(size_t UNUSED(dist), size_t len) noexcept {
 		// Preconditions:
-		// len != 0 && len <= RecLen && dist != 0 && dist <= SlideWin
-		if (len == 1)
-			// Literal: 1-bit descriptor, 8-bit length.
-			return 1 + 8;
-		else if (len == 2)
+		// len > 1 && len <= RecLen && dist != 0 && dist <= SlideWin
+		if (len == 2)
 			return numeric_limits<size_t>::max();	// "infinite"
 		else
 			// RLE: 1-bit descriptor, 12-bit offset, 4-bit length.
 			return 1 + 12 + 4;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &UNUSED(edge)) {
+	static size_t desc_bits(AdjListNode const &UNUSED(edge)) noexcept {
 		// Saxman always uses a single bit descriptor.
 		return 1;
 	}
 	// Saxman allows encoding of a sequence of zeroes with no previous match.
 	static void extra_matches(stream_t const *data, size_t basenode,
 	                          size_t ubound, size_t UNUSED(lbound),
-	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) {
+	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
 		// Can't encode zero match after this point.
 		if (basenode >= 0xFFF)
 			return;
@@ -91,7 +94,7 @@ struct SaxmanAdaptor {
 		}
 	}
 	// Saxman needs no additional padding at the end-of-file.
-	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) {
+	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) noexcept {
 		return 0;
 	}
 };

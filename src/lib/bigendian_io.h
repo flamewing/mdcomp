@@ -34,56 +34,56 @@
 #	define UNUSED(x) x
 #endif
 
-inline size_t Read1(std::istream &in) {
+inline size_t Read1(std::istream &in) noexcept {
 	size_t c = static_cast<unsigned char>(in.get());
 	return c;
 }
 
-inline size_t Read1(char const *& in) {
+inline size_t Read1(char const *& in) noexcept {
 	size_t c = static_cast<unsigned char>(*in++);
 	return c;
 }
 
-inline size_t Read1(unsigned char const *& in) {
+inline size_t Read1(unsigned char const *& in) noexcept {
 	size_t c = *in++;
 	return c;
 }
 
-inline size_t Read1(std::istream_iterator<unsigned char>& in) {
+inline size_t Read1(std::istream_iterator<unsigned char>& in) noexcept {
 	size_t c = *in++;
 	return c;
 }
 
-inline void Write1(std::ostream &out, size_t c) {
+inline void Write1(std::ostream &out, size_t c) noexcept {
 	out.put(static_cast<char>(c & 0xff));
 }
 
-inline void Write1(char *&out, size_t c) {
+inline void Write1(char *&out, size_t c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
-inline void Write1(unsigned char *&out, size_t c) {
+inline void Write1(unsigned char *&out, size_t c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
-inline void Write1(std::string &out, size_t c) {
+inline void Write1(std::string &out, size_t c) noexcept {
 	out.push_back(static_cast<char>(c & 0xff));
 }
 
-inline void Write1(std::ostream_iterator<unsigned char>&out, size_t c) {
+inline void Write1(std::ostream_iterator<unsigned char>&out, size_t c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
 namespace BigEndian {
 	template <typename T>
-	inline size_t Read2(T &in) {
+	inline size_t Read2(T &in) noexcept {
 		size_t c = Read1(in) << 8;
 		c |= Read1(in);
 		return c;
 	}
 
 	template <typename T>
-	inline size_t Read4(T &in) {
+	inline size_t Read4(T &in) noexcept {
 		size_t c = Read1(in) << 24;
 		c |= Read1(in) << 16;
 		c |= Read1(in) << 8;
@@ -92,7 +92,7 @@ namespace BigEndian {
 	}
 
 	template <typename T, int N>
-	inline size_t ReadN(T &in) {
+	inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < N; i++)
 			c = (c << 8) | Read1(in);
@@ -100,13 +100,13 @@ namespace BigEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t c) {
+	inline void Write2(T &out, size_t c) noexcept {
 		Write1(out, (c & 0xff00) >> 8);
 		Write1(out, c & 0xff);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t c) {
+	inline void Write4(T &out, size_t c) noexcept {
 		Write1(out, (c & 0xff000000) >> 24);
 		Write1(out, (c & 0x00ff0000) >> 16);
 		Write1(out, (c & 0x0000ff00) >> 8);
@@ -114,7 +114,7 @@ namespace BigEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t c) {
+	inline void WriteN(T &out, size_t c) noexcept {
 		for (int i = 8 * (N - 1); i >= 0; i -= 8)
 			Write1(out, (c >> i) & 0xff);
 	}
@@ -122,14 +122,14 @@ namespace BigEndian {
 
 namespace LittleEndian {
 	template <typename T>
-	inline size_t Read2(T &in) {
+	inline size_t Read2(T &in) noexcept {
 		size_t c = Read1(in);
 		c |= Read1(in) << 8;
 		return c;
 	}
 
 	template <typename T>
-	inline size_t Read4(T &in) {
+	inline size_t Read4(T &in) noexcept {
 		size_t c = Read1(in);
 		c |= Read1(in) << 8;
 		c |= Read1(in) << 16;
@@ -138,7 +138,7 @@ namespace LittleEndian {
 	}
 
 	template <typename T, int N>
-	inline size_t ReadN(T &in) {
+	inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < 8 * N; i += 8)
 			c = c | (Read1(in) << i);
@@ -146,13 +146,13 @@ namespace LittleEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t c) {
+	inline void Write2(T &out, size_t c) noexcept {
 		Write1(out, c & 0xff);
 		Write1(out, (c & 0xff00) >> 8);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t c) {
+	inline void Write4(T &out, size_t c) noexcept {
 		Write1(out, (c & 0x000000ff));
 		Write1(out, (c & 0x0000ff00) >> 8);
 		Write1(out, (c & 0x00ff0000) >> 16);
@@ -160,7 +160,7 @@ namespace LittleEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t c) {
+	inline void WriteN(T &out, size_t c) noexcept {
 		for (size_t i = 0; i < 8 * N; i += 8)
 			Write1(out, (c >> i) & 0xff);
 	}
