@@ -149,6 +149,10 @@ private:
 	 * into a map.
 	 */
 	MatchVector find_matches(size_t basenode) const noexcept {
+		static_assert(noexcept(Adaptor::symbolwise_weight()),
+		                       "Adaptor::symbolwise_weight() is not noexcept");
+		static_assert(noexcept(Adaptor::dictionary_weight(basenode, basenode)),
+		                       "Adaptor::dictionary_weight() is not noexcept");
 		// Upper and lower bounds for sliding window, starting node.
 		size_t ubound = std::min(Adaptor::LookAheadBufSize, nlen - basenode),
 		       lbound = basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0,
@@ -159,6 +163,8 @@ private:
 		size_t wgt = Adaptor::symbolwise_weight();
 		matches[0] = AdjListNode(basenode + 1, 0, 1, wgt);
 		// Get extra dictionary matches dependent on specific encoder.
+		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
+		                       "Adaptor::extra_matches() is not noexcept");
 		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
 		if (basenode == 0) {
@@ -209,6 +215,10 @@ public:
 	 * This function returns the shortest path through the file.
 	 */
 	AdjList find_optimal_parse() const noexcept {
+		static_assert(noexcept(Adaptor::desc_bits(AdjListNode())),
+		                       "Adaptor::desc_bits() is not noexcept");
+		static_assert(noexcept(Adaptor::get_padding(0, 0)),
+		                       "Adaptor::get_padding() is not noexcept");
 		// Auxiliary data structures:
 		// * The parent of a node is the node that reaches that node with the
 		//   lowest cost from the start of the file.

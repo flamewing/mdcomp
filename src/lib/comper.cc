@@ -60,7 +60,7 @@ struct ComperAdaptor {
 	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	constexpr static size_t dictionary_weight(size_t UNUSED(dist), size_t UNUSED(len)) {
+	constexpr static size_t dictionary_weight(size_t UNUSED(dist), size_t UNUSED(len)) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
