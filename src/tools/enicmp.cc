@@ -47,14 +47,16 @@ int main(int argc, char *argv[]) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, "x::p",
 		                    long_options, &option_index);
-		if (c == -1)
+		if (c == -1) {
 			break;
+		}
 
 		switch (c) {
 			case 'x':
 				extract = true;
-				if (optarg)
+				if (optarg) {
 					pointer = strtoul(optarg, 0, 0);
+				}
 				break;
 
 			case 'p':
@@ -80,10 +82,11 @@ int main(int argc, char *argv[]) {
 		return 3;
 	}
 
-	if (extract)
+	if (extract) {
 		enigma::decode(fin, fout, pointer, padding);
-	else
+	} else {
 		enigma::encode(fin, fout, padding);
+	}
 
 	return 0;
 }

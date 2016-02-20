@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _BITSTREAM_H_
-#define _BITSTREAM_H_
+#ifndef __LIB_BITSTREAM_H
+#define __LIB_BITSTREAM_H
 
 #include <iosfwd>
+#include "bigendian_io.h"
 
 template <typename T>
 class bigendian {
@@ -70,14 +71,16 @@ private:
 		return LittleEndianBits ? reverseBits(bits) : bits;
 	}
 	void check_buffer() noexcept {
-		if (readbits)
+		if (readbits) {
 			return;
+		}
 
 		bitbuffer = read_bits();
-		if (src.good())
+		if (src.good()) {
 			readbits = sizeof(T) * 8;
-		else
+		} else {
 			readbits = 16;
+		}
 	}
 public:
 	ibitstream(std::istream &s) noexcept : src(s), readbits(sizeof(T) * 8) {
@@ -87,21 +90,24 @@ public:
 	// gets a new T from the actual stream once all bits in the current T has
 	// been used up.
 	T pop() noexcept {
-		if (!EarlyRead)
+		if (!EarlyRead) {
 			check_buffer();
+		}
 		--readbits;
 		T bit = (bitbuffer >> readbits) & 1;
 		bitbuffer ^= (bit << readbits);
-		if (EarlyRead)
+		if (EarlyRead) {
 			check_buffer();
+		}
 		return bit;
 	}
 	// Reads up to sizeof(T) * 8 bits from the stream. This remembers previously
 	// read bits, and gets another T from the actual stream once all bits in the
 	// current T have been read.
 	T read(unsigned char cnt) noexcept {
-		if (!EarlyRead)
+		if (!EarlyRead) {
 			check_buffer();
+		}
 		T bits;
 		if (readbits < cnt) {
 			int delta = (cnt - readbits);
@@ -116,8 +122,9 @@ public:
 			bits = bitbuffer >> readbits;
 			bitbuffer ^= (bits << readbits);
 		}
-		if (EarlyRead)
+		if (EarlyRead) {
 			check_buffer();
+		}
 		return bits;
 	}
 	int have_waiting_bits() const noexcept {
@@ -186,4 +193,4 @@ public:
 	}
 };
 
-#endif // _BITSTREAM_H_
+#endif // __LIB_BITSTREAM_H

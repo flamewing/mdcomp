@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SAXMAN_H_
-#define _SAXMAN_H_
+#ifndef __LIB_SAXMAN_H
+#define __LIB_SAXMAN_H
 
 #include <iosfwd>
 
@@ -34,4 +34,4 @@ public:
 	static bool encode(std::istream &Src, std::ostream &Dst, bool WithSize = true);
 };
 
-#endif // _SAXMAN_H_
+#endif // __LIB_SAXMAN_H

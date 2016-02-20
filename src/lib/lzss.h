@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _LZSS_H_
-#define _LZSS_H_
+#ifndef __LIB_LZSS_H
+#define __LIB_LZSS_H
 
 #include <iosfwd>
 #include <limits>
@@ -73,16 +73,18 @@ public:
 	// Comparison operator. Lowest weight first, on tie, break by shortest
 	// length, on further tie break by distance. Used only on the multimap.
 	bool operator<(AdjListNode const &other) const noexcept {
-		if (weight < other.weight)
+		if (weight < other.weight) {
 			return true;
-		else if (weight > other.weight)
+		} else if (weight > other.weight) {
 			return false;
-		if (length < other.length)
+		}
+		if (length < other.length) {
 			return true;
-		else if (length > other.length)
+		} else if (length > other.length) {
 			return false;
-		else
+		} else {
 			return distance < other.distance;
+		}
 	}
 };
 
@@ -184,8 +186,9 @@ private:
 					best = std::move(AdjListNode(basenode + jj, basenode - ii, jj, wgt));
 				}
 				// We can find no more matches with the current starting node.
-				if (jj >= ubound)
+				if (jj >= ubound) {
 					break;
+				}
 			}
 		} while (ii-- > lbound);
 
@@ -393,4 +396,4 @@ public:
 	}
 };
 
-#endif // _LZSS_H_
+#endif // __LIB_LZSS_H

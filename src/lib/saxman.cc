@@ -65,11 +65,12 @@ struct SaxmanAdaptor {
 	static size_t dictionary_weight(size_t UNUSED(dist), size_t len) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
-		if (len == 2)
-			return numeric_limits<size_t>::max();	// "infinite"
-		else
+		if (len == 2) {
+			return numeric_limits<size_t>::max();   // "infinite"
+		} else {
 			// Dictionary match: 1-bit descriptor, 12-bit offset, 4-bit length.
 			return 1 + 12 + 4;
+		}
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
 	static size_t desc_bits(AdjListNode const &UNUSED(edge)) noexcept {
@@ -81,13 +82,15 @@ struct SaxmanAdaptor {
 	                          size_t ubound, size_t UNUSED(lbound),
 	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
 		// Can't encode zero match after this point.
-		if (basenode >= 0xFFF)
+		if (basenode >= 0xFFF) {
 			return;
+		}
 		// Try matching zeroes.
 		size_t jj = 0;
 		while (data[basenode + jj] == 0) {
-			if (++jj >= ubound)
+			if (++jj >= ubound) {
 				break;
+			}
 		}
 		// Need at least 3 zeroes in sequence.
 		if (jj >= 3) {
@@ -115,12 +118,14 @@ void saxman::decode_internal(istream &in, iostream &Dst,
 	while (in.good() && in.tellg() < BSize) {
 		if (src.descbit()) {
 			// Symbolwise match.
-			if (in.peek() == EOF)
+			if (in.peek() == EOF) {
 				break;
+			}
 			Write1(Dst, src.getbyte());
 		} else {
-			if (in.peek() == EOF)
+			if (in.peek() == EOF) {
 				break;
+			}
 			// Dictionary match.
 			// Offset and length of match.
 			size_t offset = src.getbyte();

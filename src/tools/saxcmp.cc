@@ -48,19 +48,21 @@ int main(int argc, char *argv[]) {
 
 	bool extract = false, crunch = false, WithSize = true;
 	streamsize pointer = 0, BSize = 0;
-	
+
 	while (true) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, "x::cs:S",
 		                    long_options, &option_index);
-		if (c == -1)
+		if (c == -1) {
 			break;
+		}
 
 		switch (c) {
 			case 'x':
 				extract = true;
-				if (optarg)
+				if (optarg) {
 					pointer = strtoul(optarg, 0, 0);
+				}
 				break;
 			case 'c':
 				crunch = true;
@@ -115,10 +117,11 @@ int main(int argc, char *argv[]) {
 			return 3;
 		}
 
-		if (extract)
+		if (extract) {
 			saxman::decode(fin, fout, pointer, BSize);
-		else
+		} else {
 			saxman::encode(fin, fout, WithSize);
+		}
 	}
 
 	return 0;

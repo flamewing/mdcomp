@@ -59,30 +59,36 @@ int main(int argc, char *argv[]) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, "x::m::cr:s:p:",
 		                    long_options, &option_index);
-		if (c == -1)
+		if (c == -1) {
 			break;
+		}
 
 		switch (c) {
 			case 'x':
 				extract = true;
-				if (optarg)
+				if (optarg) {
 					pointer = strtoul(optarg, 0, 0);
+				}
 				break;
 			case 'c':
 				crunch = true;
 				break;
 			case 'm':
 				moduled = true;
-				if (optarg)
+				if (optarg) {
 					modulesize = strtoul(optarg, 0, 0);
-				if (!modulesize)
+				}
+				if (!modulesize) {
 					modulesize = 0x1000;
+				}
 				break;
 			case 'p':
-				if (optarg)
+				if (optarg) {
 					padding = strtoul(optarg, 0, 0);
-				if (!padding || (padding & (padding - 1)) != 0)
+				}
+				if (!padding || (padding & (padding - 1)) != 0) {
 					padding = 16;
+				}
 				break;
 		}
 	}
@@ -124,10 +130,11 @@ int main(int argc, char *argv[]) {
 			return 3;
 		}
 
-		if (extract)
+		if (extract) {
 			kosinski::decode(fin, fout, pointer, moduled, padding);
-		else
+		} else {
 			kosinski::encode(fin, fout, moduled, modulesize, padding);
+		}
 	}
 
 	return 0;

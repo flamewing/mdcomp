@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _KOSINSKI_H_
-#define _KOSINSKI_H_
+#ifndef __LIB_KOSINSKI_H
+#define __LIB_KOSINSKI_H
 
 #include <iosfwd>
 class kosinski {
@@ -35,4 +35,4 @@ public:
 	                   std::streamsize const ModulePadding = 16u);
 };
 
-#endif // _KOSINSKI_H_
+#endif // __LIB_KOSINSKI_H

@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ENIGMA_H_
-#define _ENIGMA_H_
+#ifndef __LIB_ENIGMA_H
+#define __LIB_ENIGMA_H
 
 #include <iosfwd>
 
@@ -32,4 +32,4 @@ public:
 	static bool encode(std::istream &Src, std::ostream &Dst, bool padding = false);
 };
 
-#endif // _ENIGMA_H_
+#endif // __LIB_ENIGMA_H

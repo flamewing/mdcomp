@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _COMPER_H_
-#define _COMPER_H_
+#ifndef __LIB_COMPER_H
+#define __LIB_COMPER_H
 
 #include <iosfwd>
 
@@ -33,4 +33,4 @@ public:
 	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 
-#endif // _COMPER_H_
+#endif // __LIB_COMPER_H
