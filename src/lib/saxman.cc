@@ -214,7 +214,7 @@ bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
 	Src.seekg(0, ios::end);
 	streamsize BSize = Src.tellg();
 	Src.seekg(0);
-	char *const Buffer = new char[BSize];
+	auto const Buffer = new char[BSize];
 	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
 	Src.read(Buffer, BSize);
 

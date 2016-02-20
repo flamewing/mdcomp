@@ -157,7 +157,7 @@ base_flag_io *base_flag_io::create(size_t n) {
 			return new flag_io<0x1f>;
 		default:
 			cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << endl;
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -288,9 +288,7 @@ static inline void flush_buffer(vector<unsigned short> &buf,
 	}
 
 	bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
-	for (vector<unsigned short>::iterator it = buf.begin();
-	        it != buf.end(); ++it) {
-		unsigned short v = *it;
+	for (auto v : buf) {
 		mask->write_bitfield(bits, v);
 		bits.write(v & 0x7ff, packet_length);
 	}
@@ -325,8 +323,7 @@ void enigma::encode_internal(istream &Src, ostream &Dst) {
 
 	// Find the most common 2-byte value.
 	Compare_count cmp;
-	map<unsigned short, size_t>::iterator high = max_element(counts.begin(),
-	        counts.end(), cmp);
+	auto high = max_element(counts.begin(), counts.end(), cmp);
 	unsigned short const common_value = high->first;
 	// No longer needed.
 	counts.clear();
@@ -335,14 +332,10 @@ void enigma::encode_internal(istream &Src, ostream &Dst) {
 	// The original algorithm does this for all 65536 2-byte words, while
 	// this version only checks the 2-byte words actually in the file.
 	map<unsigned short, size_t> runs;
-	for (set<unsigned short>::iterator it = elems.begin();
-	        it != elems.end(); ++it) {
-		unsigned short next = *it;
-		map<unsigned short, size_t>::iterator val =
-		    runs.insert(pair<unsigned short, size_t>(next, 0)).first;
-		for (vector<unsigned short>::iterator it2 = unpack.begin();
-		        it2 != unpack.end(); ++it2) {
-			if (*it2 == next) {
+	for (auto next : elems) {
+		auto val = runs.insert(pair<unsigned short, size_t>(next, 0)).first;
+		for (auto & elem : unpack) {
+			if (elem == next) {
 				next++;
 				val->second += 1;
 			}
@@ -352,8 +345,7 @@ void enigma::encode_internal(istream &Src, ostream &Dst) {
 	elems.clear();
 
 	// Find the starting 2-byte value with the longest incrementing run.
-	map<unsigned short, size_t>::iterator incr = max_element(runs.begin(),
-	        runs.end(), cmp);
+	auto incr = max_element(runs.begin(), runs.end(), cmp);
 	unsigned short incrementing_value = incr->first;
 	// No longer needed.
 	runs.clear();

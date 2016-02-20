@@ -205,11 +205,10 @@ public:
 		for (size_t ii = 0; ii < nlen; ii++) {
 			// Find all matches for all subsequent nodes.
 			MatchVector const matches = find_matches(ii);
-			for (MatchVector::const_iterator it = matches.begin();
-			     it != matches.end(); ++it) {
+			for (const auto & match : matches) {
 				// Insert the best (lowest cost) edge linking these two nodes.
-				if (it->get_weight() != std::numeric_limits<size_t>::max()) {
-					adjs[ii].push_back(*it);
+				if (match.get_weight() != std::numeric_limits<size_t>::max()) {
+					adjs[ii].push_back(match);
 				}
 			}
 		}
@@ -247,12 +246,11 @@ public:
 			AdjList const &list = adjs[ii];
 			// Get remaining unused descriptor bits up to this node.
 			size_t basedesc = desccosts[ii];
-			for (AdjList::const_iterator it = list.begin();
-			        it != list.end(); ++it) {
+			for (const auto & elem : list) {
 				// Need destination ID and edge weight.
-				size_t nextnode = it->get_dest(), wgt = it->get_weight();
+				size_t nextnode = elem.get_dest(), wgt = elem.get_weight();
 				// Compute remaining unused bits from using this edge.
-				size_t desccost = basedesc + Adaptor::desc_bits(*it);
+				size_t desccost = basedesc + Adaptor::desc_bits(elem);
 				desccost %= Adaptor::NumDescBits;
 				if (nextnode == nlen) {
 					// This is the ending node. Add the descriptor bits for the
@@ -276,7 +274,7 @@ public:
 					// If so, update the data structures with new best edge.
 					costs[nextnode] = costs[ii] + wgt;
 					parents[nextnode] = ii;
-					pedges[nextnode] = *it;
+					pedges[nextnode] = elem;
 					desccosts[nextnode] = desccost;
 				}
 			}

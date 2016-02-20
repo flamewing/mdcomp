@@ -142,7 +142,7 @@ public:
 	}
 	// This tells if the node is a leaf or a branch.
 	bool is_leaf() const {
-		return child0 == 0 && child1 == 0;
+		return child0 == nullptr && child1 == nullptr;
 	}
 	// Getters/setters for all properties.
 	shared_ptr<node const> get_child0() const {
@@ -434,50 +434,49 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 	size_t tempsize_est = 3 * 8;
 	size_t last = 0xff;
 	// Start with any nibble runs with their own code.
-	for (NibbleCodeMap::iterator it = tempcodemap.begin();
-	        it != tempcodemap.end(); ++it) {
+	for (auto & elem : tempcodemap) {
 		// Each new nibble needs an extra byte.
-		if (last != it->first.get_nibble()) {
+		if (last != elem.first.get_nibble()) {
 			tempsize_est += 8;
 			// Be sure to SET the last nibble to the current nibble... this
 			// fixes a bug that caused file sizes to increase in some cases.
-			last = it->first.get_nibble();
+			last = elem.first.get_nibble();
 		}
 		// 2 bytes per nibble run in the table.
 		tempsize_est += 2 * 8;
 		// How many bits this nibble run uses in the file.
-		tempsize_est += counts[it->first] * (it->second).len;
+		tempsize_est += counts[elem.first] * (elem.second).len;
 	}
 
 	// Supplementary code map for the nibble runs that can be broken up into
 	// shorter nibble runs with a smaller bit length than inlining.
 	NibbleCodeMap supcodemap;
 	// Now we will compute the size requirements for inline nibble runs.
-	for (RunCountMap::iterator it = counts.begin(); it != counts.end(); ++it) {
+	for (auto & count : counts) {
 		// Find out if this nibble run has a code for it.
-		NibbleCodeMap::iterator it2 = tempcodemap.find(it->first);
+		auto it2 = tempcodemap.find(count.first);
 		if (it2 == tempcodemap.end()) {
 			// Nibble run does not have its own code. We need to find out if
 			// we can break it up into smaller nibble runs with total code
 			// size less than 13 bits or if we need to inline it (13 bits).
-			if (it->first.get_count() == 0) {
+			if (count.first.get_count() == 0) {
 				// If this is a nibble run with zero repeats, we can't break
 				// it up into smaller runs, so we inline it.
-				tempsize_est += (6 + 7) * it->second;
-			} else if (it->first.get_count() == 1) {
+				tempsize_est += (6 + 7) * count.second;
+			} else if (count.first.get_count() == 1) {
 				// We stand a chance of breaking the nibble run.
 
 				// This case is rather trivial, so we hard-code it.
 				// We can break this up only as 2 consecutive runs of a nibble
 				// run with count == 0.
-				nibble_run trg {it->first.get_nibble(), 0};
+				nibble_run trg {count.first.get_nibble(), 0};
 				it2 = tempcodemap.find(trg);
 				if (it2 == tempcodemap.end() || (it2->second).len > 6) {
 					// The smaller nibble run either does not have its own code
 					// or it results in a longer bit code when doubled up than
 					// would result from inlining the run. In either case, we
 					// inline the nibble run.
-					tempsize_est += (6 + 7) * it->second;
+					tempsize_est += (6 + 7) * count.second;
 				} else {
 					// The smaller nibble run has a small enough code that it is
 					// more efficient to use it twice than to inline our nibble
@@ -488,9 +487,9 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 					unsigned char len = (it2->second).len;
 					code = (code << len) | code;
 					len <<= 1;
-					tempsize_est += len * it->second;
+					tempsize_est += len * count.second;
 					len |= 0x80;    // Flag this as a false code.
-					supcodemap[it->first] = Code {code, len};
+					supcodemap[count.first] = Code {code, len};
 				}
 			} else {
 				// We stand a chance of breaking it the nibble run.
@@ -525,7 +524,7 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 					{0, 2, 0, 1, 0, 0, 0}, {0, 1, 2, 0, 0, 0, 0}, {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
 					{0, 0, 0, 2, 0, 0, 0}
 				};
-				size_t n = it->first.get_count(), rows;
+				size_t n = count.first.get_count(), rows;
 				// Get correct coefficient table:
 				switch (n) {
 					case 2:
@@ -555,7 +554,7 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 						break;
 				}
 
-				unsigned char nibble = it->first.get_nibble();
+				unsigned char nibble = count.first.get_nibble();
 				// Vector containing the code length of each nibble run, or 13
 				// if the nibble run is not in the codemap.
 				vector<size_t> runlen;
@@ -563,7 +562,7 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 				for (size_t i = 0; i < n; i++) {
 					// Is this run in the codemap?
 					nibble_run trg(nibble, i);
-					NibbleCodeMap::iterator it3 = tempcodemap.find(trg);
+					auto it3 = tempcodemap.find(trg);
 					if (it3 == tempcodemap.end()) {
 						// It is not.
 						// Put inline length in the vector.
@@ -611,7 +610,7 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 						}
 						// Is this run in the codemap?
 						nibble_run trg(nibble, i);
-						NibbleCodeMap::iterator it3 = tempcodemap.find(trg);
+						auto it3 = tempcodemap.find(trg);
 						if (it3 != tempcodemap.end()) {
 							// It is; it MUST be, as the other case is impossible
 							// by construction.
@@ -625,18 +624,18 @@ static size_t estimate_file_size(NibbleCodeMap &tempcodemap, RunCountMap &counts
 					if (len != best_size) {
 						// ERROR! DANGER! THIS IS IMPOSSIBLE!
 						// But just in case...
-						tempsize_est += (6 + 7) * it->second;
+						tempsize_est += (6 + 7) * count.second;
 					} else {
 						// By construction, best_size is at most 12.
 						// Flag it as a false code.
 						unsigned char len = best_size | 0x80;
 						// Add it to supplementary code map.
-						supcodemap[it->first] = Code {code, len};
-						tempsize_est += best_size * it->second;
+						supcodemap[count.first] = Code {code, len};
+						tempsize_est += best_size * count.second;
 					}
 				} else {
 					// No, we will have to inline it.
-					tempsize_est += (6 + 7) * it->second;
+					tempsize_est += (6 + 7) * count.second;
 				}
 			}
 		}
@@ -690,11 +689,11 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 	// Build the basic coin collection.
 	NodeVector qt;
 	qt.reserve(counts.size());
-	for (RunCountMap::iterator it = counts.begin(); it != counts.end(); ++it) {
+	for (auto & count : counts) {
 		// No point in including anything with weight less than 2, as they
 		// would actually increase compressed file size if used.
-		if (it->second > 1) {
-			qt.push_back(shared_ptr<node>(new node(it->first, it->second)));
+		if (count.second > 1) {
+			qt.push_back(shared_ptr<node>(new node(count.first, count.second)));
 		}
 	}
 	// This may seem useless, but my tests all indicate that this reduces the
@@ -769,8 +768,8 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 		// multiple coins associated with each nibble run) -- this number is the
 		// optimal bit length for the nibble run for the current coin collection.
 		CodeSizeMap basesizemap;
-		for (NodeVector::iterator it = solution.begin(); it != solution.end(); ++it) {
-			(*it)->traverse(basesizemap);
+		for (auto & elem : solution) {
+			(elem)->traverse(basesizemap);
 		}
 
 		// With the length-limited Huffman coding problem solved, it is now time
@@ -787,12 +786,11 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 		// then by frequency of the nibble run, then by the nibble run.
 		typedef multiset<SizeFreqNibble, Compare_size> SizeSet;
 		SizeSet sizemap;
-		for (CodeSizeMap::iterator it = basesizemap.begin();
-		        it != basesizemap.end(); ++it) {
-			unsigned char size = it->second;
-			size_t count = counts[it->first];
+		for (auto & elem : basesizemap) {
+			unsigned char size = elem.second;
+			size_t count = counts[elem.first];
 			sizecounts[size - 1]++;
-			sizemap.insert(SizeFreqNibble {count, it->first, size});
+			sizemap.insert(SizeFreqNibble {count, elem.first, size});
 		}
 
 		// We now build the canonical Huffman code table.
@@ -830,8 +828,7 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 		// With the canonical table build, the codemap can finally be built.
 		NibbleCodeMap tempcodemap;
 		size_t pos = 0;
-		for (SizeSet::iterator it = sizemap.begin();
-		        it != sizemap.end() && pos < codes.size(); ++it, pos++) {
+		for (auto it = sizemap.begin(); it != sizemap.end() && pos < codes.size(); ++it, pos++) {
 			tempcodemap[it->nibble] = codes[pos];
 		}
 
@@ -871,10 +868,10 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 	// Write header.
 	BigEndian::Write2(Dst, (mode << 15) | (sz >> 5));
 	unsigned char lastnibble = 0xff;
-	for (NibbleCodeMap::iterator it = codemap.begin(); it != codemap.end(); ++it) {
-		nibble_run const &run = it->first;
-		size_t code = (it->second).code;
-		unsigned char len = (it->second).len;
+	for (auto & elem : codemap) {
+		nibble_run const &run = elem.first;
+		size_t code = (elem.second).code;
+		unsigned char len = (elem.second).len;
 		// len with bit 7 set is a special device for further reducing file size, and
 		// should NOT be on the table.
 		if ((len & 0x80) != 0) {
@@ -900,10 +897,8 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 	// use the nibble runs as an index into the map, meaning a quick binary
 	// search gives us the code to use (if in the map) or tells us that we
 	// need to use inline RLE.
-	for (vector<nibble_run>::iterator it = rleSrc.begin();
-	        it != rleSrc.end(); ++it) {
-		nibble_run const &run = *it;
-		NibbleCodeMap::iterator val = codemap.find(run);
+	for (auto & run : rleSrc) {
+		auto val = codemap.find(run);
 		if (val != codemap.end()) {
 			size_t code = (val->second).code;
 			unsigned char len = (val->second).len;

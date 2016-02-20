@@ -33,13 +33,13 @@ private:
 	static void decode_header(std::istream &Src, CodeNibbleMap &codemap);
 	static void decode_internal(std::istream &Src, std::ostream &Dst,
 	                            CodeNibbleMap &codemap, size_t rtiles,
-	                            bool alt_out = false, int *endptr = 0);
+	                            bool alt_out = false, int *endptr = nullptr);
 	template<typename Compare>
 	static size_t encode_internal(std::istream &Src, std::ostream &Dst, int mode,
 	                              size_t sz, Compare const &comp);
 public:
 	static bool decode(std::istream &Src, std::ostream &Dst, std::streampos Location = 0,
-	                   int *endptr = 0);
+	                   int *endptr = nullptr);
 	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 

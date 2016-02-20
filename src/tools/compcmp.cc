@@ -38,9 +38,9 @@ static void usage(char *prog) {
 
 int main(int argc, char *argv[]) {
 	static option long_options[] = {
-		{"extract", optional_argument, 0, 'x'},
-		{"crunch" , no_argument      , 0, 'c'},
-		{0, 0, 0, 0}
+		{"extract", optional_argument, nullptr, 'x'},
+		{"crunch" , no_argument      , nullptr, 'c'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	bool extract = false, crunch = false;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 			case 'x':
 				extract = true;
 				if (optarg) {
-					pointer = strtoul(optarg, 0, 0);
+					pointer = strtoul(optarg, nullptr, 0);
 				}
 				break;
 			case 'c':

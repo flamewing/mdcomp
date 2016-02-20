@@ -45,11 +45,11 @@ static void usage(char *prog) {
 
 int main(int argc, char *argv[]) {
 	static option long_options[] = {
-		{"extract", optional_argument, 0, 'x'},
-		{"moduled", optional_argument, 0, 'm'},
-		{"crunch" , no_argument      , 0, 'c'},
-		{"padding", required_argument, 0, 'p'},
-		{0, 0, 0, 0}
+		{"extract", optional_argument, nullptr, 'x'},
+		{"moduled", optional_argument, nullptr, 'm'},
+		{"crunch" , no_argument      , nullptr, 'c'},
+		{"padding", required_argument, nullptr, 'p'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	bool extract = false, moduled = false, crunch = false;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 			case 'x':
 				extract = true;
 				if (optarg) {
-					pointer = strtoul(optarg, 0, 0);
+					pointer = strtoul(optarg, nullptr, 0);
 				}
 				break;
 			case 'c':
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 			case 'm':
 				moduled = true;
 				if (optarg) {
-					modulesize = strtoul(optarg, 0, 0);
+					modulesize = strtoul(optarg, nullptr, 0);
 				}
 				if (!modulesize) {
 					modulesize = 0x1000;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'p':
 				if (optarg) {
-					padding = strtoul(optarg, 0, 0);
+					padding = strtoul(optarg, nullptr, 0);
 				}
 				if (!padding || (padding & (padding - 1)) != 0) {
 					padding = 16;

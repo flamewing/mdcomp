@@ -167,7 +167,7 @@ bool comper::encode(istream &Src, ostream &Dst) {
 	Src.seekg(0);
 	// Pad to even size.
 	streamsize BSize = ISize + ((ISize & 1) != 0 ? 1 : 0);
-	char *const Buffer = new char[BSize];
+	auto const Buffer = new char[BSize];
 	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
 	Src.read(Buffer, ISize);
 	// If we had to increase buffer size, we need to set the last byte in the
