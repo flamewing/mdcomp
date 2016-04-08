@@ -333,7 +333,7 @@ void enigma::encode_internal(istream &Src, ostream &Dst) {
 	// this version only checks the 2-byte words actually in the file.
 	map<unsigned short, size_t> runs;
 	for (auto next : elems) {
-		auto val = runs.insert(pair<unsigned short, size_t>(next, 0)).first;
+		auto val = runs.emplace(next, 0).first;
 		for (auto & elem : unpack) {
 			if (elem == next) {
 				next++;

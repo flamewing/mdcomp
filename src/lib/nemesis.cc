@@ -43,45 +43,39 @@ private:
 	unsigned char count;    // How many times the nibble is repeated.
 public:
 	// Constructors.
-	nibble_run() : nibble(0), count(0) {
+	nibble_run() noexcept : nibble(0), count(0) {
 	}
-	nibble_run(unsigned char n, unsigned char c) : nibble(n), count(c) {
+	nibble_run(unsigned char n, unsigned char c) noexcept : nibble(n), count(c) {
 	}
-	nibble_run(nibble_run const &other) : nibble(other.nibble), count(other.count) {
-	}
-	nibble_run &operator=(nibble_run const &other) {
-		if (this == &other) {
-			return *this;
-		}
-		nibble = other.nibble;
-		count = other.count;
-		return *this;
-	}
+	nibble_run(nibble_run const &other) noexcept = default;
+	nibble_run(nibble_run &&other) noexcept = default;
+	nibble_run &operator=(nibble_run const &other) noexcept = default;
+	nibble_run &operator=(nibble_run &&other) noexcept = default;
 	// Sorting operator.
-	bool operator<(nibble_run const &other) const {
+	bool operator<(nibble_run const &other) const noexcept {
 		return (nibble < other.nibble) || (nibble == other.nibble && count < other.count);
 	}
 	// Sorting operator.
-	bool operator>(nibble_run const &other) const {
+	bool operator>(nibble_run const &other) const noexcept {
 		return other < *this;
 	}
-	bool operator==(nibble_run const &other) const {
+	bool operator==(nibble_run const &other) const noexcept {
 		return !(*this < other) && !(other < *this);
 	}
-	bool operator!=(nibble_run const &other) const {
+	bool operator!=(nibble_run const &other) const noexcept {
 		return !(*this == other);
 	}
 	// Getters/setters for all properties.
-	unsigned char get_nibble() const {
+	unsigned char get_nibble() const noexcept {
 		return nibble;
 	}
-	unsigned char get_count() const {
+	unsigned char get_count() const noexcept {
 		return count;
 	}
-	void set_nibble(unsigned char tf) {
+	void set_nibble(unsigned char tf) noexcept {
 		nibble = tf;
 	}
-	void set_count(unsigned char tf) {
+	void set_count(unsigned char tf) noexcept {
 		count = tf;
 	}
 };
@@ -90,14 +84,28 @@ struct SizeFreqNibble {
 	size_t count;
 	nibble_run nibble;
 	unsigned char codelen;
+	SizeFreqNibble(size_t cnt, nibble_run const &nib, unsigned char len) noexcept
+		: count(cnt), nibble(nib), codelen(len) {
+	}
+	SizeFreqNibble() noexcept = default;
+	SizeFreqNibble(SizeFreqNibble const &other) noexcept = default;
+	SizeFreqNibble(SizeFreqNibble &&other) noexcept = default;
+	SizeFreqNibble &operator=(SizeFreqNibble const &other) noexcept = default;
+	SizeFreqNibble &operator=(SizeFreqNibble &&other) noexcept = default;
 };
 
 struct Code {
 	size_t code;
 	unsigned char len;
-	bool operator<(Code const &rhs) const {
+	bool operator<(Code const &rhs) const noexcept {
 		return code < rhs.code || (code == rhs.code && len < rhs.len);
 	}
+	Code(size_t c, unsigned char l) noexcept : code(c), len(l) {  }
+	Code() noexcept = default;
+	Code(Code const &other) noexcept = default;
+	Code(Code &&other) noexcept = default;
+	Code &operator=(Code const &other) noexcept = default;
+	Code &operator=(Code &&other) noexcept = default;
 };
 
 typedef map<nibble_run, unsigned char> CodeSizeMap;
@@ -115,64 +123,64 @@ private:
 	nibble_run value;
 public:
 	// Construct a new leaf node for character c.
-	node(nibble_run const &val, int wgt = -1)
+	node(nibble_run const &val, int wgt = -1) noexcept
 		: weight(wgt), value(val) {
 	}
 	// Construct a new internal node that has children c1 and c2.
-	node(shared_ptr<node> c0, shared_ptr<node> c1) {
+	node(shared_ptr<node> c0, shared_ptr<node> c1) noexcept {
 		value = nibble_run {0, 0};
 		weight = c0->weight + c1->weight;
 		child0 = c0;
 		child1 = c1;
 	}
-	~node() {
+	~node() noexcept {
 		child0.reset();
 		child1.reset();
 	}
 	// Free the memory used by the child nodes.
-	void prune() {
+	void prune() noexcept {
 		child0.reset();
 		child1.reset();
 	}
 	// Comparison operators.
-	bool operator<(node const &other) const {
+	bool operator<(node const &other) const noexcept {
 		return weight < other.weight;
 	}
-	bool operator>(node const &other) const {
+	bool operator>(node const &other) const noexcept {
 		return other < *this;
 	}
 	// This tells if the node is a leaf or a branch.
-	bool is_leaf() const {
+	bool is_leaf() const noexcept {
 		return child0 == nullptr && child1 == nullptr;
 	}
 	// Getters/setters for all properties.
-	shared_ptr<node const> get_child0() const {
+	shared_ptr<node const> get_child0() const noexcept {
 		return child0;
 	}
-	shared_ptr<node const> get_child1() const {
+	shared_ptr<node const> get_child1() const noexcept {
 		return child1;
 	}
-	int get_weight() const {
+	int get_weight() const noexcept {
 		return weight;
 	}
-	nibble_run const &get_value() const {
+	nibble_run const &get_value() const noexcept {
 		return value;
 	}
-	void set_child0(shared_ptr<node> c0) {
+	void set_child0(shared_ptr<node> c0) noexcept {
 		child0 = c0;
 	}
-	void set_child1(shared_ptr<node> c1) {
+	void set_child1(shared_ptr<node> c1) noexcept {
 		child1 = c1;
 	}
-	void set_weight(int w) {
+	void set_weight(int w) noexcept {
 		weight = w;
 	}
-	void set_value(nibble_run const &v) {
+	void set_value(nibble_run const &v) noexcept {
 		value = v;
 	}
 	// This goes through the tree, starting with the current node, generating
 	// a map associating a nibble run with its code length.
-	void traverse(CodeSizeMap &sizemap) const {
+	void traverse(CodeSizeMap &sizemap) const noexcept {
 		if (is_leaf()) {
 			sizemap[value] += 1;
 		} else {
@@ -189,7 +197,7 @@ public:
 typedef vector<shared_ptr<node>> NodeVector;
 
 struct Compare_size {
-	bool operator()(SizeFreqNibble const &lhs, SizeFreqNibble const &rhs) {
+	bool operator()(SizeFreqNibble const &lhs, SizeFreqNibble const &rhs) noexcept {
 		if (lhs.codelen < rhs.codelen) {
 			return true;
 		} else if (lhs.codelen > rhs.codelen) {
@@ -211,7 +219,7 @@ struct Compare_size {
 
 struct Compare_node {
 	bool operator()(shared_ptr<node> const &lhs,
-	                shared_ptr<node> const &rhs) const {
+	                shared_ptr<node> const &rhs) const noexcept {
 #if 1
 		if (*lhs > *rhs) {
 			return true;
@@ -224,7 +232,7 @@ struct Compare_node {
 #endif
 	}
 	// Just discard the lowest weighted item.
-	void update(NodeVector &qt, NibbleCodeMap &codes) const {
+	void update(NodeVector &qt, NibbleCodeMap &codes) const noexcept {
 		ignore_unused_variable_warning(codes);
 		pop_heap(qt.begin(), qt.end(), *this);
 		qt.pop_back();
@@ -234,7 +242,7 @@ struct Compare_node {
 struct Compare_node2 {
 	static NibbleCodeMap codemap;
 	bool operator()(shared_ptr<node> const &lhs,
-	                shared_ptr<node> const &rhs) const {
+	                shared_ptr<node> const &rhs) const noexcept {
 		if (codemap.empty()) {
 			if (*lhs < *rhs) {
 				return true;
@@ -280,7 +288,7 @@ struct Compare_node2 {
 	}
 	// Resort the heap using weights from the previous iteration, then discards
 	// the lowest weighted item.
-	void update(NodeVector &qt, NibbleCodeMap &codes) const {
+	void update(NodeVector &qt, NibbleCodeMap &codes) const noexcept {
 		codemap = codes;
 		make_heap(qt.begin(), qt.end(), *this);
 		pop_heap(qt.begin(), qt.end(), *this);
@@ -695,7 +703,7 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 		// No point in including anything with weight less than 2, as they
 		// would actually increase compressed file size if used.
 		if (count.second > 1) {
-			qt.push_back(shared_ptr<node>(new node(count.first, count.second)));
+			qt.push_back(make_shared<node>(count.first, count.second));
 		}
 	}
 	// This may seem useless, but my tests all indicate that this reduces the
@@ -756,7 +764,7 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 				q.pop();
 				shared_ptr<node> child0 = q.top();
 				q.pop();
-				q1.push(shared_ptr<node>(new node(child0, child1)));
+				q1.push(make_shared<node>(child0, child1));
 			}
 			idx++;
 			q = q1;
@@ -792,7 +800,7 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 			unsigned char size = elem.second;
 			size_t count = counts[elem.first];
 			sizecounts[size - 1]++;
-			sizemap.insert(SizeFreqNibble {count, elem.first, size});
+			sizemap.emplace(count, elem.first, size);
 		}
 
 		// We now build the canonical Huffman code table.
@@ -820,7 +828,7 @@ size_t nemesis::encode_internal(istream &Src, ostream &Dst, int mode,
 					cnt = j;
 					break;
 				} else {
-					codes.push_back(Code {code, i});
+					codes.emplace_back(code, i);
 				}
 			}
 			// This is the beginning bit pattern for the next bit length.
