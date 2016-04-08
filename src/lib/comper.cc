@@ -34,23 +34,23 @@ struct ComperAdaptor {
 	typedef unsigned short descriptor_t;
 	typedef bigendian<descriptor_t> descriptor_endian_t;
 	// Number of bits on descriptor bitfield.
-	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 	// Number of bits used in descriptor bitfield to signal the end-of-file
 	// marker sequence.
-	constexpr static size_t NumTermBits = 1;
+	constexpr static size_t const NumTermBits = 1;
 	// Flag that tells the compressor that new descriptor fields is needed
 	// when a new bit is needed and all bits in the previous one have been
 	// used up.
-	constexpr static size_t NeedEarlyDescriptor = 0;
+	constexpr static size_t const NeedEarlyDescriptor = 0;
 	// Flag that marks the descriptor bits as being in big-endian bit
 	// order (that is, highest bits come out first).
-	constexpr static size_t DescriptorLittleEndianBits = 0;
+	constexpr static size_t const DescriptorLittleEndianBits = 0;
 	// Size of the search buffer.
-	constexpr static size_t SearchBufSize = 256;
+	constexpr static size_t const SearchBufSize = 256;
 	// Size of the look-ahead buffer.
-	constexpr static size_t LookAheadBufSize = 256;
+	constexpr static size_t const LookAheadBufSize = 256;
 	// Total size of the sliding window.
-	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+	constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {

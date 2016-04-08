@@ -41,22 +41,22 @@ struct KosinskiAdaptor {
 	typedef unsigned short descriptor_t;
 	typedef littleendian<descriptor_t> descriptor_endian_t;
 	// Number of bits on descriptor bitfield.
-	constexpr static size_t NumDescBits = sizeof(descriptor_t) * 8;
+	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 	// Number of bits used in descriptor bitfield to signal the end-of-file
 	// marker sequence.
-	constexpr static size_t NumTermBits = 2;
+	constexpr static size_t const NumTermBits = 2;
 	// Flag that tells the compressor that new descriptor fields are needed
 	// as soon as the last bit in the previous one is used up.
-	constexpr static size_t NeedEarlyDescriptor = 1;
+	constexpr static size_t const NeedEarlyDescriptor = 1;
 	// Flag that marks the descriptor bits as being in little-endian bit
 	// order (that is, lowest bits come out first).
-	constexpr static size_t DescriptorLittleEndianBits = 1;
+	constexpr static size_t const DescriptorLittleEndianBits = 1;
 	// Size of the search buffer.
-	constexpr static size_t SearchBufSize = 8192;
+	constexpr static size_t const SearchBufSize = 8192;
 	// Size of the look-ahead buffer.
-	constexpr static size_t LookAheadBufSize = 256;
+	constexpr static size_t const LookAheadBufSize = 256;
 	// Total size of the sliding window.
-	constexpr static size_t SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+	constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 	// one single symbol..
 	constexpr static size_t symbolwise_weight() noexcept {
