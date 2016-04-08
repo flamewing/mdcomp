@@ -11,7 +11,8 @@ libcomper_la_SOURCES = \
 	comper.h \
 	lzss.h \
 	bitstream.h \
-	bigendian_io.h
+	bigendian_io.h \
+	ignore_unused_variable_warning.h
 
 libcomper_la_LIBADD =
 
@@ -20,7 +21,8 @@ libsaxman_la_SOURCES = \
 	saxman.h \
 	bigendian_io.h \
 	lzss.h \
-	bitstream.h
+	bitstream.h \
+	ignore_unused_variable_warning.h
 
 libsaxman_la_LIBADD =
 
@@ -28,7 +30,8 @@ libnemesis_la_SOURCES = \
 	bigendian_io.h \
 	bitstream.h \
 	nemesis.cc \
-	nemesis.h
+	nemesis.h \
+	ignore_unused_variable_warning.h
 
 libnemesis_la_LIBADD =
 

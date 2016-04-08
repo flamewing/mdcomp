@@ -31,6 +31,7 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 #include "lzss.h"
+#include "ignore_unused_variable_warning.h"
 
 using namespace std;
 
@@ -66,7 +67,7 @@ struct KosinskiAdaptor {
 	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		if (len == 2 && dist > 256) {
@@ -92,13 +93,18 @@ struct KosinskiAdaptor {
 		return edge.get_weight() & 7;
 	}
 	// Kosinski finds no additional matches over normal LZSS.
-	static void extra_matches(stream_t const *UNUSED(data),
-	                          size_t UNUSED(basenode),
-	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
-	                          LZSSGraph<KosinskiAdaptor>::MatchVector &UNUSED(matches)) noexcept {
+	constexpr static void extra_matches(stream_t const *data,
+	                          size_t basenode,
+	                          size_t ubound, size_t lbound,
+	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) noexcept {
+		ignore_unused_variable_warning(data);
+		ignore_unused_variable_warning(basenode);
+		ignore_unused_variable_warning(ubound);
+		ignore_unused_variable_warning(lbound);
+		ignore_unused_variable_warning(matches);
 	}
 	// KosinskiM needs to pad each module to a multiple of 16 bytes.
-	static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
 		// Add in the size of the end-of-file marker.
 		if (!padmask) {
 			return 0;

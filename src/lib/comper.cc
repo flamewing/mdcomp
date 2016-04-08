@@ -24,6 +24,7 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 #include "lzss.h"
+#include "ignore_unused_variable_warning.h"
 
 using namespace std;
 
@@ -60,25 +61,35 @@ struct ComperAdaptor {
 	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	constexpr static size_t dictionary_weight(size_t UNUSED(dist), size_t UNUSED(len)) noexcept {
+	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 		// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
+		ignore_unused_variable_warning(dist);
+		ignore_unused_variable_warning(len);
 		return 1 + 8 + 8;
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &UNUSED(edge)) noexcept {
+	constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
 		// Comper always uses a single bit descriptor.
+		ignore_unused_variable_warning(edge);
 		return 1;
 	}
 	// Comper finds no additional matches over normal LZSS.
-	static void extra_matches(stream_t const *UNUSED(data),
-	                          size_t UNUSED(basenode),
-	                          size_t UNUSED(ubound), size_t UNUSED(lbound),
-	                          LZSSGraph<ComperAdaptor>::MatchVector &UNUSED(matches)) noexcept {
+	constexpr static void extra_matches(stream_t const *data,
+	                          size_t basenode,
+	                          size_t ubound, size_t lbound,
+	                          LZSSGraph<ComperAdaptor>::MatchVector &matches) noexcept {
+		ignore_unused_variable_warning(data);
+		ignore_unused_variable_warning(basenode);
+		ignore_unused_variable_warning(ubound);
+		ignore_unused_variable_warning(lbound);
+		ignore_unused_variable_warning(matches);
 	}
 	// Comper needs no additional padding at the end-of-file.
-	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) noexcept {
+	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+		ignore_unused_variable_warning(totallen);
+		ignore_unused_variable_warning(padmask);
 		return 0;
 	}
 };

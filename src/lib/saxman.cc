@@ -26,6 +26,7 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 #include "lzss.h"
+#include "ignore_unused_variable_warning.h"
 
 using namespace std;
 
@@ -62,9 +63,10 @@ struct SaxmanAdaptor {
 	// "off" vertices ago, for matches with len > 1.
 	// A return of "numeric_limits<size_t>::max()" means "infinite",
 	// or "no edge".
-	static size_t dictionary_weight(size_t UNUSED(dist), size_t len) noexcept {
+	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
 		// Preconditions:
 		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
+		ignore_unused_variable_warning(dist);
 		if (len == 2) {
 			return numeric_limits<size_t>::max();   // "infinite"
 		} else {
@@ -73,14 +75,16 @@ struct SaxmanAdaptor {
 		}
 	}
 	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &UNUSED(edge)) noexcept {
+	constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
 		// Saxman always uses a single bit descriptor.
+		ignore_unused_variable_warning(edge);
 		return 1;
 	}
 	// Saxman allows encoding of a sequence of zeroes with no previous match.
 	static void extra_matches(stream_t const *data, size_t basenode,
-	                          size_t ubound, size_t UNUSED(lbound),
+	                          size_t ubound, size_t lbound,
 	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
+		ignore_unused_variable_warning(lbound);
 		// Can't encode zero match after this point.
 		if (basenode >= 0xFFF) {
 			return;
@@ -101,7 +105,9 @@ struct SaxmanAdaptor {
 		}
 	}
 	// Saxman needs no additional padding at the end-of-file.
-	static size_t get_padding(size_t UNUSED(totallen), size_t UNUSED(padmask)) noexcept {
+	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+		ignore_unused_variable_warning(totallen);
+		ignore_unused_variable_warning(padmask);
 		return 0;
 	}
 };

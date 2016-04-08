@@ -23,17 +23,6 @@
 #include <iterator>
 #include <string>
 
-#ifdef UNUSED
-#elif defined(__GNUC__)
-#	define UNUSED(x) UNUSED_ ## x __attribute__((unused))
-#elif defined(__LCLINT__)
-#	define UNUSED(x) /*@unused@*/ x
-#elif defined(__cplusplus)
-#	define UNUSED(x)
-#else
-#	define UNUSED(x) x
-#endif
-
 inline size_t Read1(std::istream &in) noexcept {
 	size_t c = static_cast<unsigned char>(in.get());
 	return c;
