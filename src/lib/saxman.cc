@@ -106,8 +106,7 @@ struct SaxmanAdaptor {
 	}
 	// Saxman needs no additional padding at the end-of-file.
 	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-		ignore_unused_variable_warning(totallen);
-		ignore_unused_variable_warning(padmask);
+		ignore_unused_variable_warning(totallen, padmask);
 		return 0;
 	}
 };

@@ -19,8 +19,7 @@
 #ifndef __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H
 #define __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H
 
-template <typename T>
-constexpr inline void ignore_unused_variable_warning(T const&) {
-}
+template <typename... T>
+constexpr inline void ignore_unused_variable_warning(T const&...) {  }
 
 #endif // __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H

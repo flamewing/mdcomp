@@ -97,11 +97,7 @@ struct KosinskiAdaptor {
 	                          size_t basenode,
 	                          size_t ubound, size_t lbound,
 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) noexcept {
-		ignore_unused_variable_warning(data);
-		ignore_unused_variable_warning(basenode);
-		ignore_unused_variable_warning(ubound);
-		ignore_unused_variable_warning(lbound);
-		ignore_unused_variable_warning(matches);
+		ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 	}
 	// KosinskiM needs to pad each module to a multiple of 16 bytes.
 	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
