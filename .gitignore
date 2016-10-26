@@ -43,6 +43,13 @@ Makefile.in
 *.i*86
 *.x86_64
 *.hex
+/src/tools/compcmp
+/src/tools/enicmp
+/src/tools/koscmp
+/src/tools/kosplus
+/src/tools/mkoscmp
+/src/tools/nemcmp
+/src/tools/saxcmp
 
 # Debug files
 *.dSYM/
@@ -63,6 +70,11 @@ config.h.in
 /install-sh
 /missing
 /stamp-h1
+/config.h
+/config.log
+/config.status
+/po/POTFILES
+/po/stamp-it
 
 ##### Anjuta #####
 # Local configuration folder and symbol database
