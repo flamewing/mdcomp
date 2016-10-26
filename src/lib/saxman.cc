@@ -115,58 +115,95 @@ typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
 typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
 typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
 
-void saxman::decode_internal(istream &in, iostream &Dst,
-                             streamsize const BSize) {
-	SaxIStream src(in);
+class saxman_internal {
+public:
+	static void decode(std::istream &in, std::iostream &Dst,
+	                   std::streamsize const BSize) {
+		SaxIStream src(in);
 
-	// Loop while the file is good and we haven't gone over the declared length.
-	while (in.good() && in.tellg() < BSize) {
-		if (src.descbit()) {
-			// Symbolwise match.
-			if (in.peek() == EOF) {
-				break;
-			}
-			Write1(Dst, src.getbyte());
-		} else {
-			if (in.peek() == EOF) {
-				break;
-			}
-			// Dictionary match.
-			// Offset and length of match.
-			size_t offset = src.getbyte();
-			size_t length = src.getbyte();
-
-			// The high 4 bits of length are actually part of the offset.
-			offset |= (length << 4) & 0xF00;
-			// Length is low 4 bits plus 3.
-			length = (length & 0xF) + 3;
-			// And there is an additional 0x12 bytes added to offset.
-			offset = (offset + 0x12) & 0xFFF;
-			// The offset is stored as being absolute within current 0x1000-byte
-			// block, with part of it being remapped to the end of the previous
-			// 0x1000-byte block. We just rebase it around basedest.
-			size_t basedest = Dst.tellp();
-			offset = ((offset - basedest) & 0x0FFF) + basedest - 0x1000;
-
-			if (offset < basedest) {
-				// If the offset is before the current output position, we copy
-				// bytes from the given location.
-				for (size_t src = offset; src < offset + length; src++) {
-					streampos Pointer = Dst.tellp();
-					Dst.seekg(src);
-					unsigned short Byte = Read1(Dst);
-					Dst.seekp(Pointer);
-					Write1(Dst, Byte);
+		// Loop while the file is good and we haven't gone over the declared length.
+		while (in.good() && in.tellg() < BSize) {
+			if (src.descbit()) {
+				// Symbolwise match.
+				if (in.peek() == EOF) {
+					break;
 				}
+				Write1(Dst, src.getbyte());
 			} else {
-				// Otherwise, it is a zero fill.
-				for (size_t ii = 0; ii < length; ii++) {
-					Write1(Dst, 0x00);
+				if (in.peek() == EOF) {
+					break;
+				}
+				// Dictionary match.
+				// Offset and length of match.
+				size_t offset = src.getbyte();
+				size_t length = src.getbyte();
+
+				// The high 4 bits of length are actually part of the offset.
+				offset |= (length << 4) & 0xF00;
+				// Length is low 4 bits plus 3.
+				length = (length & 0xF) + 3;
+				// And there is an additional 0x12 bytes added to offset.
+				offset = (offset + 0x12) & 0xFFF;
+				// The offset is stored as being absolute within current 0x1000-byte
+				// block, with part of it being remapped to the end of the previous
+				// 0x1000-byte block. We just rebase it around basedest.
+				size_t basedest = Dst.tellp();
+				offset = ((offset - basedest) & 0x0FFF) + basedest - 0x1000;
+
+				if (offset < basedest) {
+					// If the offset is before the current output position, we copy
+					// bytes from the given location.
+					for (size_t src = offset; src < offset + length; src++) {
+						streampos Pointer = Dst.tellp();
+						Dst.seekg(src);
+						unsigned short Byte = Read1(Dst);
+						Dst.seekp(Pointer);
+						Write1(Dst, Byte);
+					}
+				} else {
+					// Otherwise, it is a zero fill.
+					for (size_t ii = 0; ii < length; ii++) {
+						Write1(Dst, 0x00);
+					}
 				}
 			}
 		}
 	}
-}
+
+	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
+	                   std::streamsize const BSize) {
+		// Compute optimal Saxman parsing of input file.
+		SaxGraph enc(Buffer, BSize, 1u);
+		SaxGraph::AdjList list = enc.find_optimal_parse();
+		SaxOStream out(Dst);
+
+		streamoff pos = 0;
+		// Go through each edge in the optimal path.
+		for (SaxGraph::AdjList::const_iterator it = list.begin();
+			    it != list.end(); ++it) {
+			AdjListNode const &edge = *it;
+			size_t len = edge.get_length(), dist = edge.get_distance();
+			// The weight of each edge uniquely identifies how it should be written.
+			// NOTE: This needs to be changed for other LZSS schemes.
+			if (len == 1) {
+				// Symbolwise match.
+				out.descbit(1);
+				out.putbyte(Buffer[pos]);
+			} else {
+				// Dictionary match.
+				out.descbit(0);
+				size_t low = pos - dist, high = len;
+				low = (low - 0x12) & 0xFFF;
+				high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
+				low &= 0xFF;
+				out.putbyte(low);
+				out.putbyte(high);
+			}
+			// Go to next position.
+			pos = edge.get_dest();
+		}
+	}
+};
 
 bool saxman::decode(istream &Src, iostream &Dst,
                     streampos Location, streamsize const BSize) {
@@ -177,42 +214,8 @@ bool saxman::decode(istream &Src, iostream &Dst,
 	in << Src.rdbuf();
 
 	in.seekg(0);
-	decode_internal(in, Dst, size);
+	saxman_internal::decode(in, Dst, size);
 	return true;
-}
-
-void saxman::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                             streamsize const BSize) {
-	// Compute optimal Saxman parsing of input file.
-	SaxGraph enc(Buffer, BSize, 1u);
-	SaxGraph::AdjList list = enc.find_optimal_parse();
-	SaxOStream out(Dst);
-
-	streamoff pos = 0;
-	// Go through each edge in the optimal path.
-	for (SaxGraph::AdjList::const_iterator it = list.begin();
-	        it != list.end(); ++it) {
-		AdjListNode const &edge = *it;
-		size_t len = edge.get_length(), dist = edge.get_distance();
-		// The weight of each edge uniquely identifies how it should be written.
-		// NOTE: This needs to be changed for other LZSS schemes.
-		if (len == 1) {
-			// Symbolwise match.
-			out.descbit(1);
-			out.putbyte(Buffer[pos]);
-		} else {
-			// Dictionary match.
-			out.descbit(0);
-			size_t low = pos - dist, high = len;
-			low = (low - 0x12) & 0xFFF;
-			high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
-			low &= 0xFF;
-			out.putbyte(low);
-			out.putbyte(high);
-		}
-		// Go to next position.
-		pos = edge.get_dest();
-	}
 }
 
 bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
@@ -225,7 +228,7 @@ bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
 
 	// Internal buffer.
 	stringstream outbuff(ios::in | ios::out | ios::binary);
-	encode_internal(outbuff, ptr, BSize);
+	saxman_internal::encode(outbuff, ptr, BSize);
 	if (WithSize) {
 		outbuff.seekg(0, ios::end);
 		LittleEndian::Write2(Dst, outbuff.tellg());

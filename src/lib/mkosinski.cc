@@ -109,52 +109,122 @@ typedef LZSSGraph<MegaKosinskiAdaptor> MKosGraph;
 typedef LZSSOStream<MegaKosinskiAdaptor> MKosOStream;
 typedef LZSSIStream<MegaKosinskiAdaptor> MKosIStream;
 
-void mkosinski::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
-	MKosIStream src(in);
+class mkosinski_internal {
+public:
+	static void decode(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+		MKosIStream src(in);
 
-	while (in.good()) {
-		if (!src.descbit()) {
-			Write1(Dst, src.getbyte());
-			++DecBytes;
-		} else {
-			// Count and distance
-			size_t Count = 0;
-			streamoff distance = 0;
+		while (in.good()) {
+			if (!src.descbit()) {
+				Write1(Dst, src.getbyte());
+				++DecBytes;
+			} else {
+				// Count and distance
+				size_t Count = 0;
+				streamoff distance = 0;
 
-			if (src.descbit()) {
-				unsigned char Low = src.getbyte(), High = src.getbyte();
+				if (src.descbit()) {
+					unsigned char Low = src.getbyte(), High = src.getbyte();
 
-				Count = size_t(High & 0x0F);
+					Count = size_t(High & 0x0F);
 
-				if (!Count) {
-					Count = src.getbyte();
 					if (!Count) {
-						break;
+						Count = src.getbyte();
+						if (!Count) {
+							break;
+						}
+						Count += 17;
+					} else {
+						Count += 2;
 					}
-					Count += 17;
+
+					distance = (~size_t(0x0FFF)) | (size_t(0xF0 & High) << 4) | size_t(Low);
 				} else {
+					distance = src.getbyte();
+					Count = (distance & 0xC0) >> 6;
 					Count += 2;
+					distance |= ~size_t(0x3F);
 				}
 
-				distance = (~size_t(0x0FFF)) | (size_t(0xF0 & High) << 4) | size_t(Low);
-			} else {
-				distance = src.getbyte();
-				Count = (distance & 0xC0) >> 6;
-				Count += 2;
-				distance |= ~size_t(0x3F);
+				for (size_t i = 0; i < Count; i++) {
+					streampos Pointer = Dst.tellp();
+					Dst.seekg(Pointer + distance);
+					unsigned char Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					Write1(Dst, Byte);
+				}
+				DecBytes += Count;
 			}
-
-			for (size_t i = 0; i < Count; i++) {
-				streampos Pointer = Dst.tellp();
-				Dst.seekg(Pointer + distance);
-				unsigned char Byte = Read1(Dst);
-				Dst.seekp(Pointer);
-				Write1(Dst, Byte);
-			}
-			DecBytes += Count;
 		}
 	}
-}
+
+	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
+	                   std::streamsize const BSize) {
+		// Compute optimal MegaKosinski parsing of input file.
+		MKosGraph enc(Buffer, BSize, 1u);
+		MKosGraph::AdjList list = enc.find_optimal_parse();
+		MKosOStream out(Dst);
+
+		streamoff pos = 0;
+		// Go through each edge in the optimal path.
+		for (MKosGraph::AdjList::const_iterator it = list.begin();
+			    it != list.end(); ++it) {
+			AdjListNode const &edge = *it;
+			size_t len = edge.get_length(), dist = edge.get_distance();
+			// The weight of each edge uniquely identifies how it should be written.
+			// NOTE: This needs to be changed for other LZSS schemes.
+			switch (edge.get_weight()) {
+				case 9:
+					// Literal.
+					out.descbit(0);
+					out.putbyte(Buffer[pos]);
+					break;
+				case 10:
+					// Inline RLE.
+					out.descbit(1);
+					out.descbit(0);
+					len -= 2;
+					dist = (-dist) & 0x3F;
+					out.putbyte((len << 6) | dist);
+					break;
+				case 18:
+				case 26: {
+					// Separate RLE.
+					out.descbit(1);
+					out.descbit(1);
+					dist = (-dist) & 0x0FFF;
+					unsigned short high = (dist >> 4) & 0xF0,
+							       low  = (dist & 0xFF);
+					if (edge.get_weight() == 18) {
+						// 2-byte RLE.
+						out.putbyte(low);
+						out.putbyte(high | (len - 2));
+					} else {
+						// 3-byte RLE.
+						out.putbyte(low);
+						out.putbyte(high);
+						out.putbyte(len - 17);
+					}
+					break;
+				}
+				default:
+					// This should be unreachable.
+					break;
+			}
+			// Go to next position.
+			pos = edge.get_dest();
+		}
+
+		// Push descriptor for end-of-file marker.
+		out.descbit(1);
+		out.descbit(1);
+
+		// Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
+		out.putbyte(0x00);
+		out.putbyte(0xF0);
+		out.putbyte(0x00);
+	}
+};
 
 bool mkosinski::decode(istream &Src, iostream &Dst,
                        streampos Location, bool Moduled) {
@@ -177,7 +247,7 @@ bool mkosinski::decode(istream &Src, iostream &Dst,
 	if (Moduled) {
 		size_t FullSize = BigEndian::Read2(in);
 		while (true) {
-			decode_internal(in, Dst, DecBytes);
+			mkosinski_internal::decode(in, Dst, DecBytes);
 			if (DecBytes >= FullSize) {
 				break;
 			}
@@ -187,77 +257,10 @@ bool mkosinski::decode(istream &Src, iostream &Dst,
 			in.seekg(paddingEnd);
 		}
 	} else {
-		decode_internal(in, Dst, DecBytes);
+		mkosinski_internal::decode(in, Dst, DecBytes);
 	}
 
 	return true;
-}
-
-void mkosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                                streamsize const BSize) {
-	// Compute optimal MegaKosinski parsing of input file.
-	MKosGraph enc(Buffer, BSize, 1u);
-	MKosGraph::AdjList list = enc.find_optimal_parse();
-	MKosOStream out(Dst);
-
-	streamoff pos = 0;
-	// Go through each edge in the optimal path.
-	for (MKosGraph::AdjList::const_iterator it = list.begin();
-	        it != list.end(); ++it) {
-		AdjListNode const &edge = *it;
-		size_t len = edge.get_length(), dist = edge.get_distance();
-		// The weight of each edge uniquely identifies how it should be written.
-		// NOTE: This needs to be changed for other LZSS schemes.
-		switch (edge.get_weight()) {
-			case 9:
-				// Literal.
-				out.descbit(0);
-				out.putbyte(Buffer[pos]);
-				break;
-			case 10:
-				// Inline RLE.
-				out.descbit(1);
-				out.descbit(0);
-				len -= 2;
-				dist = (-dist) & 0x3F;
-				out.putbyte((len << 6) | dist);
-				break;
-			case 18:
-			case 26: {
-				// Separate RLE.
-				out.descbit(1);
-				out.descbit(1);
-				dist = (-dist) & 0x0FFF;
-				unsigned short high = (dist >> 4) & 0xF0,
-					           low  = (dist & 0xFF);
-				if (edge.get_weight() == 18) {
-					// 2-byte RLE.
-					out.putbyte(low);
-					out.putbyte(high | (len - 2));
-				} else {
-					// 3-byte RLE.
-					out.putbyte(low);
-					out.putbyte(high);
-					out.putbyte(len - 17);
-				}
-				break;
-			}
-			default:
-				// This should be unreachable.
-				break;
-		}
-		// Go to next position.
-		pos = edge.get_dest();
-	}
-
-	// Push descriptor for end-of-file marker.
-	out.descbit(1);
-	out.descbit(1);
-
-	// Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
-	out.putbyte(0x00);
-	out.putbyte(0xF0);
-	out.putbyte(0x00);
 }
 
 bool mkosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleSize) {
@@ -282,7 +285,7 @@ bool mkosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff Modul
 		BigEndian::Write2(Dst, FullSize);
 
 		while (true) {
-			encode_internal(Dst, ptr, BSize);
+			mkosinski_internal::encode(Dst, ptr, BSize);
 
 			CompBytes += BSize;
 			ptr += BSize;
@@ -305,7 +308,7 @@ bool mkosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff Modul
 			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else {
-		encode_internal(Dst, ptr, BSize);
+		mkosinski_internal::encode(Dst, ptr, BSize);
 	}
 
 	// Pad to even size.

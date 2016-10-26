@@ -22,11 +22,6 @@
 #include <iosfwd>
 
 class saxman {
-private:
-	static void decode_internal(std::istream &in, std::iostream &Dst,
-	                            std::streamsize const BSize);
-	static void encode_internal(std::ostream &Dst, unsigned char const *&Buffer,
-	                            std::streamsize const BSize);
 public:
 	static bool decode(std::istream &Src, std::iostream &Dst,
 	                   std::streampos Location = 0,

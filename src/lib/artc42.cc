@@ -23,22 +23,30 @@
 #include "artc42.h"
 #include "bigendian_io.h"
 #include "bitstream.h"
+#include "ignore_unused_variable_warning.h"
 
 using namespace std;
 
 typedef ibitstream<unsigned short, true> EniIBitstream;
 typedef obitstream<unsigned short> EniOBitstream;
 
-void artc42::decode_internal(istream &Src, ostream &Dst) {
-}
+class artc42_internal {
+public:
+	static void decode(std::istream &Src, std::ostream &Dst) {
+		ignore_unused_variable_warning(Src, Dst);
+	}
+
+	static void encode(std::istream &Src, std::ostream &Dst) {
+		ignore_unused_variable_warning(Src, Dst);
+	}
+};
 
 bool artc42::decode(istream &Src, ostream &Dst, streampos Location) {
-    return false;
-}
-
-void artc42::encode_internal(istream &Src, ostream &Dst) {
+	ignore_unused_variable_warning(Src, Dst, Location);
+	return false;
 }
 
 bool artc42::encode(istream &Src, ostream &Dst) {
-    return false;
+	ignore_unused_variable_warning(Src, Dst);
+	return false;
 }

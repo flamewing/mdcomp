@@ -41,7 +41,8 @@ libmegakosinski_la_LIBADD =
 
 libartc42_la_SOURCES =  \
 	artc42.cc \
-	artc42.h
+	artc42.h \
+	ignore_unused_variable_warning.h
 
 libnemesis_la_SOURCES = \
 	bigendian_io.h \

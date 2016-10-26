@@ -161,98 +161,6 @@ base_flag_io *base_flag_io::create(size_t n) {
 	}
 }
 
-void enigma::decode_internal(istream &Src, ostream &Dst) {
-	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
-	in.seekg(0);
-
-	// Read header.
-	size_t const packet_length = Read1(in);
-	base_flag_io *mask = base_flag_io::create(Read1(in));
-	size_t incrementing_value = BigEndian::Read2(in);
-	size_t const common_value = BigEndian::Read2(in);
-
-	ibitstream<unsigned short, true> bits(in);
-
-	// Lets put in a safe termination condition here.
-	while (in.good()) {
-		if (bits.pop()) {
-			int mode = bits.read(2);
-			switch (mode) {
-				case 2:
-					mode = -1;
-				case 1:
-				case 0: {
-					size_t cnt = bits.read(4) + 1;
-					unsigned short flags = mask->read_bitfield(bits),
-					               outv  = bits.read(packet_length);
-					outv |= flags;
-
-					for (size_t i = 0; i < cnt; i++) {
-						BigEndian::Write2(Dst, outv);
-						outv += mode;
-					}
-					break;
-				}
-				case 3: {
-					size_t cnt = bits.read(4);
-					// This marks decompression as being done.
-					if (cnt == 0x0F) {
-						return;
-					}
-
-					cnt++;
-					for (size_t i = 0; i < cnt; i++) {
-						unsigned short flags = mask->read_bitfield(bits),
-						               outv  = bits.read(packet_length);
-						BigEndian::Write2(Dst, outv | flags);
-					}
-					break;
-				}
-			}
-		} else {
-			if (!bits.pop()) {
-				size_t cnt = bits.read(4) + 1;
-				for (size_t i = 0; i < cnt; i++) {
-					BigEndian::Write2(Dst, incrementing_value++);
-				}
-			} else {
-				size_t cnt = bits.read(4) + 1;
-				for (size_t i = 0; i < cnt; i++) {
-					BigEndian::Write2(Dst, common_value);
-				}
-			}
-		}
-	}
-}
-
-bool enigma::decode(istream &Src, ostream &Dst, streampos Location,
-                    bool padding) {
-	Src.seekg(Location);
-	if (padding) {
-		// This is a plane map into a full pattern name table.
-		stringstream out(ios::in | ios::out | ios::binary);
-		decode_internal(Src, out);
-		out.clear();
-		out.seekg(0);
-
-		string pad(0x80 * 0x20, char(0));
-		char buf[0x40];
-		// Add a lot of padding (plane map).
-		Dst.write(pad.c_str(), 0x80 * 0x20);
-		for (size_t i = 0; i < 0x20; i++) {
-			Dst.write(pad.c_str(), 0x20);
-			out.read(buf, sizeof(buf));
-			Dst.write(buf, sizeof(buf));
-			Dst.write(pad.c_str(), 0x20);
-		}
-		Dst.write(pad.c_str(), 0x80 * 0x20);
-	} else {
-		decode_internal(Src, Dst);
-	}
-	return true;
-}
-
 // Blazing fast function that gives the index of the MSB.
 static inline unsigned char slog2(unsigned short v) {
 	unsigned char r; // result of slog2(v) will go here
@@ -295,140 +203,235 @@ static inline void flush_buffer(vector<unsigned short> &buf,
 	buf.clear();
 }
 
-void enigma::encode_internal(istream &Src, ostream &Dst) {
-	// To unpack source into 2-byte words.
-	vector<unsigned short> unpack;
-	// Frequency map.
-	map<unsigned short, size_t> counts;
-	// Presence map.
-	set<unsigned short> elems;
+class enigma_internal {
+public:
+	static void decode(std::istream &Src, std::ostream &Dst) {
+		stringstream in(ios::in | ios::out | ios::binary);
+		in << Src.rdbuf();
+		in.seekg(0);
 
-	// Unpack source into array. Along the way, build frequency and presence maps.
-	unsigned short maskval = 0;
-	Src.clear();
-	Src.seekg(0);
-	while (true) {
-		unsigned short v = BigEndian::Read2(Src);
-		if (!Src.good()) {
-			break;
-		}
-		maskval |= v;
-		counts[v] += 1;
-		elems.insert(v);
-		unpack.push_back(v);
-	}
+		// Read header.
+		size_t const packet_length = Read1(in);
+		base_flag_io *mask = base_flag_io::create(Read1(in));
+		size_t incrementing_value = BigEndian::Read2(in);
+		size_t const common_value = BigEndian::Read2(in);
 
-	base_flag_io *mask = base_flag_io::create(maskval >> 11);
-	unsigned short const packet_length = slog2(maskval & 0x7ff) + 1;
+		ibitstream<unsigned short, true> bits(in);
 
-	// Find the most common 2-byte value.
-	Compare_count cmp;
-	auto high = max_element(counts.begin(), counts.end(), cmp);
-	unsigned short const common_value = high->first;
-	// No longer needed.
-	counts.clear();
+		// Lets put in a safe termination condition here.
+		while (in.good()) {
+			if (bits.pop()) {
+				int mode = bits.read(2);
+				switch (mode) {
+					case 2:
+						mode = -1;
+					case 1:
+					case 0: {
+						size_t cnt = bits.read(4) + 1;
+						unsigned short flags = mask->read_bitfield(bits),
+							           outv  = bits.read(packet_length);
+						outv |= flags;
 
-	// Find incrementing (not neccessarily contiguous) runs.
-	// The original algorithm does this for all 65536 2-byte words, while
-	// this version only checks the 2-byte words actually in the file.
-	map<unsigned short, size_t> runs;
-	for (auto next : elems) {
-		auto val = runs.emplace(next, 0).first;
-		for (auto & elem : unpack) {
-			if (elem == next) {
-				next++;
-				val->second += 1;
-			}
-		}
-	}
-	// No longer needed.
-	elems.clear();
-
-	// Find the starting 2-byte value with the longest incrementing run.
-	auto incr = max_element(runs.begin(), runs.end(), cmp);
-	unsigned short incrementing_value = incr->first;
-	// No longer needed.
-	runs.clear();
-
-	// Output header.
-	Write1(Dst, packet_length);
-	Write1(Dst, maskval >> 11);
-	BigEndian::Write2(Dst, incrementing_value);
-	BigEndian::Write2(Dst, common_value);
-
-	// Time now to compress the file.
-	EniOBitstream bits(Dst);
-	vector<unsigned short> buf;
-	size_t pos = 0;
-	while (pos < unpack.size()) {
-		unsigned short v = unpack[pos];
-		if (v == incrementing_value) {
-			flush_buffer(buf, bits, mask, packet_length);
-			unsigned short next = v + 1;
-			size_t cnt = 0;
-			for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
-				if (next != unpack[i]) {
-					break;
-				}
-				next++;
-				cnt++;
-			}
-			bits.write(0x00 | cnt, 6);
-			incrementing_value = next;
-			pos += cnt;
-		} else if (v == common_value) {
-			flush_buffer(buf, bits, mask, packet_length);
-			unsigned short next = v;
-			size_t cnt = 0;
-			for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
-				if (next != unpack[i]) {
-					break;
-				}
-				cnt++;
-			}
-			bits.write(0x10 | cnt, 6);
-			pos += cnt;
-		} else {
-			unsigned short next = unpack[pos + 1];
-			int delta = int(next) - int(v);
-			if (pos + 1 < unpack.size() && next != incrementing_value &&
-			        (delta == -1 || delta == 0 || delta == 1)) {
-				flush_buffer(buf, bits, mask, packet_length);
-				size_t cnt = 1;
-				next += delta;
-				for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++) {
-					if (next != unpack[i] || next == incrementing_value) {
+						for (size_t i = 0; i < cnt; i++) {
+							BigEndian::Write2(Dst, outv);
+							outv += mode;
+						}
 						break;
 					}
-					next += delta;
-					cnt++;
-				}
+					case 3: {
+						size_t cnt = bits.read(4);
+						// This marks decompression as being done.
+						if (cnt == 0x0F) {
+							return;
+						}
 
-				if (delta == -1) {
-					delta = 2;
+						cnt++;
+						for (size_t i = 0; i < cnt; i++) {
+							unsigned short flags = mask->read_bitfield(bits),
+								           outv  = bits.read(packet_length);
+							BigEndian::Write2(Dst, outv | flags);
+						}
+						break;
+					}
 				}
-
-				delta = ((delta | 4) << 4);
-				bits.write(delta | cnt, 7);
-				mask->write_bitfield(bits, v);
-				bits.write(v & 0x7ff, packet_length);
-				pos += cnt;
 			} else {
-				if (buf.size() >= 0xf) {
-					flush_buffer(buf, bits, mask, packet_length);
+				if (!bits.pop()) {
+					size_t cnt = bits.read(4) + 1;
+					for (size_t i = 0; i < cnt; i++) {
+						BigEndian::Write2(Dst, incrementing_value++);
+					}
+				} else {
+					size_t cnt = bits.read(4) + 1;
+					for (size_t i = 0; i < cnt; i++) {
+						BigEndian::Write2(Dst, common_value);
+					}
 				}
-
-				buf.push_back(v);
 			}
 		}
-		pos++;
 	}
 
-	flush_buffer(buf, bits, mask, packet_length);
+	static void encode(std::istream &Src, std::ostream &Dst) {
+		// To unpack source into 2-byte words.
+		vector<unsigned short> unpack;
+		// Frequency map.
+		map<unsigned short, size_t> counts;
+		// Presence map.
+		set<unsigned short> elems;
 
-	// Terminator.
-	bits.write(0x7f, 7);
-	bits.flush();
+		// Unpack source into array. Along the way, build frequency and presence maps.
+		unsigned short maskval = 0;
+		Src.clear();
+		Src.seekg(0);
+		while (true) {
+			unsigned short v = BigEndian::Read2(Src);
+			if (!Src.good()) {
+				break;
+			}
+			maskval |= v;
+			counts[v] += 1;
+			elems.insert(v);
+			unpack.push_back(v);
+		}
+
+		base_flag_io *mask = base_flag_io::create(maskval >> 11);
+		unsigned short const packet_length = slog2(maskval & 0x7ff) + 1;
+
+		// Find the most common 2-byte value.
+		Compare_count cmp;
+		auto high = max_element(counts.begin(), counts.end(), cmp);
+		unsigned short const common_value = high->first;
+		// No longer needed.
+		counts.clear();
+
+		// Find incrementing (not neccessarily contiguous) runs.
+		// The original algorithm does this for all 65536 2-byte words, while
+		// this version only checks the 2-byte words actually in the file.
+		map<unsigned short, size_t> runs;
+		for (auto next : elems) {
+			auto val = runs.emplace(next, 0).first;
+			for (auto & elem : unpack) {
+				if (elem == next) {
+					next++;
+					val->second += 1;
+				}
+			}
+		}
+		// No longer needed.
+		elems.clear();
+
+		// Find the starting 2-byte value with the longest incrementing run.
+		auto incr = max_element(runs.begin(), runs.end(), cmp);
+		unsigned short incrementing_value = incr->first;
+		// No longer needed.
+		runs.clear();
+
+		// Output header.
+		Write1(Dst, packet_length);
+		Write1(Dst, maskval >> 11);
+		BigEndian::Write2(Dst, incrementing_value);
+		BigEndian::Write2(Dst, common_value);
+
+		// Time now to compress the file.
+		EniOBitstream bits(Dst);
+		vector<unsigned short> buf;
+		size_t pos = 0;
+		while (pos < unpack.size()) {
+			unsigned short v = unpack[pos];
+			if (v == incrementing_value) {
+				flush_buffer(buf, bits, mask, packet_length);
+				unsigned short next = v + 1;
+				size_t cnt = 0;
+				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
+					if (next != unpack[i]) {
+						break;
+					}
+					next++;
+					cnt++;
+				}
+				bits.write(0x00 | cnt, 6);
+				incrementing_value = next;
+				pos += cnt;
+			} else if (v == common_value) {
+				flush_buffer(buf, bits, mask, packet_length);
+				unsigned short next = v;
+				size_t cnt = 0;
+				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
+					if (next != unpack[i]) {
+						break;
+					}
+					cnt++;
+				}
+				bits.write(0x10 | cnt, 6);
+				pos += cnt;
+			} else {
+				unsigned short next = unpack[pos + 1];
+				int delta = int(next) - int(v);
+				if (pos + 1 < unpack.size() && next != incrementing_value &&
+					    (delta == -1 || delta == 0 || delta == 1)) {
+					flush_buffer(buf, bits, mask, packet_length);
+					size_t cnt = 1;
+					next += delta;
+					for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++) {
+						if (next != unpack[i] || next == incrementing_value) {
+							break;
+						}
+						next += delta;
+						cnt++;
+					}
+
+					if (delta == -1) {
+						delta = 2;
+					}
+
+					delta = ((delta | 4) << 4);
+					bits.write(delta | cnt, 7);
+					mask->write_bitfield(bits, v);
+					bits.write(v & 0x7ff, packet_length);
+					pos += cnt;
+				} else {
+					if (buf.size() >= 0xf) {
+						flush_buffer(buf, bits, mask, packet_length);
+					}
+
+					buf.push_back(v);
+				}
+			}
+			pos++;
+		}
+
+		flush_buffer(buf, bits, mask, packet_length);
+
+		// Terminator.
+		bits.write(0x7f, 7);
+		bits.flush();
+	}
+};
+
+bool enigma::decode(istream &Src, ostream &Dst, streampos Location,
+                    bool padding) {
+	Src.seekg(Location);
+	if (padding) {
+		// This is a plane map into a full pattern name table.
+		stringstream out(ios::in | ios::out | ios::binary);
+		enigma_internal::decode(Src, out);
+		out.clear();
+		out.seekg(0);
+
+		string pad(0x80 * 0x20, char(0));
+		char buf[0x40];
+		// Add a lot of padding (plane map).
+		Dst.write(pad.c_str(), 0x80 * 0x20);
+		for (size_t i = 0; i < 0x20; i++) {
+			Dst.write(pad.c_str(), 0x20);
+			out.read(buf, sizeof(buf));
+			Dst.write(buf, sizeof(buf));
+			Dst.write(pad.c_str(), 0x20);
+		}
+		Dst.write(pad.c_str(), 0x80 * 0x20);
+	} else {
+		enigma_internal::decode(Src, Dst);
+	}
+	return true;
 }
 
 bool enigma::encode(istream &Src, ostream &Dst, bool padding) {
@@ -447,9 +450,9 @@ bool enigma::encode(istream &Src, ostream &Dst, bool padding) {
 			src.write(buf, sizeof(buf));
 			Src.ignore(0x20);
 		}
-		encode_internal(src, Dst);
+		enigma_internal::encode(src, Dst);
 	} else {
-		encode_internal(Src, Dst);
+		enigma_internal::encode(Src, Dst);
 		// Pad to even size.
 		if ((Dst.tellp() & 1) != 0) {
 			Dst.put(0);

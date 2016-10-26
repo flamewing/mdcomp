@@ -24,9 +24,6 @@
 #include <iosfwd>
 
 class enigma {
-private:
-	static void decode_internal(std::istream &Src, std::ostream &Dst);
-	static void encode_internal(std::istream &Src, std::ostream &Dst);
 public:
 	static bool decode(std::istream &Src, std::ostream &Dst, std::streampos Location = 0, bool padding = false);
 	static bool encode(std::istream &Src, std::ostream &Dst, bool padding = false);

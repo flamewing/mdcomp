@@ -102,57 +102,131 @@ struct KosPlusAdaptor {
 	}
 };
 
-void kosplus::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
-	typedef LZSSIStream<KosPlusAdaptor> KosIStream;
+class kosplus_internal {
+public:
+	static void decode(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+		typedef LZSSIStream<KosPlusAdaptor> KosIStream;
 
-	KosIStream src(in);
+		KosIStream src(in);
 
-	while (in.good()) {
-		if (src.descbit()) {
-			Write1(Dst, src.getbyte());
-			++DecBytes;
-		} else {
-			// Count and distance
-			size_t Count = 0;
-			streamoff distance = 0;
-
+		while (in.good()) {
 			if (src.descbit()) {
-				unsigned char Low = src.getbyte(), High = src.getbyte();
+				Write1(Dst, src.getbyte());
+				++DecBytes;
+			} else {
+				// Count and distance
+				size_t Count = 0;
+				streamoff distance = 0;
 
-				Count = size_t(High & 0x07);
+				if (src.descbit()) {
+					unsigned char Low = src.getbyte(), High = src.getbyte();
 
-				if (!Count) {
-					Count = src.getbyte();
+					Count = size_t(High & 0x07);
+
 					if (!Count) {
-						break;
+						Count = src.getbyte();
+						if (!Count) {
+							break;
+						}
+						Count += 9;
+					} else {
+						Count += 2;
 					}
-					Count += 9;
+
+					distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 				} else {
-					Count += 2;
+					unsigned char Low  = src.descbit(),
+						          High = src.descbit();
+
+					Count = ((size_t(Low) << 1) | size_t(High)) + 2;
+
+					distance = src.getbyte();
+					distance |= ~size_t(0xFF);
 				}
 
-				distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
-			} else {
-				unsigned char Low  = src.descbit(),
-				              High = src.descbit();
-
-				Count = ((size_t(Low) << 1) | size_t(High)) + 2;
-
-				distance = src.getbyte();
-				distance |= ~size_t(0xFF);
+				for (size_t i = 0; i < Count; i++) {
+					streampos Pointer = Dst.tellp();
+					Dst.seekg(Pointer + distance);
+					unsigned char Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					Write1(Dst, Byte);
+				}
+				DecBytes += Count;
 			}
-
-			for (size_t i = 0; i < Count; i++) {
-				streampos Pointer = Dst.tellp();
-				Dst.seekg(Pointer + distance);
-				unsigned char Byte = Read1(Dst);
-				Dst.seekp(Pointer);
-				Write1(Dst, Byte);
-			}
-			DecBytes += Count;
 		}
 	}
-}
+
+	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
+	                   std::streamsize const BSize) {
+		typedef LZSSGraph<KosPlusAdaptor> KosGraph;
+		typedef LZSSOStream<KosPlusAdaptor> KosOStream;
+
+		// Compute optimal KosPlus parsing of input file.
+		KosGraph enc(Buffer, BSize, 1u);
+		typename KosGraph::AdjList list = enc.find_optimal_parse();
+		KosOStream out(Dst);
+
+		streamoff pos = 0;
+		// Go through each edge in the optimal path.
+		for (typename KosGraph::AdjList::const_iterator it = list.begin();
+			    it != list.end(); ++it) {
+			AdjListNode const &edge = *it;
+			size_t len = edge.get_length(), dist = edge.get_distance();
+			// The weight of each edge uniquely identifies how it should be written.
+			// NOTE: This needs to be changed for other LZSS schemes.
+			switch (edge.get_weight()) {
+				case 9:
+					// Literal.
+					out.descbit(1);
+					out.putbyte(Buffer[pos]);
+					break;
+				case 12:
+					// Inline RLE.
+					out.descbit(0);
+					out.descbit(0);
+					len -= 2;
+					out.descbit((len >> 1) & 1);
+					out.descbit(len & 1);
+					out.putbyte(-dist);
+					break;
+				case 18:
+				case 26: {
+					// Separate RLE.
+					out.descbit(0);
+					out.descbit(1);
+					dist = (-dist) & 0x1FFF;
+					unsigned short high = (dist >> 5) & 0xF8,
+						           low  = (dist & 0xFF);
+					if (edge.get_weight() == 18) {
+						// 2-byte RLE.
+						out.putbyte(low);
+						out.putbyte(high | (len - 2));
+					} else {
+						// 3-byte RLE.
+						out.putbyte(low);
+						out.putbyte(high);
+						out.putbyte(len - 9);
+					}
+					break;
+				}
+				default:
+					// This should be unreachable.
+					break;
+			}
+			// Go to next position.
+			pos = edge.get_dest();
+		}
+
+		// Push descriptor for end-of-file marker.
+		out.descbit(0);
+		out.descbit(1);
+
+		// Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
+		out.putbyte(0x00);
+		out.putbyte(0xF0);
+		out.putbyte(0x00);
+	}
+};
 
 bool kosplus::decode(istream &Src, iostream &Dst,
                      streampos Location, bool Moduled) {
@@ -176,87 +250,16 @@ bool kosplus::decode(istream &Src, iostream &Dst,
 		size_t FullSize = BigEndian::Read2(in);
 		
 		while (true) {
-			decode_internal(in, Dst, DecBytes);
+			kosplus_internal::decode(in, Dst, DecBytes);
 			if (DecBytes >= FullSize) {
 				break;
 			}
 		}
 	} else {
-		decode_internal(in, Dst, DecBytes);
+		kosplus_internal::decode(in, Dst, DecBytes);
 	}
 
 	return true;
-}
-
-void kosplus::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                              streamsize const BSize) {
-	typedef LZSSGraph<KosPlusAdaptor> KosGraph;
-	typedef LZSSOStream<KosPlusAdaptor> KosOStream;
-
-	// Compute optimal KosPlus parsing of input file.
-	KosGraph enc(Buffer, BSize, 1u);
-	typename KosGraph::AdjList list = enc.find_optimal_parse();
-	KosOStream out(Dst);
-
-	streamoff pos = 0;
-	// Go through each edge in the optimal path.
-	for (typename KosGraph::AdjList::const_iterator it = list.begin();
-	        it != list.end(); ++it) {
-		AdjListNode const &edge = *it;
-		size_t len = edge.get_length(), dist = edge.get_distance();
-		// The weight of each edge uniquely identifies how it should be written.
-		// NOTE: This needs to be changed for other LZSS schemes.
-		switch (edge.get_weight()) {
-			case 9:
-				// Literal.
-				out.descbit(1);
-				out.putbyte(Buffer[pos]);
-				break;
-			case 12:
-				// Inline RLE.
-				out.descbit(0);
-				out.descbit(0);
-				len -= 2;
-				out.descbit((len >> 1) & 1);
-				out.descbit(len & 1);
-				out.putbyte(-dist);
-				break;
-			case 18:
-			case 26: {
-				// Separate RLE.
-				out.descbit(0);
-				out.descbit(1);
-				dist = (-dist) & 0x1FFF;
-				unsigned short high = (dist >> 5) & 0xF8,
-				               low  = (dist & 0xFF);
-				if (edge.get_weight() == 18) {
-					// 2-byte RLE.
-					out.putbyte(low);
-					out.putbyte(high | (len - 2));
-				} else {
-					// 3-byte RLE.
-					out.putbyte(low);
-					out.putbyte(high);
-					out.putbyte(len - 9);
-				}
-				break;
-			}
-			default:
-				// This should be unreachable.
-				break;
-		}
-		// Go to next position.
-		pos = edge.get_dest();
-	}
-
-	// Push descriptor for end-of-file marker.
-	out.descbit(0);
-	out.descbit(1);
-
-	// Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
-	out.putbyte(0x00);
-	out.putbyte(0xF0);
-	out.putbyte(0x00);
 }
 
 bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleSize) {
@@ -281,7 +284,7 @@ bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleS
 		BigEndian::Write2(Dst, FullSize);
 
 		while (true) {
-			encode_internal(Dst, ptr, BSize);
+			kosplus_internal::encode(Dst, ptr, BSize);
 
 			CompBytes += BSize;
 			ptr += BSize;
@@ -293,7 +296,7 @@ bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleS
 			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else {
-		encode_internal(Dst, ptr, BSize);
+		kosplus_internal::encode(Dst, ptr, BSize);
 	}
 
 	// Pad to even size.

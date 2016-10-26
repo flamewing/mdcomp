@@ -92,32 +92,72 @@ typedef LZSSGraph<ComperAdaptor> CompGraph;
 typedef LZSSOStream<ComperAdaptor> CompOStream;
 typedef LZSSIStream<ComperAdaptor> CompIStream;
 
-void comper::decode_internal(istream &in, iostream &Dst) {
-	CompIStream src(in);
+class comper_internal {
+public:
+	static void decode(std::istream &in, std::iostream &Dst) {
+		CompIStream src(in);
 
-	while (in.good()) {
-		if (!src.descbit()) {
-			// Symbolwise match.
-			BigEndian::Write2(Dst, BigEndian::Read2(in));
-		} else {
-			// Dictionary match.
-			// Distance and length of match.
-			size_t distance = (0x100 - src.getbyte()) * 2,
-			       length = src.getbyte();
-			if (length == 0) {
-				break;
-			}
+		while (in.good()) {
+			if (!src.descbit()) {
+				// Symbolwise match.
+				BigEndian::Write2(Dst, BigEndian::Read2(in));
+			} else {
+				// Dictionary match.
+				// Distance and length of match.
+				size_t distance = (0x100 - src.getbyte()) * 2,
+					   length = src.getbyte();
+				if (length == 0) {
+					break;
+				}
 
-			for (size_t i = 0; i <= length; i++) {
-				streampos Pointer = Dst.tellp();
-				Dst.seekg(streamoff(Pointer) - distance);
-				unsigned short Word = BigEndian::Read2(Dst);
-				Dst.seekp(Pointer);
-				BigEndian::Write2(Dst, Word);
+				for (size_t i = 0; i <= length; i++) {
+					streampos Pointer = Dst.tellp();
+					Dst.seekg(streamoff(Pointer) - distance);
+					unsigned short Word = BigEndian::Read2(Dst);
+					Dst.seekp(Pointer);
+					BigEndian::Write2(Dst, Word);
+				}
 			}
 		}
 	}
-}
+
+	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
+	                   std::streamsize const BSize) {
+		// Compute optimal Comper parsing of input file.
+		CompGraph enc(Buffer, BSize, 1u);
+		CompGraph::AdjList list = enc.find_optimal_parse();
+		CompOStream out(Dst);
+
+		streamoff pos = 0;
+		// Go through each edge in the optimal path.
+		for (CompGraph::AdjList::const_iterator it = list.begin();
+			    it != list.end(); ++it) {
+			AdjListNode const &edge = *it;
+			size_t len = edge.get_length(), dist = edge.get_distance();
+			// The weight of each edge uniquely identifies how it should be written.
+			// NOTE: This needs to be changed for other LZSS schemes.
+			if (len == 1) {
+				// Symbolwise match.
+				out.descbit(0);
+				out.putbyte(Buffer[pos]);
+				out.putbyte(Buffer[pos + 1]);
+			} else {
+				// Dictionary match.
+				out.descbit(1);
+				out.putbyte(-dist);
+				out.putbyte(len - 1);
+			}
+			// Go to next position.
+			pos = edge.get_dest() * 2;
+		}
+
+		// Push descriptor for end-of-file marker.
+		out.descbit(1);
+
+		out.putbyte(0x00);
+		out.putbyte(0x00);
+	}
+};
 
 bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
 	Src.seekg(Location);
@@ -125,45 +165,8 @@ bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
 	in << Src.rdbuf();
 
 	in.seekg(0);
-	decode_internal(in, Dst);
+	comper_internal::decode(in, Dst);
 	return true;
-}
-
-void comper::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                             streamsize const BSize) {
-	// Compute optimal Comper parsing of input file.
-	CompGraph enc(Buffer, BSize, 1u);
-	CompGraph::AdjList list = enc.find_optimal_parse();
-	CompOStream out(Dst);
-
-	streamoff pos = 0;
-	// Go through each edge in the optimal path.
-	for (CompGraph::AdjList::const_iterator it = list.begin();
-	        it != list.end(); ++it) {
-		AdjListNode const &edge = *it;
-		size_t len = edge.get_length(), dist = edge.get_distance();
-		// The weight of each edge uniquely identifies how it should be written.
-		// NOTE: This needs to be changed for other LZSS schemes.
-		if (len == 1) {
-			// Symbolwise match.
-			out.descbit(0);
-			out.putbyte(Buffer[pos]);
-			out.putbyte(Buffer[pos + 1]);
-		} else {
-			// Dictionary match.
-			out.descbit(1);
-			out.putbyte(-dist);
-			out.putbyte(len - 1);
-		}
-		// Go to next position.
-		pos = edge.get_dest() * 2;
-	}
-
-	// Push descriptor for end-of-file marker.
-	out.descbit(1);
-
-	out.putbyte(0x00);
-	out.putbyte(0x00);
 }
 
 bool comper::encode(istream &Src, ostream &Dst) {
@@ -181,7 +184,7 @@ bool comper::encode(istream &Src, ostream &Dst) {
 		Buffer[ISize] = 0;
 	}
 
-	encode_internal(Dst, ptr, BSize);
+	comper_internal::encode(Dst, ptr, BSize);
 
 	delete [] Buffer;
 	return true;

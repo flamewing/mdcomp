@@ -110,111 +110,70 @@ struct KosinskiAdaptor {
 	}
 };
 
-void kosinski::decode_internal(istream &in, iostream &Dst, size_t &DecBytes) {
-	typedef LZSSIStream<KosinskiAdaptor> KosIStream;
+class kosinski_internal {
+public:
+	static void decode(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+		typedef LZSSIStream<KosinskiAdaptor> KosIStream;
 
-	KosIStream src(in);
+		KosIStream src(in);
 
-	while (in.good()) {
-		if (src.descbit()) {
-			// Symbolwise match.
-			Write1(Dst, src.getbyte());
-			++DecBytes;
-		} else {
-			// Dictionary matches.
-			// Count and distance
-			size_t Count = 0;
-			size_t distance = 0;
-
+		while (in.good()) {
 			if (src.descbit()) {
-				// Separate dictionary match.
-				unsigned char Low = src.getbyte(), High = src.getbyte();
+				// Symbolwise match.
+				Write1(Dst, src.getbyte());
+				++DecBytes;
+			} else {
+				// Dictionary matches.
+				// Count and distance
+				size_t Count = 0;
+				size_t distance = 0;
 
-				Count = size_t(High & 0x07);
+				if (src.descbit()) {
+					// Separate dictionary match.
+					unsigned char Low = src.getbyte(), High = src.getbyte();
 
-				if (!Count) {
-					// 3-byte dictionary match.
-					Count = src.getbyte();
+					Count = size_t(High & 0x07);
+
 					if (!Count) {
-						break;
-					} else if (Count == 1) {
-						continue;
+						// 3-byte dictionary match.
+						Count = src.getbyte();
+						if (!Count) {
+							break;
+						} else if (Count == 1) {
+							continue;
+						}
+						Count += 1;
+					} else {
+						// 2-byte dictionary match.
+						Count += 2;
 					}
-					Count += 1;
+
+					distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 				} else {
-					// 2-byte dictionary match.
-					Count += 2;
+					// Inline dictionary match.
+					unsigned char Low  = src.descbit(),
+						          High = src.descbit();
+
+					Count = ((size_t(Low) << 1) | size_t(High)) + 2;
+
+					distance = src.getbyte();
+					distance |= ~size_t(0xFF);
 				}
 
-				distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
-			} else {
-				// Inline dictionary match.
-				unsigned char Low  = src.descbit(),
-				              High = src.descbit();
-
-				Count = ((size_t(Low) << 1) | size_t(High)) + 2;
-
-				distance = src.getbyte();
-				distance |= ~size_t(0xFF);
+				for (size_t i = 0; i < Count; i++) {
+					size_t Pointer = Dst.tellp();
+					Dst.seekg(Pointer + distance);
+					unsigned char Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					Write1(Dst, Byte);
+				}
+				DecBytes += Count;
 			}
-
-			for (size_t i = 0; i < Count; i++) {
-				size_t Pointer = Dst.tellp();
-				Dst.seekg(Pointer + distance);
-				unsigned char Byte = Read1(Dst);
-				Dst.seekp(Pointer);
-				Write1(Dst, Byte);
-			}
-			DecBytes += Count;
 		}
 	}
-}
 
-bool kosinski::decode(istream &Src, iostream &Dst,
-                      streampos Location, bool Moduled,
-                      streamsize const ModulePadding) {
-	size_t DecBytes = 0;
-
-	Src.seekg(0, ios::end);
-	streamsize sz = streamsize(Src.tellg()) - Location;
-	Src.seekg(Location);
-
-	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
-
-	// Pad to even length, for safety.
-	if ((sz & 1) != 0) {
-		in.put(0x00);
-	}
-
-	in.seekg(0);
-
-	if (Moduled) {
-		streamsize const PadMask = ModulePadding - 1;
-		size_t FullSize = BigEndian::Read2(in);
-		if (FullSize == 0xA000) {
-			FullSize = 0x8000;
-		}
-
-		while (true) {
-			decode_internal(in, Dst, DecBytes);
-			if (DecBytes >= FullSize) {
-				break;
-			}
-
-			// Skip padding between modules
-			size_t paddingEnd = (((size_t(in.tellg()) - 2) + PadMask) & ~PadMask) + 2;
-			in.seekg(paddingEnd);
-		}
-	} else {
-		decode_internal(in, Dst, DecBytes);
-	}
-
-	return true;
-}
-
-void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
-                               streamsize const BSize, streamsize const Padding) {
+	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
+	                   std::streamsize const BSize, std::streamsize const Padding) {
 	typedef LZSSGraph<KosinskiAdaptor> KosGraph;
 	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
@@ -302,6 +261,50 @@ void kosinski::encode_internal(ostream &Dst, unsigned char const *&Buffer,
 	out.putbyte(0x00);
 	out.putbyte(0xF0);
 	out.putbyte(0x00);
+	}
+};
+
+bool kosinski::decode(istream &Src, iostream &Dst,
+                      streampos Location, bool Moduled,
+                      streamsize const ModulePadding) {
+	size_t DecBytes = 0;
+
+	Src.seekg(0, ios::end);
+	streamsize sz = streamsize(Src.tellg()) - Location;
+	Src.seekg(Location);
+
+	stringstream in(ios::in | ios::out | ios::binary);
+	in << Src.rdbuf();
+
+	// Pad to even length, for safety.
+	if ((sz & 1) != 0) {
+		in.put(0x00);
+	}
+
+	in.seekg(0);
+
+	if (Moduled) {
+		streamsize const PadMask = ModulePadding - 1;
+		size_t FullSize = BigEndian::Read2(in);
+		if (FullSize == 0xA000) {
+			FullSize = 0x8000;
+		}
+
+		while (true) {
+			kosinski_internal::decode(in, Dst, DecBytes);
+			if (DecBytes >= FullSize) {
+				break;
+			}
+
+			// Skip padding between modules
+			size_t paddingEnd = (((size_t(in.tellg()) - 2) + PadMask) & ~PadMask) + 2;
+			in.seekg(paddingEnd);
+		}
+	} else {
+		kosinski_internal::decode(in, Dst, DecBytes);
+	}
+
+	return true;
 }
 
 bool kosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleSize,
@@ -331,7 +334,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff Module
 			// We want to manage internal padding for all modules but the last.
 			CompBytes += BSize;
 			streamsize const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
-			encode_internal(Dst, ptr, BSize, Padding);
+			kosinski_internal::encode(Dst, ptr, BSize, Padding);
 
 			ptr += BSize;
 
@@ -353,7 +356,7 @@ bool kosinski::encode(istream &Src, ostream &Dst, bool Moduled, streamoff Module
 			BSize = min(ModuleSize, FullSize - CompBytes);
 		}
 	} else {
-		encode_internal(Dst, ptr, BSize, 1u);
+		kosinski_internal::encode(Dst, ptr, BSize, 1u);
 	}
 
 	// Pad to even size.
