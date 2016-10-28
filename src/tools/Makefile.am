@@ -6,7 +6,8 @@ bin_PROGRAMS = \
 	compcmp \
 	saxcmp \
 	kosplus \
-	mkoscmp
+	mkoscmp \
+	rockcmp
 
 compcmp_SOURCES =  \
 	compcmp.cc
@@ -63,6 +64,15 @@ enicmp_LDFLAGS = \
 	$(builddir)/../lib/libenigma.la
 
 enicmp_CXXFLAGS = \
+	-I$(srcdir)/../lib
+
+rockcmp_SOURCES = \
+	rockcmp.cc
+
+rockcmp_LDFLAGS = \
+	$(builddir)/../lib/librocket.la
+
+rockcmp_CXXFLAGS = \
 	-I$(srcdir)/../lib
 
 AM_CXXFLAGS = 
