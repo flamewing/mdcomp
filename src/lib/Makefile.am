@@ -7,7 +7,8 @@ lib_LTLIBRARIES = \
 	libsaxman.la \
 	libkosplus.la \
 	libmegakosinski.la \
-	libartc42.la
+	libartc42.la \
+	librocket.la
 
 libcomper_la_SOURCES = \
 	comper.cc \
@@ -79,6 +80,14 @@ libenigma_la_SOURCES = \
 	enigma.h
 
 libenigma_la_LIBADD =
+
+librocket_la_SOURCES = \
+	bigendian_io.h\
+	bitstream.h \
+	rocket.cc \
+	rocket.h
+
+librocket_la_LIBADD =
 
 AM_CPPFLAGS =
 
