@@ -227,18 +227,13 @@ public:
 	}
 };
 
-bool kosplus::decode(istream &Src, iostream &Dst, size_t Location, bool Moduled) {
-	size_t DecBytes = 0;
-
-	Src.seekg(0, ios::end);
-	size_t sz = size_t(Src.tellg()) - Location;
-	Src.seekg(Location);
-
+bool kosplus::decode(istream &Src, iostream &Dst, bool Moduled) {
 	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
+	size_t DecBytes = 0;
 
 	// Pad to even length, for safety.
-	if ((sz & 1) != 0) {
+	if ((in.tellp() & 1) != 0) {
 		in.put(0x00);
 	}
 
@@ -246,7 +241,7 @@ bool kosplus::decode(istream &Src, iostream &Dst, size_t Location, bool Moduled)
 
 	if (Moduled) {
 		size_t FullSize = BigEndian::Read2(in);
-		
+
 		while (true) {
 			kosplus_internal::decode(in, Dst, DecBytes);
 			if (DecBytes >= FullSize) {
@@ -302,7 +297,6 @@ bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, size_t ModuleSize
 		Dst.put(0);
 	}
 
-	
 	delete [] Buffer;
 	return true;
 }

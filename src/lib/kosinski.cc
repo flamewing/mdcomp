@@ -236,20 +236,13 @@ public:
 	}
 };
 
-bool kosinski::decode(istream &Src, iostream &Dst,
-                      size_t Location, bool Moduled,
-                      size_t const ModulePadding) {
-	size_t DecBytes = 0;
-
-	Src.seekg(0, ios::end);
-	size_t sz = size_t(Src.tellg()) - Location;
-	Src.seekg(Location);
-
+bool kosinski::decode(istream &Src, iostream &Dst, bool Moduled, size_t const ModulePadding) {
 	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
+	size_t DecBytes = 0;
 
 	// Pad to even length, for safety.
-	if ((sz & 1) != 0) {
+	if ((in.tellp() & 1) != 0) {
 		in.put(0x00);
 	}
 

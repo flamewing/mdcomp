@@ -407,56 +407,16 @@ public:
 	}
 };
 
-bool enigma::decode(istream &Src, ostream &Dst, streampos Location,
-                    bool padding) {
-	Src.seekg(Location);
-	if (padding) {
-		// This is a plane map into a full pattern name table.
-		stringstream out(ios::in | ios::out | ios::binary);
-		enigma_internal::decode(Src, out);
-		out.clear();
-		out.seekg(0);
-
-		string pad(0x80 * 0x20, char(0));
-		char buf[0x40];
-		// Add a lot of padding (plane map).
-		Dst.write(pad.c_str(), 0x80 * 0x20);
-		for (size_t i = 0; i < 0x20; i++) {
-			Dst.write(pad.c_str(), 0x20);
-			out.read(buf, sizeof(buf));
-			Dst.write(buf, sizeof(buf));
-			Dst.write(pad.c_str(), 0x20);
-		}
-		Dst.write(pad.c_str(), 0x80 * 0x20);
-	} else {
-		enigma_internal::decode(Src, Dst);
-	}
+bool enigma::decode(istream &Src, ostream &Dst) {
+	enigma_internal::decode(Src, Dst);
 	return true;
 }
 
-bool enigma::encode(istream &Src, ostream &Dst, bool padding) {
-	Src.seekg(0, ios::end);
-	size_t sz = Src.tellg();
-	Src.seekg(0);
-
-	// Remove padding associated with S1 special stages in 80x80 block version.
-	if (padding && sz >= 0x3000) {
-		stringstream src(ios::in | ios::out | ios::binary);
-		Src.ignore(0x80 * 0x20);
-		char buf[0x40];
-		for (size_t i = 0; i < 0x20; i++) {
-			Src.ignore(0x20);
-			Src.read(buf, sizeof(buf));
-			src.write(buf, sizeof(buf));
-			Src.ignore(0x20);
-		}
-		enigma_internal::encode(src, Dst);
-	} else {
-		enigma_internal::encode(Src, Dst);
-		// Pad to even size.
-		if ((Dst.tellp() & 1) != 0) {
-			Dst.put(0);
-		}
+bool enigma::encode(istream &Src, ostream &Dst) {
+	enigma_internal::encode(Src, Dst);
+	// Pad to even size.
+	if ((Dst.tellp() & 1) != 0) {
+		Dst.put(0);
 	}
 
 	return true;

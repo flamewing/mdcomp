@@ -323,7 +323,7 @@ public:
 
 	static void decode(std::istream &Src, std::ostream &Dst,
 	                   CodeNibbleMap &codemap, size_t rtiles,
-	                   bool alt_out = false, int *endptr = nullptr) {
+	                   bool alt_out = false) {
 		// This buffer is used for alternating mode decoding.
 		stringstream dst(ios::in | ios::out | ios::binary);
 
@@ -396,10 +396,6 @@ public:
 					len++;
 				}
 			}
-		}
-
-		if (endptr) {
-			*endptr = Src.tellg();
 		}
 
 		// Write out any remaining bits, padding with zeroes.
@@ -921,9 +917,7 @@ public:
 	}
 };
 
-bool nemesis::decode(istream &Src, ostream &Dst, streampos Location, int *endptr) {
-	Src.seekg(Location);
-
+bool nemesis::decode(istream &Src, ostream &Dst) {
 	CodeNibbleMap codemap;
 	size_t rtiles = BigEndian::Read2(Src);
 	// sets the output mode based on the value of the first bit
@@ -932,9 +926,7 @@ bool nemesis::decode(istream &Src, ostream &Dst, streampos Location, int *endptr
 
 	if (rtiles > 0) {
 		nemesis_internal::decode_header(Src, codemap);
-		nemesis_internal::decode(Src, Dst, codemap, rtiles, alt_out, endptr);
-	} else if (endptr) {
-		*endptr = Src.tellg();
+		nemesis_internal::decode(Src, Dst, codemap, rtiles, alt_out);
 	}
 	return true;
 }
@@ -984,7 +976,7 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	sizes[3] = nemesis_internal::encode(alt, buffers[3], true , sz, Compare_node2());
 
 	// Figure out what was the best encoding.
-	size_t bestsz = ~0ull, beststream = 0;
+	size_t bestsz = numeric_limits<size_t>::max(), beststream = 0;
 	for (size_t ii = 0; ii < sizeof(sizes) / sizeof(sizes[0]); ii++) {
 		if (sizes[ii] < bestsz) {
 			bestsz = sizes[ii];

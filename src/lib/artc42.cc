@@ -42,8 +42,8 @@ public:
 	}
 };
 
-bool artc42::decode(istream &Src, ostream &Dst, streampos Location) {
-	ignore_unused_variable_warning(Src, Dst, Location);
+bool artc42::decode(istream &Src, ostream &Dst) {
+	ignore_unused_variable_warning(Src, Dst);
 	return false;
 }
 

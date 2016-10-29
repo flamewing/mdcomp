@@ -159,13 +159,12 @@ public:
 	}
 };
 
-bool comper::decode(istream &Src, iostream &Dst, size_t Location) {
-	Src.seekg(Location);
+bool comper::decode(istream &Src, iostream &Dst) {
 	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 
 	// Pad to even length, for safety.
-	if ((in.tellg() & 1) != 0) {
+	if ((in.tellp() & 1) != 0) {
 		in.put(0x00);
 	}
 

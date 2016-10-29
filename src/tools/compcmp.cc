@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
-		comper::decode(fin, buffer, pointer);
+		fin.seekg(pointer);
+		comper::decode(fin, buffer);
 		fin.close();
 		buffer.seekg(0);
 
@@ -105,7 +106,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract) {
-			comper::decode(fin, fout, pointer);
+			fin.seekg(pointer);
+			comper::decode(fin, fout);
 		} else {
 			comper::encode(fin, fout);
 		}

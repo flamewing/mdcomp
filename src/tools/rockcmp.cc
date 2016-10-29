@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
-		rocket::decode(fin, buffer, pointer);
+		fin.seekg(pointer);
+		rocket::decode(fin, buffer);
 		fin.close();
 		buffer.seekg(0);
 
@@ -105,7 +106,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract) {
-			rocket::decode(fin, fout, pointer);
+			fin.seekg(pointer);
+			rocket::decode(fin, fout);
 		} else {
 			rocket::encode(fin, fout);
 		}

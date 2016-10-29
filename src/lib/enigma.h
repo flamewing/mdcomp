@@ -25,8 +25,8 @@
 
 class enigma {
 public:
-	static bool decode(std::istream &Src, std::ostream &Dst, std::streampos Location = 0, bool padding = false);
-	static bool encode(std::istream &Src, std::ostream &Dst, bool padding = false);
+	static bool decode(std::istream &Src, std::ostream &Dst);
+	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 
 #endif // __LIB_ENIGMA_H

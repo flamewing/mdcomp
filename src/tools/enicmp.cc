@@ -27,25 +27,23 @@
 using namespace std;
 
 static void usage(char *prog) {
-	cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] [-p|--padding] {input_filename} {output_filename}" << endl;
+	cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
 	cerr << endl;
-	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
-	cerr << "\t-p,--padding\tAdd or remove padding. Use this only for Sonic 1 Special Stage files in 80x80 block mode" << endl << endl;
+	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
 	static option long_options[] = {
 		{"extract", optional_argument, nullptr, 'x'},
-		{"padding", no_argument      , nullptr, 'p'},
 		{nullptr, 0, nullptr, 0}
 	};
 
-	bool extract = false, padding = false;
+	bool extract = false;
 	streamsize pointer = 0;
 
 	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::p",
+		int c = getopt_long(argc, argv, "x::",
 		                    long_options, &option_index);
 		if (c == -1) {
 			break;
@@ -57,10 +55,6 @@ int main(int argc, char *argv[]) {
 				if (optarg) {
 					pointer = strtoul(optarg, nullptr, 0);
 				}
-				break;
-
-			case 'p':
-				padding = true;
 				break;
 		}
 	}
@@ -83,9 +77,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (extract) {
-		enigma::decode(fin, fout, pointer, padding);
+		fin.seekg(pointer);
+		enigma::decode(fin, fout);
 	} else {
-		enigma::encode(fin, fout, padding);
+		enigma::encode(fin, fout);
 	}
 
 	return 0;

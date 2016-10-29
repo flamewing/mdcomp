@@ -113,7 +113,8 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
-		kosinski::decode(fin, buffer, pointer, moduled, padding);
+		fin.seekg(pointer);
+		kosinski::decode(fin, buffer, moduled, padding);
 		fin.close();
 		buffer.seekg(0);
 
@@ -131,7 +132,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract) {
-			kosinski::decode(fin, fout, pointer, moduled, padding);
+			fin.seekg(pointer);
+			kosinski::decode(fin, fout, moduled, padding);
 		} else {
 			kosinski::encode(fin, fout, moduled, modulesize, padding);
 		}

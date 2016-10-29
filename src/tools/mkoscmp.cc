@@ -101,7 +101,8 @@ int main(int argc, char *argv[]) {
 
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
-		mkosinski::decode(fin, buffer, pointer, moduled);
+		fin.seekg(pointer);
+		mkosinski::decode(fin, buffer, moduled);
 		fin.close();
 		buffer.seekg(0);
 
@@ -119,7 +120,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract) {
-			mkosinski::decode(fin, fout, pointer, moduled);
+			fin.seekg(pointer);
+			mkosinski::decode(fin, fout, moduled);
 		} else {
 			mkosinski::encode(fin, fout, moduled, modulesize);
 		}

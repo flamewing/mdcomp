@@ -165,13 +165,12 @@ public:
 	}
 };
 
-bool rocket::decode(istream &Src, iostream &Dst, size_t Location) {
-	Src.seekg(Location);
+bool rocket::decode(istream &Src, iostream &Dst) {
+	Src.ignore(2);
+	unsigned short stream_end = BigEndian::Read2(Src);
 	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
 
-	in.seekg(2);
-	unsigned short stream_end = BigEndian::Read2(in) + 4;
 	rocket_internal::decode(in, Dst, stream_end);
 	return true;
 }

@@ -26,8 +26,7 @@
 
 class nemesis {
 public:
-	static bool decode(std::istream &Src, std::ostream &Dst, std::streampos Location = 0,
-	                   int *endptr = nullptr);
+	static bool decode(std::istream &Src, std::ostream &Dst);
 	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 

@@ -24,8 +24,7 @@
 
 class rocket {
 public:
-	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   size_t Location = 0);
+	static bool decode(std::istream &Src, std::iostream &Dst);
 	static bool encode(std::istream &Src, std::ostream &Dst);
 };
 

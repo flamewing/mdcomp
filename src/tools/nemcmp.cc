@@ -94,9 +94,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (crunch) {
-		int endptr = 0;
 		stringstream buffer(ios::in | ios::out | ios::binary);
-		nemesis::decode(fin, buffer, pointer, &endptr);
+		fin.seekg(pointer);
+		nemesis::decode(fin, buffer);
 		fin.close();
 		buffer.seekg(0);
 
@@ -114,10 +114,10 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (extract) {
-			int endptr = 0;
-			nemesis::decode(fin, fout, pointer, &endptr);
+			fin.seekg(pointer);
+			nemesis::decode(fin, fout);
 			if (printend) {
-				cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right << endptr << endl;
+				cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right << fin.tellg() << endl;
 			}
 		} else {
 			nemesis::encode(fin, fout);

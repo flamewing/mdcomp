@@ -202,9 +202,7 @@ public:
 	}
 };
 
-bool saxman::decode(istream &Src, iostream &Dst,
-                    size_t Location, size_t const BSize) {
-	Src.seekg(Location);
+bool saxman::decode(istream &Src, iostream &Dst, size_t const BSize) {
 	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
 
 	stringstream in(ios::in | ios::out | ios::binary);
