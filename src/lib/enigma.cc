@@ -436,7 +436,7 @@ bool enigma::decode(istream &Src, ostream &Dst, streampos Location,
 
 bool enigma::encode(istream &Src, ostream &Dst, bool padding) {
 	Src.seekg(0, ios::end);
-	streamsize sz = Src.tellg();
+	size_t sz = Src.tellg();
 	Src.seekg(0);
 
 	// Remove padding associated with S1 special stages in 80x80 block version.

@@ -25,9 +25,9 @@
 class kosplus {
 public:
 	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   std::streampos Location = 0, bool Moduled = false);
+	                   size_t Location = 0, bool Moduled = false);
 	static bool encode(std::istream &Src, std::ostream &Dst,
-	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000);
+	                   bool Moduled = false, size_t ModuleSize = 0x1000);
 };
 
 #endif // __LIB_KOSPLUS_H

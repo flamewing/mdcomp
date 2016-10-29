@@ -29,82 +29,82 @@
 
 using namespace std;
 
-// NOTE: This has to be changed for other LZSS-based compression schemes.
-struct KosPlusAdaptor {
-	typedef unsigned char stream_t;
-	typedef unsigned char descriptor_t;
-	typedef littleendian<descriptor_t> descriptor_endian_t;
-	// Number of bits on descriptor bitfield.
-	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-	// Number of bits used in descriptor bitfield to signal the end-of-file
-	// marker sequence.
-	constexpr static size_t const NumTermBits = 2;
-	// Flag that tells the compressor that new descriptor fields are needed
-	// as soon as the last bit in the previous one is used up.
-	constexpr static size_t const NeedEarlyDescriptor = 0;
-	// Flag that marks the descriptor bits as being in little-endian bit
-	// order (that is, lowest bits come out first).
-	constexpr static size_t const DescriptorLittleEndianBits = 0;
-	// Size of the search buffer.
-	constexpr static size_t const SearchBufSize = 8192;
-	// Size of the look-ahead buffer.
-	constexpr static size_t const LookAheadBufSize = 264;
-	// Total size of the sliding window.
-	constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
-	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-	// one single symbol..
-	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-	// one single symbol..
-	constexpr static size_t symbolwise_weight() noexcept {
-		// Literal: 1-bit descriptor, 8-bit length.
-		return 1 + 8;
-	}
-	// Computes the cost of covering all of the "len" vertices starting from
-	// "off" vertices ago, for matches with len > 1.
-	// A return of "numeric_limits<size_t>::max()" means "infinite",
-	// or "no edge".
-	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
-		// Preconditions:
-		// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
-		if (len == 2 && dist > 256) {
-			// Can't represent this except by inlining both nodes.
-			return numeric_limits<size_t>::max();	// "infinite"
-		} else if (len <= 5 && dist <= 256) {
-			// Inline RLE: 2-bit descriptor, 2-bit count, 8-bit distance.
-			return 2 + 2 + 8;
-		} else if (len >= 3 && len <= 9) {
-			// Separate RLE, short form: 2-bit descriptor, 13-bit distance,
-			// 3-bit length.
-			return 2 + 13 + 3;
-		} else { //if (len >= 10 && len <= 264)
-			// Separate RLE, long form: 2-bit descriptor, 13-bit distance,
-			// 3-bit marker (zero), 8-bit length.
-			return 2 + 13 + 8 + 3;
-		}
-	}
-	// Given an edge, computes how many bits are used in the descriptor field.
-	static size_t desc_bits(AdjListNode const &edge) noexcept {
-		// Since KosPlus non-descriptor data is always 1, 2 or 3 bytes, this is
-		// a quick way to compute it.
-		return edge.get_weight() & 7;
-	}
-	// KosPlus finds no additional matches over normal LZSS.
-	constexpr static void extra_matches(stream_t const *data,
-	                          size_t basenode,
-	                          size_t ubound, size_t lbound,
-	                          LZSSGraph<KosPlusAdaptor>::MatchVector &matches) noexcept {
-		ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
-	}
-	// KosPlusM needs no additional padding at the end-of-file.
-	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-		ignore_unused_variable_warning(totallen, padmask);
-		return 0;
-	}
-};
-
 class kosplus_internal {
+	// NOTE: This has to be changed for other LZSS-based compression schemes.
+	struct KosPlusAdaptor {
+		typedef unsigned char stream_t;
+		typedef unsigned char descriptor_t;
+		typedef littleendian<descriptor_t> descriptor_endian_t;
+		// Number of bits on descriptor bitfield.
+		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+		// Number of bits used in descriptor bitfield to signal the end-of-file
+		// marker sequence.
+		constexpr static size_t const NumTermBits = 2;
+		// Flag that tells the compressor that new descriptor fields are needed
+		// as soon as the last bit in the previous one is used up.
+		constexpr static size_t const NeedEarlyDescriptor = 0;
+		// Flag that marks the descriptor bits as being in little-endian bit
+		// order (that is, lowest bits come out first).
+		constexpr static bool const DescriptorLittleEndianBits = false;
+		// Size of the search buffer.
+		constexpr static size_t const SearchBufSize = 8192;
+		// Size of the look-ahead buffer.
+		constexpr static size_t const LookAheadBufSize = 264;
+		// Total size of the sliding window.
+		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+		// one single symbol..
+		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+		// one single symbol..
+		constexpr static size_t symbolwise_weight() noexcept {
+			// Literal: 1-bit descriptor, 8-bit length.
+			return 1 + 8;
+		}
+		// Computes the cost of covering all of the "len" vertices starting from
+		// "off" vertices ago, for matches with len > 1.
+		// A return of "numeric_limits<size_t>::max()" means "infinite",
+		// or "no edge".
+		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+			// Preconditions:
+			// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
+			if (len == 2 && dist > 256) {
+				// Can't represent this except by inlining both nodes.
+				return numeric_limits<size_t>::max();	// "infinite"
+			} else if (len <= 5 && dist <= 256) {
+				// Inline RLE: 2-bit descriptor, 2-bit count, 8-bit distance.
+				return 2 + 2 + 8;
+			} else if (len >= 3 && len <= 9) {
+				// Separate RLE, short form: 2-bit descriptor, 13-bit distance,
+				// 3-bit length.
+				return 2 + 13 + 3;
+			} else { //if (len >= 10 && len <= 264)
+				// Separate RLE, long form: 2-bit descriptor, 13-bit distance,
+				// 3-bit marker (zero), 8-bit length.
+				return 2 + 13 + 8 + 3;
+			}
+		}
+		// Given an edge, computes how many bits are used in the descriptor field.
+		static size_t desc_bits(AdjListNode const &edge) noexcept {
+			// Since KosPlus non-descriptor data is always 1, 2 or 3 bytes, this is
+			// a quick way to compute it.
+			return edge.get_weight() & 7;
+		}
+		// KosPlus finds no additional matches over normal LZSS.
+		constexpr static void extra_matches(stream_t const *data,
+		                                    size_t basenode,
+		                                    size_t ubound, size_t lbound,
+		                                    LZSSGraph<KosPlusAdaptor>::MatchVector &matches) noexcept {
+			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+		}
+		// KosPlusM needs no additional padding at the end-of-file.
+		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+			ignore_unused_variable_warning(totallen, padmask);
+			return 0;
+		}
+	};
+
 public:
-	static void decode(std::istream &in, std::iostream &Dst, size_t &DecBytes) {
+	static void decode(istream &in, iostream &Dst, size_t &DecBytes) {
 		typedef LZSSIStream<KosPlusAdaptor> KosIStream;
 
 		KosIStream src(in);
@@ -116,7 +116,7 @@ public:
 			} else {
 				// Count and distance
 				size_t Count = 0;
-				streamoff distance = 0;
+				size_t distance = 0;
 
 				if (src.descbit()) {
 					unsigned char Low = src.getbyte(), High = src.getbyte();
@@ -145,7 +145,7 @@ public:
 				}
 
 				for (size_t i = 0; i < Count; i++) {
-					streampos Pointer = Dst.tellp();
+					size_t Pointer = Dst.tellp();
 					Dst.seekg(Pointer + distance);
 					unsigned char Byte = Read1(Dst);
 					Dst.seekp(Pointer);
@@ -156,8 +156,7 @@ public:
 		}
 	}
 
-	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
-	                   std::streamsize const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
 		typedef LZSSGraph<KosPlusAdaptor> KosGraph;
 		typedef LZSSOStream<KosPlusAdaptor> KosOStream;
 
@@ -166,7 +165,7 @@ public:
 		typename KosGraph::AdjList list = enc.find_optimal_parse();
 		KosOStream out(Dst);
 
-		streamoff pos = 0;
+		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (typename KosGraph::AdjList::const_iterator it = list.begin();
 			    it != list.end(); ++it) {
@@ -228,12 +227,11 @@ public:
 	}
 };
 
-bool kosplus::decode(istream &Src, iostream &Dst,
-                     streampos Location, bool Moduled) {
+bool kosplus::decode(istream &Src, iostream &Dst, size_t Location, bool Moduled) {
 	size_t DecBytes = 0;
 
 	Src.seekg(0, ios::end);
-	streamsize sz = streamsize(Src.tellg()) - Location;
+	size_t sz = size_t(Src.tellg()) - Location;
 	Src.seekg(Location);
 
 	stringstream in(ios::in | ios::out | ios::binary);
@@ -262,9 +260,9 @@ bool kosplus::decode(istream &Src, iostream &Dst,
 	return true;
 }
 
-bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleSize) {
+bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, size_t ModuleSize) {
 	Src.seekg(0, ios::end);
-	streamsize BSize = Src.tellg();
+	size_t BSize = Src.tellg();
 	Src.seekg(0);
 	auto const Buffer = new char[BSize];
 	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
@@ -275,7 +273,7 @@ bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleS
 			return false;
 		}
 
-		streamoff FullSize = BSize, CompBytes = 0;
+		size_t FullSize = BSize, CompBytes = 0;
 
 		if (BSize > ModuleSize) {
 			BSize = ModuleSize;
@@ -304,6 +302,7 @@ bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, streamoff ModuleS
 		Dst.put(0);
 	}
 
+	
 	delete [] Buffer;
 	return true;
 }

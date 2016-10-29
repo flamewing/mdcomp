@@ -107,7 +107,7 @@ public:
  * 	constexpr static size_t const NeedEarlyDescriptor = 1;
  * 	// Flag that marks the descriptor bits as being in little-endian bit
  * 	// order (that is, lowest bits come out first).
- * 	constexpr static size_t const DescriptorLittleEndianBits = 1;
+ * 	constexpr static bool const DescriptorLittleEndianBits = true;
  * 	// Size of the search buffer.
  * 	constexpr static size_t const SearchBufSize = 8192;
  * 	// Size of the look-ahead buffer.
@@ -312,8 +312,7 @@ private:
 	// Where we will output to.
 	std::ostream &out;
 	// Internal bitstream output buffer.
-	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits != 0,
-	           BitWriter> bits;
+	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;
 public:
@@ -376,7 +375,7 @@ private:
 	std::istream &in;
 	// Internal bitstream input buffer.
 	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor != 0,
-	           Adaptor::DescriptorLittleEndianBits != 0, BitWriter> bits;
+	 Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;
 public:

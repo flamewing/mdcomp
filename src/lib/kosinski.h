@@ -24,11 +24,11 @@
 class kosinski {
 public:
 	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   std::streampos Location = 0, bool Moduled = false,
-	                   std::streamsize const ModulePadding = 16u);
+	                   size_t Location = 0, bool Moduled = false,
+	                   size_t const ModulePadding = 16u);
 	static bool encode(std::istream &Src, std::ostream &Dst,
-	                   bool Moduled = false, std::streamoff ModuleSize = 0x1000,
-	                   std::streamsize const ModulePadding = 16u);
+	                   bool Moduled = false, size_t ModuleSize = 0x1000,
+	                   size_t const ModulePadding = 16u);
 };
 
 #endif // __LIB_KOSINSKI_H

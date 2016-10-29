@@ -25,8 +25,8 @@
 class saxman {
 public:
 	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   std::streampos Location = 0,
-	                   std::streamsize const BSize = 0);
+	                   size_t Location = 0,
+	                   size_t const BSize = 0);
 	static bool encode(std::istream &Src, std::ostream &Dst, bool WithSize = true);
 };
 

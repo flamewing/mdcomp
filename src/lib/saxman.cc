@@ -20,7 +20,6 @@
 #include <istream>
 #include <ostream>
 #include <sstream>
-#include <cstdio>
 
 #include "saxman.h"
 #include "bigendian_io.h"
@@ -30,99 +29,98 @@
 
 using namespace std;
 
-// NOTE: This has to be changed for other LZSS-based compression schemes.
-struct SaxmanAdaptor {
-	typedef unsigned char stream_t;
-	typedef unsigned char descriptor_t;
-	typedef littleendian<descriptor_t> descriptor_endian_t;
-	// Number of bits on descriptor bitfield.
-	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-	// Number of bits used in descriptor bitfield to signal the end-of-file
-	// marker sequence.
-	constexpr static size_t const NumTermBits = 0;
-	// Flag that tells the compressor that new descriptor fields is needed
-	// when a new bit is needed and all bits in the previous one have been
-	// used up.
-	constexpr static size_t const NeedEarlyDescriptor = 0;
-	// Flag that marks the descriptor bits as being in little-endian bit
-	// order (that is, lowest bits come out first).
-	constexpr static size_t const DescriptorLittleEndianBits = 1;
-	// Size of the search buffer.
-	constexpr static size_t const SearchBufSize = 4096;
-	// Size of the look-ahead buffer.
-	constexpr static size_t const LookAheadBufSize = 18;
-	// Total size of the sliding window.
-	constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
-	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-	// one single symbol..
-	constexpr static size_t symbolwise_weight() noexcept {
-		// Symbolwise match: 1-bit descriptor, 8-bit length.
-		return 1 + 8;
-	}
-	// Computes the cost of covering all of the "len" vertices starting from
-	// "off" vertices ago, for matches with len > 1.
-	// A return of "numeric_limits<size_t>::max()" means "infinite",
-	// or "no edge".
-	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
-		// Preconditions:
-		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
-		ignore_unused_variable_warning(dist);
-		if (len == 2) {
-			return numeric_limits<size_t>::max();   // "infinite"
-		} else {
-			// Dictionary match: 1-bit descriptor, 12-bit offset, 4-bit length.
-			return 1 + 12 + 4;
+class saxman_internal {
+	// NOTE: This has to be changed for other LZSS-based compression schemes.
+	struct SaxmanAdaptor {
+		typedef unsigned char stream_t;
+		typedef unsigned char descriptor_t;
+		typedef littleendian<descriptor_t> descriptor_endian_t;
+		// Number of bits on descriptor bitfield.
+		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+		// Number of bits used in descriptor bitfield to signal the end-of-file
+		// marker sequence.
+		constexpr static size_t const NumTermBits = 0;
+		// Flag that tells the compressor that new descriptor fields is needed
+		// when a new bit is needed and all bits in the previous one have been
+		// used up.
+		constexpr static size_t const NeedEarlyDescriptor = 0;
+		// Flag that marks the descriptor bits as being in little-endian bit
+		// order (that is, lowest bits come out first).
+		constexpr static bool const DescriptorLittleEndianBits = true;
+		// Size of the search buffer.
+		constexpr static size_t const SearchBufSize = 4096;
+		// Size of the look-ahead buffer.
+		constexpr static size_t const LookAheadBufSize = 18;
+		// Total size of the sliding window.
+		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+		// one single symbol..
+		constexpr static size_t symbolwise_weight() noexcept {
+			// Symbolwise match: 1-bit descriptor, 8-bit length.
+			return 1 + 8;
 		}
-	}
-	// Given an edge, computes how many bits are used in the descriptor field.
-	constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
-		// Saxman always uses a single bit descriptor.
-		ignore_unused_variable_warning(edge);
-		return 1;
-	}
-	// Saxman allows encoding of a sequence of zeroes with no previous match.
-	static void extra_matches(stream_t const *data, size_t basenode,
-	                          size_t ubound, size_t lbound,
-	                          LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
-		ignore_unused_variable_warning(lbound);
-		// Can't encode zero match after this point.
-		if (basenode >= 0xFFF) {
-			return;
-		}
-		// Try matching zeroes.
-		size_t jj = 0;
-		while (data[basenode + jj] == 0) {
-			if (++jj >= ubound) {
-				break;
+		// Computes the cost of covering all of the "len" vertices starting from
+		// "off" vertices ago, for matches with len > 1.
+		// A return of "numeric_limits<size_t>::max()" means "infinite",
+		// or "no edge".
+		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+			// Preconditions:
+			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
+			ignore_unused_variable_warning(dist);
+			if (len == 2) {
+				return numeric_limits<size_t>::max();   // "infinite"
+			} else {
+				// Dictionary match: 1-bit descriptor, 12-bit offset, 4-bit length.
+				return 1 + 12 + 4;
 			}
 		}
-		// Need at least 3 zeroes in sequence.
-		if (jj >= 3) {
-			// Got them, so add them to the list.
-			matches[jj - 1] = AdjListNode(basenode + jj,
-			                              numeric_limits<size_t>::max(),
-			                              jj, 1 + 12 + 4);
+		// Given an edge, computes how many bits are used in the descriptor field.
+		constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
+			// Saxman always uses a single bit descriptor.
+			ignore_unused_variable_warning(edge);
+			return 1;
 		}
-	}
-	// Saxman needs no additional padding at the end-of-file.
-	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-		ignore_unused_variable_warning(totallen, padmask);
-		return 0;
-	}
-};
+		// Saxman allows encoding of a sequence of zeroes with no previous match.
+		static void extra_matches(stream_t const *data, size_t basenode,
+			                      size_t ubound, size_t lbound,
+			                      LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
+			ignore_unused_variable_warning(lbound);
+			// Can't encode zero match after this point.
+			if (basenode >= 0xFFF) {
+				return;
+			}
+			// Try matching zeroes.
+			size_t jj = 0;
+			while (data[basenode + jj] == 0) {
+				if (++jj >= ubound) {
+					break;
+				}
+			}
+			// Need at least 3 zeroes in sequence.
+			if (jj >= 3) {
+				// Got them, so add them to the list.
+				matches[jj - 1] = AdjListNode(basenode + jj,
+					                          numeric_limits<size_t>::max(),
+					                          jj, 1 + 12 + 4);
+			}
+		}
+		// Saxman needs no additional padding at the end-of-file.
+		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+			ignore_unused_variable_warning(totallen, padmask);
+			return 0;
+		}
+	};
 
-typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
-typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
-typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
+	typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
+	typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
+	typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
 
-class saxman_internal {
 public:
-	static void decode(std::istream &in, std::iostream &Dst,
-	                   std::streamsize const BSize) {
+	static void decode(istream &in, iostream &Dst, size_t const BSize) {
 		SaxIStream src(in);
 
 		// Loop while the file is good and we haven't gone over the declared length.
-		while (in.good() && in.tellg() < BSize) {
+		while (in.good() && size_t(in.tellg()) < BSize) {
 			if (src.descbit()) {
 				// Symbolwise match.
 				if (in.peek() == EOF) {
@@ -154,7 +152,7 @@ public:
 					// If the offset is before the current output position, we copy
 					// bytes from the given location.
 					for (size_t src = offset; src < offset + length; src++) {
-						streampos Pointer = Dst.tellp();
+						size_t Pointer = Dst.tellp();
 						Dst.seekg(src);
 						unsigned short Byte = Read1(Dst);
 						Dst.seekp(Pointer);
@@ -170,14 +168,13 @@ public:
 		}
 	}
 
-	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
-	                   std::streamsize const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
 		// Compute optimal Saxman parsing of input file.
 		SaxGraph enc(Buffer, BSize, 1u);
 		SaxGraph::AdjList list = enc.find_optimal_parse();
 		SaxOStream out(Dst);
 
-		streamoff pos = 0;
+		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (SaxGraph::AdjList::const_iterator it = list.begin();
 			    it != list.end(); ++it) {
@@ -206,7 +203,7 @@ public:
 };
 
 bool saxman::decode(istream &Src, iostream &Dst,
-                    streampos Location, streamsize const BSize) {
+                    size_t Location, size_t const BSize) {
 	Src.seekg(Location);
 	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
 
@@ -220,7 +217,7 @@ bool saxman::decode(istream &Src, iostream &Dst,
 
 bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
 	Src.seekg(0, ios::end);
-	streamsize BSize = Src.tellg();
+	size_t BSize = Src.tellg();
 	Src.seekg(0);
 	auto const Buffer = new char[BSize];
 	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);

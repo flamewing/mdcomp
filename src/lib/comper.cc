@@ -29,73 +29,73 @@
 
 using namespace std;
 
-// NOTE: This has to be changed for other LZSS-based compression schemes.
-struct ComperAdaptor {
-	typedef unsigned short stream_t;
-	typedef unsigned short descriptor_t;
-	typedef bigendian<descriptor_t> descriptor_endian_t;
-	// Number of bits on descriptor bitfield.
-	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-	// Number of bits used in descriptor bitfield to signal the end-of-file
-	// marker sequence.
-	constexpr static size_t const NumTermBits = 1;
-	// Flag that tells the compressor that new descriptor fields is needed
-	// when a new bit is needed and all bits in the previous one have been
-	// used up.
-	constexpr static size_t const NeedEarlyDescriptor = 0;
-	// Flag that marks the descriptor bits as being in big-endian bit
-	// order (that is, highest bits come out first).
-	constexpr static size_t const DescriptorLittleEndianBits = 0;
-	// Size of the search buffer.
-	constexpr static size_t const SearchBufSize = 256;
-	// Size of the look-ahead buffer.
-	constexpr static size_t const LookAheadBufSize = 256;
-	// Total size of the sliding window.
-	constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
-	// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-	// one single symbol..
-	constexpr static size_t symbolwise_weight() noexcept {
-		// Symbolwise match: 1-bit descriptor, 16-bit length.
-		return 1 + 16;
-	}
-	// Computes the cost of covering all of the "len" vertices starting from
-	// "off" vertices ago, for matches with len > 1.
-	// A return of "numeric_limits<size_t>::max()" means "infinite",
-	// or "no edge".
-	constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
-		// Preconditions:
-		// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
-		// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
-		ignore_unused_variable_warning(dist, len);
-		return 1 + 8 + 8;
-	}
-	// Given an edge, computes how many bits are used in the descriptor field.
-	constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
-		// Comper always uses a single bit descriptor.
-		ignore_unused_variable_warning(edge);
-		return 1;
-	}
-	// Comper finds no additional matches over normal LZSS.
-	constexpr static void extra_matches(stream_t const *data,
-	                          size_t basenode,
-	                          size_t ubound, size_t lbound,
-	                          LZSSGraph<ComperAdaptor>::MatchVector &matches) noexcept {
-		ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
-	}
-	// Comper needs no additional padding at the end-of-file.
-	constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-		ignore_unused_variable_warning(totallen, padmask);
-		return 0;
-	}
-};
-
-typedef LZSSGraph<ComperAdaptor> CompGraph;
-typedef LZSSOStream<ComperAdaptor> CompOStream;
-typedef LZSSIStream<ComperAdaptor> CompIStream;
-
 class comper_internal {
+	// NOTE: This has to be changed for other LZSS-based compression schemes.
+	struct ComperAdaptor {
+		typedef unsigned short stream_t;
+		typedef unsigned short descriptor_t;
+		typedef bigendian<descriptor_t> descriptor_endian_t;
+		// Number of bits on descriptor bitfield.
+		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+		// Number of bits used in descriptor bitfield to signal the end-of-file
+		// marker sequence.
+		constexpr static size_t const NumTermBits = 1;
+		// Flag that tells the compressor that new descriptor fields is needed
+		// when a new bit is needed and all bits in the previous one have been
+		// used up.
+		constexpr static size_t const NeedEarlyDescriptor = 0;
+		// Flag that marks the descriptor bits as being in big-endian bit
+		// order (that is, highest bits come out first).
+		constexpr static bool const DescriptorLittleEndianBits = false;
+		// Size of the search buffer.
+		constexpr static size_t const SearchBufSize = 256;
+		// Size of the look-ahead buffer.
+		constexpr static size_t const LookAheadBufSize = 256;
+		// Total size of the sliding window.
+		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
+		// one single symbol..
+		constexpr static size_t symbolwise_weight() noexcept {
+			// Symbolwise match: 1-bit descriptor, 16-bit length.
+			return 1 + 16;
+		}
+		// Computes the cost of covering all of the "len" vertices starting from
+		// "off" vertices ago, for matches with len > 1.
+		// A return of "numeric_limits<size_t>::max()" means "infinite",
+		// or "no edge".
+		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+			// Preconditions:
+			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
+			// Dictionary match: 1-bit descriptor, 8-bit distance, 8-bit length.
+			ignore_unused_variable_warning(dist, len);
+			return 1 + 8 + 8;
+		}
+		// Given an edge, computes how many bits are used in the descriptor field.
+		constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
+			// Comper always uses a single bit descriptor.
+			ignore_unused_variable_warning(edge);
+			return 1;
+		}
+		// Comper finds no additional matches over normal LZSS.
+		constexpr static void extra_matches(stream_t const *data,
+		                                    size_t basenode,
+		                                    size_t ubound, size_t lbound,
+		                                    LZSSGraph<ComperAdaptor>::MatchVector &matches) noexcept {
+			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+		}
+		// Comper needs no additional padding at the end-of-file.
+		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+			ignore_unused_variable_warning(totallen, padmask);
+			return 0;
+		}
+	};
+
+	typedef LZSSGraph<ComperAdaptor> CompGraph;
+	typedef LZSSOStream<ComperAdaptor> CompOStream;
+	typedef LZSSIStream<ComperAdaptor> CompIStream;
+
 public:
-	static void decode(std::istream &in, std::iostream &Dst) {
+	static void decode(istream &in, iostream &Dst) {
 		CompIStream src(in);
 
 		while (in.good()) {
@@ -112,8 +112,8 @@ public:
 				}
 
 				for (size_t i = 0; i <= length; i++) {
-					streampos Pointer = Dst.tellp();
-					Dst.seekg(streamoff(Pointer) - distance);
+					size_t Pointer = Dst.tellp();
+					Dst.seekg(Pointer - distance);
 					unsigned short Word = BigEndian::Read2(Dst);
 					Dst.seekp(Pointer);
 					BigEndian::Write2(Dst, Word);
@@ -122,14 +122,13 @@ public:
 		}
 	}
 
-	static void encode(std::ostream &Dst, unsigned char const *&Buffer,
-	                   std::streamsize const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
 		// Compute optimal Comper parsing of input file.
 		CompGraph enc(Buffer, BSize, 1u);
 		CompGraph::AdjList list = enc.find_optimal_parse();
 		CompOStream out(Dst);
 
-		streamoff pos = 0;
+		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (CompGraph::AdjList::const_iterator it = list.begin();
 			    it != list.end(); ++it) {
@@ -160,10 +159,15 @@ public:
 	}
 };
 
-bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
+bool comper::decode(istream &Src, iostream &Dst, size_t Location) {
 	Src.seekg(Location);
 	stringstream in(ios::in | ios::out | ios::binary);
 	in << Src.rdbuf();
+
+	// Pad to even length, for safety.
+	if ((in.tellg() & 1) != 0) {
+		in.put(0x00);
+	}
 
 	in.seekg(0);
 	comper_internal::decode(in, Dst);
@@ -172,10 +176,10 @@ bool comper::decode(istream &Src, iostream &Dst, streampos Location) {
 
 bool comper::encode(istream &Src, ostream &Dst) {
 	Src.seekg(0, ios::end);
-	streamsize ISize = Src.tellg();
+	size_t ISize = Src.tellg();
 	Src.seekg(0);
 	// Pad to even size.
-	streamsize BSize = ISize + ((ISize & 1) != 0 ? 1 : 0);
+	size_t BSize = ISize + ((ISize & 1) != 0 ? 1 : 0);
 	auto const Buffer = new char[BSize];
 	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
 	Src.read(Buffer, ISize);
