@@ -1,6 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2013-2015 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2013-2016 <flamewing.sonic@gmail.com>
+ * Very loosely based on code by the KENS Project Development Team
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published

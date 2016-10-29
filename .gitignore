@@ -50,6 +50,7 @@ Makefile.in
 /src/tools/mkoscmp
 /src/tools/nemcmp
 /src/tools/saxcmp
+/src/tools/rockcmp
 
 # Debug files
 *.dSYM/
@@ -59,6 +60,7 @@ Makefile.in
 
 Makefile.in
 config.h.in
+po/Makefile.in.in
 
 # http://www.gnu.org/software/autoconf
 
