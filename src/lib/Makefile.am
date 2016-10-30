@@ -6,7 +6,6 @@ lib_LTLIBRARIES = \
 	libcomper.la \
 	libsaxman.la \
 	libkosplus.la \
-	libmegakosinski.la \
 	libartc42.la \
 	librocket.la
 
@@ -29,16 +28,6 @@ libsaxman_la_SOURCES = \
 	ignore_unused_variable_warning.h
 
 libsaxman_la_LIBADD =
-
-libmegakosinski_la_SOURCES = \
-	mkosinski.cc \
-	mkosinski.h \
-	lzss.h \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h
-
-libmegakosinski_la_LIBADD = 
 
 libartc42_la_SOURCES =  \
 	artc42.cc \
