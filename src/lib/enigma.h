@@ -22,11 +22,18 @@
 #define __LIB_ENIGMA_H
 
 #include <iosfwd>
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
 
-class enigma {
+class enigma;
+typedef BasicDecoder<enigma, false> basic_enigma;
+typedef ModuledAdaptor<enigma, 4096u, 1u> moduled_enigma;
+
+class enigma : public basic_enigma, public moduled_enigma {
 public:
 	static bool decode(std::istream &Src, std::ostream &Dst);
 	static bool encode(std::istream &Src, std::ostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_ENIGMA_H

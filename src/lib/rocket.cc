@@ -85,8 +85,8 @@ class rocket_internal {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// Rocket needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-			ignore_unused_variable_warning(totallen, padmask);
+		constexpr static size_t get_padding(size_t totallen) noexcept {
+			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
 	};
@@ -96,7 +96,7 @@ class rocket_internal {
 	typedef LZSSIStream<RocketAdaptor> RockIStream;
 
 public:
-	static void decode(istream &in, iostream &Dst, unsigned short stream_end) {
+	static void decode(istream &in, iostream &Dst, unsigned short Size) {
 		RockIStream src(in);
 
 		// Initialise buffer (needed by Rocket Knight Adventures plane maps)
@@ -107,7 +107,7 @@ public:
 		}
 		size_t buffer_index = 0x3C0;
 
-		while (in.good() && in.tellg() < stream_end) {
+		while (in.good() && in.tellg() < Size) {
 			if (src.descbit()) {
 				// Symbolwise match.
 				unsigned char Byte = Read1(in);
@@ -134,9 +134,9 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
 		// Compute optimal Rocket parsing of input file.
-		RockGraph enc(Buffer, BSize, 1u);
+		RockGraph enc(Data, Size);
 		RockGraph::AdjList list = enc.find_optimal_parse();
 		RockOStream out(Dst);
 
@@ -151,7 +151,7 @@ public:
 			if (len == 1) {
 				// Symbolwise match.
 				out.descbit(1);
-				out.putbyte(Buffer[pos]);
+				out.putbyte(Data[pos]);
 			} else {
 				// Dictionary match.
 				out.descbit(0);
@@ -165,42 +165,33 @@ public:
 	}
 };
 
+template<>
+size_t moduled_rocket::PadMaskBits = 1u;
+
 bool rocket::decode(istream &Src, iostream &Dst) {
 	Src.ignore(2);
-	unsigned short stream_end = BigEndian::Read2(Src);
-	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
+	size_t Size = BigEndian::Read2(Src);
 
-	rocket_internal::decode(in, Dst, stream_end);
+	size_t Location = Src.tellg();
+	stringstream in(ios::in | ios::out | ios::binary);
+	extract(Src, in);
+
+	rocket_internal::decode(in, Dst, Size);
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
-bool rocket::encode(istream &Src, ostream &Dst) {
-	Src.seekg(0, ios::end);
-	size_t ISize = Src.tellg();
-	Src.seekg(0);
-	// Pad to even size.
-	size_t BSize = ISize + ((ISize & 1) != 0 ? 1 : 0);
-	auto const Buffer = new char[BSize];
-	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
-	Src.read(Buffer, ISize);
-	// If we had to increase buffer size, we need to set the last byte in the
-	// buffer manually. We will pad with a 0 byte.
-	if (ISize != BSize) {
-		Buffer[ISize] = 0;
-	}
-
+bool rocket::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
 	// Internal buffer.
 	stringstream outbuff(ios::in | ios::out | ios::binary);
-	rocket_internal::encode(outbuff, ptr, BSize);
-	size_t compressed_size = outbuff.tellp();
-	outbuff.seekg(0);
+	rocket_internal::encode(outbuff, data, Size);
 
 	// Fill in header
-	BigEndian::Write2(Dst, ISize);					// Size of decompressed file
-	BigEndian::Write2(Dst, compressed_size);		// Size of compressed file
+	BigEndian::Write2(Dst, Size);					// Size of decompressed file
+	BigEndian::Write2(Dst, outbuff.tellp());		// Size of compressed file
+
+	outbuff.seekg(0);
 	Dst << outbuff.rdbuf();
 
-	delete [] Buffer;
 	return true;
 }

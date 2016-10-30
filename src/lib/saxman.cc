@@ -105,8 +105,8 @@ class saxman_internal {
 			}
 		}
 		// Saxman needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-			ignore_unused_variable_warning(totallen, padmask);
+		constexpr static size_t get_padding(size_t totallen) noexcept {
+			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
 	};
@@ -116,11 +116,11 @@ class saxman_internal {
 	typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
 
 public:
-	static void decode(istream &in, iostream &Dst, size_t const BSize) {
+	static void decode(istream &in, iostream &Dst, size_t const Size) {
 		SaxIStream src(in);
 
 		// Loop while the file is good and we haven't gone over the declared length.
-		while (in.good() && size_t(in.tellg()) < BSize) {
+		while (in.good() && size_t(in.tellg()) < Size) {
 			if (src.descbit()) {
 				// Symbolwise match.
 				if (in.peek() == EOF) {
@@ -161,16 +161,16 @@ public:
 				} else {
 					// Otherwise, it is a zero fill.
 					for (size_t ii = 0; ii < length; ii++) {
-						Write1(Dst, 0x00);
+						Write1(Dst, 0);
 					}
 				}
 			}
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
 		// Compute optimal Saxman parsing of input file.
-		SaxGraph enc(Buffer, BSize, 1u);
+		SaxGraph enc(Data, Size);
 		SaxGraph::AdjList list = enc.find_optimal_parse();
 		SaxOStream out(Dst);
 
@@ -185,7 +185,7 @@ public:
 			if (len == 1) {
 				// Symbolwise match.
 				out.descbit(1);
-				out.putbyte(Buffer[pos]);
+				out.putbyte(Data[pos]);
 			} else {
 				// Dictionary match.
 				out.descbit(0);
@@ -202,35 +202,31 @@ public:
 	}
 };
 
-bool saxman::decode(istream &Src, iostream &Dst, size_t const BSize) {
-	size_t size = BSize == 0 ? LittleEndian::Read2(Src) : BSize;
+template<>
+size_t moduled_saxman::PadMaskBits = 1u;
 
+bool saxman::decode(istream &Src, iostream &Dst, size_t Size) {
+	if (Size == 0) {
+		Size = LittleEndian::Read2(Src);
+	}
+
+	size_t Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
+	extract(Src, in);
 
-	in.seekg(0);
-	saxman_internal::decode(in, Dst, size);
+	saxman_internal::decode(in, Dst, Size);
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
-bool saxman::encode(istream &Src, ostream &Dst, bool WithSize) {
-	Src.seekg(0, ios::end);
-	size_t BSize = Src.tellg();
-	Src.seekg(0);
-	auto const Buffer = new char[BSize];
-	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
-	Src.read(Buffer, BSize);
-
-	// Internal buffer.
+bool saxman::encode(ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize) {
 	stringstream outbuff(ios::in | ios::out | ios::binary);
-	saxman_internal::encode(outbuff, ptr, BSize);
+	saxman_internal::encode(outbuff, data, Size);
 	if (WithSize) {
 		outbuff.seekg(0, ios::end);
 		LittleEndian::Write2(Dst, outbuff.tellg());
 	}
 	outbuff.seekg(0);
 	Dst << outbuff.rdbuf();
-
-	delete [] Buffer;
 	return true;
 }

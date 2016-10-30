@@ -21,12 +21,18 @@
 #define __LIB_KOSPLUS_H
 
 #include <iosfwd>
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
 
-class kosplus {
+class kosplus;
+typedef BasicDecoder<kosplus, false> basic_kosplus;
+typedef ModuledAdaptor<kosplus, 4096u, 1u> moduled_kosplus;
+
+class kosplus : public basic_kosplus, public moduled_kosplus {
 public:
-	static bool decode(std::istream &Src, std::iostream &Dst, bool Moduled = false);
-	static bool encode(std::istream &Src, std::ostream &Dst,
-	                   bool Moduled = false, size_t ModuleSize = 0x1000);
+	using basic_kosplus::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_KOSPLUS_H

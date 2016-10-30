@@ -1,66 +1,32 @@
 
 lib_LTLIBRARIES = \
+	libartc42.la \
+	libcomper.la \
 	libenigma.la \
 	libkosinski.la \
-	libnemesis.la \
-	libcomper.la \
-	libsaxman.la \
 	libkosplus.la \
-	libartc42.la \
-	librocket.la
-
-libcomper_la_SOURCES = \
-	comper.cc \
-	comper.h \
-	lzss.h \
-	bitstream.h \
-	bigendian_io.h \
-	ignore_unused_variable_warning.h
-
-libcomper_la_LIBADD =
-
-libsaxman_la_SOURCES = \
-	saxman.cc \
-	saxman.h \
-	bigendian_io.h \
-	lzss.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h
-
-libsaxman_la_LIBADD =
+	libnemesis.la \
+	librocket.la \
+	libsaxman.la
 
 libartc42_la_SOURCES =  \
+	ignore_unused_variable_warning.h \
 	artc42.cc \
-	artc42.h \
-	ignore_unused_variable_warning.h
+	artc42.h
 
-libnemesis_la_SOURCES = \
+libartc42_la_LIBADD =
+
+libcomper_la_SOURCES = \
 	bigendian_io.h \
 	bitstream.h \
-	nemesis.cc \
-	nemesis.h \
-	ignore_unused_variable_warning.h
-
-libnemesis_la_LIBADD =
-
-libkosinski_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	kosinski.cc \
-	kosinski.h \
-	lzss.h
-
-libkosinski_la_LIBADD =
-
-libkosplus_la_SOURCES = \
-	bigendian_io.h	\
-	bitstream.h \
-	kosplus.cc \
-	kosplus.h \
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
 	lzss.h \
-	ignore_unused_variable_warning.h
+	comper.cc \
+	comper.h
 
-libkosplus_la_LIBADD = 
+libcomper_la_LIBADD =
 
 libenigma_la_SOURCES = \
 	bigendian_io.h\
@@ -70,13 +36,62 @@ libenigma_la_SOURCES = \
 
 libenigma_la_LIBADD =
 
-librocket_la_SOURCES = \
-	bigendian_io.h\
+libkosinski_la_SOURCES = \
+	bigendian_io.h \
 	bitstream.h \
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
+	lzss.h \
+	kosinski.cc \
+	kosinski.h
+
+libkosinski_la_LIBADD =
+
+libkosplus_la_SOURCES = \
+	bigendian_io.h \
+	bitstream.h \
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
+	lzss.h \
+	kosplus.cc \
+	kosplus.h
+
+libkosplus_la_LIBADD = 
+
+libnemesis_la_SOURCES = \
+	bigendian_io.h \
+	bitstream.h \
+	ignore_unused_variable_warning.h
+	nemesis.cc \
+	nemesis.h \
+
+libnemesis_la_LIBADD =
+
+librocket_la_SOURCES = \
+	bigendian_io.h \
+	bitstream.h \
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
+	lzss.h \
 	rocket.cc \
 	rocket.h
 
 librocket_la_LIBADD =
+
+libsaxman_la_SOURCES = \
+	bigendian_io.h \
+	bitstream.h \
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
+	lzss.h \
+	saxman.cc \
+	saxman.h
+
+libsaxman_la_LIBADD =
 
 AM_CPPFLAGS =
 

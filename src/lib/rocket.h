@@ -21,11 +21,18 @@
 #define __LIB_ROCKET_H
 
 #include <iosfwd>
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
 
-class rocket {
+class rocket;
+typedef BasicDecoder<rocket, false> basic_rocket;
+typedef ModuledAdaptor<rocket, 4096u, 1u> moduled_rocket;
+
+class rocket : public basic_rocket, public moduled_rocket {
 public:
+	using basic_rocket::encode;
 	static bool decode(std::istream &Src, std::iostream &Dst);
-	static bool encode(std::istream &Src, std::ostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_ROCKET_H

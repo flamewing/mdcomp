@@ -22,12 +22,18 @@
 #define __LIB_NEMESIS_H
 
 #include <iosfwd>
-#include <map>
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
 
-class nemesis {
+class nemesis;
+typedef BasicDecoder<nemesis, false> basic_nemesis;
+typedef ModuledAdaptor<nemesis, 4096u, 1u> moduled_nemesis;
+
+class nemesis : public basic_nemesis, public moduled_nemesis {
 public:
 	static bool decode(std::istream &Src, std::ostream &Dst);
 	static bool encode(std::istream &Src, std::ostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_NEMESIS_H

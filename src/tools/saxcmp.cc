@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, crunch = false, WithSize = true;
-	streamsize pointer = 0, BSize = 0;
+	size_t pointer = 0, BSize = 0;
 
 	while (true) {
 		int option_index = 0;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
 		fin.seekg(pointer);
-		saxman::decode(fin, buffer);
+		saxman::decode(fin, buffer, BSize);
 		fin.close();
 		buffer.seekg(0);
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
-		saxman::encode(buffer, fout);
+		saxman::encode(buffer, fout, WithSize);
 	} else {
 		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {

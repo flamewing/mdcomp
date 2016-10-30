@@ -131,7 +131,7 @@ public:
  * 	                          size_t ubound, size_t lbound,
  * 	                          LZSSGraph<KosinskiAdaptor>::MatchVector &matches) noexcept;
  * 	// Function that computes padding between modules, if any. May be constexpr.
- * 	static size_t get_padding(size_t totallen, size_t padmask) noexcept;
+ * 	static size_t get_padding(size_t totallen) noexcept;
  */
 template<typename Adaptor>
 class LZSSGraph {
@@ -142,8 +142,6 @@ private:
 	// Source file data and its size; one node per character in source file.
 	typename Adaptor::stream_t const *data;
 	size_t const nlen;
-	// Account for padding at end of file, if any.
-	size_t const Padding;
 	// Adjacency lists for all the nodes in the graph.
 	std::vector<AdjList> adjs;
 
@@ -199,10 +197,9 @@ private:
 	}
 public:
 	// Constructor: creates the graph from the input file.
-	LZSSGraph(unsigned char const *dt, size_t const size,
-	          size_t const pad) noexcept
+	LZSSGraph(unsigned char const *dt, size_t const size) noexcept
 		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
-		  nlen(size / sizeof(typename Adaptor::stream_t)), Padding(pad * 8 - 1) {
+		  nlen(size / sizeof(typename Adaptor::stream_t)) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		for (size_t ii = 0; ii < nlen; ii++) {
@@ -222,7 +219,7 @@ public:
 	AdjList find_optimal_parse() const noexcept {
 		static_assert(noexcept(Adaptor::desc_bits(AdjListNode())),
 		                       "Adaptor::desc_bits() is not noexcept");
-		static_assert(noexcept(Adaptor::get_padding(0, 0)),
+		static_assert(noexcept(Adaptor::get_padding(0)),
 		                       "Adaptor::get_padding() is not noexcept");
 		// Auxiliary data structures:
 		// * The parent of a node is the node that reaches that node with the
@@ -271,7 +268,7 @@ public:
 						desccost += (Adaptor::NumDescBits - descmod);
 					}
 					// Compensate for the Adaptor's padding, if any. 
-					wgt += Adaptor::get_padding(wgt, Padding);
+					wgt += Adaptor::get_padding(wgt);
 				}
 				// Is the cost to reach the target node through this edge less
 				// than the current cost?

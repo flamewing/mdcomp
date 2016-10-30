@@ -37,10 +37,10 @@ static void usage(char *prog) {
 	     << "\t            \tfor the -m parameter, which makes both input and output files moduled" << endl
 	     << "\t            \t(but the optional module size affects only the output file)." << endl;
 	cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << endl
-	     << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << endl;
+	     << "\t            \tthe size of each module (default: " << moduled_kosinski::ModuleSize << ")." << endl;
 	cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << endl
 	     << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << endl
-	     << "\t            \tno padding. Must be a power of 2 (defaults to 16 if ommitted)." << endl << endl;
+	     << "\t            \tno padding. Must be a power of 2 (defaults: " << moduled_kosinski::ModulePadding << ")." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -53,7 +53,9 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	streamsize pointer = 0, modulesize = 0x1000, padding = 16;
+	size_t pointer = 0ull,
+	       modulesize = moduled_kosinski::ModuleSize,
+	       padding = moduled_kosinski::ModulePadding;
 
 	while (true) {
 		int option_index = 0;
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
 					modulesize = strtoul(optarg, nullptr, 0);
 				}
 				if (!modulesize) {
-					modulesize = 0x1000;
+					modulesize = 4096;
 				}
 				break;
 			case 'p':
@@ -114,7 +116,11 @@ int main(int argc, char *argv[]) {
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
 		fin.seekg(pointer);
-		kosinski::decode(fin, buffer, moduled, padding);
+		if (moduled) {
+			kosinski::moduled_decode(fin, buffer, padding);
+		} else {
+			kosinski::decode(fin, buffer);
+		}
 		fin.close();
 		buffer.seekg(0);
 
@@ -123,7 +129,11 @@ int main(int argc, char *argv[]) {
 			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
-		kosinski::encode(buffer, fout, moduled, modulesize, padding);
+		if (moduled) {
+			kosinski::moduled_encode(buffer, fout, modulesize, padding);
+		} else {
+			kosinski::encode(buffer, fout);
+		}
 	} else {
 		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
@@ -133,9 +143,17 @@ int main(int argc, char *argv[]) {
 
 		if (extract) {
 			fin.seekg(pointer);
-			kosinski::decode(fin, fout, moduled, padding);
+			if (moduled) {
+				kosinski::moduled_decode(fin, fout, padding);
+			} else {
+				kosinski::decode(fin, fout);
+			}
 		} else {
-			kosinski::encode(fin, fout, moduled, modulesize, padding);
+			if (moduled) {
+				kosinski::moduled_encode(fin, fout, modulesize, padding);
+			} else {
+				kosinski::encode(fin, fout);
+			}
 		}
 	}
 

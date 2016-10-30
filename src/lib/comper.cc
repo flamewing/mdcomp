@@ -84,8 +84,8 @@ class comper_internal {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// Comper needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-			ignore_unused_variable_warning(totallen, padmask);
+		constexpr static size_t get_padding(size_t totallen) noexcept {
+			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
 	};
@@ -122,9 +122,9 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
+	static void encode(ostream &Dst, unsigned char const *Data, size_t const Size) {
 		// Compute optimal Comper parsing of input file.
-		CompGraph enc(Buffer, BSize, 1u);
+		CompGraph enc(Data, Size);
 		CompGraph::AdjList list = enc.find_optimal_parse();
 		CompOStream out(Dst);
 
@@ -139,8 +139,8 @@ public:
 			if (len == 1) {
 				// Symbolwise match.
 				out.descbit(0);
-				out.putbyte(Buffer[pos]);
-				out.putbyte(Buffer[pos + 1]);
+				out.putbyte(Data[pos]);
+				out.putbyte(Data[pos + 1]);
 			} else {
 				// Dictionary match.
 				out.descbit(1);
@@ -154,42 +154,25 @@ public:
 		// Push descriptor for end-of-file marker.
 		out.descbit(1);
 
-		out.putbyte(0x00);
-		out.putbyte(0x00);
+		out.putbyte(0);
+		out.putbyte(0);
 	}
 };
 
+template<>
+size_t moduled_comper::PadMaskBits = 1u;
+
 bool comper::decode(istream &Src, iostream &Dst) {
+	size_t Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
+	extract(Src, in);
 
-	// Pad to even length, for safety.
-	if ((in.tellp() & 1) != 0) {
-		in.put(0x00);
-	}
-
-	in.seekg(0);
 	comper_internal::decode(in, Dst);
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
-bool comper::encode(istream &Src, ostream &Dst) {
-	Src.seekg(0, ios::end);
-	size_t ISize = Src.tellg();
-	Src.seekg(0);
-	// Pad to even size.
-	size_t BSize = ISize + ((ISize & 1) != 0 ? 1 : 0);
-	auto const Buffer = new char[BSize];
-	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
-	Src.read(Buffer, ISize);
-	// If we had to increase buffer size, we need to set the last byte in the
-	// buffer manually. We will pad with a 0 byte.
-	if (ISize != BSize) {
-		Buffer[ISize] = 0;
-	}
-
-	comper_internal::encode(Dst, ptr, BSize);
-
-	delete [] Buffer;
+bool comper::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+	comper_internal::encode(Dst, data, Size);
 	return true;
 }

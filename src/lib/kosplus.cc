@@ -97,14 +97,14 @@ class kosplus_internal {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// KosPlusM needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
-			ignore_unused_variable_warning(totallen, padmask);
+		constexpr static size_t get_padding(size_t totallen) noexcept {
+			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
 	};
 
 public:
-	static void decode(istream &in, iostream &Dst, size_t &DecBytes) {
+	static void decode(istream &in, iostream &Dst) {
 		typedef LZSSIStream<KosPlusAdaptor> KosIStream;
 
 		KosIStream src(in);
@@ -112,7 +112,6 @@ public:
 		while (in.good()) {
 			if (src.descbit()) {
 				Write1(Dst, src.getbyte());
-				++DecBytes;
 			} else {
 				// Count and distance
 				size_t Count = 0;
@@ -151,17 +150,16 @@ public:
 					Dst.seekp(Pointer);
 					Write1(Dst, Byte);
 				}
-				DecBytes += Count;
 			}
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize) {
+	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
 		typedef LZSSGraph<KosPlusAdaptor> KosGraph;
 		typedef LZSSOStream<KosPlusAdaptor> KosOStream;
 
 		// Compute optimal KosPlus parsing of input file.
-		KosGraph enc(Buffer, BSize, 1u);
+		KosGraph enc(Data, Size);
 		typename KosGraph::AdjList list = enc.find_optimal_parse();
 		KosOStream out(Dst);
 
@@ -177,7 +175,7 @@ public:
 				case 9:
 					// Literal.
 					out.descbit(1);
-					out.putbyte(Buffer[pos]);
+					out.putbyte(Data[pos]);
 					break;
 				case 12:
 					// Inline RLE.
@@ -227,76 +225,25 @@ public:
 	}
 };
 
-bool kosplus::decode(istream &Src, iostream &Dst, bool Moduled) {
+template<>
+size_t moduled_kosplus::PadMaskBits = 1u;
+
+bool kosplus::decode(istream &Src, iostream &Dst) {
+	size_t Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
-	size_t DecBytes = 0;
+	extract(Src, in);
 
-	// Pad to even length, for safety.
-	if ((in.tellp() & 1) != 0) {
-		in.put(0x00);
-	}
+	kosplus_internal::decode(in, Dst);
 
-	in.seekg(0);
-
-	if (Moduled) {
-		size_t FullSize = BigEndian::Read2(in);
-
-		while (true) {
-			kosplus_internal::decode(in, Dst, DecBytes);
-			if (DecBytes >= FullSize) {
-				break;
-			}
-		}
-	} else {
-		kosplus_internal::decode(in, Dst, DecBytes);
-	}
-
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
-bool kosplus::encode(istream &Src, ostream &Dst, bool Moduled, size_t ModuleSize) {
-	Src.seekg(0, ios::end);
-	size_t BSize = Src.tellg();
-	Src.seekg(0);
-	auto const Buffer = new char[BSize];
-	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
-	Src.read(Buffer, BSize);
-
-	if (Moduled) {
-		if (BSize > 65535) {  // Decompressed size would fill RAM or VRAM.
-			return false;
-		}
-
-		size_t FullSize = BSize, CompBytes = 0;
-
-		if (BSize > ModuleSize) {
-			BSize = ModuleSize;
-		}
-
-		BigEndian::Write2(Dst, FullSize);
-
-		while (true) {
-			kosplus_internal::encode(Dst, ptr, BSize);
-
-			CompBytes += BSize;
-			ptr += BSize;
-
-			if (CompBytes >= FullSize) {
-				break;
-			}
-
-			BSize = min(ModuleSize, FullSize - CompBytes);
-		}
-	} else {
-		kosplus_internal::encode(Dst, ptr, BSize);
-	}
-
+bool kosplus::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+	kosplus_internal::encode(Dst, data, Size);
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0) {
 		Dst.put(0);
 	}
-
-	delete [] Buffer;
 	return true;
 }

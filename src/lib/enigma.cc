@@ -418,8 +418,12 @@ bool enigma::encode(istream &Src, ostream &Dst) {
 	if ((Dst.tellp() & 1) != 0) {
 		Dst.put(0);
 	}
-
 	return true;
 }
 
-
+bool enigma::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
+	stringstream Src(ios::in | ios::out | ios::binary);
+	Src.write(reinterpret_cast<char const*>(data), Size);
+	Src.seekg(0);
+	return encode(Src, Dst);
+}

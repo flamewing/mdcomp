@@ -936,22 +936,14 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	// buffers for the padded Nemesis input.
 	stringstream src(ios::in | ios::out | ios::binary);
 
-	// Get original source length.
-	Src.seekg(0, ios::end);
-	streampos sz = Src.tellg();
-	Src.seekg(0);
-
 	// Copy to buffer.
 	src << Src.rdbuf();
 
-	// Is the source length a multiple of 32 bits?
-	if ((sz & 0x1f) != 0) {
-		// If not, pad it with zeroes until it is.
-		while ((src.tellp() & 0x1f) != 0) {
-			Write1(src, 0);
-			sz += 1;
-		}
+	// Pad source with zeroes until it is a multiple of 32 bits.
+	while ((src.tellp() & 0x1f) != 0) {
+		Write1(src, 0);
 	}
+	size_t sz = src.tellp();
 
 	// Now we will build the alternating bit stream for mode 1 compression.
 	src.clear();
@@ -993,4 +985,11 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	}
 
 	return true;
+}
+
+bool nemesis::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
+	stringstream Src(ios::in | ios::out | ios::binary);
+	Src.write(reinterpret_cast<char const*>(data), Size);
+	Src.seekg(0);
+	return encode(Src, Dst);
 }

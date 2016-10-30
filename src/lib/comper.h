@@ -21,11 +21,18 @@
 #define __LIB_COMPER_H
 
 #include <iosfwd>
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
 
-class comper {
+class comper;
+typedef BasicDecoder<comper, true> basic_comper;
+typedef ModuledAdaptor<comper, 4096u, 1u> moduled_comper;
+
+class comper : public basic_comper, public moduled_comper {
 public:
+	using basic_comper::encode;
 	static bool decode(std::istream &Src, std::iostream &Dst);
-	static bool encode(std::istream &Src, std::ostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_COMPER_H

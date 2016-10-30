@@ -95,10 +95,10 @@ class kosinski_internal {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// KosinskiM needs to pad each module to a multiple of 16 bytes.
-		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
+		static size_t get_padding(size_t totallen) noexcept {
 			// Add in the size of the end-of-file marker.
 			size_t padding = totallen + 3 * 8;
-			return ((padding + padmask) & ~padmask) - totallen;
+			return ((padding + moduled_kosinski::PadMaskBits) & ~moduled_kosinski::PadMaskBits) - totallen;
 		}
 	};
 
@@ -107,14 +107,13 @@ class kosinski_internal {
 	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
 
 public:
-	static void decode(istream &in, iostream &Dst, size_t &DecBytes) {
+	static void decode(istream &in, iostream &Dst) {
 		KosIStream src(in);
 
 		while (in.good()) {
 			if (src.descbit()) {
 				// Symbolwise match.
 				Write1(Dst, src.getbyte());
-				++DecBytes;
 			} else {
 				// Dictionary matches.
 				// Count and distance
@@ -160,14 +159,13 @@ public:
 					Dst.seekp(Pointer);
 					Write1(Dst, Byte);
 				}
-				DecBytes += Count;
 			}
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Buffer, size_t const BSize, size_t const Padding) {
+	static void encode(ostream &Dst, unsigned char const *Data, size_t const Size) {
 		// Compute optimal Kosinski parsing of input file.
-		KosGraph enc(Buffer, BSize, Padding);
+		KosGraph enc(Data, Size);
 		typename KosGraph::AdjList list = enc.find_optimal_parse();
 		KosOStream out(Dst);
 
@@ -183,7 +181,7 @@ public:
 				case 9:
 					// Symbolwise match.
 					out.descbit(1);
-					out.putbyte(Buffer[pos]);
+					out.putbyte(Data[pos]);
 					break;
 				case 12:
 					// Inline dictionary match.
@@ -233,99 +231,25 @@ public:
 	}
 };
 
-bool kosinski::decode(istream &Src, iostream &Dst, bool Moduled, size_t const ModulePadding) {
+template<>
+size_t moduled_kosinski::PadMaskBits = 1u;
+
+bool kosinski::decode(istream &Src, iostream &Dst) {
+	size_t Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
-	in << Src.rdbuf();
-	size_t DecBytes = 0;
+	extract(Src, in);
 
-	// Pad to even length, for safety.
-	if ((in.tellp() & 1) != 0) {
-		in.put(0x00);
-	}
+	kosinski_internal::decode(in, Dst);
 
-	in.seekg(0);
-
-	if (Moduled) {
-		size_t const PadMask = ModulePadding - 1;
-		size_t FullSize = BigEndian::Read2(in);
-		if (FullSize == 0xA000) {
-			FullSize = 0x8000;
-		}
-
-		while (true) {
-			kosinski_internal::decode(in, Dst, DecBytes);
-			if (DecBytes >= FullSize) {
-				break;
-			}
-
-			// Skip padding between modules
-			size_t paddingEnd = (((size_t(in.tellg()) - 2) + PadMask) & ~PadMask) + 2;
-			in.seekg(paddingEnd);
-		}
-	} else {
-		kosinski_internal::decode(in, Dst, DecBytes);
-	}
-
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
-bool kosinski::encode(istream &Src, ostream &Dst, bool Moduled, size_t ModuleSize,
-                      size_t const ModulePadding) {
-	Src.seekg(0, ios::end);
-	size_t BSize = Src.tellg();
-	Src.seekg(0);
-	auto const Buffer = new char[BSize];
-	unsigned char const *ptr = reinterpret_cast<unsigned char *>(Buffer);
-	Src.read(Buffer, BSize);
-
-	if (Moduled) {
-		if (BSize > 65535) {  // Decompressed size would fill RAM or VRAM.
-			return false;
-		}
-
-		size_t FullSize = BSize, CompBytes = 0;
-		size_t const PadMask = ModulePadding - 1;
-
-		if (BSize > ModuleSize) {
-			BSize = ModuleSize;
-		}
-
-		BigEndian::Write2(Dst, FullSize);
-
-		while (true) {
-			// We want to manage internal padding for all modules but the last.
-			CompBytes += BSize;
-			size_t const Padding = (CompBytes < FullSize) ? ModulePadding : 1u;
-			kosinski_internal::encode(Dst, ptr, BSize, Padding);
-
-			ptr += BSize;
-
-			if (CompBytes >= FullSize) {
-				break;
-			}
-
-			// Padding between modules
-			size_t paddingEnd = (((size_t(Dst.tellp()) - 2) + PadMask) & ~PadMask) + 2;
-			size_t pos = size_t(Dst.tellp());
-			if (paddingEnd > pos) {
-				size_t n = paddingEnd - pos;
-
-				for (size_t ii = 0; ii < n; ii++) {
-					Dst.put(0x00);
-				}
-			}
-
-			BSize = min(ModuleSize, FullSize - CompBytes);
-		}
-	} else {
-		kosinski_internal::encode(Dst, ptr, BSize, 1u);
-	}
-
+bool kosinski::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+	kosinski_internal::encode(Dst, data, Size);
 	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0) {
 		Dst.put(0);
 	}
-
-	delete [] Buffer;
 	return true;
 }

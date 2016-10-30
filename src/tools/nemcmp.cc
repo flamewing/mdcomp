@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, printend = false, crunch = false;
-	streamsize pointer = 0;
+	size_t pointer = 0;
 
 	while (true) {
 		int option_index = 0;

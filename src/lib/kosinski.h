@@ -21,13 +21,18 @@
 #define __LIB_KOSINSKI_H
 
 #include <iosfwd>
-class kosinski {
+#include "basic_decoder.h"
+#include "moduled_adaptor.h"
+
+class kosinski;
+typedef BasicDecoder<kosinski, false> basic_kosinski;
+typedef ModuledAdaptor<kosinski, 4096u, 16u> moduled_kosinski;
+
+class kosinski : public basic_kosinski, public moduled_kosinski {
 public:
-	static bool decode(std::istream &Src, std::iostream &Dst,
-	                   bool Moduled = false, size_t const ModulePadding = 16u);
-	static bool encode(std::istream &Src, std::ostream &Dst,
-	                   bool Moduled = false, size_t ModuleSize = 0x1000,
-	                   size_t const ModulePadding = 16u);
+	using basic_kosinski::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst);
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_KOSINSKI_H

@@ -36,8 +36,8 @@ static void usage(char *prog) {
 	     << "\t            \tto input_filename. All parameters affect only the output file, except" << endl
 	     << "\t            \tfor the -m parameter, which makes both input and output files moduled" << endl
 	     << "\t            \t(but the optional module size affects only the output file)." << endl;
-	cerr << "\t-m,--moduled\tUse compression in modules. {size} only affects compression; it is" << endl
-	     << "\t            \tthe size of each module (defaults to 0x1000 if ommitted)." << endl << endl;
+	cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << endl
+	     << "\t            \tthe size of each module (default: " << moduled_kosplus::ModuleSize << ")." << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	streamsize pointer = 0, modulesize = 0x1000;
+	size_t pointer = 0, modulesize = 0x1000;
 
 	while (true) {
 		int option_index = 0;
@@ -102,7 +102,11 @@ int main(int argc, char *argv[]) {
 	if (crunch) {
 		stringstream buffer(ios::in | ios::out | ios::binary);
 		fin.seekg(pointer);
-		kosplus::decode(fin, buffer, moduled);
+		if (moduled) {
+			kosplus::moduled_decode(fin, buffer);
+		} else {
+			kosplus::decode(fin, buffer);
+		}
 		fin.close();
 		buffer.seekg(0);
 
@@ -111,7 +115,11 @@ int main(int argc, char *argv[]) {
 			cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
 			return 3;
 		}
-		kosplus::encode(buffer, fout, moduled, modulesize);
+		if (moduled) {
+			kosplus::moduled_encode(buffer, fout, modulesize);
+		} else {
+			kosplus::encode(buffer, fout);
+		}
 	} else {
 		fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
 		if (!fout.good()) {
@@ -121,9 +129,17 @@ int main(int argc, char *argv[]) {
 
 		if (extract) {
 			fin.seekg(pointer);
-			kosplus::decode(fin, fout, moduled);
+			if (moduled) {
+				kosplus::moduled_decode(fin, fout);
+			} else {
+				kosplus::decode(fin, fout);
+			}
 		} else {
-			kosplus::encode(fin, fout, moduled, modulesize);
+			if (moduled) {
+				kosplus::moduled_encode(fin, fout, modulesize);
+			} else {
+				kosplus::encode(fin, fout);
+			}
 		}
 	}
 
