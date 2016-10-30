@@ -104,7 +104,7 @@ public:
  * 	constexpr static size_t const NumTermBits = 2;
  * 	// Flag that tells the compressor that new descriptor fields are needed
  * 	// as soon as the last bit in the previous one is used up.
- * 	constexpr static size_t const NeedEarlyDescriptor = 1;
+ * 	constexpr static bool const NeedEarlyDescriptor = true;
  * 	// Flag that marks the descriptor bits as being in little-endian bit
  * 	// order (that is, lowest bits come out first).
  * 	constexpr static bool const DescriptorLittleEndianBits = true;
@@ -234,12 +234,13 @@ public:
 		//   possible for all nodes but the first, which starts at 0.
 		std::vector<size_t> costs(nlen + 1, std::numeric_limits<size_t>::max());
 		costs[0] = 0;
-		// * And this is a vector that tallies up the amount of unused bits in
+		// * And this is a vector that tallies up the amount of bits in
 		//   the descriptor bitfield for the shortest path up to this node.
 		//   After tallying up the ending node, the end-of-file marker may cause
 		//   an additional dummy descriptor bitfield to be emitted; this vector
 		//   is used to counteract that.
-		std::vector<size_t> desccosts(nlen + 1, 0);
+		std::vector<size_t> desccosts(nlen + 1, std::numeric_limits<size_t>::max());
+		desccosts[0] = 0;
 
 		// Since the LZSS graph is a topologically-sorted DAG by construction,
 		// computing the shortest distance is very quick and easy: just go
@@ -251,31 +252,32 @@ public:
 			size_t basedesc = desccosts[ii];
 			for (const auto & elem : list) {
 				// Need destination ID and edge weight.
-				size_t nextnode = elem.get_dest(), wgt = elem.get_weight();
-				// Compute remaining unused bits from using this edge.
+				size_t nextnode = elem.get_dest(), wgt = costs[ii] + elem.get_weight();
+				// Compute descriptor bits from using this edge.
 				size_t desccost = basedesc + Adaptor::desc_bits(elem);
-				desccost %= Adaptor::NumDescBits;
 				if (nextnode == nlen) {
 					// This is the ending node. Add the descriptor bits for the
-					// end-of-file marker and wrap the descriptor.
+					// end-of-file marker.
+					wgt += Adaptor::NumTermBits;
 					desccost += Adaptor::NumTermBits;
-					desccost %= Adaptor::NumDescBits;
 					// If the descriptor bitfield had exactly 0 bits left after
 					// this, we may need to emit a new descriptor bitfield (the
 					// full Adaptor::NumDescBits bits). Otherwise, we need to
 					// pads the last descriptor bitfield to full size. This line
 					// accomplishes both.
-					if (Adaptor::NeedEarlyDescriptor != 0 || desccost > 0) {
-						wgt += (Adaptor::NumDescBits - desccost);
+					size_t descmod = desccost % Adaptor::NumDescBits;
+					if (descmod != 0 || Adaptor::NeedEarlyDescriptor) {
+						wgt += (Adaptor::NumDescBits - descmod);
+						desccost += (Adaptor::NumDescBits - descmod);
 					}
 					// Compensate for the Adaptor's padding, if any. 
-					wgt += Adaptor::get_padding(costs[ii] + wgt, Padding);
+					wgt += Adaptor::get_padding(wgt, Padding);
 				}
 				// Is the cost to reach the target node through this edge less
 				// than the current cost?
-				if (costs[nextnode] > costs[ii] + wgt) {
+				if (costs[nextnode] > wgt) {
 					// If so, update the data structures with new best edge.
-					costs[nextnode] = costs[ii] + wgt;
+					costs[nextnode] = wgt;
 					parents[nextnode] = ii;
 					pedges[nextnode] = elem;
 					desccosts[nextnode] = desccost;
@@ -329,7 +331,7 @@ public:
 		bool needdummydesc = !bits.have_waiting_bits();
 		// Now, flush the queue if needed.
 		bits.flush();
-		if (Adaptor::NeedEarlyDescriptor != 0 && needdummydesc) {
+		if (Adaptor::NeedEarlyDescriptor && needdummydesc) {
 			// We need to add a dummy descriptor field; so add it.
 			for (size_t ii = 0; ii < sizeof(descriptor_t); ii++) {
 				out.put(0x00);
@@ -341,7 +343,7 @@ public:
 	// Writes a bit to the descriptor bitfield. When the descriptor field is
 	// full, outputs it and the output parameter buffer.
 	void descbit(descriptor_t bit) noexcept {
-		if (Adaptor::NeedEarlyDescriptor != 0) {
+		if (Adaptor::NeedEarlyDescriptor) {
 			if (bits.push(bit)) {
 				out.write(buffer.c_str(), buffer.size());
 				buffer.clear();
@@ -374,7 +376,7 @@ private:
 	// Where we will input to.
 	std::istream &in;
 	// Internal bitstream input buffer.
-	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor != 0,
+	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor,
 	 Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;

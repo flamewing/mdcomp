@@ -42,7 +42,7 @@ class kosplus_internal {
 		constexpr static size_t const NumTermBits = 2;
 		// Flag that tells the compressor that new descriptor fields are needed
 		// as soon as the last bit in the previous one is used up.
-		constexpr static size_t const NeedEarlyDescriptor = 0;
+		constexpr static bool const NeedEarlyDescriptor = false;
 		// Flag that marks the descriptor bits as being in little-endian bit
 		// order (that is, lowest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = false;

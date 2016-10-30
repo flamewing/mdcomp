@@ -43,7 +43,7 @@ class comper_internal {
 		// Flag that tells the compressor that new descriptor fields is needed
 		// when a new bit is needed and all bits in the previous one have been
 		// used up.
-		constexpr static size_t const NeedEarlyDescriptor = 0;
+		constexpr static bool const NeedEarlyDescriptor = false;
 		// Flag that marks the descriptor bits as being in big-endian bit
 		// order (that is, highest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = false;

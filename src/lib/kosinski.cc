@@ -42,7 +42,7 @@ class kosinski_internal {
 		constexpr static size_t const NumTermBits = 2;
 		// Flag that tells the compressor that new descriptor fields are needed
 		// as soon as the last bit in the previous one is used up.
-		constexpr static size_t const NeedEarlyDescriptor = 1;
+		constexpr static bool const NeedEarlyDescriptor = true;
 		// Flag that marks the descriptor bits as being in little-endian bit
 		// order (that is, lowest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = true;
@@ -97,9 +97,6 @@ class kosinski_internal {
 		// KosinskiM needs to pad each module to a multiple of 16 bytes.
 		constexpr static size_t get_padding(size_t totallen, size_t padmask) noexcept {
 			// Add in the size of the end-of-file marker.
-			if (!padmask) {
-				return 0;
-			}
 			size_t padding = totallen + 3 * 8;
 			return ((padding + padmask) & ~padmask) - totallen;
 		}
