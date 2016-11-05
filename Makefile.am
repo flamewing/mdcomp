@@ -30,6 +30,9 @@ DISTCLEANFILES = intltool-extract \
 	po/.intltool-merge-cache
 
 include_HEADERS = \
+	src/lib/bigendian_io.h \
+	src/lib/basic_decoder.h \
+	src/lib/moduled_adaptor.h \
 	src/lib/artc42.h \
 	src/lib/comper.h \
 	src/lib/enigma.h \
