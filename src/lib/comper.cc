@@ -29,6 +29,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_comper::PadMaskBits = 1u;
+
 class comper_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct ComperAdaptor {
@@ -158,9 +161,6 @@ public:
 		out.putbyte(0);
 	}
 };
-
-template<>
-size_t moduled_comper::PadMaskBits = 1u;
 
 bool comper::decode(istream &Src, iostream &Dst) {
 	size_t Location = Src.tellg();

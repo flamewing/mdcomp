@@ -22,6 +22,7 @@
 #include <ostream>
 #include <sstream>
 #include <map>
+#include <memory>
 #include <string>
 #include <set>
 #include <vector>
@@ -41,7 +42,7 @@ typedef obitstream<unsigned short> EniOBitstream;
 class base_flag_io {
 public:
 	virtual ~base_flag_io() {}
-	static base_flag_io *create(size_t n);
+	static unique_ptr<base_flag_io> create(size_t n);
 	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
 	virtual void write_bitfield(EniOBitstream &bits, unsigned short flags) const = 0;
 };
@@ -89,72 +90,72 @@ public:
 };
 
 // Selects the appropriate template instance to be used.
-base_flag_io *base_flag_io::create(size_t n) {
+unique_ptr<base_flag_io> base_flag_io::create(size_t n) {
 	switch ((n & 0x1F)) {
 		case 0x00:
-			return new flag_io<0x00>;
+			return make_unique<flag_io<0x00>>();
 		case 0x01:
-			return new flag_io<0x01>;
+			return make_unique<flag_io<0x01>>();
 		case 0x02:
-			return new flag_io<0x02>;
+			return make_unique<flag_io<0x02>>();
 		case 0x03:
-			return new flag_io<0x03>;
+			return make_unique<flag_io<0x03>>();
 		case 0x04:
-			return new flag_io<0x04>;
+			return make_unique<flag_io<0x04>>();
 		case 0x05:
-			return new flag_io<0x05>;
+			return make_unique<flag_io<0x05>>();
 		case 0x06:
-			return new flag_io<0x06>;
+			return make_unique<flag_io<0x06>>();
 		case 0x07:
-			return new flag_io<0x07>;
+			return make_unique<flag_io<0x07>>();
 		case 0x08:
-			return new flag_io<0x08>;
+			return make_unique<flag_io<0x08>>();
 		case 0x09:
-			return new flag_io<0x09>;
+			return make_unique<flag_io<0x09>>();
 		case 0x0a:
-			return new flag_io<0x0a>;
+			return make_unique<flag_io<0x0a>>();
 		case 0x0b:
-			return new flag_io<0x0b>;
+			return make_unique<flag_io<0x0b>>();
 		case 0x0c:
-			return new flag_io<0x0c>;
+			return make_unique<flag_io<0x0c>>();
 		case 0x0d:
-			return new flag_io<0x0d>;
+			return make_unique<flag_io<0x0d>>();
 		case 0x0e:
-			return new flag_io<0x0e>;
+			return make_unique<flag_io<0x0e>>();
 		case 0x0f:
-			return new flag_io<0x0f>;
+			return make_unique<flag_io<0x0f>>();
 		case 0x10:
-			return new flag_io<0x10>;
+			return make_unique<flag_io<0x10>>();
 		case 0x11:
-			return new flag_io<0x11>;
+			return make_unique<flag_io<0x11>>();
 		case 0x12:
-			return new flag_io<0x12>;
+			return make_unique<flag_io<0x12>>();
 		case 0x13:
-			return new flag_io<0x13>;
+			return make_unique<flag_io<0x13>>();
 		case 0x14:
-			return new flag_io<0x14>;
+			return make_unique<flag_io<0x14>>();
 		case 0x15:
-			return new flag_io<0x15>;
+			return make_unique<flag_io<0x15>>();
 		case 0x16:
-			return new flag_io<0x16>;
+			return make_unique<flag_io<0x16>>();
 		case 0x17:
-			return new flag_io<0x17>;
+			return make_unique<flag_io<0x17>>();
 		case 0x18:
-			return new flag_io<0x18>;
+			return make_unique<flag_io<0x18>>();
 		case 0x19:
-			return new flag_io<0x19>;
+			return make_unique<flag_io<0x19>>();
 		case 0x1a:
-			return new flag_io<0x1a>;
+			return make_unique<flag_io<0x1a>>();
 		case 0x1b:
-			return new flag_io<0x1b>;
+			return make_unique<flag_io<0x1b>>();
 		case 0x1c:
-			return new flag_io<0x1c>;
+			return make_unique<flag_io<0x1c>>();
 		case 0x1d:
-			return new flag_io<0x1d>;
+			return make_unique<flag_io<0x1d>>();
 		case 0x1e:
-			return new flag_io<0x1e>;
+			return make_unique<flag_io<0x1e>>();
 		case 0x1f:
-			return new flag_io<0x1f>;
+			return make_unique<flag_io<0x1f>>();
 		default:
 			cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << endl;
 			return nullptr;
@@ -189,7 +190,7 @@ struct Compare_count {
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(vector<unsigned short> &buf,
                                 EniOBitstream &bits,
-                                base_flag_io *&mask,
+                                unique_ptr<base_flag_io> &mask,
                                 unsigned short const packet_length) {
 	if (!buf.size()) {
 		return;
@@ -212,7 +213,7 @@ public:
 
 		// Read header.
 		size_t const packet_length = Read1(in);
-		base_flag_io *mask = base_flag_io::create(Read1(in));
+		auto mask = base_flag_io::create(Read1(in));
 		size_t incrementing_value = BigEndian::Read2(in);
 		size_t const common_value = BigEndian::Read2(in);
 
@@ -293,7 +294,7 @@ public:
 			unpack.push_back(v);
 		}
 
-		base_flag_io *mask = base_flag_io::create(maskval >> 11);
+		auto mask = base_flag_io::create(maskval >> 11);
 		unsigned short const packet_length = slog2(maskval & 0x7ff) + 1;
 
 		// Find the most common 2-byte value.

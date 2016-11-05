@@ -29,6 +29,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_kosplus::PadMaskBits = 1u;
+
 class kosplus_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosPlusAdaptor {
@@ -224,9 +227,6 @@ public:
 		out.putbyte(0x00);
 	}
 };
-
-template<>
-size_t moduled_kosplus::PadMaskBits = 1u;
 
 bool kosplus::decode(istream &Src, iostream &Dst) {
 	size_t Location = Src.tellg();

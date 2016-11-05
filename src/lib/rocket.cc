@@ -29,6 +29,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_rocket::PadMaskBits = 1u;
+
 class rocket_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct RocketAdaptor {
@@ -164,9 +167,6 @@ public:
 		}
 	}
 };
-
-template<>
-size_t moduled_rocket::PadMaskBits = 1u;
 
 bool rocket::decode(istream &Src, iostream &Dst) {
 	Src.ignore(2);

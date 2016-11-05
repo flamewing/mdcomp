@@ -29,6 +29,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_saxman::PadMaskBits = 1u;
+
 class saxman_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct SaxmanAdaptor {
@@ -201,9 +204,6 @@ public:
 		}
 	}
 };
-
-template<>
-size_t moduled_saxman::PadMaskBits = 1u;
 
 bool saxman::decode(istream &Src, iostream &Dst, size_t Size) {
 	if (Size == 0) {

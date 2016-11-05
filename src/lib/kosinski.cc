@@ -29,6 +29,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_kosinski::PadMaskBits = 1u;
+
 class kosinski_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosinskiAdaptor {
@@ -230,9 +233,6 @@ public:
 		out.putbyte(0x00);
 	}
 };
-
-template<>
-size_t moduled_kosinski::PadMaskBits = 1u;
 
 bool kosinski::decode(istream &Src, iostream &Dst) {
 	size_t Location = Src.tellg();
