@@ -1,73 +1,54 @@
 
 bin_PROGRAMS = \
-	enicmp\
-	koscmp \
-	nemcmp \
 	compcmp \
-	saxcmp \
+	enicmp \
+	koscmp \
 	kosplus \
-	rockcmp
+	nemcmp \
+	rockcmp \
+	saxcmp
 
-compcmp_SOURCES =  \
-	compcmp.cc
+compcmp_SOURCES = compcmp.cc
 
-compcmp_CXXFLAGS = -I$(srcdir)/../lib 
+compcmp_CXXFLAGS = -I$(srcdir)/../lib
 
-compcmp_LDFLAGS = $(builddir)/../lib/libcomper.la 
+compcmp_LDFLAGS = $(builddir)/../lib/libcomper.la
 
-saxcmp_SOURCES =  \
-	saxcmp.cc
+enicmp_SOURCES = enicmp.cc
 
-saxcmp_CXXFLAGS = -I$(srcdir)/../lib 
+enicmp_CXXFLAGS = -I$(srcdir)/../lib
 
-saxcmp_LDFLAGS = $(builddir)/../lib/libsaxman.la 
+enicmp_LDFLAGS = $(builddir)/../lib/libenigma.la
 
-nemcmp_SOURCES = \
-	nemcmp.cc
+nemcmp_SOURCES = nemcmp.cc
 
-nemcmp_LDFLAGS = \
-	$(builddir)/../lib/libnemesis.la
+nemcmp_CXXFLAGS = -I$(srcdir)/../lib
 
-nemcmp_CXXFLAGS = \
-	-I$(srcdir)/../lib
+nemcmp_LDFLAGS = $(builddir)/../lib/libnemesis.la
 
-koscmp_SOURCES = \
-	koscmp.cc
+koscmp_SOURCES = koscmp.cc
 
-koscmp_LDFLAGS = \
-	$(builddir)/../lib/libkosinski.la
+koscmp_CXXFLAGS = -I$(srcdir)/../lib
 
-koscmp_CXXFLAGS = \
-	-I$(srcdir)/../lib
+koscmp_LDFLAGS = $(builddir)/../lib/libkosinski.la
 
-kosplus_SOURCES = \
-	kosplus.cc
+kosplus_SOURCES = kosplus.cc
 
-kosplus_LDFLAGS = \
-	$(builddir)/../lib/libkosplus.la
+kosplus_CXXFLAGS = -I$(srcdir)/../lib
 
-kosplus_CXXFLAGS = \
-	-I$(srcdir)/../lib
+kosplus_LDFLAGS = $(builddir)/../lib/libkosplus.la
 
-enicmp_SOURCES = \
-	enicmp.cc
+rockcmp_SOURCES = rockcmp.cc
 
-enicmp_LDFLAGS = \
-	$(builddir)/../lib/libenigma.la
+rockcmp_CXXFLAGS = -I$(srcdir)/../lib
 
-enicmp_CXXFLAGS = \
-	-I$(srcdir)/../lib
+rockcmp_LDFLAGS = $(builddir)/../lib/librocket.la
 
-rockcmp_SOURCES = \
-	rockcmp.cc
+saxcmp_SOURCES = saxcmp.cc
 
-rockcmp_LDFLAGS = \
-	$(builddir)/../lib/librocket.la
+saxcmp_CXXFLAGS = -I$(srcdir)/../lib
 
-rockcmp_CXXFLAGS = \
-	-I$(srcdir)/../lib
+saxcmp_LDFLAGS = $(builddir)/../lib/libsaxman.la
 
-AM_CXXFLAGS = 
-
-## File created by the gnome-build tools
+AM_CXXFLAGS =
 
