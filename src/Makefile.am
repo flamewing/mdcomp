@@ -2,13 +2,9 @@
 
 ## Created by Anjuta
 
-AM_CFLAGS =\
-	 -Wall\
-	 -g
+AM_CFLAGS =
 
-SUBDIRS = \
-	lib\
-	tools
+SUBDIRS = lib tools
 
 AM_CXXFLAGS = 
 
