@@ -73,9 +73,6 @@ rm -f autoconfig.h.in
 rm -f config.status aclocal.m4
 rm -f `find . -name 'Makefile.in'` `find . -name 'Makefile'`
 
-# touch the configure.ac file to force rebuilding configure
-touch configure.ac
-
 # Regenerate everything
 echo "Running aclocal $aclocalinclude ..."
 aclocal $aclocalincludes
