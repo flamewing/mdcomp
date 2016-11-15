@@ -3,31 +3,20 @@
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-SUBDIRS = src po
+SUBDIRS = src
 
 mdcompdocdir = ${prefix}/doc/mdcomp
 
-includedir = ${prefix}/include/mdcomp
-
 mdcompdoc_DATA = \
-	README\
-	COPYING\
-	AUTHORS\
-	ChangeLog\
-	INSTALL\
-	NEWS
-
-INTLTOOL_FILES = intltool-extract.in \
-	intltool-merge.in \
-	intltool-update.in
+	COPYING \
+	INSTALL
 
 EXTRA_DIST = $(mdcompdoc_DATA) \
 	$(INTLTOOL_FILES)
 
-DISTCLEANFILES = intltool-extract \
-	intltool-merge \
-	intltool-update \
-	po/.intltool-merge-cache
+DISTCLEANFILES =
+
+includedir = ${prefix}/include/mdcomp
 
 include_HEADERS = \
 	src/lib/bigendian_io.h \

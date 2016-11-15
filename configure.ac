@@ -21,16 +21,6 @@ CXXFLAGS="$CXXFLAGS -Wwrite-strings -Wredundant-decls -fcheck-new"
 CXXFLAGS="$CXXFLAGS -Wstrict-overflow -Wdisabled-optimization -Wctor-dtor-privacy"
 CXXFLAGS="$CXXFLAGS -Wnon-virtual-dtor -Woverloaded-virtual"
 
-dnl ***************************************************************************
-dnl Internatinalization
-dnl ***************************************************************************
-IT_PROG_INTLTOOL([0.35.0])
-
-GETTEXT_PACKAGE=mdcomp
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
-AM_GLIB_GNU_GETTEXT
-
 LT_INIT
 
 AC_OUTPUT([
@@ -38,5 +28,5 @@ Makefile
 src/Makefile
 src/lib/Makefile
 src/tools/Makefile
-po/Makefile.in
 ])
+

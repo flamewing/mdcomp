@@ -68,6 +68,8 @@ po/Makefile.in.in
 /aclocal.m4
 /compile
 /configure
+config.guess
+config.sub
 /depcomp
 /install-sh
 /missing
