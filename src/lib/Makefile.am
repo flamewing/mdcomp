@@ -31,6 +31,8 @@ libcomper_la_LIBADD =
 libenigma_la_SOURCES = \
 	bigendian_io.h\
 	bitstream.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
 	enigma.cc \
 	enigma.h
 
@@ -63,9 +65,11 @@ libkosplus_la_LIBADD =
 libnemesis_la_SOURCES = \
 	bigendian_io.h \
 	bitstream.h \
-	ignore_unused_variable_warning.h
+	ignore_unused_variable_warning.h \
+	basic_decoder.h \
+	moduled_adaptor.h \
 	nemesis.cc \
-	nemesis.h \
+	nemesis.h
 
 libnemesis_la_LIBADD =
 
@@ -94,6 +98,4 @@ libsaxman_la_SOURCES = \
 libsaxman_la_LIBADD =
 
 AM_CPPFLAGS =
-
-## File created by the gnome-build tools
 
