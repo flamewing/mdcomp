@@ -35,6 +35,9 @@
 
 using namespace std;
 
+template<>
+size_t moduled_enigma::PadMaskBits = 1u;
+
 typedef ibitstream<unsigned short, true> EniIBitstream;
 typedef obitstream<unsigned short> EniOBitstream;
 
