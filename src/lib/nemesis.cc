@@ -40,12 +40,11 @@ using namespace std;
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
-	unsigned char nibble;   // Nibble we are interested in.
-	unsigned char count;    // How many times the nibble is repeated.
+	unsigned char nibble{0};   // Nibble we are interested in.
+	unsigned char count{0};    // How many times the nibble is repeated.
 public:
 	// Constructors.
-	nibble_run() noexcept : nibble(0), count(0) {
-	}
+	nibble_run() noexcept = default;
 	nibble_run(unsigned char n, unsigned char c) noexcept : nibble(n), count(c) {
 	}
 	nibble_run(nibble_run const &other) noexcept = default;
