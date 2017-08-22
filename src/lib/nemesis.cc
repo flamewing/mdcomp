@@ -83,9 +83,9 @@ public:
 };
 
 struct SizeFreqNibble {
-	size_t count;
+	size_t count{0};
 	nibble_run nibble;
-	unsigned char codelen;
+	unsigned char codelen{0};
 	SizeFreqNibble(size_t cnt, nibble_run const &nib, unsigned char len) noexcept
 		: count(cnt), nibble(nib), codelen(len) {
 	}
