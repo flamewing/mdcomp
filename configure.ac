@@ -26,7 +26,7 @@ CHK_WARN="$CHK_WARN -Wuninitialized -fstrict-aliasing -Wduplicated-cond -Wplacem
 CHK_WARN="$CHK_WARN -Wlogical-op -Wlogical-not-parentheses -Wunused-const-variable -Wpointer-sign"
 CHK_WARN="$CHK_WARN -Wundef"
 #CHK_WARN="$CHK_WARN -Wpadded -Wshadow -Wconditionally-supported"
-CHK_WARN="$CHK_WARN -Wc++11-compat -Wc++14-compat -Wc++1z-compat"
+CHK_WARN="$CHK_WARN -Wc++14-compat -Wc++1z-compat"
 # GCC attributes
 #CHK_WARN="$CHK_WARN -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format"
 # C++11 and newer
