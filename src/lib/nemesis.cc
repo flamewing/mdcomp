@@ -108,10 +108,10 @@ struct Code {
 	Code &operator=(Code &&other) noexcept = default;
 };
 
-typedef map<nibble_run, unsigned char> CodeSizeMap;
-typedef map<nibble_run, size_t> RunCountMap;
-typedef map<nibble_run, Code> NibbleCodeMap;
-typedef map<Code, nibble_run> CodeNibbleMap;
+using CodeSizeMap = map<nibble_run, unsigned char>;
+using RunCountMap = map<nibble_run, size_t>;
+using NibbleCodeMap = map<nibble_run, Code>;
+using CodeNibbleMap = map<Code, nibble_run>;
 
 // Slightly based on code by Mark Nelson for Huffman encoding.
 // http://marknelson.us/1996/01/01/priority-queues/
@@ -194,7 +194,7 @@ public:
 	}
 };
 
-typedef vector<shared_ptr<node>> NodeVector;
+using NodeVector = vector<shared_ptr<node> >;
 
 struct Compare_size {
 	bool operator()(SizeFreqNibble const &lhs, SizeFreqNibble const &rhs) noexcept {
@@ -711,7 +711,7 @@ public:
 		// *the* lowest file size.
 		while (qt.size() > 1) {
 			// Make a copy of the basic coin collection.
-			typedef priority_queue<shared_ptr<node>, NodeVector, Compare_node> CoinQueue;
+			using CoinQueue = priority_queue<shared_ptr<node>, NodeVector, Compare_node>;
 			CoinQueue q0(qt.begin(), qt.end());
 
 			// We now solve the Coin collector's problem using the Package-merge
@@ -775,7 +775,7 @@ public:
 			// This set contains lots more information, and is used to associate
 			// the nibble run with its optimal code. It is sorted by code size,
 			// then by frequency of the nibble run, then by the nibble run.
-			typedef multiset<SizeFreqNibble, Compare_size> SizeSet;
+			using SizeSet = multiset<SizeFreqNibble, Compare_size>;
 			SizeSet sizemap;
 			for (auto & elem : basesizemap) {
 				unsigned char size = elem.second;

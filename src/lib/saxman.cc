@@ -35,9 +35,9 @@ size_t moduled_saxman::PadMaskBits = 1u;
 class saxman_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct SaxmanAdaptor {
-		typedef unsigned char stream_t;
-		typedef unsigned char descriptor_t;
-		typedef littleendian<descriptor_t> descriptor_endian_t;
+		using stream_t = unsigned char;
+		using descriptor_t = unsigned char;
+		using descriptor_endian_t = littleendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -114,9 +114,9 @@ class saxman_internal {
 		}
 	};
 
-	typedef LZSSGraph<SaxmanAdaptor> SaxGraph;
-	typedef LZSSOStream<SaxmanAdaptor> SaxOStream;
-	typedef LZSSIStream<SaxmanAdaptor> SaxIStream;
+	using SaxGraph = LZSSGraph<SaxmanAdaptor>;
+	using SaxOStream = LZSSOStream<SaxmanAdaptor>;
+	using SaxIStream = LZSSIStream<SaxmanAdaptor>;
 
 public:
 	static void decode(istream &in, iostream &Dst, size_t const Size) {

@@ -35,9 +35,9 @@ size_t moduled_comper::PadMaskBits = 1u;
 class comper_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct ComperAdaptor {
-		typedef unsigned short stream_t;
-		typedef unsigned short descriptor_t;
-		typedef bigendian<descriptor_t> descriptor_endian_t;
+		using stream_t = unsigned short;
+		using descriptor_t = unsigned short;
+		using descriptor_endian_t = bigendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -93,9 +93,9 @@ class comper_internal {
 		}
 	};
 
-	typedef LZSSGraph<ComperAdaptor> CompGraph;
-	typedef LZSSOStream<ComperAdaptor> CompOStream;
-	typedef LZSSIStream<ComperAdaptor> CompIStream;
+	using CompGraph = LZSSGraph<ComperAdaptor>;
+	using CompOStream = LZSSOStream<ComperAdaptor>;
+	using CompIStream = LZSSIStream<ComperAdaptor>;
 
 public:
 	static void decode(istream &in, iostream &Dst) {

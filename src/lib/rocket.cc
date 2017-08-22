@@ -35,9 +35,9 @@ size_t moduled_rocket::PadMaskBits = 1u;
 class rocket_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct RocketAdaptor {
-		typedef unsigned char stream_t;
-		typedef unsigned char descriptor_t;
-		typedef littleendian<descriptor_t> descriptor_endian_t;
+		using stream_t = unsigned char;
+		using descriptor_t = unsigned char;
+		using descriptor_endian_t = littleendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -94,9 +94,9 @@ class rocket_internal {
 		}
 	};
 
-	typedef LZSSGraph<RocketAdaptor> RockGraph;
-	typedef LZSSOStream<RocketAdaptor> RockOStream;
-	typedef LZSSIStream<RocketAdaptor> RockIStream;
+	using RockGraph = LZSSGraph<RocketAdaptor>;
+	using RockOStream = LZSSOStream<RocketAdaptor>;
+	using RockIStream = LZSSIStream<RocketAdaptor>;
 
 public:
 	static void decode(istream &in, iostream &Dst, unsigned short Size) {

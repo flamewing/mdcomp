@@ -28,8 +28,8 @@
 
 using namespace std;
 
-typedef ibitstream<unsigned short, true> EniIBitstream;
-typedef obitstream<unsigned short> EniOBitstream;
+using EniIBitstream = ibitstream<unsigned short, true>;
+using EniOBitstream = obitstream<unsigned short>;
 
 class artc42_internal {
 public:

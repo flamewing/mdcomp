@@ -35,9 +35,9 @@ size_t moduled_kosplus::PadMaskBits = 1u;
 class kosplus_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosPlusAdaptor {
-		typedef unsigned char stream_t;
-		typedef unsigned char descriptor_t;
-		typedef littleendian<descriptor_t> descriptor_endian_t;
+		using stream_t = unsigned char;
+		using descriptor_t = unsigned char;
+		using descriptor_endian_t = littleendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -108,7 +108,7 @@ class kosplus_internal {
 
 public:
 	static void decode(istream &in, iostream &Dst) {
-		typedef LZSSIStream<KosPlusAdaptor> KosIStream;
+		using KosIStream = LZSSIStream<KosPlusAdaptor>;
 
 		KosIStream src(in);
 
@@ -158,8 +158,8 @@ public:
 	}
 
 	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
-		typedef LZSSGraph<KosPlusAdaptor> KosGraph;
-		typedef LZSSOStream<KosPlusAdaptor> KosOStream;
+		using KosGraph = LZSSGraph<KosPlusAdaptor>;
+		using KosOStream = LZSSOStream<KosPlusAdaptor>;
 
 		// Compute optimal KosPlus parsing of input file.
 		KosGraph enc(Data, Size);

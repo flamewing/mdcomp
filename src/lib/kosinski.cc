@@ -35,9 +35,9 @@ size_t moduled_kosinski::PadMaskBits = 1u;
 class kosinski_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosinskiAdaptor {
-		typedef unsigned char  stream_t;
-		typedef unsigned short descriptor_t;
-		typedef littleendian<descriptor_t> descriptor_endian_t;
+		using stream_t = unsigned char;
+		using descriptor_t = unsigned short;
+		using descriptor_endian_t = littleendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -105,9 +105,9 @@ class kosinski_internal {
 		}
 	};
 
-	typedef LZSSIStream<KosinskiAdaptor> KosIStream;
-	typedef LZSSGraph<KosinskiAdaptor> KosGraph;
-	typedef LZSSOStream<KosinskiAdaptor> KosOStream;
+	using KosIStream = LZSSIStream<KosinskiAdaptor>;
+	using KosGraph = LZSSGraph<KosinskiAdaptor>;
+	using KosOStream = LZSSOStream<KosinskiAdaptor>;
 
 public:
 	static void decode(istream &in, iostream &Dst) {
