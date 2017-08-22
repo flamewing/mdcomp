@@ -127,7 +127,7 @@ private:
 	nibble_run value;
 public:
 	// Construct a new leaf node for character c.
-	node(nibble_run const &val, int wgt = -1) noexcept
+	node(nibble_run const &val, int wgt) noexcept
 		: weight(wgt), value(val) {
 	}
 	// Construct a new internal node that has children c1 and c2.
