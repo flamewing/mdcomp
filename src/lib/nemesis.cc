@@ -27,6 +27,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "nemesis.h"
@@ -127,7 +128,7 @@ public:
 		: weight(wgt), value(val) {
 	}
 	// Construct a new internal node that has children c1 and c2.
-	node(shared_ptr<node> c0, shared_ptr<node> c1) noexcept {
+	node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept {
 		value = nibble_run {0, 0};
 		weight = c0->weight + c1->weight;
 		child0 = c0;
@@ -167,10 +168,10 @@ public:
 		return value;
 	}
 	void set_child0(shared_ptr<node> c0) noexcept {
-		child0 = c0;
+		child0 = std::move(c0);
 	}
 	void set_child1(shared_ptr<node> c1) noexcept {
-		child1 = c1;
+		child1 = std::move(c1);
 	}
 	void set_weight(int w) noexcept {
 		weight = w;
