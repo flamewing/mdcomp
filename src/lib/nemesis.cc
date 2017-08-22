@@ -19,6 +19,7 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <istream>
 #include <map>
 #include <memory>
@@ -406,7 +407,7 @@ public:
 			// the lines.
 			dst.seekg(0);
 			dst.clear();
-			unsigned long in = LittleEndian::Read4(dst);
+			uint32_t in = LittleEndian::Read4(dst);
 			LittleEndian::Write4(Dst, in);
 			while (size_t(dst.tellg()) < rtiles << 5) {
 				in ^= LittleEndian::Read4(dst);

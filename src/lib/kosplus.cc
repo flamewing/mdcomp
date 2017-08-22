@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -195,8 +196,8 @@ public:
 					out.descbit(0);
 					out.descbit(1);
 					dist = (-dist) & 0x1FFF;
-					unsigned short high = (dist >> 5) & 0xF8,
-						           low  = (dist & 0xFF);
+					uint16_t high = (dist >> 5) & 0xF8,
+					         low  = (dist & 0xFF);
 					if (edge.get_weight() == 18) {
 						// 2-byte RLE.
 						out.putbyte(low);

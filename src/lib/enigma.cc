@@ -35,8 +35,8 @@
 
 using namespace std;
 
-using EniIBitstream = ibitstream<unsigned short, true>;
-using EniOBitstream = obitstream<unsigned short>;
+using EniIBitstream = ibitstream<uint16_t, true>;
+using EniOBitstream = obitstream<uint16_t>;
 
 // Pure virtual base class.
 class base_flag_io {

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -157,7 +158,7 @@ public:
 					for (size_t src = offset; src < offset + length; src++) {
 						size_t Pointer = Dst.tellp();
 						Dst.seekg(src);
-						unsigned short Byte = Read1(Dst);
+						unsigned char Byte = Read1(Dst);
 						Dst.seekp(Pointer);
 						Write1(Dst, Byte);
 					}

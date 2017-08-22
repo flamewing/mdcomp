@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <istream>
 #include <ostream>
@@ -28,8 +29,8 @@
 
 using namespace std;
 
-using EniIBitstream = ibitstream<unsigned short, true>;
-using EniOBitstream = obitstream<unsigned short>;
+using EniIBitstream = ibitstream<uint16_t, true>;
+using EniOBitstream = obitstream<uint16_t>;
 
 class artc42_internal {
 public:

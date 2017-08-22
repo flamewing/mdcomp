@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -99,7 +100,7 @@ class rocket_internal {
 	using RockIStream = LZSSIStream<RocketAdaptor>;
 
 public:
-	static void decode(istream &in, iostream &Dst, unsigned short Size) {
+	static void decode(istream &in, iostream &Dst, uint16_t Size) {
 		RockIStream src(in);
 
 		// Initialise buffer (needed by Rocket Knight Adventures plane maps)
@@ -158,7 +159,7 @@ public:
 			} else {
 				// Dictionary match.
 				out.descbit(0);
-				unsigned short index = (0x3C0 + pos - dist) & 0x3FF;
+				uint16_t index = (0x3C0 + pos - dist) & 0x3FF;
 				out.putbyte(((len-1)<<2)|(index>>8));
 				out.putbyte(index);
 			}

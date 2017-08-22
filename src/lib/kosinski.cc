@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cstdint>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -36,7 +37,7 @@ class kosinski_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosinskiAdaptor {
 		using stream_t = unsigned char;
-		using descriptor_t = unsigned short;
+		using descriptor_t = uint16_t;
 		using descriptor_endian_t = littleendian<descriptor_t>;
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
@@ -201,8 +202,8 @@ public:
 					out.descbit(0);
 					out.descbit(1);
 					dist = (-dist) & 0x1FFF;
-					unsigned short high = (dist >> 5) & 0xF8,
-						           low  = (dist & 0xFF);
+					uint16_t high = (dist >> 5) & 0xF8,
+					         low  = (dist & 0xFF);
 					if (edge.get_weight() == 18) {
 						// 2-byte dictionary match.
 						out.putbyte(low);
