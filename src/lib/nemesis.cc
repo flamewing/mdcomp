@@ -18,14 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory>
-#include <istream>
-#include <ostream>
-#include <sstream>
-#include <map>
-#include <set>
-#include <queue>
 #include <algorithm>
+#include <istream>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <queue>
+#include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 

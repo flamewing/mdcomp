@@ -24,8 +24,8 @@
 #include "kosinski.h"
 #include "bigendian_io.h"
 #include "bitstream.h"
-#include "lzss.h"
 #include "ignore_unused_variable_warning.h"
+#include "lzss.h"
 
 using namespace std;
 

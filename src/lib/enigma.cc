@@ -18,16 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <istream>
-#include <ostream>
-#include <sstream>
-#include <map>
-#include <memory>
-#include <string>
-#include <set>
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <istream>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "enigma.h"
 #include "bigendian_io.h"
