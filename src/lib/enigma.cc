@@ -167,12 +167,12 @@ static inline unsigned char slog2(unsigned short v) {
 	unsigned char r; // result of slog2(v) will go here
 	unsigned char shift;
 
-	r = (v > 0xFF) << 3;
+	r = static_cast<int>(v > 0xFF) << 3;
 	v >>= r;
-	shift = (v > 0xF) << 2;
+	shift = static_cast<int>(v > 0xF) << 2;
 	v >>= shift;
 	r |= shift;
-	shift = (v > 0x3) << 1;
+	shift = static_cast<int>(v > 0x3) << 1;
 	v >>= shift;
 	r |= shift;
 	r |= (v >> 1);
@@ -192,7 +192,7 @@ static inline void flush_buffer(vector<unsigned short> &buf,
                                 EniOBitstream &bits,
                                 unique_ptr<base_flag_io> &mask,
                                 unsigned short const packet_length) {
-	if (!buf.size()) {
+	if (buf.size() == 0u) {
 		return;
 	}
 
@@ -221,7 +221,7 @@ public:
 
 		// Lets put in a safe termination condition here.
 		while (in.good()) {
-			if (bits.pop()) {
+			if (bits.pop() != 0u) {
 				int mode = bits.read(2);
 				switch (mode) {
 					case 2:
@@ -256,7 +256,7 @@ public:
 					}
 				}
 			} else {
-				if (!bits.pop()) {
+				if (bits.pop() == 0u) {
 					size_t cnt = bits.read(4) + 1;
 					for (size_t i = 0; i < cnt; i++) {
 						BigEndian::Write2(Dst, incrementing_value++);

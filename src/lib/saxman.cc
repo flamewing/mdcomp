@@ -124,7 +124,7 @@ public:
 
 		// Loop while the file is good and we haven't gone over the declared length.
 		while (in.good() && size_t(in.tellg()) < Size) {
-			if (src.descbit()) {
+			if (src.descbit() != 0u) {
 				// Symbolwise match.
 				if (in.peek() == EOF) {
 					break;

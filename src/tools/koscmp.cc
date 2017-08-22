@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 		switch (c) {
 			case 'x':
 				extract = true;
-				if (optarg) {
+				if (optarg != nullptr) {
 					pointer = strtoul(optarg, nullptr, 0);
 				}
 				break;
@@ -77,18 +77,18 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'm':
 				moduled = true;
-				if (optarg) {
+				if (optarg != nullptr) {
 					modulesize = strtoul(optarg, nullptr, 0);
 				}
-				if (!modulesize) {
+				if (modulesize == 0u) {
 					modulesize = 4096;
 				}
 				break;
 			case 'p':
-				if (optarg) {
+				if (optarg != nullptr) {
 					padding = strtoul(optarg, nullptr, 0);
 				}
-				if (!padding || (padding & (padding - 1)) != 0) {
+				if ((padding == 0u) || (padding & (padding - 1)) != 0) {
 					padding = 16;
 				}
 				break;

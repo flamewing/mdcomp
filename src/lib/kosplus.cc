@@ -113,21 +113,21 @@ public:
 		KosIStream src(in);
 
 		while (in.good()) {
-			if (src.descbit()) {
+			if (src.descbit() != 0u) {
 				Write1(Dst, src.getbyte());
 			} else {
 				// Count and distance
 				size_t Count = 0;
 				size_t distance = 0;
 
-				if (src.descbit()) {
+				if (src.descbit() != 0u) {
 					unsigned char Low = src.getbyte(), High = src.getbyte();
 
 					Count = size_t(High & 0x07);
 
-					if (!Count) {
+					if (Count == 0u) {
 						Count = src.getbyte();
-						if (!Count) {
+						if (Count == 0u) {
 							break;
 						}
 						Count += 9;

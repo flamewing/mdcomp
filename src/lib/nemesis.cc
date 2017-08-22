@@ -576,7 +576,7 @@ public:
 						size_t len = 0;
 						for (size_t j = 0; j < n; j++) {
 							size_t c = linear_coeffs[base + j];
-							if (!c) {
+							if (c == 0u) {
 								continue;
 							}
 
@@ -596,7 +596,7 @@ public:
 						size_t code = 0, len = 0;
 						for (size_t i = 0; i < n; i++) {
 							size_t c = linear_coeffs[best_line + i];
-							if (!c) {
+							if (c == 0u) {
 								continue;
 							}
 							// Is this run in the codemap?
@@ -962,10 +962,10 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	size_t sizes[4];
 
 	// Four different attempts to encode, for improved file size.
-	sizes[0] = nemesis_internal::encode(src, buffers[0], false, sz, Compare_node());
-	sizes[1] = nemesis_internal::encode(src, buffers[1], false, sz, Compare_node2());
-	sizes[2] = nemesis_internal::encode(alt, buffers[2], true , sz, Compare_node());
-	sizes[3] = nemesis_internal::encode(alt, buffers[3], true , sz, Compare_node2());
+	sizes[0] = nemesis_internal::encode(src, buffers[0], 0, sz, Compare_node());
+	sizes[1] = nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2());
+	sizes[2] = nemesis_internal::encode(alt, buffers[2], 1 , sz, Compare_node());
+	sizes[3] = nemesis_internal::encode(alt, buffers[3], 1 , sz, Compare_node2());
 
 	// Figure out what was the best encoding.
 	size_t bestsz = numeric_limits<size_t>::max(), beststream = 0;

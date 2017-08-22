@@ -114,7 +114,7 @@ public:
 		KosIStream src(in);
 
 		while (in.good()) {
-			if (src.descbit()) {
+			if (src.descbit() != 0u) {
 				// Symbolwise match.
 				Write1(Dst, src.getbyte());
 			} else {
@@ -123,16 +123,16 @@ public:
 				size_t Count = 0;
 				size_t distance = 0;
 
-				if (src.descbit()) {
+				if (src.descbit() != 0u) {
 					// Separate dictionary match.
 					unsigned char Low = src.getbyte(), High = src.getbyte();
 
 					Count = size_t(High & 0x07);
 
-					if (!Count) {
+					if (Count == 0u) {
 						// 3-byte dictionary match.
 						Count = src.getbyte();
-						if (!Count) {
+						if (Count == 0u) {
 							break;
 						} else if (Count == 1) {
 							continue;

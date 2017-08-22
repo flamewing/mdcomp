@@ -111,7 +111,7 @@ public:
 		size_t buffer_index = 0x3C0;
 
 		while (in.good() && in.tellg() < Size) {
-			if (src.descbit()) {
+			if (src.descbit() != 0u) {
 				// Symbolwise match.
 				unsigned char Byte = Read1(in);
 				Write1(Dst, Byte);

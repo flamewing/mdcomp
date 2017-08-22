@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'x':
 				extract = true;
-				if (optarg) {
+				if (optarg != nullptr) {
 					pointer = strtoul(optarg, nullptr, 0);
 				}
 				break;

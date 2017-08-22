@@ -102,7 +102,7 @@ public:
 		CompIStream src(in);
 
 		while (in.good()) {
-			if (!src.descbit()) {
+			if (src.descbit() == 0u) {
 				// Symbolwise match.
 				BigEndian::Write2(Dst, BigEndian::Read2(in));
 			} else {
