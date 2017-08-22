@@ -184,7 +184,7 @@ private:
 				size_t wgt = Adaptor::dictionary_weight(basenode - ii, jj);
 				AdjListNode &best = matches[jj - 1];
 				if (wgt < best.get_weight()) {
-					best = std::move(AdjListNode(basenode + jj, basenode - ii, jj, wgt));
+					best = AdjListNode(basenode + jj, basenode - ii, jj, wgt);
 				}
 				// We can find no more matches with the current starting node.
 				if (jj >= ubound) {
