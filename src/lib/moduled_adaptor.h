@@ -42,6 +42,9 @@ public:
 };
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+size_t ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::PadMaskBits = 0;
+
+template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
 	std::istream &Src,
 	std::iostream &Dst,

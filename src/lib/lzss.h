@@ -157,7 +157,7 @@ private:
 		static_assert(noexcept(Adaptor::dictionary_weight(basenode, basenode)),
 		                       "Adaptor::dictionary_weight() is not noexcept");
 		// Upper and lower bounds for sliding window, starting node.
-		size_t ubound = std::min(Adaptor::LookAheadBufSize, nlen - basenode),
+		size_t ubound = std::min(size_t(Adaptor::LookAheadBufSize), nlen - basenode),
 		       lbound = basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0,
 		       ii = basenode - 1;
 		// This is what we produce.

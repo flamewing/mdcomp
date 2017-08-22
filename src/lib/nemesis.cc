@@ -36,9 +36,6 @@
 
 using namespace std;
 
-template<>
-size_t moduled_nemesis::PadMaskBits = 1u;
-
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
