@@ -52,6 +52,7 @@ public:
 	nibble_run(nibble_run &&other) noexcept = default;
 	nibble_run &operator=(nibble_run const &other) noexcept = default;
 	nibble_run &operator=(nibble_run &&other) noexcept = default;
+	~nibble_run() noexcept = default;
 	// Sorting operator.
 	bool operator<(nibble_run const &other) const noexcept {
 		return (nibble < other.nibble) || (nibble == other.nibble && count < other.count);
@@ -93,6 +94,7 @@ struct SizeFreqNibble {
 	SizeFreqNibble(SizeFreqNibble &&other) noexcept = default;
 	SizeFreqNibble &operator=(SizeFreqNibble const &other) noexcept = default;
 	SizeFreqNibble &operator=(SizeFreqNibble &&other) noexcept = default;
+	~SizeFreqNibble() noexcept = default;
 };
 
 struct Code {
@@ -107,6 +109,7 @@ struct Code {
 	Code(Code &&other) noexcept = default;
 	Code &operator=(Code const &other) noexcept = default;
 	Code &operator=(Code &&other) noexcept = default;
+	~Code() noexcept = default;
 };
 
 using CodeSizeMap = map<nibble_run, unsigned char>;
@@ -134,6 +137,10 @@ public:
 		child0 = c0;
 		child1 = c1;
 	}
+	node(node const &other) noexcept = default;
+	node(node &&other) noexcept = default;
+	node &operator=(node const &other) noexcept = default;
+	node &operator=(node &&other) noexcept = default;
 	~node() noexcept {
 		child0.reset();
 		child1.reset();

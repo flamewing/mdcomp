@@ -41,6 +41,11 @@ using EniOBitstream = obitstream<uint16_t>;
 // Pure virtual base class.
 class base_flag_io {
 public:
+	base_flag_io() noexcept = default;
+	base_flag_io(base_flag_io const &other) noexcept = default;
+	base_flag_io(base_flag_io &&other) noexcept = default;
+	base_flag_io &operator=(base_flag_io const &other) noexcept = default;
+	base_flag_io &operator=(base_flag_io &&other) noexcept = default;
 	virtual ~base_flag_io() = default;
 	static unique_ptr<base_flag_io> create(size_t n);
 	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
