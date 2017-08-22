@@ -31,7 +31,7 @@ typedef ModuledAdaptor<saxman, 4096u, 1u> moduled_saxman;
 class saxman : public basic_saxman, public moduled_saxman {
 public:
 	using basic_saxman::encode;
-	static bool decode(std::istream &Src, std::iostream &Dst, size_t const BSize = 0);
+	static bool decode(std::istream &Src, std::iostream &Dst, size_t const Size = 0);
 	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize = true);
 };
 
