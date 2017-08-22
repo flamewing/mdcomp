@@ -192,7 +192,7 @@ static inline void flush_buffer(vector<unsigned short> &buf,
                                 EniOBitstream &bits,
                                 unique_ptr<base_flag_io> &mask,
                                 unsigned short const packet_length) {
-	if (buf.size() == 0u) {
+	if (buf.empty()) {
 		return;
 	}
 
