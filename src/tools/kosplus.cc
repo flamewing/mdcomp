@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 	while (true) {
 		int option_index = 0;
 		int c = getopt_long(argc, argv, "x::m::c",
-		                    long_options, &option_index);
+		                    static_cast<option*>(long_options), &option_index);
 		if (c == -1) {
 			break;
 		}
