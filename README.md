@@ -1,4 +1,4 @@
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/13716/badge.svg)](https://scan.coverity.com/projects/13715)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/13715/badge.svg)](https://scan.coverity.com/projects/13715)
 
 # mdcomp
 Assorted compression formats for the Sega Mega Drive
