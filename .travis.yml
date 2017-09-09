@@ -7,11 +7,10 @@ sudo: required
 language: cpp
 
 compiler:
-  - gcc
+  - gcc-6
 
 env:
   global:
-    - CXX: "g++6"
 
 before_install:
   # Exit immediately if the branch is the "coverity_scan" branch and the job number is not 1
