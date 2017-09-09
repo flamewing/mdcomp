@@ -1,0 +1,43 @@
+os:
+  - linux
+
+dist: trusty
+sudo: required
+
+language: cpp
+
+compiler:
+  - gcc
+
+env:
+  global:
+    - CXX: "g++6"
+
+before_install:
+  # Exit immediately if the branch is the "coverity_scan" branch and the job number is not 1
+  - test "$TRAVIS_BRANCH" != "coverity_scan" -o "${TRAVIS_JOB_NUMBER##*.}" = "1" || exit 0
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -qq update; fi
+  - if [ "$TRAVIS_BRANCH" = "coverity_scan" ]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-6
+  coverity_scan:
+    project:
+      name: "flamewing/mdcomp"
+      description: "Assorted compression formats for the Sega Mega Drive"
+    notification_email: flamewing.sonic@gmail.com
+    build_command_prepend: "./autogen.sh"
+    build_command:   "make"
+    branch_pattern: coverity_scan
+
+script: if [ "$TRAVIS_BRANCH" != "coverity_scan" ]; then .travis/script.sh; fi
+
+notifications:
+  email: true
+  on_success: change
+  on_failure: always
+
