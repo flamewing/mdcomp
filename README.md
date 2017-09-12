@@ -7,5 +7,6 @@ Assorted compression formats for the Sega Mega Drive
 # TODO
 
 - [ ] Detail compression formats
+- [ ] Use Boost::Program Options
 - [ ] Make universal compressor/decompressor
 - [ ] Finish this readme
