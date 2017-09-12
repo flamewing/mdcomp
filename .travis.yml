@@ -26,6 +26,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-6
+      - libboost1.60-all-dev
   coverity_scan:
     project:
       name: "flamewing/mdcomp"
