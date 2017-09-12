@@ -83,7 +83,7 @@ autoheader
 echo "Running automake --foreign $am_opt ..."
 automake --add-missing --copy --foreign $am_opt
 echo "Running autoconf ..."
-autoconf 
+autoconf
 
 if test x$NOCONFIGURE = x; then
 	echo Running $srcdir/configure "$@" ...

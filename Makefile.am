@@ -11,8 +11,7 @@ mdcompdoc_DATA = \
 	COPYING \
 	INSTALL
 
-EXTRA_DIST = $(mdcompdoc_DATA) \
-	$(INTLTOOL_FILES)
+EXTRA_DIST = $(mdcompdoc_DATA)
 
 DISTCLEANFILES =
 
