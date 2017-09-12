@@ -1,6 +1,7 @@
 os: linux
 dist: trusty
 sudo: required
+group: deprecated-2017Q3
 
 language: cpp
 compiler: gcc
