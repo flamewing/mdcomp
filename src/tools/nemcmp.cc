@@ -24,6 +24,8 @@
 
 #include <getopt.h>
 
+#include <boost/io/ios_state.hpp>
+
 #include "nemesis.h"
 
 using namespace std;
@@ -117,6 +119,7 @@ int main(int argc, char *argv[]) {
 			fin.seekg(pointer);
 			nemesis::decode(fin, fout);
 			if (printend) {
+				boost::io::ios_all_saver flags(cout);
 				cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right << fin.tellg() << endl;
 			}
 		} else {
