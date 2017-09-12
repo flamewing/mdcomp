@@ -63,7 +63,7 @@ LT_INIT
 # Boost
 # ---------------------------------------------------------------------
 
-AX_BOOST_BASE([1.60],, [AC_MSG_ERROR([mdcomp requires Boost, but it was not found in your system])])
+AX_BOOST_BASE([1.54],, [AC_MSG_ERROR([mdcomp requires Boost, but it was not found in your system])])
 
 # ---------------------------------------------------------------------
 # Makefiles

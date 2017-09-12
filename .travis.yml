@@ -1,7 +1,6 @@
 os: linux
 dist: trusty
 sudo: required
-group: deprecated-2017Q3
 
 language: cpp
 compiler: gcc
@@ -27,7 +26,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-6
-      - libboost1.60-all-dev
+      - libboost-all-dev
   coverity_scan:
     project:
       name: "flamewing/mdcomp"
