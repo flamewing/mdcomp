@@ -193,6 +193,5 @@ bool rocket::encode(ostream &Dst, unsigned char const *data, size_t const Size) 
 
 	outbuff.seekg(0);
 	Dst << outbuff.rdbuf();
-
 	return true;
 }

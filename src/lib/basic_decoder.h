@@ -51,7 +51,15 @@ bool BasicDecoder<Format, PadEven, Args...>::encode(
 	if (PadEven && data.size() > FullSize) {
 		data[FullSize] = 0;
 	}
-	return Format::encode(Dst, data.data(), data.size(), std::forward<Args>(args)...);
+	if (Format::encode(Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
+		// Pad to even size.
+		if ((Dst.tellp() & 1) != 0) {
+			Dst.put(0);
+		}
+		return true;
+	} else {
+		return false;
+	}
 }
 
 template <typename Format, bool PadEven, typename... Args>
@@ -60,8 +68,7 @@ void BasicDecoder<Format, PadEven, Args...>::extract(
 	std::iostream &Dst
 ) {
 	Dst << Src.rdbuf();
-
-	// Pad to even length, for safety.
+	// Pad to even size.
 	if ((Dst.tellp() & 1) != 0) {
 		Dst.put(0);
 	}

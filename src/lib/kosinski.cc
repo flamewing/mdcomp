@@ -248,9 +248,5 @@ bool kosinski::decode(istream &Src, iostream &Dst) {
 
 bool kosinski::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
 	kosinski_internal::encode(Dst, data, Size);
-	// Pad to even size.
-	if ((Dst.tellp() & 1) != 0) {
-		Dst.put(0);
-	}
 	return true;
 }

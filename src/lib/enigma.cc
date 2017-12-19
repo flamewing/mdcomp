@@ -420,10 +420,6 @@ bool enigma::decode(istream &Src, ostream &Dst) {
 
 bool enigma::encode(istream &Src, ostream &Dst) {
 	enigma_internal::encode(Src, Dst);
-	// Pad to even size.
-	if ((Dst.tellp() & 1) != 0) {
-		Dst.put(0);
-	}
 	return true;
 }
 

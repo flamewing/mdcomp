@@ -986,12 +986,6 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 
 	buffers[beststream].seekg(0);
 	Dst << buffers[beststream].rdbuf();
-
-	// Pad to even size.
-	if ((Dst.tellp() & 1) != 0) {
-		Dst.put(0);
-	}
-
 	return true;
 }
 
