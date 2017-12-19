@@ -29,10 +29,12 @@ using basic_saxman = BasicDecoder<saxman, false, bool>;
 using moduled_saxman = ModuledAdaptor<saxman, 4096u, 1u>;
 
 class saxman : public basic_saxman, public moduled_saxman {
+	friend basic_saxman;
+	friend moduled_saxman;
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize = true);
 public:
 	using basic_saxman::encode;
 	static bool decode(std::istream &Src, std::iostream &Dst, size_t const Size = 0);
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize = true);
 };
 
 #endif // __LIB_SAXMAN_H

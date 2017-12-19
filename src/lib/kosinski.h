@@ -29,10 +29,12 @@ using basic_kosinski = BasicDecoder<kosinski, false>;
 using moduled_kosinski = ModuledAdaptor<kosinski, 4096u, 16u>;
 
 class kosinski : public basic_kosinski, public moduled_kosinski {
+	friend basic_kosinski;
+	friend moduled_kosinski;
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 public:
 	using basic_kosinski::encode;
 	static bool decode(std::istream &Src, std::iostream &Dst);
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 };
 
 #endif // __LIB_KOSINSKI_H
