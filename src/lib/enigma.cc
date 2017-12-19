@@ -223,6 +223,7 @@ public:
 		size_t const common_value = BigEndian::Read2(in);
 
 		ibitstream<unsigned short, true> bits(in);
+		static int modeDeltaLUT[] = {0, 1, -1};
 
 		// Lets put in a safe termination condition here.
 		while (in.good()) {
@@ -230,7 +231,6 @@ public:
 				int mode = bits.read(2);
 				switch (mode) {
 					case 2:
-						mode = -1;
 					case 1:
 					case 0: {
 						size_t cnt = bits.read(4) + 1;
@@ -240,7 +240,7 @@ public:
 
 						for (size_t i = 0; i < cnt; i++) {
 							BigEndian::Write2(Dst, outv);
-							outv += mode;
+							outv += modeDeltaLUT[mode];
 						}
 						break;
 					}
