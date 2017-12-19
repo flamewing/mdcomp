@@ -25,8 +25,8 @@
 #include "moduled_adaptor.h"
 
 class kosinski;
-typedef BasicDecoder<kosinski, false> basic_kosinski;
-typedef ModuledAdaptor<kosinski, 4096u, 16u> moduled_kosinski;
+using basic_kosinski = BasicDecoder<kosinski, false>;
+using moduled_kosinski = ModuledAdaptor<kosinski, 4096u, 16u>;
 
 class kosinski : public basic_kosinski, public moduled_kosinski {
 public:

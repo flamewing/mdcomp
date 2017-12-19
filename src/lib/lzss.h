@@ -95,9 +95,9 @@ public:
  * The template parameter is an adaptor class/structure with the following
  * members:
  * struct LZSSAdaptor {
- * 	typedef unsigned char  stream_t;
- * 	typedef unsigned short descriptor_t;
- * 	typedef littleendian<descriptor_t> descriptor_endian_t;
+ * 	using stream_t     = unsigned char;
+ * 	using descriptor_t = unsigned short;
+ * 	using descriptor_endian_t = littleendian<descriptor_t>;
  * 	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
  * 	// Number of bits used in descriptor bitfield to signal the end-of-file
  * 	// marker sequence.
@@ -136,8 +136,8 @@ public:
 template<typename Adaptor>
 class LZSSGraph {
 public:
-	typedef std::list<AdjListNode> AdjList;
-	typedef std::vector<AdjListNode> MatchVector;
+	using AdjList = std::list<AdjListNode>;
+	using MatchVector = std::vector<AdjListNode>;
 private:
 	// Source file data and its size; one node per character in source file.
 	typename Adaptor::stream_t const *data;
@@ -306,8 +306,8 @@ public:
 template <typename Adaptor>
 class LZSSOStream {
 private:
-	typedef typename Adaptor::descriptor_t descriptor_t;
-	typedef typename Adaptor::descriptor_endian_t BitWriter;
+	using descriptor_t = typename Adaptor::descriptor_t;
+	using BitWriter = typename Adaptor::descriptor_endian_t;
 	// Where we will output to.
 	std::ostream &out;
 	// Internal bitstream output buffer.
@@ -368,8 +368,8 @@ public:
 template <typename Adaptor>
 class LZSSIStream {
 private:
-	typedef typename Adaptor::descriptor_t descriptor_t;
-	typedef typename Adaptor::descriptor_endian_t BitWriter;
+	using descriptor_t = typename Adaptor::descriptor_t;
+	using BitWriter = typename Adaptor::descriptor_endian_t;
 	// Where we will input to.
 	std::istream &in;
 	// Internal bitstream input buffer.

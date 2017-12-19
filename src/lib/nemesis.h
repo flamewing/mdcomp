@@ -26,8 +26,8 @@
 #include "moduled_adaptor.h"
 
 class nemesis;
-typedef BasicDecoder<nemesis, false> basic_nemesis;
-typedef ModuledAdaptor<nemesis, 4096u, 1u> moduled_nemesis;
+using basic_nemesis = BasicDecoder<nemesis, false>;
+using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
 
 class nemesis : public basic_nemesis, public moduled_nemesis {
 public:

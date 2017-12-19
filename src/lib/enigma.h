@@ -26,8 +26,8 @@
 #include "moduled_adaptor.h"
 
 class enigma;
-typedef BasicDecoder<enigma, false> basic_enigma;
-typedef ModuledAdaptor<enigma, 4096u, 1u> moduled_enigma;
+using basic_enigma = BasicDecoder<enigma, false>;
+using moduled_enigma = ModuledAdaptor<enigma, 4096u, 1u>;
 
 class enigma : public basic_enigma, public moduled_enigma {
 public:

@@ -25,8 +25,8 @@
 #include "moduled_adaptor.h"
 
 class kosplus;
-typedef BasicDecoder<kosplus, false> basic_kosplus;
-typedef ModuledAdaptor<kosplus, 4096u, 1u> moduled_kosplus;
+using basic_kosplus = BasicDecoder<kosplus, false>;
+using moduled_kosplus = ModuledAdaptor<kosplus, 4096u, 1u>;
 
 class kosplus : public basic_kosplus, public moduled_kosplus {
 public:

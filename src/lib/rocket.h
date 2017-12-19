@@ -25,8 +25,8 @@
 #include "moduled_adaptor.h"
 
 class rocket;
-typedef BasicDecoder<rocket, false> basic_rocket;
-typedef ModuledAdaptor<rocket, 4096u, 1u> moduled_rocket;
+using basic_rocket = BasicDecoder<rocket, false>;
+using moduled_rocket = ModuledAdaptor<rocket, 4096u, 1u>;
 
 class rocket : public basic_rocket, public moduled_rocket {
 public:

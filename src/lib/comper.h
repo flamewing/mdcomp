@@ -25,8 +25,8 @@
 #include "moduled_adaptor.h"
 
 class comper;
-typedef BasicDecoder<comper, true> basic_comper;
-typedef ModuledAdaptor<comper, 4096u, 1u> moduled_comper;
+using basic_comper = BasicDecoder<comper, true>;
+using moduled_comper = ModuledAdaptor<comper, 4096u, 1u>;
 
 class comper : public basic_comper, public moduled_comper {
 public:

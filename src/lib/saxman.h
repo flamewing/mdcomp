@@ -25,8 +25,8 @@
 #include "moduled_adaptor.h"
 
 class saxman;
-typedef BasicDecoder<saxman, false, bool> basic_saxman;
-typedef ModuledAdaptor<saxman, 4096u, 1u> moduled_saxman;
+using basic_saxman = BasicDecoder<saxman, false, bool>;
+using moduled_saxman = ModuledAdaptor<saxman, 4096u, 1u>;
 
 class saxman : public basic_saxman, public moduled_saxman {
 public:
