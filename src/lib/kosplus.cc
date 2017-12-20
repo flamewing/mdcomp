@@ -115,29 +115,35 @@ public:
 
 		while (in.good()) {
 			if (src.descbit() != 0u) {
+				// Symbolwise match.
 				Write1(Dst, src.getbyte());
 			} else {
+				// Dictionary matches.
 				// Count and distance
 				size_t Count = 0;
 				size_t distance = 0;
 
 				if (src.descbit() != 0u) {
+					// Separate dictionary match.
 					unsigned char Low = src.getbyte(), High = src.getbyte();
 
 					Count = size_t(High & 0x07);
 
 					if (Count == 0u) {
+						// 3-byte dictionary match.
 						Count = src.getbyte();
 						if (Count == 0u) {
 							break;
 						}
 						Count += 9;
 					} else {
+						// 2-byte dictionary match.
 						Count += 2;
 					}
 
 					distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 				} else {
+					// Inline dictionary match.
 					unsigned char Low  = src.descbit(),
 						          High = src.descbit();
 
@@ -177,12 +183,12 @@ public:
 			// NOTE: This needs to be changed for other LZSS schemes.
 			switch (edge.get_weight()) {
 				case 9:
-					// Literal.
+					// Symbolwise match.
 					out.descbit(1);
 					out.putbyte(Data[pos]);
 					break;
 				case 12:
-					// Inline RLE.
+					// Inline dictionary match.
 					out.descbit(0);
 					out.descbit(0);
 					len -= 2;
@@ -192,18 +198,18 @@ public:
 					break;
 				case 18:
 				case 26: {
-					// Separate RLE.
+					// Separate dictionary match.
 					out.descbit(0);
 					out.descbit(1);
 					dist = (-dist) & 0x1FFF;
 					uint16_t high = (dist >> 5) & 0xF8,
 					         low  = (dist & 0xFF);
 					if (edge.get_weight() == 18) {
-						// 2-byte RLE.
+						// 2-byte dictionary match.
 						out.putbyte(low);
 						out.putbyte(high | (len - 2));
 					} else {
-						// 3-byte RLE.
+						// 3-byte dictionary match.
 						out.putbyte(low);
 						out.putbyte(high);
 						out.putbyte(len - 9);
