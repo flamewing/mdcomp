@@ -209,6 +209,9 @@ static inline void flush_buffer(vector<unsigned short> &buf,
 	buf.clear();
 }
 
+template<>
+size_t moduled_enigma::PadMaskBits = 1u;
+
 class enigma_internal {
 public:
 	static void decode(std::istream &Src, std::ostream &Dst) {

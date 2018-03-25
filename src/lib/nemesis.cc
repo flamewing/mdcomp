@@ -306,6 +306,9 @@ struct Compare_node2 {
 
 NibbleCodeMap Compare_node2::codemap;
 
+template<>
+size_t moduled_nemesis::PadMaskBits = 1u;
+
 class nemesis_internal {
 public:
 	static void decode_header(std::istream &Src, CodeNibbleMap &codemap) {
