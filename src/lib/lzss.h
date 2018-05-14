@@ -20,6 +20,7 @@
 #ifndef __LIB_LZSS_H
 #define __LIB_LZSS_H
 
+#include <algorithm>
 #include <iosfwd>
 #include <limits>
 #include <list>
