@@ -47,9 +47,9 @@ public:
 	base_flag_io &operator=(base_flag_io const &other) noexcept = default;
 	base_flag_io &operator=(base_flag_io &&other) noexcept = default;
 	virtual ~base_flag_io() = default;
-	static unique_ptr<base_flag_io> create(size_t n);
+	static unique_ptr<base_flag_io> create(size_t const n);
 	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
-	virtual void write_bitfield(EniOBitstream &bits, unsigned short flags) const = 0;
+	virtual void write_bitfield(EniOBitstream &bits, unsigned short const flags) const = 0;
 };
 
 // Templated for blazing speed.
@@ -75,7 +75,7 @@ public:
 		}
 		return flags;
 	}
-	void write_bitfield(EniOBitstream &bits, unsigned short flags) const override {
+	void write_bitfield(EniOBitstream &bits, unsigned short const flags) const override {
 		if ((N & (1 << 4)) != 0) {
 			bits.push((flags >> 15) & 1);
 		}
@@ -95,7 +95,7 @@ public:
 };
 
 // Selects the appropriate template instance to be used.
-unique_ptr<base_flag_io> base_flag_io::create(size_t n) {
+unique_ptr<base_flag_io> base_flag_io::create(size_t const n) {
 	switch ((n & 0x1F)) {
 		case 0x00:
 			return make_unique<flag_io<0x00>>();
@@ -202,7 +202,7 @@ static inline void flush_buffer(vector<unsigned short> &buf,
 	}
 
 	bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
-	for (auto v : buf) {
+	for (const auto v : buf) {
 		mask->write_bitfield(bits, v);
 		bits.write(v & 0x7ff, packet_length);
 	}
@@ -226,19 +226,19 @@ public:
 		size_t const common_value = BigEndian::Read2(in);
 
 		ibitstream<unsigned short, true> bits(in);
-		static int modeDeltaLUT[] = {0, 1, -1};
+		constexpr static int const modeDeltaLUT[] = {0, 1, -1};
 
 		// Lets put in a safe termination condition here.
 		while (in.good()) {
 			if (bits.pop() != 0u) {
-				int mode = bits.read(2);
+				int const mode = bits.read(2);
 				switch (mode) {
 					case 2:
 					case 1:
 					case 0: {
-						size_t cnt = bits.read(4) + 1;
-						unsigned short flags = mask->read_bitfield(bits),
-							           outv  = bits.read(packet_length);
+						size_t const cnt = bits.read(4) + 1;
+						unsigned short const flags = mask->read_bitfield(bits);
+						unsigned short outv = bits.read(packet_length);
 						outv |= flags;
 
 						for (size_t i = 0; i < cnt; i++) {
@@ -248,14 +248,13 @@ public:
 						break;
 					}
 					case 3: {
-						size_t cnt = bits.read(4);
+						size_t const cnt = bits.read(4);
 						// This marks decompression as being done.
 						if (cnt == 0x0F) {
 							return;
 						}
 
-						cnt++;
-						for (size_t i = 0; i < cnt; i++) {
+						for (size_t i = 0; i <= cnt; i++) {
 							unsigned short flags = mask->read_bitfield(bits),
 								           outv  = bits.read(packet_length);
 							BigEndian::Write2(Dst, outv | flags);
@@ -265,12 +264,12 @@ public:
 				}
 			} else {
 				if (bits.pop() == 0u) {
-					size_t cnt = bits.read(4) + 1;
+					size_t const cnt = bits.read(4) + 1;
 					for (size_t i = 0; i < cnt; i++) {
 						BigEndian::Write2(Dst, incrementing_value++);
 					}
 				} else {
-					size_t cnt = bits.read(4) + 1;
+					size_t const cnt = bits.read(4) + 1;
 					for (size_t i = 0; i < cnt; i++) {
 						BigEndian::Write2(Dst, common_value);
 					}
@@ -345,7 +344,7 @@ public:
 		vector<unsigned short> buf;
 		size_t pos = 0;
 		while (pos < unpack.size()) {
-			unsigned short v = unpack[pos];
+			unsigned short const v = unpack[pos];
 			if (v == incrementing_value) {
 				flush_buffer(buf, bits, mask, packet_length);
 				unsigned short next = v + 1;

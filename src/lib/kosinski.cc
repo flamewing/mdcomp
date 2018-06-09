@@ -66,7 +66,7 @@ class kosinski_internal {
 		// "off" vertices ago, for matches with len > 1.
 		// A return of "numeric_limits<size_t>::max()" means "infinite",
 		// or "no edge".
-		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+		constexpr static size_t dictionary_weight(size_t const dist, size_t const len) noexcept {
 			// Preconditions:
 			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 			if (len == 2 && dist > 256) {
@@ -93,13 +93,13 @@ class kosinski_internal {
 		}
 		// Kosinski finds no additional matches over normal LZSS.
 		constexpr static void extra_matches(stream_t const *data,
-		                                    size_t basenode,
-		                                    size_t ubound, size_t lbound,
+		                                    size_t const basenode,
+		                                    size_t const ubound, size_t const lbound,
 		                                    LZSSGraph<KosinskiAdaptor>::MatchVector &matches) noexcept {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// KosinskiM needs to pad each module to a multiple of 16 bytes.
-		static size_t get_padding(size_t totallen) noexcept {
+		static size_t get_padding(size_t const totallen) noexcept {
 			// Add in the size of the end-of-file marker.
 			size_t padding = totallen + 3 * 8;
 			return ((padding + moduled_kosinski::PadMaskBits) & ~moduled_kosinski::PadMaskBits) - totallen;
@@ -234,7 +234,7 @@ public:
 };
 
 bool kosinski::decode(istream &Src, iostream &Dst) {
-	size_t Location = Src.tellg();
+	size_t const Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
 	extract(Src, in);
 

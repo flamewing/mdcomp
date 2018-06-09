@@ -67,7 +67,7 @@ class rocket_internal {
 		// "off" vertices ago, for matches with len > 1.
 		// A return of "numeric_limits<size_t>::max()" means "infinite",
 		// or "no edge".
-		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+		constexpr static size_t dictionary_weight(size_t const dist, size_t const len) noexcept {
 			// Preconditions:
 			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 			// Dictionary match: 1-bit descriptor, 10-bit distance, 6-bit length.
@@ -83,13 +83,13 @@ class rocket_internal {
 		// Rocket finds no additional matches over normal LZSS.
 		// TODO: Lies. Plane maps rely on the buffer initially containing 0x20's
 		constexpr static void extra_matches(stream_t const *data,
-			                      size_t basenode,
-			                      size_t ubound, size_t lbound,
+			                      size_t const basenode,
+			                      size_t const ubound, size_t const lbound,
 			                      LZSSGraph<RocketAdaptor>::MatchVector &matches) noexcept {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// Rocket needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen) noexcept {
+		constexpr static size_t get_padding(size_t const totallen) noexcept {
 			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
@@ -100,7 +100,7 @@ class rocket_internal {
 	using RockIStream = LZSSIStream<RocketAdaptor>;
 
 public:
-	static void decode(istream &in, iostream &Dst, uint16_t Size) {
+	static void decode(istream &in, iostream &Dst, uint16_t const Size) {
 		RockIStream src(in);
 
 		// Initialise buffer (needed by Rocket Knight Adventures plane maps)
@@ -114,21 +114,21 @@ public:
 		while (in.good() && in.tellg() < Size) {
 			if (src.descbit() != 0u) {
 				// Symbolwise match.
-				unsigned char Byte = Read1(in);
+				unsigned char const Byte = Read1(in);
 				Write1(Dst, Byte);
 				buffer[buffer_index++] = Byte;
 				buffer_index &= 0x3FF;
 			} else {
 				// Dictionary match.
 				// Distance and length of match.
-				size_t high = src.getbyte(),
-					   low = src.getbyte();
+				size_t const high = src.getbyte(),
+					         low = src.getbyte();
 
-				size_t length = (high&0xFC)>>2,
-					   index = ((high&3)<<8)|low;
+				size_t const length = (high&0xFC)>>2;
+				size_t index = ((high&3)<<8)|low;
 
 				for (size_t i = 0; i <= length; i++) {
-					unsigned char Byte = buffer[index++];
+					unsigned char const Byte = buffer[index++];
 					index &= 0x3FF;
 					Write1(Dst, Byte);
 					buffer[buffer_index++] = Byte;
@@ -149,7 +149,7 @@ public:
 		for (RockGraph::AdjList::const_iterator it = list.begin();
 			    it != list.end(); ++it) {
 			AdjListNode const &edge = *it;
-			size_t len = edge.get_length(), dist = edge.get_distance();
+			size_t const len = edge.get_length(), dist = edge.get_distance();
 			// The weight of each edge uniquely identifies how it should be written.
 			// NOTE: This needs to be changed for other LZSS schemes.
 			if (len == 1) {
@@ -159,7 +159,7 @@ public:
 			} else {
 				// Dictionary match.
 				out.descbit(0);
-				uint16_t index = (0x3C0 + pos - dist) & 0x3FF;
+				uint16_t const index = (0x3C0 + pos - dist) & 0x3FF;
 				out.putbyte(((len-1)<<2)|(index>>8));
 				out.putbyte(index);
 			}
@@ -171,9 +171,9 @@ public:
 
 bool rocket::decode(istream &Src, iostream &Dst) {
 	Src.ignore(2);
-	size_t Size = BigEndian::Read2(Src);
+	size_t const Size = BigEndian::Read2(Src);
 
-	size_t Location = Src.tellg();
+	size_t const Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
 	extract(Src, in);
 

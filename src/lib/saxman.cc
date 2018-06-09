@@ -67,7 +67,7 @@ class saxman_internal {
 		// "off" vertices ago, for matches with len > 1.
 		// A return of "numeric_limits<size_t>::max()" means "infinite",
 		// or "no edge".
-		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+		constexpr static size_t dictionary_weight(size_t const dist, size_t const len) noexcept {
 			// Preconditions:
 			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 			ignore_unused_variable_warning(dist);
@@ -85,9 +85,9 @@ class saxman_internal {
 			return 1;
 		}
 		// Saxman allows encoding of a sequence of zeroes with no previous match.
-		static void extra_matches(stream_t const *data, size_t basenode,
-			                      size_t ubound, size_t lbound,
-			                      LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
+		constexpr static void extra_matches(stream_t const *data, size_t const basenode,
+			                                size_t const ubound, size_t const lbound,
+			                                LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
 			ignore_unused_variable_warning(lbound);
 			// Can't encode zero match after this point.
 			if (basenode >= 0xFFF) {
@@ -109,7 +109,7 @@ class saxman_internal {
 			}
 		}
 		// Saxman needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen) noexcept {
+		constexpr static size_t get_padding(size_t const totallen) noexcept {
 			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
@@ -149,16 +149,16 @@ public:
 				// The offset is stored as being absolute within current 0x1000-byte
 				// block, with part of it being remapped to the end of the previous
 				// 0x1000-byte block. We just rebase it around basedest.
-				size_t basedest = Dst.tellp();
+				size_t const basedest = Dst.tellp();
 				offset = ((offset - basedest) & 0x0FFF) + basedest - 0x1000;
 
 				if (offset < basedest) {
 					// If the offset is before the current output position, we copy
 					// bytes from the given location.
 					for (size_t src = offset; src < offset + length; src++) {
-						size_t Pointer = Dst.tellp();
+						size_t const Pointer = Dst.tellp();
 						Dst.seekg(src);
-						unsigned char Byte = Read1(Dst);
+						unsigned char const Byte = Read1(Dst);
 						Dst.seekp(Pointer);
 						Write1(Dst, Byte);
 					}
@@ -183,7 +183,7 @@ public:
 		for (SaxGraph::AdjList::const_iterator it = list.begin();
 			    it != list.end(); ++it) {
 			AdjListNode const &edge = *it;
-			size_t len = edge.get_length(), dist = edge.get_distance();
+			size_t const len = edge.get_length(), dist = edge.get_distance();
 			// The weight of each edge uniquely identifies how it should be written.
 			// NOTE: This needs to be changed for other LZSS schemes.
 			if (len == 1) {
@@ -211,7 +211,7 @@ bool saxman::decode(istream &Src, iostream &Dst, size_t Size) {
 		Size = LittleEndian::Read2(Src);
 	}
 
-	size_t Location = Src.tellg();
+	size_t const Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
 	extract(Src, in);
 

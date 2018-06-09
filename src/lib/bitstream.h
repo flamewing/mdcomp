@@ -28,7 +28,7 @@ public:
 	size_t read(std::istream &src) noexcept {
 		return BigEndian::ReadN<std::istream &, sizeof(T)>(src);
 	}
-	void write(std::ostream &dst, size_t c) noexcept {
+	void write(std::ostream &dst, size_t const c) noexcept {
 		BigEndian::WriteN<std::ostream &, sizeof(T)>(dst, c);
 	}
 };
@@ -39,7 +39,7 @@ public:
 	size_t read(std::istream &src) noexcept {
 		return LittleEndian::ReadN<std::istream &, sizeof(T)>(src);
 	}
-	void write(std::ostream &dst, size_t c) noexcept {
+	void write(std::ostream &dst, size_t const c) noexcept {
 		LittleEndian::WriteN<std::ostream &, sizeof(T)>(dst, c);
 	}
 };
@@ -104,7 +104,7 @@ public:
 	// Reads up to sizeof(T) * 8 bits from the stream. This remembers previously
 	// read bits, and gets another T from the actual stream once all bits in the
 	// current T have been read.
-	T read(unsigned char cnt) noexcept {
+	T read(unsigned char const cnt) noexcept {
 		if (!EarlyRead) {
 			check_buffer();
 		}
@@ -141,7 +141,7 @@ private:
 	Writer w;
 	unsigned int waitingbits;
 	T bitbuffer;
-	void write_bits(T bits) noexcept {
+	void write_bits(T const bits) noexcept {
 		w.write(dst, LittleEndianBits ? reverseBits(bits) : bits);
 	}
 public:
@@ -150,7 +150,7 @@ public:
 	// Puts a single bit into the stream. Remembers previously written bits, and
 	// outputs a T to the actual stream once there are at least sizeof(T) * 8
 	// bits stored in the buffer.
-	bool push(T data) noexcept {
+	bool push(T const data) noexcept {
 		bitbuffer = (bitbuffer << 1) | (data & 1);
 		if (++waitingbits >= sizeof(T) * 8) {
 			write_bits(bitbuffer);
@@ -163,7 +163,7 @@ public:
 	// Writes up to sizeof(T) * 8 bits to the stream. This remembers previously
 	// written bits, and outputs a T to the actual stream once there are at
 	// least sizeof(T) * 8 bits stored in the buffer.
-	bool write(T data, unsigned char size) noexcept {
+	bool write(T const data, unsigned char const size) noexcept {
 		if (waitingbits + size >= sizeof(T) * 8) {
 			int delta = (sizeof(T) * 8 - waitingbits);
 			waitingbits = (waitingbits + size) % (sizeof(T) * 8);

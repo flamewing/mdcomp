@@ -43,23 +43,23 @@ inline size_t Read1(std::istream_iterator<unsigned char>& in) noexcept {
 	return c;
 }
 
-inline void Write1(std::ostream &out, size_t c) noexcept {
+inline void Write1(std::ostream &out, size_t const c) noexcept {
 	out.put(static_cast<char>(c & 0xff));
 }
 
-inline void Write1(char *&out, size_t c) noexcept {
+inline void Write1(char *&out, size_t const c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
-inline void Write1(unsigned char *&out, size_t c) noexcept {
+inline void Write1(unsigned char *&out, size_t const c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
-inline void Write1(std::string &out, size_t c) noexcept {
+inline void Write1(std::string &out, size_t const c) noexcept {
 	out.push_back(static_cast<char>(c & 0xff));
 }
 
-inline void Write1(std::ostream_iterator<unsigned char>&out, size_t c) noexcept {
+inline void Write1(std::ostream_iterator<unsigned char>&out, size_t const c) noexcept {
 	*out++ = static_cast<char>(c & 0xff);
 }
 
@@ -90,13 +90,13 @@ namespace BigEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t c) noexcept {
+	inline void Write2(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0xff00) >> 8);
 		Write1(out, c & 0xff);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t c) noexcept {
+	inline void Write4(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0xff000000) >> 24);
 		Write1(out, (c & 0x00ff0000) >> 16);
 		Write1(out, (c & 0x0000ff00) >> 8);
@@ -104,7 +104,7 @@ namespace BigEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t c) noexcept {
+	inline void WriteN(T &out, size_t const c) noexcept {
 		for (int i = 8 * (N - 1); i >= 0; i -= 8) {
 			Write1(out, (c >> i) & 0xff);
 		}
@@ -138,13 +138,13 @@ namespace LittleEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t c) noexcept {
+	inline void Write2(T &out, size_t const c) noexcept {
 		Write1(out, c & 0xff);
 		Write1(out, (c & 0xff00) >> 8);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t c) noexcept {
+	inline void Write4(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0x000000ff));
 		Write1(out, (c & 0x0000ff00) >> 8);
 		Write1(out, (c & 0x00ff0000) >> 16);
@@ -152,7 +152,7 @@ namespace LittleEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t c) noexcept {
+	inline void WriteN(T &out, size_t const c) noexcept {
 		for (size_t i = 0; i < 8 * N; i += 8) {
 			Write1(out, (c >> i) & 0xff);
 		}

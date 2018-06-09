@@ -68,7 +68,7 @@ class kosplus_internal {
 		// "off" vertices ago, for matches with len > 1.
 		// A return of "numeric_limits<size_t>::max()" means "infinite",
 		// or "no edge".
-		constexpr static size_t dictionary_weight(size_t dist, size_t len) noexcept {
+		constexpr static size_t dictionary_weight(size_t const dist, size_t const len) noexcept {
 			// Preconditions:
 			// len > 1 && len <= szLookAhead && dist != 0 && dist <= szSearchBuffer
 			if (len == 2 && dist > 256) {
@@ -95,13 +95,13 @@ class kosplus_internal {
 		}
 		// KosPlus finds no additional matches over normal LZSS.
 		constexpr static void extra_matches(stream_t const *data,
-		                                    size_t basenode,
-		                                    size_t ubound, size_t lbound,
+		                                    size_t const basenode,
+		                                    size_t const ubound, size_t const lbound,
 		                                    LZSSGraph<KosPlusAdaptor>::MatchVector &matches) noexcept {
 			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// KosPlusM needs no additional padding at the end-of-file.
-		constexpr static size_t get_padding(size_t totallen) noexcept {
+		constexpr static size_t get_padding(size_t const totallen) noexcept {
 			ignore_unused_variable_warning(totallen);
 			return 0;
 		}
@@ -234,7 +234,7 @@ public:
 };
 
 bool kosplus::decode(istream &Src, iostream &Dst) {
-	size_t Location = Src.tellg();
+	size_t const Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
 	extract(Src, in);
 

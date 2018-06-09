@@ -74,10 +74,10 @@ public:
 	unsigned char get_count() const noexcept {
 		return count;
 	}
-	void set_nibble(unsigned char tf) noexcept {
+	void set_nibble(unsigned char const tf) noexcept {
 		nibble = tf;
 	}
-	void set_count(unsigned char tf) noexcept {
+	void set_count(unsigned char const tf) noexcept {
 		count = tf;
 	}
 };
@@ -86,7 +86,7 @@ struct SizeFreqNibble {
 	size_t count{0};
 	nibble_run nibble;
 	unsigned char codelen{0};
-	SizeFreqNibble(size_t cnt, nibble_run const &nib, unsigned char len) noexcept
+	SizeFreqNibble(size_t cnt, nibble_run const &nib, unsigned char const len) noexcept
 		: count(cnt), nibble(nib), codelen(len) {
 	}
 	SizeFreqNibble() noexcept = default;
@@ -103,7 +103,7 @@ struct Code {
 	bool operator<(Code const &rhs) const noexcept {
 		return code < rhs.code || (code == rhs.code && len < rhs.len);
 	}
-	Code(size_t c, unsigned char l) noexcept : code(c), len(l) {  }
+	Code(size_t const c, unsigned char const l) noexcept : code(c), len(l) {  }
 	Code() noexcept = default;
 	Code(Code const &other) noexcept = default;
 	Code(Code &&other) noexcept = default;
@@ -127,7 +127,7 @@ private:
 	nibble_run value;
 public:
 	// Construct a new leaf node for character c.
-	node(nibble_run const &val, int wgt) noexcept
+	node(nibble_run const &val, int const wgt) noexcept
 		: weight(wgt), value(val) {
 	}
 	// Construct a new internal node that has children c1 and c2.
@@ -323,18 +323,18 @@ public:
 				in_val = Read1(Src);
 			}
 
-			nibble_run run(out_val, ((in_val & 0x70) >> 4) + 1);
+			nibble_run const run(out_val, ((in_val & 0x70) >> 4) + 1);
 
-			size_t code = Read1(Src);
-			unsigned char len = in_val & 0xf;
+			size_t const code = Read1(Src);
+			unsigned const char len = in_val & 0xf;
 			// Read the run's code from stream.
 			codemap[Code {code, len}] = run;
 		}
 	}
 
 	static void decode(std::istream &Src, std::ostream &Dst,
-	                   CodeNibbleMap &codemap, size_t rtiles,
-	                   bool alt_out = false) {
+	                   CodeNibbleMap &codemap, size_t const rtiles,
+	                   bool const alt_out = false) {
 		// This buffer is used for alternating mode decoding.
 		stringstream dst(ios::in | ios::out | ios::binary);
 
@@ -501,24 +501,24 @@ public:
 					// run is N, then we have N dimensions.
 					// Pointer to table of linear coefficients. This table has
 					// N columns for each line.
-					size_t *linear_coeffs;
+					size_t const *linear_coeffs;
 					// Here are some hard-coded tables, obtained by brute-force:
-					static size_t linear_coeffs2[ 2][2] = {{3, 0}, {1, 1}};
-					static size_t linear_coeffs3[ 4][3] = {{4, 0, 0}, {2, 1, 0}, {1, 0, 1}, {0, 2, 0}};
-					static size_t linear_coeffs4[ 6][4] = {
+					constexpr static size_t const linear_coeffs2[ 2][2] = {{3, 0}, {1, 1}};
+					constexpr static size_t const linear_coeffs3[ 4][3] = {{4, 0, 0}, {2, 1, 0}, {1, 0, 1}, {0, 2, 0}};
+					constexpr static size_t const linear_coeffs4[ 6][4] = {
 						{5, 0, 0, 0}, {3, 1, 0, 0}, {2, 0, 1, 0},
 						{1, 2, 0, 0}, {1, 0, 0, 1}, {0, 1, 1, 0}
 					};
-					static size_t linear_coeffs5[10][5] = {
+					constexpr static size_t const linear_coeffs5[10][5] = {
 						{6, 0, 0, 0, 0}, {4, 1, 0, 0, 0}, {3, 0, 1, 0, 0}, {2, 2, 0, 0, 0}, {2, 0, 0, 1, 0},
 						{1, 1, 1, 0, 0}, {1, 0, 0, 0, 1}, {0, 3, 0, 0, 0}, {0, 1, 0, 1, 0}, {0, 0, 2, 0, 0}
 					};
-					static size_t linear_coeffs6[14][6] = {
+					constexpr static size_t const linear_coeffs6[14][6] = {
 						{7, 0, 0, 0, 0, 0}, {5, 1, 0, 0, 0, 0}, {4, 0, 1, 0, 0, 0}, {3, 2, 0, 0, 0, 0}, {3, 0, 0, 1, 0, 0},
 						{2, 1, 1, 0, 0, 0}, {2, 0, 0, 0, 1, 0}, {1, 3, 0, 0, 0, 0}, {1, 1, 0, 1, 0, 0}, {1, 0, 2, 0, 0, 0},
 						{1, 0, 0, 0, 0, 1}, {0, 2, 1, 0, 0, 0}, {0, 1, 0, 0, 1, 0}, {0, 0, 1, 1, 0, 0}
 					};
-					static size_t linear_coeffs7[21][7] = {
+					constexpr static size_t const linear_coeffs7[21][7] = {
 						{8, 0, 0, 0, 0, 0, 0}, {6, 1, 0, 0, 0, 0, 0}, {5, 0, 1, 0, 0, 0, 0}, {4, 2, 0, 0, 0, 0, 0},
 						{4, 0, 0, 1, 0, 0, 0}, {3, 1, 1, 0, 0, 0, 0}, {3, 0, 0, 0, 1, 0, 0}, {2, 3, 0, 0, 0, 0, 0},
 						{2, 1, 0, 1, 0, 0, 0}, {2, 0, 2, 0, 0, 0, 0}, {2, 0, 0, 0, 0, 1, 0}, {1, 2, 1, 0, 0, 0, 0},
@@ -526,7 +526,8 @@ public:
 						{0, 2, 0, 1, 0, 0, 0}, {0, 1, 2, 0, 0, 0, 0}, {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
 						{0, 0, 0, 2, 0, 0, 0}
 					};
-					size_t n = count.first.get_count(), rows;
+					size_t const n = count.first.get_count();
+					size_t rows;
 					// Get correct coefficient table:
 					switch (n) {
 						case 2:
@@ -556,7 +557,7 @@ public:
 							break;
 					}
 
-					unsigned char nibble = count.first.get_nibble();
+					unsigned char const nibble = count.first.get_nibble();
 					// Vector containing the code length of each nibble run, or 13
 					// if the nibble run is not in the codemap.
 					vector<size_t> runlen;
@@ -586,7 +587,7 @@ public:
 						// Tally up the code length for this coefficient line.
 						size_t len = 0;
 						for (size_t j = 0; j < n; j++) {
-							size_t c = linear_coeffs[base + j];
+							size_t const c = linear_coeffs[base + j];
 							if (c == 0u) {
 								continue;
 							}
@@ -606,7 +607,7 @@ public:
 						// and add it to the supplementary code table.
 						size_t code = 0, len = 0;
 						for (size_t i = 0; i < n; i++) {
-							size_t c = linear_coeffs[best_line + i];
+							size_t const c = linear_coeffs[best_line + i];
 							if (c == 0u) {
 								continue;
 							}
@@ -630,7 +631,7 @@ public:
 						} else {
 							// By construction, best_size is at most 12.
 							// Flag it as a false code.
-							unsigned char len = best_size | 0x80;
+							unsigned char const len = best_size | 0x80;
 							// Add it to supplementary code map.
 							supcodemap[count.first] = Code {code, len};
 							tempsize_est += best_size * count.second;
@@ -652,14 +653,14 @@ public:
 
 	template <typename Compare>
 	static size_t encode(istream &Src, ostream &Dst, int mode,
-		                            size_t sz, Compare const &comp) {
+		                            size_t const sz, Compare const &comp) {
 		// Seek to start and clear all errors.
 		Src.clear();
 		Src.seekg(0);
 		// Unpack source so we don't have to deal with nibble IO after.
 		vector<unsigned char> unpack;
 		for (size_t i = 0; i < sz; i++) {
-			size_t c = Read1(Src);
+			size_t const c = Read1(Src);
 			unpack.push_back((c & 0xf0) >> 4);
 			unpack.push_back((c & 0x0f));
 		}
@@ -853,7 +854,7 @@ public:
 			NibbleCodeMap tempcodemap;
 			shared_ptr<node> child = qt.front();
 			tempcodemap[child->get_value()] = Code {0u, 1};
-			size_t tempsize_est = estimate_file_size(tempcodemap, counts);
+			size_t const tempsize_est = estimate_file_size(tempcodemap, counts);
 
 			// Is this iteration better than the best?
 			if (tempsize_est < size_est) {
@@ -872,7 +873,7 @@ public:
 		unsigned char lastnibble = 0xff;
 		for (auto & elem : codemap) {
 			nibble_run const &run = elem.first;
-			size_t code = (elem.second).code;
+			size_t const code = (elem.second).code;
 			unsigned char len = (elem.second).len;
 			// len with bit 7 set is a special device for further reducing file size, and
 			// should NOT be on the table.
@@ -902,7 +903,7 @@ public:
 		for (auto & run : rleSrc) {
 			auto val = codemap.find(run);
 			if (val != codemap.end()) {
-				size_t code = (val->second).code;
+				size_t const code = (val->second).code;
 				unsigned char len = (val->second).len;
 				// len with bit 7 set is a device to bypass the code table at the
 				// start of the file. We need to clear the bit here before writing
@@ -954,7 +955,7 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	while ((src.tellp() & 0x1f) != 0) {
 		Write1(src, 0);
 	}
-	size_t sz = src.tellp();
+	size_t const sz = src.tellp();
 
 	// Now we will build the alternating bit stream for mode 1 compression.
 	src.clear();

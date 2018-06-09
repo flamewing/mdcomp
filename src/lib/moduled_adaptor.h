@@ -37,7 +37,7 @@ public:
 	                           size_t const ModulePadding = DefaultModulePadding);
 
 	static bool moduled_encode(std::istream &Src, std::ostream &Dst,
-	                           size_t ModuleSize = DefaultModuleSize,
+	                           size_t const ModuleSize = DefaultModuleSize,
 	                           size_t const ModulePadding = DefaultModulePadding);
 };
 
@@ -47,7 +47,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_de
 	std::iostream &Dst,
 	size_t const ModulePadding
 ) {
-	long long FullSize = BigEndian::Read2(Src);
+	long long const FullSize = BigEndian::Read2(Src);
 	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
 	in << Src.rdbuf();
 
@@ -66,7 +66,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_de
 		}
 
 		// Skip padding between modules
-		size_t paddingEnd = (size_t(in.tellg()) + PadMask) & ~PadMask;
+		size_t const paddingEnd = (size_t(in.tellg()) + PadMask) & ~PadMask;
 		in.seekg(paddingEnd);
 	}
 
@@ -77,7 +77,7 @@ template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding
 bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
 	std::istream &Src,
 	std::ostream &Dst,
-	size_t ModuleSize,
+	size_t const ModuleSize,
 	size_t const ModulePadding
 ) {
 	Src.seekg(0, std::ios::end);
@@ -101,7 +101,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
 		ptr += ModuleSize;
 
 		// Padding between modules
-		long long paddingEnd = (size_t(sout.tellp()) + PadMask) & ~PadMask;
+		long long const paddingEnd = (size_t(sout.tellp()) + PadMask) & ~PadMask;
 		for (; sout.tellp() < paddingEnd; sout.put(0)) {
 		}
 	}
