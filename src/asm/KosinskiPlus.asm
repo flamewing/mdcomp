@@ -71,22 +71,12 @@ KosPlusDec:
 	beq.s	.Quit						; If cnt=0, quit decompression.
 
 	lea	(a1,d5),a5
-	rept 8
-		move.b	(a5)+,(a1)+					; Do 8 extra copies.
-	endm
 	move.w	d4,d6
 	not.w	d6
 	and.w	d7,d6
 	add.w	d6,d6
 	lsr.w	#_KosPlus_LoopUnroll,d4
 	jmp	.largecopy(pc,d6.w)
-; ---------------------------------------------------------------------------
-.largecopy:
-	rept (1<<_KosPlus_LoopUnroll)
-		move.b	(a5)+,(a1)+
-	endm
-	dbra	d4,.largecopy
-	bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
 .StreamCopy:
 	lea	(a1,d5),a5
@@ -99,6 +89,12 @@ KosPlusDec:
 	add.w	d4,d4
 	jmp	.mediumcopy(pc,d4.w)
 ; ---------------------------------------------------------------------------
+.largecopy:
+	rept (1<<_KosPlus_LoopUnroll)
+		move.b	(a5)+,(a1)+
+	endm
+	dbra	d4,.largecopy
+
 .mediumcopy:
 	rept 8
 		move.b	(a5)+,(a1)+
