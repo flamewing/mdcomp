@@ -144,10 +144,10 @@ public:
 					distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
 				} else {
 					// Inline dictionary match.
-					unsigned char Low  = src.descbit(),
-						          High = src.descbit();
+					unsigned char High = src.descbit(),
+						          Low  = src.descbit();
 
-					Count = ((size_t(Low) << 1) | size_t(High)) + 2;
+					Count = ((size_t(High) << 1) | size_t(Low)) + 2;
 
 					distance = src.getbyte();
 					distance |= ~size_t(0xFF);
