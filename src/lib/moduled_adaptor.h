@@ -85,7 +85,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
 	Src.seekg(0);
 	std::vector<unsigned char> data;
 	data.resize(FullSize);
-	std::vector<unsigned char>::const_iterator ptr = data.cbegin();
+	auto ptr = data.cbegin();
 	Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
 
 	size_t const PadMask = ModulePadding - 1;

@@ -263,9 +263,8 @@ struct Compare_node2 {
 		nibble_run const rnib = rhs->get_value();
 
 		size_t lclen, rclen;
-		NibbleCodeMap::const_iterator lit, rit;
-		lit = codemap.find(lnib);
-		rit = codemap.find(rnib);
+		auto const lit = codemap.find(lnib);
+		auto const rit = codemap.find(rnib);
 		if (lit == codemap.end()) {
 			lclen = (6 + 7) * lhs->get_weight();
 		} else {
@@ -374,7 +373,7 @@ public:
 				len = 1;
 			} else {
 				// Find out if the data so far is a nibble code.
-				CodeNibbleMap::const_iterator it = codemap.find(Code {code, len});
+				auto const it = codemap.find(Code {code, len});
 				if (it != codemap.end()) {
 					// If it is, then it is time to output the encoded nibble run.
 					nibble_run const &run = it->second;

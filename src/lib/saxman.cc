@@ -18,6 +18,7 @@
  */
 
 #include <cstdint>
+#include <iostream>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -39,6 +40,12 @@ class saxman_internal {
 		using stream_t = unsigned char;
 		using descriptor_t = unsigned char;
 		using descriptor_endian_t = littleendian<descriptor_t>;
+		enum class EdgeType : size_t {
+			invalid,
+			symbolwise,
+			dictionary,
+			zerofill
+		};
 		// Number of bits on descriptor bitfield.
 		constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
 		// Number of bits used in descriptor bitfield to signal the end-of-file
@@ -57,32 +64,42 @@ class saxman_internal {
 		constexpr static size_t const LookAheadBufSize = 18;
 		// Total size of the sliding window.
 		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
-		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-		// one single symbol..
-		constexpr static size_t symbolwise_weight() noexcept {
-			// Symbolwise match: 1-bit descriptor, 8-bit length.
-			return 1 + 8;
-		}
-		// Computes the cost of covering all of the "len" vertices starting from
-		// "off" vertices ago, for matches with len > 1.
-		// A return of "numeric_limits<size_t>::max()" means "infinite",
-		// or "no edge".
-		constexpr static size_t dictionary_weight(size_t const dist, size_t const len) noexcept {
+		// Computes the type of edge that covers all of the "len" vertices starting from
+		// "off" vertices ago.
+		// Returns EdgeType::invalid if there is no such edge.
+		constexpr static EdgeType match_type(size_t const dist, size_t const len) noexcept {
 			// Preconditions:
-			// len > 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
+			// len >= 1 && len <= LookAheadBufSize && dist != 0 && dist <= SearchBufSize
 			ignore_unused_variable_warning(dist);
-			if (len == 2) {
-				return numeric_limits<size_t>::max();   // "infinite"
+			if (len == 1) {
+				return EdgeType::symbolwise;
+			} else if (len == 2) {
+				return EdgeType::invalid;
 			} else {
-				// Dictionary match: 1-bit descriptor, 12-bit offset, 4-bit length.
-				return 1 + 12 + 4;
+				return EdgeType::dictionary;
 			}
 		}
-		// Given an edge, computes how many bits are used in the descriptor field.
-		constexpr static size_t desc_bits(AdjListNode const &edge) noexcept {
+		// Given an edge type, computes how many bits are used in the descriptor field.
+		constexpr static size_t desc_bits(EdgeType const type) noexcept {
 			// Saxman always uses a single bit descriptor.
-			ignore_unused_variable_warning(edge);
+			ignore_unused_variable_warning(type);
 			return 1;
+		}
+		// Given an edge type, computes how many bits are used in total by this edge.
+		// A return of "numeric_limits<size_t>::max()" means "infinite",
+		// or "no edge".
+		constexpr static size_t edge_weight(EdgeType const type) noexcept {
+			switch (type) {
+				case EdgeType::symbolwise:
+					// 8-bit value.
+					return desc_bits(type) + 8;
+				case EdgeType::dictionary:
+				case EdgeType::zerofill:
+					// 12-bit offset, 4-bit length.
+					return desc_bits(type) + 12 + 4;
+				default:
+					return numeric_limits<size_t>::max();
+			}
 		}
 		// Saxman allows encoding of a sequence of zeroes with no previous match.
 		constexpr static void extra_matches(stream_t const *data, size_t const basenode,
@@ -90,7 +107,7 @@ class saxman_internal {
 			                                LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
 			ignore_unused_variable_warning(lbound);
 			// Can't encode zero match after this point.
-			if (basenode >= 0xFFF) {
+			if (basenode >= SearchBufSize-1) {
 				return;
 			}
 			// Try matching zeroes.
@@ -103,9 +120,10 @@ class saxman_internal {
 			// Need at least 3 zeroes in sequence.
 			if (jj >= 3) {
 				// Got them, so add them to the list.
-				matches[jj - 1] = AdjListNode(basenode + jj,
+				EdgeType const ty = EdgeType::zerofill;
+				matches[jj - 1] = AdjListNode<EdgeType>(basenode + jj,
 					                          numeric_limits<size_t>::max(),
-					                          jj, 1 + 12 + 4);
+					                          jj, edge_weight(ty), ty);
 			}
 		}
 		// Saxman needs no additional padding at the end-of-file.
@@ -115,12 +133,10 @@ class saxman_internal {
 		}
 	};
 
-	using SaxGraph = LZSSGraph<SaxmanAdaptor>;
-	using SaxOStream = LZSSOStream<SaxmanAdaptor>;
-	using SaxIStream = LZSSIStream<SaxmanAdaptor>;
-
 public:
 	static void decode(istream &in, iostream &Dst, size_t const Size) {
+		using SaxIStream = LZSSIStream<SaxmanAdaptor>;
+
 		SaxIStream src(in);
 
 		// Loop while the file is good and we haven't gone over the declared length.
@@ -150,7 +166,7 @@ public:
 				// block, with part of it being remapped to the end of the previous
 				// 0x1000-byte block. We just rebase it around basedest.
 				size_t const basedest = Dst.tellp();
-				offset = ((offset - basedest) & 0x0FFF) + basedest - 0x1000;
+				offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize) + basedest - SaxmanAdaptor::SearchBufSize;
 
 				if (offset < basedest) {
 					// If the offset is before the current output position, we copy
@@ -173,6 +189,10 @@ public:
 	}
 
 	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
+		using EdgeType = typename SaxmanAdaptor::EdgeType;
+		using SaxGraph = LZSSGraph<SaxmanAdaptor>;
+		using SaxOStream = LZSSOStream<SaxmanAdaptor>;
+
 		// Compute optimal Saxman parsing of input file.
 		SaxGraph enc(Data, Size);
 		SaxGraph::AdjList list = enc.find_optimal_parse();
@@ -180,27 +200,30 @@ public:
 
 		size_t pos = 0;
 		// Go through each edge in the optimal path.
-		for (SaxGraph::AdjList::const_iterator it = list.begin();
-			    it != list.end(); ++it) {
-			AdjListNode const &edge = *it;
-			size_t const len = edge.get_length(), dist = edge.get_distance();
-			// The weight of each edge uniquely identifies how it should be written.
-			// NOTE: This needs to be changed for other LZSS schemes.
-			if (len == 1) {
-				// Symbolwise match.
-				out.descbit(1);
-				out.putbyte(Data[pos]);
-			} else {
-				// Dictionary match.
-				out.descbit(0);
-				size_t low = pos - dist, high = len;
-				low = (low - 0x12) & 0xFFF;
-				high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
-				low &= 0xFF;
-				out.putbyte(low);
-				out.putbyte(high);
-			}
-			// Go to next position.
+		for (auto const &edge : list) {
+			switch (edge.get_type()) {
+				case EdgeType::symbolwise:
+					out.descbit(1);
+					out.putbyte(Data[pos]);
+					break;
+				case EdgeType::dictionary:
+				case EdgeType::zerofill: {
+					size_t const len  = edge.get_length(),
+					             dist = edge.get_distance();
+					out.descbit(0);
+					size_t low = pos - dist, high = len;
+					low = (low - 0x12) & 0xFFF;
+					high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
+					low &= 0xFF;
+					out.putbyte(low);
+					out.putbyte(high);
+					break;
+				}
+				default:
+					// This should be unreachable.
+					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
+					break;
+			};
 			pos = edge.get_dest();
 		}
 	}
