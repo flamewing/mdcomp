@@ -121,14 +121,14 @@ public:
 			} else {
 				// Dictionary matches.
 				// Count and distance
-				size_t Count = 0;
-				size_t distance = 0;
+				size_t Count = 0u;
+				size_t distance = 0u;
 
 				if (src.descbit() != 0u) {
 					// Separate dictionary match.
-					unsigned char Low = src.getbyte(), High = src.getbyte();
+					size_t Low = src.getbyte(), High = src.getbyte();
 
-					Count = size_t(High & 0x07);
+					Count = High & 0x07u;
 
 					if (Count == 0u) {
 						// 3-byte dictionary match.
@@ -144,21 +144,19 @@ public:
 						Count += 2;
 					}
 
-					distance = (~size_t(0x1FFF)) | (size_t(0xF8 & High) << 5) | size_t(Low);
+					distance = 0x2000u - (((0xF8u & High) << 5) | Low);
 				} else {
 					// Inline dictionary match.
-					unsigned char High = src.descbit(),
-						          Low  = src.descbit();
+					size_t High = src.descbit(), Low  = src.descbit();
 
-					Count = ((size_t(High) << 1) | size_t(Low)) + 2;
+					Count = ((High << 1) | Low) + 2;
 
-					distance = src.getbyte();
-					distance |= ~size_t(0xFF);
+					distance = 0x100u - src.getbyte();
 				}
 
 				for (size_t i = 0; i < Count; i++) {
 					size_t Pointer = Dst.tellp();
-					Dst.seekg(Pointer + distance);
+					Dst.seekg(Pointer - distance);
 					unsigned char Byte = Read1(Dst);
 					Dst.seekp(Pointer);
 					Write1(Dst, Byte);
@@ -194,16 +192,16 @@ public:
 					len -= 2;
 					out.descbit((len >> 1) & 1);
 					out.descbit(len & 1);
-					out.putbyte(-dist);
+					out.putbyte(0x100u - dist);
 					break;
 				case 18:
 				case 26: {
 					// Separate dictionary match.
 					out.descbit(0);
 					out.descbit(1);
-					dist = (-dist) & 0x1FFF;
-					uint16_t high = (dist >> 5) & 0xF8,
-					         low  = (dist & 0xFF);
+					dist = 0x2000u - dist;
+					uint16_t high = (dist >> 5) & 0xF8u,
+					         low  = (dist & 0xFFu);
 					if (edge.get_weight() == 18) {
 						// 2-byte dictionary match.
 						out.putbyte(low);
