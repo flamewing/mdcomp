@@ -1,9 +1,13 @@
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 ; Adds a Kosinski Moduled archive to the module queue
-; Inputs:
-; a1 = address of the archive
-; d2 = destination in VRAM
+; ---------------------------------------------------------------------------
+; INPUT:
+; 	a1	Source address
+; 	d2	Destination address in VRAM
+; ---------------------------------------------------------------------------
+; Queue is slightly optimized compared to S3&K version. Uses faster Kosinski
+; compressor internally.
 ; ---------------------------------------------------------------------------
 Queue_Kos_Module:
 	lea	(Kos_module_queue).w,a2

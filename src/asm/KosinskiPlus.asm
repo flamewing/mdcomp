@@ -1,10 +1,15 @@
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; KOSINSKI PLUS Decompressor
-;
-; ARGUMENTS:
-; a0 = source address
-; a1 = destination address
+; Kosinski+ Decompressor
+; ---------------------------------------------------------------------------
+; INPUT:
+; 	a0	Source address
+; 	a1	Destination address
+; ---------------------------------------------------------------------------
+; New format based on Kosinski. It changes several design decisions to allow
+; a faster decompressor without loss of compression ratio.
+; Created originally by Flamewing and vladikcomper (by discussions on IRC),
+; further suggestions by Clownacy.
 ; ---------------------------------------------------------------------------
 _KosPlus_LoopUnroll = 3
 

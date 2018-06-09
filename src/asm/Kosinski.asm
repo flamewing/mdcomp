@@ -1,12 +1,11 @@
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; KOSINSKI Decompressor
-; (sometimes iincorrectly called KOZINSKI)
-;
-; ARGUMENTS:
-; a0 = source address
-; a1 = destination address
-;
+; Kosinski Decompressor
+; ---------------------------------------------------------------------------
+; INPUT:
+; 	a0	source address
+; 	a1	destination address
+; ---------------------------------------------------------------------------
 ; For format explanation see http://segaretro.org/Kosinski_compression
 ; New faster version by written by vladikcomper, with additional improvements
 ; by MarkeyJester and Flamewing
@@ -38,7 +37,6 @@ _Kos_ReadBit macro
 	endif
 	endm
 ; ===========================================================================
-; KozDec_193A:
 KosDec:
 	include "_inc/Kosinski_internal.asm"
 	rts								; End of function KosDec.

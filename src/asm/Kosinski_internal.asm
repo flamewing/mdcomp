@@ -2,10 +2,8 @@
 ; ---------------------------------------------------------------------------
 ; This is the internal portion of the code, which is shared by KosDec and
 ; Process_Kos_Queue. DO NOT CALL THIS DIRECTLY.
-;
+; ---------------------------------------------------------------------------
 ; For format explanation see http://info.sonicretro.org/Kosinski_compression
-; New faster version by written by vladikcomper, with additional improvements by
-; MarkeyJester and Flamewing
 ; ---------------------------------------------------------------------------
 	moveq	#(1<<_Kos_LoopUnroll)-1,d7
 	if _Kos_UseLUT==1
