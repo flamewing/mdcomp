@@ -315,6 +315,11 @@ private:
 	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
 	// Internal parameter buffer.
 	std::string buffer;
+	void flushbuffer() noexcept {
+		out.write(buffer.c_str(), buffer.size());
+		buffer.clear();
+	}
+
 public:
 	// Constructor.
 	LZSSOStream(std::ostream &Dst) noexcept : out(Dst), bits(out) {
@@ -336,20 +341,18 @@ public:
 			}
 		}
 		// Now write the terminating sequence if it wasn't written already.
-		out.write(buffer.c_str(), buffer.size());
+		flushbuffer();
 	}
 	// Writes a bit to the descriptor bitfield. When the descriptor field is
 	// full, outputs it and the output parameter buffer.
 	void descbit(descriptor_t bit) noexcept {
 		if (Adaptor::NeedEarlyDescriptor) {
 			if (bits.push(bit)) {
-				out.write(buffer.c_str(), buffer.size());
-				buffer.clear();
+				flushbuffer();
 			}
 		} else {
 			if (!bits.have_waiting_bits()) {
-				out.write(buffer.c_str(), buffer.size());
-				buffer.clear();
+				flushbuffer();
 			}
 			bits.push(bit);
 		}
