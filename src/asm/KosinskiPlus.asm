@@ -102,11 +102,10 @@ KosPlusDec:
 .Code_01:
 	moveq	#0,d4						; d4 will contain copy count.
 	; Code 01 (Dictionary ref. long / special).
-	move.b	(a0)+,d6					; d6 = %LLLLLLLL.
 	move.b	(a0)+,d4					; d4 = %HHHHHCCC.
 	move.b	d4,d5						; d5 = %11111111 HHHHHCCC.
 	lsl.w	#5,d5						; d5 = %111HHHHH CCC00000.
-	move.b	d6,d5						; d5 = %111HHHHH LLLLLLLL.
+	move.b	(a0)+,d5					; d5 = %111HHHHH LLLLLLLL.
 	if _KosPlus_LoopUnroll==3
 		and.w	d7,d4						; d4 = %00000CCC.
 	else

@@ -125,7 +125,7 @@ public:
 
 				if (src.descbit() != 0u) {
 					// Separate dictionary match.
-					unsigned char Low = src.getbyte(), High = src.getbyte();
+					unsigned char High = src.getbyte(), Low = src.getbyte();
 
 					Count = size_t(High & 0x07);
 
@@ -206,12 +206,12 @@ public:
 					         low  = (dist & 0xFF);
 					if (edge.get_weight() == 18) {
 						// 2-byte dictionary match.
-						out.putbyte(low);
 						out.putbyte(high | (len - 2));
+						out.putbyte(low);
 					} else {
 						// 3-byte dictionary match.
-						out.putbyte(low);
 						out.putbyte(high);
+						out.putbyte(low);
 						out.putbyte(len - 9);
 					}
 					break;
@@ -228,9 +228,9 @@ public:
 		out.descbit(0);
 		out.descbit(1);
 
-		// Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
-		out.putbyte(0x00);
+		// Write end-of-file marker.
 		out.putbyte(0xF0);
+		out.putbyte(0x00);
 		out.putbyte(0x00);
 	}
 };
