@@ -222,7 +222,7 @@ public:
 				default:
 					// This should be unreachable.
 					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
-					break;
+					__builtin_unreachable();
 			};
 			pos = edge.get_dest();
 		}

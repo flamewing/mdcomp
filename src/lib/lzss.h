@@ -30,6 +30,14 @@
 #include "bigendian_io.h"
 #include "bitstream.h"
 
+#ifdef _MSC_VER
+#ifndef __clang__
+[[noreturn]] inline void __builtin_unreachable() {
+	__assume(false);
+}
+#endif
+#endif
+
 /*
  * Class representing an edge in the LZSS-compression graph. An edge (u, v)
  * indicates that there is a sliding window match that covers all the characters
