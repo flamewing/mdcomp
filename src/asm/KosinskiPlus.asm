@@ -7,7 +7,6 @@
 ; a1 = destination address
 ; ---------------------------------------------------------------------------
 _KosPlus_LoopUnroll = 3
-_KosPlus_ExtremeUnrolling = 1
 
 _Kos_ReadBit macro
 	dbra	d2,.skip
@@ -33,71 +32,25 @@ KosPlusDec:
 
 	; Codes 00 and 01.
 	moveq	#-1,d5
-  if _KosPlus_ExtremeUnrolling==1
 	_Kos_ReadBit
 	bcs.s	.Code_01
 
 	; Code 00 (Dictionary ref. short).
-	_Kos_ReadBit
-	bcs.s	.Copy45
-	_Kos_ReadBit
-	bcs.s	.Copy3
 	move.b	(a0)+,d5					; d5 = displacement.
 	lea	(a1,d5),a5
+	; Always copy at least two bytes.
 	move.b	(a5)+,(a1)+
 	move.b	(a5)+,(a1)+
-	bra.s	.FetchNewCode
-; ---------------------------------------------------------------------------
-.Copy3:
-	move.b	(a0)+,d5					; d5 = displacement.
-	lea	(a1,d5),a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.s	.FetchNewCode
-; ---------------------------------------------------------------------------
-.Copy45:
 	_Kos_ReadBit
-	bcs.s	.Copy5
-	move.b	(a0)+,d5					; d5 = displacement.
-	lea	(a1,d5),a5
+	bcc.s	.Copy_01
 	move.b	(a5)+,(a1)+
 	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.s	.FetchNewCode
-; ---------------------------------------------------------------------------
-.Copy5:
-	move.b	(a0)+,d5					; d5 = displacement.
-	lea	(a1,d5),a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.s	.FetchNewCode
-; ---------------------------------------------------------------------------
-  else
-	moveq	#0,d4						; d4 will contain copy count.
-	_Kos_ReadBit
-	bcs.s	.Code_01
 
-	; Code 00 (Dictionary ref. short).
+.Copy_01:
 	_Kos_ReadBit
-	addx.w	d4,d4
-	_Kos_ReadBit
-	addx.w	d4,d4
-	move.b	(a0)+,d5					; d5 = displacement.
-
-.StreamCopy:
-	lea	(a1,d5),a5
-	move.b	(a5)+,(a1)+					; Do 1 extra copy (to compensate +1 to copy counter).
-
-.copy:
+	bcc.s	.FetchNewCode
 	move.b	(a5)+,(a1)+
-	dbra	d4,.copy
 	bra.s	.FetchNewCode
-  endif
 ; ---------------------------------------------------------------------------
 .Code_01:
 	moveq	#0,d4						; d4 will contain copy count.
@@ -135,7 +88,6 @@ KosPlusDec:
 	dbra	d4,.largecopy
 	bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
-  if _KosPlus_ExtremeUnrolling==1
 .StreamCopy:
 	lea	(a1,d5),a5
 	move.b	(a5)+,(a1)+					; Do 1 extra copy (to compensate +1 to copy counter).
@@ -152,7 +104,6 @@ KosPlusDec:
 		move.b	(a5)+,(a1)+
 	endm
 	bra.w	.FetchNewCode
-  endif
 ; ---------------------------------------------------------------------------
 .Quit:
 	rts
