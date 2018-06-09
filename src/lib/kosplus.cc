@@ -138,7 +138,7 @@ public:
 						Count += 9;
 					} else {
 						// 2-byte dictionary match.
-						Count += 2;
+						Count = 10 - Count;
 					}
 
 					distance = 0x2000u - (((0xF8u & High) << 5) | Low);
@@ -204,7 +204,7 @@ public:
 					         low  = (dist & 0xFFu);
 					if (edge.get_weight() == 18) {
 						// 2-byte dictionary match.
-						out.putbyte(high | (len - 2));
+						out.putbyte(high | (10 - len));
 						out.putbyte(low);
 					} else {
 						// 3-byte dictionary match.

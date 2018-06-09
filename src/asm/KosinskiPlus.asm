@@ -81,13 +81,8 @@ KosPlusDec:
 .StreamCopy:
 	lea	(a1,d5),a5
 	move.b	(a5)+,(a1)+					; Do 1 extra copy (to compensate +1 to copy counter).
-	if _KosPlus_LoopUnroll==3
-		eor.w	d7,d4
-	else
-		eori.w	#7,d4
-	endif
 	add.w	d4,d4
-	jmp	.mediumcopy(pc,d4.w)
+	jmp	.mediumcopy-2(pc,d4.w)
 ; ---------------------------------------------------------------------------
 .largecopy:
 	rept (1<<_KosPlus_LoopUnroll)
