@@ -1,15 +1,18 @@
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-; Kosinski+ Decompressor
-; ---------------------------------------------------------------------------
-; INPUT:
-; 	a0	Source address
-; 	a1	Destination address
 ; ---------------------------------------------------------------------------
 ; New format based on Kosinski. It changes several design decisions to allow
 ; a faster decompressor without loss of compression ratio.
 ; Created originally by Flamewing and vladikcomper (by discussions on IRC),
 ; further suggestions by Clownacy.
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	KosPlusDec
+;
+; DESCRIPTION
+; 	Kosinski+ Decompressor
+;
+; INPUT:
+; 	a0	Source address
+; 	a1	Destination address
 ; ---------------------------------------------------------------------------
 _KosPlus_LoopUnroll = 3
 
@@ -21,7 +24,9 @@ _Kos_ReadBit macro
 	add.b	d0,d0						; Get a bit from the bitstream.
 	endm
 ; ===========================================================================
-; KozDec_193A:
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
 KosPlusDec:
 	moveq	#(1<<_KosPlus_LoopUnroll)-1,d7
 	moveq	#0,d2						; Flag as having no bits left.

@@ -1,14 +1,17 @@
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-; Kosinski Decompressor
-; ---------------------------------------------------------------------------
-; INPUT:
-; 	a0	source address
-; 	a1	destination address
 ; ---------------------------------------------------------------------------
 ; For format explanation see http://segaretro.org/Kosinski_compression
 ; New faster version by written by vladikcomper, with additional improvements
 ; by MarkeyJester and Flamewing
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	KosDec
+;
+; DESCRIPTION
+; 	Kosinski Decompressor
+;
+; INPUT:
+; 	a0	source address
+; 	a1	destination address
 ; ---------------------------------------------------------------------------
 _Kos_UseLUT = 1
 _Kos_LoopUnroll = 3
@@ -16,7 +19,7 @@ _Kos_ExtremeUnrolling = 1
 
 _Kos_RunBitStream macro
 	dbra	d2,.skip
-	moveq	#7,d2					; Set repeat count to 8.
+	moveq	#7,d2					; We have 8 new bits, but will use one up below.
 	move.b	d1,d0					; Use the remaining 8 bits.
 	not.w	d3						; Have all 16 bits been used up?
 	bne.s	.skip					; Branch if not.
@@ -37,6 +40,9 @@ _Kos_ReadBit macro
 	endif
 	endm
 ; ===========================================================================
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
 KosDec:
 	include "_inc/Kosinski_internal.asm"
 	rts								; End of function KosDec.

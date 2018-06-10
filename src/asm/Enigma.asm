@@ -1,15 +1,19 @@
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Enigma Decompressor
+; For format explanation see http://info.sonicretro.org/Enigma_compression
 ; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	EniDec
+;
+; DESCRIPTION
+; 	Enigma Decompressor
+;
 ; INPUT:
-
-; ARGUMENTS:
 ; 	d0	Starting pattern name (added to each 8x8 before writing to destination)
 ; 	a0	Source address
 ; 	a1	Destination address
 ; ---------------------------------------------------------------------------
-; For format explanation see http://info.sonicretro.org/Enigma_compression
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 EniDec:
 	movem.l	d0-d7/a1-a5,-(sp)
@@ -47,23 +51,18 @@ EniDec_Loop:
 	lsr.w	#4,d1			; store upper nybble (max value = 7)
 	add.w	d1,d1
 	jmp	EniDec_JmpTable(pc,d1.w)
-; End of function EniDec
-
 ; ---------------------------------------------------------------------------
-
 EniDec_Sub0:
 	move.w	a2,(a1)+		; write to destination
 	addq.w	#1,a2			; increment
 	dbra	d2,EniDec_Sub0		; repeat
 	bra.s	EniDec_Loop
 ; ---------------------------------------------------------------------------
-
 EniDec_Sub4:
 	move.w	a4,(a1)+		; write to destination
 	dbra	d2,EniDec_Sub4		; repeat
 	bra.s	EniDec_Loop
 ; ---------------------------------------------------------------------------
-
 EniDec_Sub8:
 	bsr.w	EniDec_GetInlineCopyVal
 
@@ -73,7 +72,6 @@ EniDec_Sub8:
 
 	bra.s	EniDec_Loop
 ; ---------------------------------------------------------------------------
-
 EniDec_SubA:
 	bsr.w	EniDec_GetInlineCopyVal
 
@@ -84,7 +82,6 @@ EniDec_SubA:
 
 	bra.s	EniDec_Loop
 ; ---------------------------------------------------------------------------
-
 EniDec_SubC:
 	bsr.w	EniDec_GetInlineCopyVal
 
@@ -95,7 +92,6 @@ EniDec_SubC:
 
 	bra.s	EniDec_Loop
 ; ---------------------------------------------------------------------------
-
 EniDec_SubE:
 	cmpi.w	#$F,d2
 	beq.s	EniDec_End
@@ -118,7 +114,6 @@ EniDec_JmpTable:
 	bra.s	EniDec_SubC
 	bra.s	EniDec_SubE
 ; ---------------------------------------------------------------------------
-
 EniDec_End:
 	subq.w	#1,a0
 	cmpi.w	#16,d6		; were we going to start on a completely new byte?
@@ -134,10 +129,11 @@ EniDec_End:
 .even_loc:
 	movem.l	(sp)+,d0-d7/a1-a5
 	rts
+; End of function EniDec
+; ===========================================================================
 
-;  S U B R O U T I N E
-
-
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
 EniDec_GetInlineCopyVal:
 	move.w	a3,d3		; store starting art tile
 	move.b	d4,d1
@@ -218,17 +214,17 @@ EniDec_GetInlineCopyVal:
 .got_exact:
 	moveq	#16,d6		; 16 bits = 2 bytes
 	bra.s	.got_field
-; End of function EniDec_GetInlineCopyVal
-
 ; ---------------------------------------------------------------------------
-; word_190A:
 EniDec_AndVals:
 	dc.w	 1,    3,    7,   $F
 	dc.w   $1F,  $3F,  $7F,  $FF
 	dc.w  $1FF, $3FF, $7FF, $FFF
 	dc.w $1FFF,$3FFF,$7FFF,$FFFF
-; ---------------------------------------------------------------------------
+; End of function EniDec_GetInlineCopyVal
+; ===========================================================================
 
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
 EniDec_ChkGetNextByte:
 	sub.w	d0,d6
 	cmpi.w	#9,d6
@@ -239,5 +235,6 @@ EniDec_ChkGetNextByte:
 
 .done:
 	rts
+; End of function EniDec_ChkGetNextByte
 ; ===========================================================================
 

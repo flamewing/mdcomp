@@ -1,13 +1,50 @@
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Adds a Kosinski Moduled archive to the module queue
+; Moduled Kosinski decompression queue.
+;
+; This version is slightly optimized compared to S3&K version.
+; Also, it uses the faster Kosinski compressor internally.
 ; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	Queue_Kos_Module
+;
+; DESCRIPTION
+; 	Adds a Kosinski Moduled archive to the module queue
+;
 ; INPUT:
 ; 	a1	Source address
 ; 	d2	Destination address in VRAM
 ; ---------------------------------------------------------------------------
-; Queue is slightly optimized compared to S3&K version. Uses faster Kosinski
-; compressor internally.
+; FUNCTION:
+;	Process_Kos_Module_Queue
+;
+; DESCRIPTION:
+; 	Processes the first module on the queue
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	Queue_Kos
+;
+; DESCRIPTION
+; 	Adds Kosinski-compressed data to the decompression queue
+;
+; INPUT:
+; 	a1	Compressed data address
+; 	a2	Decompression destination in RAM
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	Set_Kos_Bookmark
+;
+; DESCRIPTION
+; 	Checks if V-int occured in the middle of Kosinski queue processing
+; 	and stores the location from which processing is to resume if it did
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	Process_Kos_Queue
+;
+; DESCRIPTION
+; 	Processes the first entry in the Kosinski decompression queue
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 Queue_Kos_Module:
 	lea	(Kos_module_queue).w,a2
@@ -56,8 +93,6 @@ Process_Kos_Module_Queue_Init:
 ; ===========================================================================
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-; Processes the first module on the queue
 ; ---------------------------------------------------------------------------
 Process_Kos_Module_Queue:
 	tst.w	(Kos_modules_left).w
@@ -129,11 +164,6 @@ Process_Kos_Module_Queue:
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Adds Kosinski-compressed data to the decompression queue
-; Inputs:
-; a1 = compressed data address
-; a2 = decompression destination in RAM
-; ---------------------------------------------------------------------------
 Queue_Kos:
 	move.w	(Kos_decomp_queue_count).w,d0
 	lsl.w	#3,d0
@@ -146,9 +176,6 @@ Queue_Kos:
 ; ===========================================================================
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-; Checks if V-int occured in the middle of Kosinski queue processing
-; and stores the location from which processing is to resume if it did
 ; ---------------------------------------------------------------------------
 Set_Kos_Bookmark:
 	tst.w	(Kos_decomp_queue_count).w
@@ -167,8 +194,6 @@ Set_Kos_Bookmark:
 ; ===========================================================================
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-; Processes the first entry in the Kosinski decompression queue
 ; ---------------------------------------------------------------------------
 Process_Kos_Queue:
 	tst.w	(Kos_decomp_queue_count).w
@@ -205,6 +230,11 @@ Restore_Kos_Bookmark:
 	rte
 ; End of function Process_Kos_Queue
 ; ===========================================================================
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
+; Backs up current state for later restoration.
+; ---------------------------------------------------------------------------
 Backup_Kos_Registers:
 	move	sr,(Kos_decomp_stored_SR).w
 	movem.w	d0-d6,(Kos_decomp_stored_Wregisters).w

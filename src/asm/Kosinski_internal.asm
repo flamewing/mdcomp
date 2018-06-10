@@ -1,4 +1,3 @@
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 ; This is the internal portion of the code, which is shared by KosDec and
 ; Process_Kos_Queue. DO NOT CALL THIS DIRECTLY.
