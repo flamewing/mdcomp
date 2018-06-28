@@ -16,7 +16,7 @@
 ; ---------------------------------------------------------------------------
 _KosPlus_LoopUnroll = 3
 
-_Kos_ReadBit macro
+_KosPlus_ReadBit macro
 	dbra	d2,.skip
 	moveq	#7,d2						; We have 8 new bits, but will use one up below.
 	move.b	(a0)+,d0					; Get desc field low-byte.
@@ -37,12 +37,12 @@ KosPlusDec:
 	move.b	(a0)+,(a1)+
 
 .FetchNewCode:
-	_Kos_ReadBit
+	_KosPlus_ReadBit
 	bcs.s	.FetchCodeLoop				; If code = 1, branch.
 
 	; Codes 00 and 01.
 	moveq	#-1,d5
-	_Kos_ReadBit
+	_KosPlus_ReadBit
 	bcs.s	.Code_01
 
 	; Code 00 (Dictionary ref. short).
@@ -51,13 +51,13 @@ KosPlusDec:
 	; Always copy at least two bytes.
 	move.b	(a5)+,(a1)+
 	move.b	(a5)+,(a1)+
-	_Kos_ReadBit
+	_KosPlus_ReadBit
 	bcc.s	.Copy_01
 	move.b	(a5)+,(a1)+
 	move.b	(a5)+,(a1)+
 
 .Copy_01:
-	_Kos_ReadBit
+	_KosPlus_ReadBit
 	bcc.s	.FetchNewCode
 	move.b	(a5)+,(a1)+
 	bra.s	.FetchNewCode
