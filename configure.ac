@@ -93,9 +93,9 @@ if test x$dbg_level = xno; then
 elif test x$dbg_level = xsymbols -o x$dbg_level = xextreme; then
 	AC_MSG_RESULT($dbg_level)
 	if test x$dbg_level = xextreme; then
-		DEBUG_FLAGS="$CXXFLAGS -g3"
+		CXXFLAGS="$CXXFLAGS -g3"
 	else
-		DEBUG_FLAGS="$CXXFLAGS -g"
+		CXXFLAGS="$CXXFLAGS -g"
 	fi
 fi
 
