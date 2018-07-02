@@ -9,21 +9,33 @@
 ; 	a0	Source address
 ; 	a1	Destination address
 ; ---------------------------------------------------------------------------
+_Comp_LoopUnroll = 3
+
+_Comp_RunBitStream macro
+	dbra	d3,.mainloop	; if bits counter remains, parse the next word
+	bra.ATTRIBUTE	.newblock		; start a new block
+	endm
+
+_Comp_ReadBit macro
+	add.w	d0,d0			; roll description field
+	endm
+; ===========================================================================
+
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 CompDec:
+	moveq	#(1<<_Comp_LoopUnroll)-1,d7
 
 .newblock:
 	move.w	(a0)+,d0		; fetch description field
 	moveq	#15,d3			; set bits counter to 16
 
 .mainloop:
-	add.w	d0,d0			; roll description field
+	_Comp_ReadBit
 	bcs.s	.flag			; if a flag issued, branch
 	move.w	(a0)+,(a1)+		; otherwise, do uncompressed data
-	dbra	d3,.mainloop	; if bits counter remains, parse the next word
-	bra.s	.newblock		; start a new block
+	_Comp_RunBitStream.s
 ; ---------------------------------------------------------------------------
 .flag:
 	moveq	#-1,d1			; init displacement
@@ -33,13 +45,20 @@ CompDec:
 	move.b	(a0)+,d2		; load copy length
 	beq.s	.end			; if zero, branch
 	lea	(a1,d1.w),a2		; load start copy address
-
+	move.w	d2,d4
+	not.w	d4
+	and.w	d7,d4
+	add.w	d4,d4
+	lsr.w	#_Comp_LoopUnroll,d2
+	jmp	.loop(pc,d4.w)
+; ---------------------------------------------------------------------------
 .loop:
-	move.w	(a2)+,(a1)+		; copy given sequence
+	rept (1<<_Comp_LoopUnroll)
+		move.w	(a2)+,(a1)+		; copy given sequence
+	endm
 	dbra	d2,.loop		; repeat
-	dbra	d3,.mainloop	; if bits counter remains, parse the next word
-	bra.s	.newblock		; start a new block
-
+	_Comp_RunBitStream.s
+; ---------------------------------------------------------------------------
 .end:
 	rts
 ; ===========================================================================
