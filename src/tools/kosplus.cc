@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "kosplus.h"
+#include "kosplus.hh"
 
 using namespace std;
 

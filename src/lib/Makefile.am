@@ -10,90 +10,90 @@ lib_LTLIBRARIES = \
 	libsaxman.la
 
 libartc42_la_SOURCES =  \
-	ignore_unused_variable_warning.h \
+	ignore_unused_variable_warning.hh \
 	artc42.cc \
-	artc42.h
+	artc42.hh
 
 libartc42_la_LIBADD =
 
 libcomper_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
-	lzss.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	lzss.hh \
 	comper.cc \
-	comper.h
+	comper.hh
 
 libcomper_la_LIBADD =
 
 libenigma_la_SOURCES = \
-	bigendian_io.h\
-	bitstream.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
+	bigendian_io.hh\
+	bitstream.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
 	enigma.cc \
-	enigma.h
+	enigma.hh
 
 libenigma_la_LIBADD =
 
 libkosinski_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
-	lzss.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	lzss.hh \
 	kosinski.cc \
-	kosinski.h
+	kosinski.hh
 
 libkosinski_la_LIBADD =
 
 libkosplus_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
-	lzss.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	lzss.hh \
 	kosplus.cc \
-	kosplus.h
+	kosplus.hh
 
 libkosplus_la_LIBADD = 
 
 libnemesis_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
 	nemesis.cc \
-	nemesis.h
+	nemesis.hh
 
 libnemesis_la_LIBADD =
 
 librocket_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
-	lzss.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	lzss.hh \
 	rocket.cc \
-	rocket.h
+	rocket.hh
 
 librocket_la_LIBADD =
 
 libsaxman_la_SOURCES = \
-	bigendian_io.h \
-	bitstream.h \
-	ignore_unused_variable_warning.h \
-	basic_decoder.h \
-	moduled_adaptor.h \
-	lzss.h \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	lzss.hh \
 	saxman.cc \
-	saxman.h
+	saxman.hh
 
 libsaxman_la_LIBADD =
 

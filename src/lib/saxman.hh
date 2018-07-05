@@ -1,7 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2015-2016 <flamewing.sonic@gmail.com>
- *
+ * Copyright (C) Flamewing 2013-2016 <flamewing.sonic@gmail.com>
+ * Very loosely based on code by the KENS Project Development Team
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -17,24 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_KOSPLUS_H
-#define __LIB_KOSPLUS_H
+#ifndef __LIB_SAXMAN_H
+#define __LIB_SAXMAN_H
 
 #include <iosfwd>
-#include "basic_decoder.h"
-#include "moduled_adaptor.h"
+#include "basic_decoder.hh"
+#include "moduled_adaptor.hh"
 
-class kosplus;
-using basic_kosplus = BasicDecoder<kosplus, false>;
-using moduled_kosplus = ModuledAdaptor<kosplus, 4096u, 1u>;
+class saxman;
+using basic_saxman = BasicDecoder<saxman, false, bool>;
+using moduled_saxman = ModuledAdaptor<saxman, 4096u, 1u>;
 
-class kosplus : public basic_kosplus, public moduled_kosplus {
-	friend basic_kosplus;
-	friend moduled_kosplus;
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
+class saxman : public basic_saxman, public moduled_saxman {
+	friend basic_saxman;
+	friend moduled_saxman;
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize = true);
 public:
-	using basic_kosplus::encode;
-	static bool decode(std::istream &Src, std::iostream &Dst);
+	using basic_saxman::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst, size_t const Size = 0);
 };
 
-#endif // __LIB_KOSPLUS_H
+#endif // __LIB_SAXMAN_H

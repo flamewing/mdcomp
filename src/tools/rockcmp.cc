@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "rocket.h"
+#include "rocket.hh"
 
 using namespace std;
 

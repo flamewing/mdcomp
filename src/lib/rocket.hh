@@ -1,8 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2016 <flamewing.sonic@gmail.com>
- * Loosely based on code by Roger Sanders (AKA Nemesis) and William Sanders
- * (AKA Milamber)
+ * Copyright (C) Clownacy 2016
+ * Copyright (C) Flamewing 2016 <flamewing.sonic@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -18,24 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_NEMESIS_H
-#define __LIB_NEMESIS_H
+#ifndef __LIB_ROCKET_H
+#define __LIB_ROCKET_H
 
 #include <iosfwd>
-#include "basic_decoder.h"
-#include "moduled_adaptor.h"
+#include "basic_decoder.hh"
+#include "moduled_adaptor.hh"
 
-class nemesis;
-using basic_nemesis = BasicDecoder<nemesis, false>;
-using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
+class rocket;
+using basic_rocket = BasicDecoder<rocket, false>;
+using moduled_rocket = ModuledAdaptor<rocket, 4096u, 1u>;
 
-class nemesis : public basic_nemesis, public moduled_nemesis {
-	friend basic_nemesis;
-	friend moduled_nemesis;
+class rocket : public basic_rocket, public moduled_rocket {
+	friend basic_rocket;
+	friend moduled_rocket;
 	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
-	static bool decode(std::istream &Src, std::ostream &Dst);
+	using basic_rocket::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst);
 };
 
-#endif // __LIB_NEMESIS_H
+#endif // __LIB_ROCKET_H

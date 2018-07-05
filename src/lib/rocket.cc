@@ -23,11 +23,11 @@
 #include <ostream>
 #include <sstream>
 
-#include "rocket.h"
-#include "bigendian_io.h"
-#include "bitstream.h"
-#include "ignore_unused_variable_warning.h"
-#include "lzss.h"
+#include "rocket.hh"
+#include "bigendian_io.hh"
+#include "bitstream.hh"
+#include "ignore_unused_variable_warning.hh"
+#include "lzss.hh"
 
 using namespace std;
 

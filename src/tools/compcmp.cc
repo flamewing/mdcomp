@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "comper.h"
+#include "comper.hh"
 
 using namespace std;
 

@@ -22,7 +22,7 @@
 
 #include <getopt.h>
 
-#include "enigma.h"
+#include "enigma.hh"
 
 using namespace std;
 

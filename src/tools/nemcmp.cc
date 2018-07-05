@@ -26,7 +26,7 @@
 
 #include <boost/io/ios_state.hpp>
 
-#include "nemesis.h"
+#include "nemesis.hh"
 
 using namespace std;
 

@@ -20,7 +20,7 @@
 #define __LIB_BITSTREAM_H
 
 #include <iosfwd>
-#include "bigendian_io.h"
+#include "bigendian_io.hh"
 
 template <typename T>
 class bigendian {
@@ -46,7 +46,7 @@ public:
 
 template<typename T>
 static T reverseBits(T val) noexcept {
-	unsigned int sz = sizeof(T) * 8; // bit size; must be power of 2 
+	unsigned int sz = sizeof(T) * 8; // bit size; must be power of 2
 	T mask = ~0;
 	while ((sz >>= 1) > 0) {
 		mask ^= (mask << sz);

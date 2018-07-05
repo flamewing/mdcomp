@@ -1,8 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2016 <flamewing.sonic@gmail.com>
- * Copyright (C) 2002-2004 The KENS Project Development Team
- * Copyright (C) 2002-2003 Roger Sanders (AKA Nemesis)
+ * Copyright (C) Flamewing 2015-2016 <flamewing.sonic@gmail.com>
+ *
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -18,24 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_ENIGMA_H
-#define __LIB_ENIGMA_H
+#ifndef __LIB_KOSPLUS_H
+#define __LIB_KOSPLUS_H
 
 #include <iosfwd>
-#include "basic_decoder.h"
-#include "moduled_adaptor.h"
+#include "basic_decoder.hh"
+#include "moduled_adaptor.hh"
 
-class enigma;
-using basic_enigma = BasicDecoder<enigma, false>;
-using moduled_enigma = ModuledAdaptor<enigma, 4096u, 1u>;
+class kosplus;
+using basic_kosplus = BasicDecoder<kosplus, false>;
+using moduled_kosplus = ModuledAdaptor<kosplus, 4096u, 1u>;
 
-class enigma : public basic_enigma, public moduled_enigma {
-	friend basic_enigma;
-	friend moduled_enigma;
+class kosplus : public basic_kosplus, public moduled_kosplus {
+	friend basic_kosplus;
+	friend moduled_kosplus;
 	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
-	static bool decode(std::istream &Src, std::ostream &Dst);
+	using basic_kosplus::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst);
 };
 
-#endif // __LIB_ENIGMA_H
+#endif // __LIB_KOSPLUS_H

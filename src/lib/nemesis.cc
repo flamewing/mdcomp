@@ -31,10 +31,10 @@
 #include <utility>
 #include <vector>
 
-#include "nemesis.h"
-#include "bigendian_io.h"
-#include "bitstream.h"
-#include "ignore_unused_variable_warning.h"
+#include "nemesis.hh"
+#include "bigendian_io.hh"
+#include "bitstream.hh"
+#include "ignore_unused_variable_warning.hh"
 
 using namespace std;
 

@@ -29,9 +29,9 @@
 #include <string>
 #include <vector>
 
-#include "enigma.h"
-#include "bigendian_io.h"
-#include "bitstream.h"
+#include "enigma.hh"
+#include "bigendian_io.hh"
+#include "bitstream.hh"
 
 using namespace std;
 

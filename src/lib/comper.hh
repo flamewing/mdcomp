@@ -1,7 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * Copyright (C) Flamewing 2013-2016 <flamewing.sonic@gmail.com>
- * Very loosely based on code by the KENS Project Development Team
+ *
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -17,24 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_SAXMAN_H
-#define __LIB_SAXMAN_H
+#ifndef __LIB_COMPER_H
+#define __LIB_COMPER_H
 
 #include <iosfwd>
-#include "basic_decoder.h"
-#include "moduled_adaptor.h"
+#include "basic_decoder.hh"
+#include "moduled_adaptor.hh"
 
-class saxman;
-using basic_saxman = BasicDecoder<saxman, false, bool>;
-using moduled_saxman = ModuledAdaptor<saxman, 4096u, 1u>;
+class comper;
+using basic_comper = BasicDecoder<comper, true>;
+using moduled_comper = ModuledAdaptor<comper, 4096u, 1u>;
 
-class saxman : public basic_saxman, public moduled_saxman {
-	friend basic_saxman;
-	friend moduled_saxman;
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize = true);
+class comper : public basic_comper, public moduled_comper {
+	friend basic_comper;
+	friend moduled_comper;
+	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 public:
-	using basic_saxman::encode;
-	static bool decode(std::istream &Src, std::iostream &Dst, size_t const Size = 0);
+	using basic_comper::encode;
+	static bool decode(std::istream &Src, std::iostream &Dst);
 };
 
-#endif // __LIB_SAXMAN_H
+#endif // __LIB_COMPER_H

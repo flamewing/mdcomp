@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "kosinski.h"
+#include "kosinski.hh"
 
 using namespace std;
 

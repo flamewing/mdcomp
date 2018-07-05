@@ -27,8 +27,8 @@
 #include <string>
 #include <vector>
 
-#include "bigendian_io.h"
-#include "bitstream.h"
+#include "bigendian_io.hh"
+#include "bitstream.hh"
 
 #ifdef _MSC_VER
 #ifndef __clang__
@@ -290,7 +290,7 @@ public:
 						wgt += (Adaptor::NumDescBits - descmod);
 						desccost += (Adaptor::NumDescBits - descmod);
 					}
-					// Compensate for the Adaptor's padding, if any. 
+					// Compensate for the Adaptor's padding, if any.
 					wgt += Adaptor::get_padding(wgt);
 				}
 				// Is the cost to reach the target node through this edge less

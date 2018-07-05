@@ -21,8 +21,8 @@
 #define __LIB_KOSINSKI_H
 
 #include <iosfwd>
-#include "basic_decoder.h"
-#include "moduled_adaptor.h"
+#include "basic_decoder.hh"
+#include "moduled_adaptor.hh"
 
 class kosinski;
 using basic_kosinski = BasicDecoder<kosinski, false>;

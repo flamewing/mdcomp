@@ -18,17 +18,17 @@ DISTCLEANFILES =
 includedir = ${prefix}/include/mdcomp
 
 include_HEADERS = \
-	src/lib/bigendian_io.h \
-	src/lib/basic_decoder.h \
-	src/lib/moduled_adaptor.h \
-	src/lib/artc42.h \
-	src/lib/comper.h \
-	src/lib/enigma.h \
-	src/lib/kosinski.h \
-	src/lib/kosplus.h \
-	src/lib/nemesis.h \
-	src/lib/saxman.h \
-	src/lib/rocket.h
+	src/lib/bigendian_io.hh \
+	src/lib/basic_decoder.hh \
+	src/lib/moduled_adaptor.hh \
+	src/lib/artc42.hh \
+	src/lib/comper.hh \
+	src/lib/enigma.hh \
+	src/lib/kosinski.hh \
+	src/lib/kosplus.hh \
+	src/lib/nemesis.hh \
+	src/lib/saxman.hh \
+	src/lib/rocket.hh
 
 # Remove doc directory on uninstall
 uninstall-local:
