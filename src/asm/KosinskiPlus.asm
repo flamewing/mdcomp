@@ -2,7 +2,7 @@
 ; New format based on Kosinski. It changes several design decisions to allow
 ; a faster decompressor without loss of compression ratio.
 ; Created originally by Flamewing and vladikcomper (by discussions on IRC),
-; further suggestions by Clownacy.
+; further improvements by Clownacy.
 ; ---------------------------------------------------------------------------
 ; FUNCTION:
 ; 	KosPlusDec

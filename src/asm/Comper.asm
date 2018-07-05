@@ -1,4 +1,6 @@
 ; ---------------------------------------------------------------------------
+; Original version written by vladikcomper, with improvements by Flamewing
+; ---------------------------------------------------------------------------
 ; FUNCTION:
 ; 	CompDec
 ;

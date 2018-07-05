@@ -1,6 +1,6 @@
 ; ---------------------------------------------------------------------------
 ; For format explanation see http://segaretro.org/Kosinski_compression
-; New faster version by written by vladikcomper, with additional improvements
+; New faster version written by vladikcomper, with additional improvements
 ; by MarkeyJester and Flamewing
 ; ---------------------------------------------------------------------------
 ; FUNCTION:
