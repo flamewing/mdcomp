@@ -7,7 +7,8 @@ lib_LTLIBRARIES = \
 	libkosplus.la \
 	libnemesis.la \
 	librocket.la \
-	libsaxman.la
+	libsaxman.la \
+	libsnkrle.la
 
 libartc42_la_SOURCES =  \
 	ignore_unused_variable_warning.hh \
@@ -96,6 +97,17 @@ libsaxman_la_SOURCES = \
 	saxman.hh
 
 libsaxman_la_LIBADD =
+
+libsnkrle_la_SOURCES = \
+	bigendian_io.hh \
+	bitstream.hh \
+	ignore_unused_variable_warning.hh \
+	basic_decoder.hh \
+	moduled_adaptor.hh \
+	snkrle.cc \
+	snkrle.hh
+
+libsnkrle_la_LIBADD =
 
 AM_CPPFLAGS =
 

@@ -6,7 +6,8 @@ bin_PROGRAMS = \
 	kosplus \
 	nemcmp \
 	rockcmp \
-	saxcmp
+	saxcmp \
+	snkcmp
 
 compcmp_SOURCES = compcmp.cc
 
@@ -49,6 +50,12 @@ saxcmp_SOURCES = saxcmp.cc
 saxcmp_CXXFLAGS = -I$(srcdir)/../lib
 
 saxcmp_LDFLAGS = $(builddir)/../lib/libsaxman.la
+
+snkcmp_SOURCES = snkcmp.cc
+
+snkcmp_CXXFLAGS = -I$(srcdir)/../lib
+
+snkcmp_LDFLAGS = $(builddir)/../lib/libsnkrle.la
 
 AM_CXXFLAGS =
 

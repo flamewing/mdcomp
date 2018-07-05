@@ -28,7 +28,8 @@ include_HEADERS = \
 	src/lib/kosplus.hh \
 	src/lib/nemesis.hh \
 	src/lib/saxman.hh \
-	src/lib/rocket.hh
+	src/lib/rocket.hh \
+	src/lib/snkrle.hh
 
 # Remove doc directory on uninstall
 uninstall-local:

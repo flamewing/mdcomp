@@ -50,6 +50,7 @@ Makefile.in
 /src/tools/mkoscmp
 /src/tools/nemcmp
 /src/tools/saxcmp
+/src/tools/snkcmp
 /src/tools/rockcmp
 
 # Debug files
