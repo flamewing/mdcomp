@@ -26,15 +26,20 @@
 #include <vector>
 #include "bigendian_io.hh"
 
-template <typename Format, bool PadEven, typename... Args>
+enum class PadMode {
+	DontPad,
+	PadEven
+};
+
+template <typename Format, PadMode Pad, typename... Args>
 class BasicDecoder {
 public:
 	static bool encode(std::istream &Src, std::ostream &Dst, Args... args);
 	static void extract(std::istream &Src, std::iostream &Dst);
 };
 
-template <typename Format, bool PadEven, typename... Args>
-bool BasicDecoder<Format, PadEven, Args...>::encode(
+template <typename Format, PadMode Pad, typename... Args>
+bool BasicDecoder<Format, Pad, Args...>::encode(
 	std::istream &Src,
 	std::ostream &Dst,
 	Args... args
@@ -44,13 +49,13 @@ bool BasicDecoder<Format, PadEven, Args...>::encode(
 	size_t FullSize = Src.gcount();
 	Src.seekg(Start);
 	std::vector<unsigned char> data;
-	if (PadEven) {
+	if (Pad == PadMode::PadEven) {
 		data.resize(FullSize + (FullSize & 1));
 	} else {
 		data.resize(FullSize);
 	}
 	Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
-	if (PadEven && data.size() > FullSize) {
+	if (Pad == PadMode::PadEven && data.size() > FullSize) {
 		data.back() = 0;
 	}
 	if (Format::encode(Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
@@ -64,8 +69,8 @@ bool BasicDecoder<Format, PadEven, Args...>::encode(
 	}
 }
 
-template <typename Format, bool PadEven, typename... Args>
-void BasicDecoder<Format, PadEven, Args...>::extract(
+template <typename Format, PadMode Pad, typename... Args>
+void BasicDecoder<Format, Pad, Args...>::extract(
 	std::istream &Src,
 	std::iostream &Dst
 ) {

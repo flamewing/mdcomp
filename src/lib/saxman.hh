@@ -25,7 +25,7 @@
 #include "moduled_adaptor.hh"
 
 class saxman;
-using basic_saxman = BasicDecoder<saxman, false, bool>;
+using basic_saxman = BasicDecoder<saxman, PadMode::DontPad, bool>;
 using moduled_saxman = ModuledAdaptor<saxman, 4096u, 1u>;
 
 class saxman : public basic_saxman, public moduled_saxman {

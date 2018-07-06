@@ -25,7 +25,7 @@
 #include "moduled_adaptor.hh"
 
 class kosinski;
-using basic_kosinski = BasicDecoder<kosinski, false>;
+using basic_kosinski = BasicDecoder<kosinski, PadMode::DontPad>;
 using moduled_kosinski = ModuledAdaptor<kosinski, 4096u, 16u>;
 
 class kosinski : public basic_kosinski, public moduled_kosinski {

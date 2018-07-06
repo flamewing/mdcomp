@@ -24,7 +24,7 @@
 #include "moduled_adaptor.hh"
 
 class snkrle;
-using basic_snkrle = BasicDecoder<snkrle, true>;
+using basic_snkrle = BasicDecoder<snkrle, PadMode::PadEven>;
 using moduled_snkrle = ModuledAdaptor<snkrle, 4096u, 1u>;
 
 class snkrle : public basic_snkrle, public moduled_snkrle {

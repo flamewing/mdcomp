@@ -25,7 +25,7 @@
 #include "moduled_adaptor.hh"
 
 class rocket;
-using basic_rocket = BasicDecoder<rocket, false>;
+using basic_rocket = BasicDecoder<rocket, PadMode::DontPad>;
 using moduled_rocket = ModuledAdaptor<rocket, 4096u, 1u>;
 
 class rocket : public basic_rocket, public moduled_rocket {

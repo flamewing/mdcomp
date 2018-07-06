@@ -25,7 +25,7 @@
 #include "moduled_adaptor.hh"
 
 class kosplus;
-using basic_kosplus = BasicDecoder<kosplus, false>;
+using basic_kosplus = BasicDecoder<kosplus, PadMode::DontPad>;
 using moduled_kosplus = ModuledAdaptor<kosplus, 4096u, 1u>;
 
 class kosplus : public basic_kosplus, public moduled_kosplus {

@@ -25,7 +25,7 @@
 #include "moduled_adaptor.hh"
 
 class comper;
-using basic_comper = BasicDecoder<comper, true>;
+using basic_comper = BasicDecoder<comper, PadMode::PadEven>;
 using moduled_comper = ModuledAdaptor<comper, 4096u, 1u>;
 
 class comper : public basic_comper, public moduled_comper {

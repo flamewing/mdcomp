@@ -26,7 +26,7 @@
 #include "moduled_adaptor.hh"
 
 class enigma;
-using basic_enigma = BasicDecoder<enigma, false>;
+using basic_enigma = BasicDecoder<enigma, PadMode::DontPad>;
 using moduled_enigma = ModuledAdaptor<enigma, 4096u, 1u>;
 
 class enigma : public basic_enigma, public moduled_enigma {

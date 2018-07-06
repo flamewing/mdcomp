@@ -26,7 +26,7 @@
 #include "moduled_adaptor.hh"
 
 class nemesis;
-using basic_nemesis = BasicDecoder<nemesis, false>;
+using basic_nemesis = BasicDecoder<nemesis, PadMode::DontPad>;
 using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
 
 class nemesis : public basic_nemesis, public moduled_nemesis {
