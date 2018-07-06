@@ -9,93 +9,74 @@
 ;
 ; INPUT:
 ; 	a0	Source address
-; 	d2	VRAM Destination address
+; 	a1	Destination address
 ; ===========================================================================
-
+; Note on preconditions:
+; The following preconditions are conditions satisfied by the decoding logic at
+; various points in the routine. They are referred to by their code.
+; 	 (1)	There is an even number of bytes left to decompress.
+; 	 (1')	There is an odd number of bytes left to decompress.
+; 	 (2)	Last character read is in d3.
+; 	 (2')	Last character read is in d6.
+; 	 (3)	d3 was printed to the buffer (d6).
+; 	 (3')	The buffer (d6) is empty.
+; 	 (3")	The buffer (d3) is empty.
+; 	 (3*)	The buffer (d6) has the last character written twice.
+; 	 (3^)	The buffer (d6) has two different characters
+; 	 (4)	We are at an even position on the output stream.
+; 	 (5)	The two bytes of the low word of d6 are equal to d3.
+; ===========================================================================
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 SNKDec:
-	move.w	#$2700,sr						; 16(2/0)
-	movem.l	d0/d1/d3-d6/a2-a3,-(sp)			; 72(2/16)
-
-SNKDecToVRAM:
-	VRAMCommReg d2, WRITE, 1				; 38(6/0)
-	lea	(VDP_data_port).l,a2				; 12(3/0)
-	move.l	d2,VDP_control_port-VDP_data_port(a2)	; 16(2/2)
-
-SNKDecMain:
 	;16 words = 1 tile
-	; Allocate some space on stack
-	subq.w	#2,sp							;  8(1/0)
-	move.w	#$FF,d0							;  8(2/0)
+	move.w	#$FE,d0							;  8(2/0)
 	moveq	#0,d1							;  4(1/0)
+	moveq	#0,d4							;  4(1/0)
 	move.w	(a0)+,d1						;  8(2/0)
-	lsl.l	#5,d1							; 16(1/0)
-	lea	SNKDec_CopyLUT_End(pc),a3			;  8(2/0)
+	lea	SNKDec_CopyLUT_End(pc),a4			;  8(2/0)
+	; PRECONDITIONS: (1), (3'), and (4) hold.
 
 .fetch_new_char:
-	; PRECONDITIONS:
-	; (0)	The buffer in d6 is empty.
-	; Read a byte from input stream.
+	; PRECONDITIONS: (1), (3'), and (4) hold
+	; Read and print the character to the temporary buffer (d6).
+	movep.w	0(a0),d6						; 16(4/0)
+	; Read the character again for ease of comparison.
 	move.b	(a0)+,d3						;  8(2/0)
-
-.print_to_buffer:
-	; Print the character on d3 to the temporary buffer (d6).
-	; Using a RAM mini-buffer is faster by 10(-1/0) than using lsl.
-	move.b	d3,(sp)							;  8(2/0)
-	move.w	(sp),d6							;  8(2/0)
+	; PRECONDITIONS: (1) and (4) still hold; (2) now also holds, and (3') is
+	; replaced by (3).
 
 .main_loop:
-	; PRECONDITIONS:
-	; (1)	there is an even number of bytes left to decompress;
-	; (2)	last character read is in d3;
-	; (3)	d3 was printed to the buffer (d6);
-	; (4)	we are at an even position on the output stream.
+	; PRECONDITIONS: (1), (2), (3), and (4) hold.
 	; Read and print new character to the buffer.
 	move.b	(a0)+,d6						;  8(2/0)
 	; We now have a word on the buffer. Write it to output stream.
-	move.w	d6,(a2)							;  8(1/1)
+	move.w	d6,(a1)+						;  8(1/1)
 	subq.w	#2,d1							;  4(1/0)
-	; PRECONDITIONS: (1), (2) and (4) still hold; (3) is replaced by:
-	; (3')	the buffer (d6) is empty.
+	; PRECONDITIONS: (1), (2), (3) and (4) still hold.
 	; Branch if decompression was finished.
 	beq.s	SNKDecEnd						; T: 10(2/0); N:  8(1/0)
 	; Is this a run of identical bytes?
 	cmp.b	d3,d6							;  4(1/0)
 	; Branch if not.
 	bne.s	.main_loop_buffer_clear			; T: 10(2/0); N:  8(1/0)
+	; PRECONDITIONS: (1), (2), and (4) still hold; (3) is replaced by (3*).
 	; We have a run. Fetch number of repetitions.
 	move.b	(a0)+,d5						;  8(2/0)
 	; Zero repetitions means we wrote what was required and emptied our buffer.
 	beq.s	.main_loop_buffer_clear			; T: 10(2/0); N:  8(1/0)
-	; PRECONDITIONS: (1), (2), (3') and (4) still hold;
-	; We have one more precondition:
-	; (5)	the two bytes of the low word of d6 are equal to d3.
+	; PRECONDITIONS: (1), (2), (3*), and (4) still hold.
 	; Given all preconditions, we just have to write d6 several times.
-	; Strip off junk in high bits of repetition count.
-	and.w	d0,d5							;  4(1/0)
-	if 1==1
-		; TODO: do we even need this? This would point to an unreliable
-		; compressor which should be fixed...
-		; Do we have a copy count higher than the number of characters remaining?
-		cmp.w	d1,d5						;  4(1/0)
-		; Branch if not.
-		bls.s	.got_count1					; T: 10(2/0); N:  8(1/0)
-		; Cap count to number of bytes remaining.
-		move.w	d1,d5						;  4(1/0)
-
-.got_count1:
-	endif
 	; Save count for later.
-	move.w	d5,d4							;  4(1/0)
-	; Strip off low bit, as we will write words.
-	andi.b	#$FE,d5							;  8(2/0)
+	move.b	d5,d4							;  4(1/0)
+	; Strip off low bit, as well as junk in high bits. We will write words.
+	and.w	d0,d5							;  4(1/0)
 	; Prepare for loop unroll.
 	neg.w	d5								;  4(1/0)
 	; Copy with lookup table.
-	jsr	(a3,d5.w)							; 22(2/2)
-	; NOTE: because of the 5 preconditions above, then we have the following:
+	jsr	(a4,d5.w)							; 22(2/2)
+	; NOTE: because of the preconditions in effect, then we have the theorem:
 	; (A)	if the copy count is odd, we haven't finished the decompression.
 	; Therefore, if we have reached the end of file, we don't have to worry
 	; about the low bit of the copy count we saved above.
@@ -105,16 +86,14 @@ SNKDecMain:
 	beq.s	SNKDecEnd						; T: 10(2/0); N:  8(1/0)
 	; Was the copy count an odd number?
 	moveq	#1,d5							;  4(1/0)
-	and.w	d4,d5							;  4(1/0)
+	and.b	d4,d5							;  4(1/0)
 	; Branch if not.
 	beq.s	.no_single_byte					; T: 10(2/0); N:  8(1/0)
-	; PRECONDITIONS: all of (2), (3'), (4) and (5) still hold. Instead of (1),
-	; we have:
-	; (1')	there is an odd number of bytes left to decompress.
+	; PRECONDITIONS: (2), (3*), and (4) still hold; (1) is replaced by (1').
 	; Implicitly print byte at d3 to buffer at d6 by doing (almost) nothing.
 	; Add a byte back to count because we haven't put it into the output stream.
 	addq.w	#1,d1							;  4(1/0)
-	; PRECONDITIONS: all of (1), (2), (3), (4) and (5) hold.
+	; PRECONDITIONS: (1), (2), (3*), and (4) still hold.
 	; Was the copy count 255?
 	addq.b	#1,d4							;  4(1/0)
 	; Branch if not.
@@ -122,15 +101,19 @@ SNKDecMain:
 	; We need to read in a new character, and we have one printed to the buffer.
 	; Read and print new character to the buffer.
 	move.b	(a0)+,d6						;  8(2/0)
+	; PRECONDITIONS: (1), and (4) still hold; (2) is replaced by (2'), and (3*)
+	; is replaced by (3^).
 	; Write both to output stream.
-	move.w	d6,(a2)							;  8(1/1)
+	move.w	d6,(a1)+						;  8(1/1)
 	subq.w	#2,d1							;  4(1/0)
+	; PRECONDITIONS: (1), (2'), and (4) still hold; (3) is replaced by (3").
 	; Branch if decompression was finished.
 	beq.s	SNKDecEnd						; T: 10(2/0); N:  8(1/0)
 	bra.s	.main_loop_buffer_clear			; 10(2/0)
 ;----------------------------------------------------------------------------
 .no_single_byte:
-	; PRECONDITIONS: all of (1), (2), (3'), (4) and (5) still hold.
+	; PRECONDITIONS: (1), and (4) still hold; (2) is replaced by (2'), and (3*)
+	; is replaced by (3").
 	; If copy count is 255, we need to fetch a new byte and write it to the
 	; buffer.
 	; Was the copy count 255?
@@ -139,65 +122,40 @@ SNKDecMain:
 	beq.s	.fetch_new_char					; T: 10(2/0); N:  8(1/0)
 
 .main_loop_buffer_clear:
-	; PRECONDITIONS:
-	; (1)	there is an even number of bytes left to decompress;
-	; (2")	last character read is in d6;
-	; (3")	the buffer (d3) is empty;
-	; (4)	we are at an even position on the output stream.
-	; Read and print new character to the buffer.
-	move.b	(a0)+,d3						;  8(2/0)
+	; PRECONDITIONS: (1), (2'), (3"), and (4) hold.
+	; Swap (empty) buffer to d6 and last character read to d6.
+	move.b	d6,d3							;  4(1/0)
+	; PRECONDITIONS: (1), and (4) still hold; (2') is replaced by (2),
+	; and (3") is replaced by (3').
+	; Read and print new character to the buffer (d6).
+	movep.w	0(a0),d6						; 16(4/0)
+	; Print it again to buffer for ease of comparison.
+	move.b	(a0)+,d6						;  8(2/0)
+	; PRECONDITIONS: (1), (2), and (4) still hold; (3') is replaced by (3*).
 	; Is this a run of identical bytes?
-	cmp.b	d3,d6							;  4(1/0)
+	cmp.b	d6,d3							;  4(1/0)
 	; Branch if not.
-	bne.s	.print_to_buffer				; T: 10(2/0); N:  8(1/0)
+	bne.s	.main_loop						; T: 10(2/0); N:  8(1/0)
 	; We have a run. Fetch number of repetitions.
 	move.b	(a0)+,d5						;  8(2/0)
 	; Zero repetitions means we just need to print the character to the buffer.
-	beq.s	.print_to_buffer				; T: 10(2/0); N:  8(1/0)
-	; Strip off junk in high bits of repetition count.
-	and.w	d0,d5							;  4(1/0)
-	; PRECONDITIONS: all of (1), (2), (3'), (4) and (5) still hold.
-	; NOTE: preconditions (1), (2"), (3") and (4) are maintained by the above
-	; operations. Since the bytes at d3 and d6 are equal, we will shift to d6 as
-	; buffer and d3 as last character read. This swaps precondition (2") by (2)
-	; and precondition (3") by
-	; (3')	the buffer (d6) is empty;
-	; Print the character on d3 to the temporary buffer (d6).
-	; Using a RAM mini-buffer is faster by 10(-1/0) than using lsl.
-	move.b	d3,(sp)							;  8(2/0)
-	move.w	(sp),d6							;  8(2/0)
-	move.b	d3,d6							;  4(1/0)
-	; We now have a word on the buffer. Write it to output stream.
-	move.w	d6,(a2)							;  8(1/1)
+	beq.s	.main_loop						; T: 10(2/0); N:  8(1/0)
+	; By precondition (3*), we now have a word with two identical bytes on the
+	; buffer. Write it to output stream.
+	move.w	d6,(a1)+						;  8(1/1)
 	subq.w	#2,d1							;  4(1/0)
-	; PRECONDITIONS: (1), (2) and (4) still hold; (3) is replaced by:
-	; (3')	the buffer (d6) is empty.
+	; PRECONDITIONS: (1), (2), (3*) and (4) still hold.
 	; Deduct one byte from the copy count since we printed it above.
-	subq.w	#1,d5
+	subq.b	#1,d5
 	; Save count for later.
-	move.w	d5,d4							;  4(1/0)
-	; NOTE: preconditions (1), (2), (3), (4) and (5) now valid.
-	if 1==1
-		; TODO: do we even need this? This would point to an unreliable
-		; compressor which should be fixed...
-		; Do we have a copy count higher than the number of characters remaining?
-		cmp.w	d1,d5						;  4(1/0)
-		; Branch if not.
-		bls.s	.got_count2					; T: 10(2/0); N:  8(1/0)
-		; Cap count to number of bytes remaining.
-		move.w	d1,d5						;  4(1/0)
-
-.got_count2:
-	endif
-	; Strip off low bit, as we will write words.
-	andi.b	#$FE,d5							;  8(2/0)
+	move.b	d5,d4							;  4(1/0)
+	; Strip off low bit, as well as junk in high bits. We will write words.
+	and.w	d0,d5							;  4(1/0)
 	; Prepare for loop unroll.
 	neg.w	d5								;  4(1/0)
 	; Copy with lookup table.
-	jsr	(a3,d5.w)							; 22(2/2)
-	; PRECONDITIONS: (1), (2), (4) and (5) still hold; (3) is replaced by:
-	; (3')	the buffer (d6) is empty.
-	; NOTE: because of the 5 preconditions above, then we have the following:
+	jsr	(a4,d5.w)							; 22(2/2)
+	; NOTE: because of the preconditions in effect, then we have the theorem:
 	; (B)	if the copy count was even, we haven't finished the decompression.
 	; Therefore, if we have reached the end of file, we don't have to worry
 	; about the low bit of the copy count we saved above.
@@ -205,20 +163,18 @@ SNKDecMain:
 	sub.w	d4,d1							;  4(1/0)
 	; Branch if decompression is over.
 	beq.s	SNKDecEnd						; T: 10(2/0); N:  8(1/0)
-	; To use some common code.
-	addq.w	#1,d4							;  4(1/0)
+	; Add 1 back to use some common code.
+	addq.b	#1,d4							;  4(1/0)
 	; Was the copy count an odd number?
 	moveq	#1,d5							;  4(1/0)
-	and.w	d4,d5							;  4(1/0)
+	and.b	d4,d5							;  4(1/0)
 	; Branch if yes.
 	bne.s	.no_single_byte					; T: 10(2/0); N:  8(1/0)
-	; PRECONDITIONS: all of (2), (3'), (4) and (5) still hold. Instead of (1),
-	; we have:
-	; (1')	there is an odd number of bytes left to decompress.
+	; PRECONDITIONS: (2), (3*), and (4) still hold; (1) is replaced by (1').
 	; Implicitly print byte at d3 to buffer at d6 by doing (almost) nothing.
 	; Add a byte back to count because we haven't put it into the output stream.
 	addq.w	#1,d1							;  4(1/0)
-	; PRECONDITIONS: all of (1), (2), (3), (4) and (5) hold.
+	; PRECONDITIONS: (2), (3*), and (4) still hold; (1') is replaced by (1).
 	; Was the copy count 255?
 	addq.b	#1,d4							;  4(1/0)
 	; Branch if not.
@@ -226,21 +182,21 @@ SNKDecMain:
 	; We need to read in a new character, and we have one printed to the buffer.
 	; Read and print new character to the buffer.
 	move.b	(a0)+,d6						;  8(2/0)
+	; PRECONDITIONS: (1), and (4) still hold; (2) is replaced by (2'), and (3*)
+	; is replaced by (3^).
 	; Write both to output stream.
-	move.w	d6,(a2)							;  8(1/1)
+	move.w	d6,(a1)+						;  8(1/1)
 	subq.w	#2,d1							;  4(1/0)
+	; PRECONDITIONS: (1), (2'), and (4) still hold; (3) is replaced by (3").
 	; Branch if decompression was not finished.
 	bne.s	.main_loop_buffer_clear			; T: 10(2/0); N:  8(1/0)
 
 SNKDecEnd:
-	addq.w	#2,sp							;  8(1/0)
-	movem.l	(sp)+,d0/d1/d3-d6/a2-a3			; 76(19/0)
-	move.w	#$2000,sr						; 16(2/0)
 	rts
 ; ===========================================================================
 SNKDec_CopyLUT:
     rept 127
-	move.w	d6,(a2)							;  8(1/1)
+	move.w	d6,(a1)+						;  8(1/1)
     endm
 SNKDec_CopyLUT_End:
 	rts
