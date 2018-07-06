@@ -98,11 +98,6 @@ bool snkrle::decode(istream &Src, ostream &Dst) {
 	return true;
 }
 
-bool snkrle::encode(istream &Src, ostream &Dst) {
-	snkrle_internal::encode(Src, Dst);
-	return true;
-}
-
 bool snkrle::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
 	stringstream Src(ios::in | ios::out | ios::binary);
 	Src.write(reinterpret_cast<char const*>(data), Size);

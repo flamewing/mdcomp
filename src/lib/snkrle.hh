@@ -24,7 +24,7 @@
 #include "moduled_adaptor.hh"
 
 class snkrle;
-using basic_snkrle = BasicDecoder<snkrle, false>;
+using basic_snkrle = BasicDecoder<snkrle, true>;
 using moduled_snkrle = ModuledAdaptor<snkrle, 4096u, 1u>;
 
 class snkrle : public basic_snkrle, public moduled_snkrle {
@@ -32,6 +32,6 @@ class snkrle : public basic_snkrle, public moduled_snkrle {
 	friend moduled_snkrle;
 	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
+	using basic_snkrle::encode;
 	static bool decode(std::istream &Src, std::ostream &Dst);
 };
