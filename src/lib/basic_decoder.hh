@@ -22,6 +22,7 @@
 #define __LIB_BASIC_DECODER_H
 
 #include <iosfwd>
+#include <limits>
 #include <vector>
 #include "bigendian_io.hh"
 
@@ -38,18 +39,19 @@ bool BasicDecoder<Format, PadEven, Args...>::encode(
 	std::ostream &Dst,
 	Args... args
 ) {
+	size_t Start = Src.tellg();
+	Src.ignore(std::numeric_limits<std::streamsize>::max());
+	size_t FullSize = Src.gcount();
+	Src.seekg(Start);
 	std::vector<unsigned char> data;
-	Src.seekg(0, std::ios::end);
-	size_t FullSize = Src.tellg();
 	if (PadEven) {
 		data.resize(FullSize + (FullSize & 1));
 	} else {
 		data.resize(FullSize);
 	}
-	Src.seekg(0);
 	Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
 	if (PadEven && data.size() > FullSize) {
-		data[FullSize] = 0;
+		data.back() = 0;
 	}
 	if (Format::encode(Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
 		// Pad to even size.

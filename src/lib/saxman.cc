@@ -18,6 +18,7 @@
  */
 
 #include <cstdint>
+#include <limits>
 #include <iostream>
 #include <istream>
 #include <ostream>
@@ -245,12 +246,15 @@ bool saxman::decode(istream &Src, iostream &Dst, size_t Size) {
 
 bool saxman::encode(ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize) {
 	stringstream outbuff(ios::in | ios::out | ios::binary);
+	size_t Start = outbuff.tellg();
 	saxman_internal::encode(outbuff, data, Size);
 	if (WithSize) {
-		outbuff.seekg(0, ios::end);
-		LittleEndian::Write2(Dst, outbuff.tellg());
+		outbuff.seekg(Start);
+		outbuff.ignore(numeric_limits<streamsize>::max());
+		size_t FullSize = outbuff.gcount();
+		LittleEndian::Write2(Dst, FullSize);
 	}
-	outbuff.seekg(0);
+	outbuff.seekg(Start);
 	Dst << outbuff.rdbuf();
 	return true;
 }

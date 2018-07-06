@@ -21,6 +21,7 @@
 #ifndef __LIB_MODULED_ADAPTOR_H
 #define __LIB_MODULED_ADAPTOR_H
 
+#include <limits>
 #include <sstream>
 #include <vector>
 #include "bigendian_io.hh"
@@ -83,9 +84,10 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
 	size_t const ModuleSize,
 	size_t const ModulePadding
 ) {
-	Src.seekg(0, std::ios::end);
-	size_t FullSize = Src.tellg();
-	Src.seekg(0);
+	size_t Location = Src.tellg();
+	Src.ignore(std::numeric_limits<std::streamsize>::max());
+	size_t FullSize = Src.gcount();
+	Src.seekg(Location);
 	std::vector<unsigned char> data;
 	data.resize(FullSize);
 	auto ptr = data.cbegin();
