@@ -64,7 +64,7 @@ class rocket_internal {
 		// Total size of the sliding window.
 		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
 		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
-		// one single symbol..
+		// one single symbol.
 		// Computes the type of edge that covers all of the "len" vertices starting from
 		// "off" vertices ago.
 		// Returns EdgeType::invalid if there is no such edge.

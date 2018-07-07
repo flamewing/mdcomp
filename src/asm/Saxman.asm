@@ -59,7 +59,7 @@ _Sax_ReadBit macro
 	moveq	#7,d2					; we have 8 new bits, but will use one up below.
 	_SaxDec_GetByte d0				; get desc field low-byte.
 	if _Sax_UseLUT==1
-		move.b	(a2,d0.w),d0			; invert bit order..
+		move.b	(a2,d0.w),d0			; invert bit order.
 	endif
 .skip
 	if _Sax_UseLUT==1
