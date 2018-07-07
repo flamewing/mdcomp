@@ -200,19 +200,19 @@ public:
 		RockGraph::AdjList list = enc.find_optimal_parse();
 		RockOStream out(Dst);
 
-		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (auto const &edge : list) {
 			switch (edge.get_type()) {
 				case EdgeType::symbolwise:
 					out.descbit(1);
-					out.putbyte(Data[pos]);
+					out.putbyte(edge.get_symbol());
 					break;
 				case EdgeType::dictionary: {
 					size_t const len  = edge.get_length(),
-					             dist = edge.get_distance();
+					             dist = edge.get_distance(),
+					             pos  = edge.get_pos();
 					out.descbit(0);
-					RockIndex const index{(0x3C0 + pos - dist)};
+					RockIndex const index{(0x3C0u + pos - dist)};
 					out.putbyte(((len-1)<<2)|(index>>8));
 					out.putbyte(index);
 					break;
@@ -222,8 +222,6 @@ public:
 					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
 					__builtin_unreachable();
 			};
-			// Go to next position.
-			pos = edge.get_dest();
 		}
 	}
 };

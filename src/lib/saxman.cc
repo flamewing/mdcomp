@@ -106,6 +106,7 @@ class saxman_internal {
 		constexpr static void extra_matches(stream_t const *data, size_t const basenode,
 			                                size_t const ubound, size_t const lbound,
 			                                LZSSGraph<SaxmanAdaptor>::MatchVector &matches) noexcept {
+			using Node_t = LZSSGraph<SaxmanAdaptor>::Node_t;
 			ignore_unused_variable_warning(lbound);
 			// Can't encode zero match after this point.
 			if (basenode >= SearchBufSize-1) {
@@ -122,9 +123,9 @@ class saxman_internal {
 			if (jj >= 3) {
 				// Got them, so add them to the list.
 				EdgeType const ty = EdgeType::zerofill;
-				matches[jj - 1] = AdjListNode<EdgeType>(basenode + jj,
-					                          numeric_limits<size_t>::max(),
-					                          jj, edge_weight(ty), ty);
+				matches[jj - 1] = Node_t(basenode,
+					                     numeric_limits<size_t>::max(),
+					                     jj, edge_weight(ty), ty);
 			}
 		}
 		// Saxman needs no additional padding at the end-of-file.
@@ -162,7 +163,7 @@ public:
 				// Length is low 4 bits plus 3.
 				length = (length & 0xF) + 3;
 				// And there is an additional 0x12 bytes added to offset.
-				offset = (offset + 0x12) & 0xFFF;
+				offset = (offset + 0x12) % SaxmanAdaptor::SearchBufSize;
 				// The offset is stored as being absolute within current 0x1000-byte
 				// block, with part of it being remapped to the end of the previous
 				// 0x1000-byte block. We just rebase it around basedest.
@@ -199,23 +200,22 @@ public:
 		SaxGraph::AdjList list = enc.find_optimal_parse();
 		SaxOStream out(Dst);
 
-		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (auto const &edge : list) {
 			switch (edge.get_type()) {
 				case EdgeType::symbolwise:
 					out.descbit(1);
-					out.putbyte(Data[pos]);
+					out.putbyte(edge.get_symbol());
 					break;
 				case EdgeType::dictionary:
 				case EdgeType::zerofill: {
 					size_t const len  = edge.get_length(),
-					             dist = edge.get_distance();
+					             dist = edge.get_distance(),
+					             pos  = edge.get_pos();
+					size_t const base = (pos - dist - 0x12u) & 0xFFFu;
+					size_t const low  = base & 0xFFu,
+					             high = ((len - 3u) & 0x0Fu) | ((base >> 4) & 0xF0u);
 					out.descbit(0);
-					size_t low = pos - dist, high = len;
-					low = (low - 0x12) & 0xFFF;
-					high = ((high - 3) & 0x0F) | ((low >> 4) & 0xF0);
-					low &= 0xFF;
 					out.putbyte(low);
 					out.putbyte(high);
 					break;
@@ -225,7 +225,6 @@ public:
 					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
 					__builtin_unreachable();
 			};
-			pos = edge.get_dest();
 		}
 	}
 };

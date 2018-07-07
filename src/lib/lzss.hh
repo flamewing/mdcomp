@@ -44,62 +44,64 @@
  * in the [u, v) range (half-open) -- that is, node v is not part of the match.
  * Each node is a character in the file, and is represented by its position.
  */
-template <typename EdgeType>
+template <typename Adaptor>
 class AdjListNode {
+public:
+	using EdgeType = typename Adaptor::EdgeType;
+	using stream_t = typename Adaptor::stream_t;
+
 private:
 	// The first character after the match ends.
-	size_t destnode;
+	size_t currpos;
 	// Cost, in bits, of "covering" all of the characters in the match.
 	size_t weight;
-	// How many characters back does the match begin at.
-	size_t distance;
-	// How long the match is.
-	size_t length;
 	EdgeType type;
+	union {
+		struct {
+			// How many characters back does the match begin at.
+			size_t distance;
+			// How long the match is.
+			size_t length;
+		} match;
+		stream_t symbol;
+	};
 public:
 	// Constructors.
 	constexpr AdjListNode() noexcept
-		: destnode(1), weight(std::numeric_limits<size_t>::max()), distance(1),
-		  length(1), type(EdgeType::symbolwise) {
+		: currpos(0), weight(std::numeric_limits<size_t>::max()),
+		  type(EdgeType::symbolwise), symbol(stream_t(0)) {
 	}
-	constexpr AdjListNode(size_t dest, size_t dist, size_t len, size_t wgt, EdgeType ty) noexcept
-		: destnode(dest), weight(wgt), distance(dist), length(len), type(ty) {
+	constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
+		: currpos(pos), weight(Adaptor::edge_weight(ty)), type(ty), symbol(sym) {
 	}
-	constexpr AdjListNode(AdjListNode<EdgeType> const &other) noexcept = default;
-	constexpr AdjListNode(AdjListNode<EdgeType> &&other) noexcept = default;
-	constexpr AdjListNode &operator=(AdjListNode<EdgeType> const &other) noexcept = default;
-	constexpr AdjListNode &operator=(AdjListNode<EdgeType> &&other) noexcept = default;
+	constexpr AdjListNode(size_t pos, size_t dist, size_t len, size_t wgt, EdgeType ty) noexcept
+		: currpos(pos), weight(wgt), type(ty), match({dist, len}) {
+	}
+	constexpr AdjListNode(AdjListNode<Adaptor> const &other) noexcept = default;
+	constexpr AdjListNode(AdjListNode<Adaptor> &&other) noexcept = default;
+	constexpr AdjListNode &operator=(AdjListNode<Adaptor> const &other) noexcept = default;
+	constexpr AdjListNode &operator=(AdjListNode<Adaptor> &&other) noexcept = default;
 	// Getters.
+	constexpr size_t get_pos() const noexcept {
+		return currpos;
+	}
 	constexpr size_t get_dest() const noexcept {
-		return destnode;
+		return currpos + get_length();
 	}
 	constexpr size_t get_weight() const noexcept {
 		return weight;
 	}
 	constexpr size_t get_distance() const noexcept {
-		return distance;
+		return type == EdgeType::symbolwise ? 0 : match.distance;
 	}
 	constexpr size_t get_length() const noexcept {
-		return length;
+		return type == EdgeType::symbolwise ? 1 : match.length;
+	}
+	constexpr stream_t get_symbol() const noexcept {
+		return type == EdgeType::symbolwise ? symbol : stream_t(-1);
 	}
 	constexpr EdgeType get_type() const noexcept {
 		return type;
-	}
-	// Comparison operator. Lowest weight first, on tie, break by shortest
-	// length, on further tie break by distance. Used only on the multimap.
-	constexpr bool operator<(AdjListNode<EdgeType> const &other) const noexcept {
-		if (weight < other.weight) {
-			return true;
-		} else if (weight > other.weight) {
-			return false;
-		}
-		if (length < other.length) {
-			return true;
-		} else if (length > other.length) {
-			return false;
-		} else {
-			return distance < other.distance;
-		}
 	}
 };
 
@@ -154,8 +156,8 @@ template<typename Adaptor>
 class LZSSGraph {
 public:
 	using EdgeType = typename Adaptor::EdgeType;
-	using Node_t = AdjListNode<EdgeType>;
 	using stream_t = typename Adaptor::stream_t;
+	using Node_t = AdjListNode<Adaptor>;
 	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
 private:
@@ -184,7 +186,7 @@ private:
 		MatchVector matches(ubound);
 		// Start with the literal/symbolwise encoding of the current node.
 		EdgeType const ty = Adaptor::match_type(0, 1);
-		matches[0] = Node_t(basenode + 1, 0, 1, Adaptor::edge_weight(ty), ty);
+		matches[0] = Node_t(basenode, data[basenode], ty);
 		// Get extra dictionary matches dependent on specific encoder.
 		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
 		                       "Adaptor::extra_matches() is not noexcept");
@@ -206,7 +208,7 @@ private:
 					size_t const wgt = Adaptor::edge_weight(ty);
 					Node_t &best = matches[jj - 1];
 					if (wgt < best.get_weight()) {
-						best = Node_t(basenode + jj, basenode - ii, jj, wgt, ty);
+						best = Node_t(basenode, basenode - ii, jj, wgt, ty);
 					}
 				}
 				// We can find no more matches with the current starting node.

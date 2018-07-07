@@ -201,19 +201,18 @@ public:
 		typename KosGraph::AdjList list = enc.find_optimal_parse();
 		KosOStream out(Dst);
 
-		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (auto const &edge : list) {
 			switch (edge.get_type()) {
 				case EdgeType::symbolwise:
 					out.descbit(1);
-					out.putbyte(Data[pos]);
+					out.putbyte(edge.get_symbol());
 					break;
 				case EdgeType::dictionary_inline: {
-					out.descbit(0);
-					out.descbit(0);
 					size_t const len  = edge.get_length() - 2,
 					             dist = 0x100u - edge.get_distance();
+					out.descbit(0);
+					out.descbit(0);
 					out.putbyte(dist);
 					out.descbit((len >> 1) & 1);
 					out.descbit(len & 1);
@@ -221,12 +220,12 @@ public:
 				}
 				case EdgeType::dictionary_short:
 				case EdgeType::dictionary_long: {
-					out.descbit(0);
-					out.descbit(1);
 					size_t const len  = edge.get_length(),
 					             dist = 0x2000u - edge.get_distance();
-					uint16_t high = (dist >> 5) & 0xF8u,
-					         low  = (dist & 0xFFu);
+					size_t high = (dist >> 5) & 0xF8u,
+					       low  = (dist & 0xFFu);
+					out.descbit(0);
+					out.descbit(1);
 					if (edge.get_type() == EdgeType::dictionary_short) {
 						out.putbyte(high | (10 - len));
 						out.putbyte(low);
@@ -242,8 +241,6 @@ public:
 					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
 					__builtin_unreachable();
 			}
-			// Go to next position.
-			pos = edge.get_dest();
 		}
 
 		// Push descriptor for end-of-file marker.

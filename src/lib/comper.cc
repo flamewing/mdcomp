@@ -152,15 +152,18 @@ public:
 		CompGraph::AdjList list = enc.find_optimal_parse();
 		CompOStream out(Dst);
 
-		size_t pos = 0;
 		// Go through each edge in the optimal path.
 		for (auto const &edge : list) {
 			switch (edge.get_type()) {
-				case EdgeType::symbolwise:
+				case EdgeType::symbolwise: {
+					auto value = edge.get_symbol();
+					size_t const high = (value >> 8) & 0xFFu,
+					             low  = (value & 0xFFu);
 					out.descbit(0);
-					out.putbyte(Data[pos]);
-					out.putbyte(Data[pos + 1]);
+					out.putbyte(high);
+					out.putbyte(low);
 					break;
+				}
 				case EdgeType::dictionary: {
 					size_t const len  = edge.get_length(),
 					             dist = edge.get_distance();
@@ -174,8 +177,6 @@ public:
 					std::cerr << "Compression produced invalid edge type " << static_cast<size_t>(edge.get_type()) << std::endl;
 					__builtin_unreachable();
 			};
-			// Go to next position.
-			pos = edge.get_dest() * 2;
 		}
 
 		// Push descriptor for end-of-file marker.
