@@ -40,7 +40,7 @@ class saxman_internal {
 	struct SaxmanAdaptor {
 		using stream_t = unsigned char;
 		using descriptor_t = unsigned char;
-		using descriptor_endian_t = littleendian<descriptor_t>;
+		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {
 			invalid,
 			symbolwise,

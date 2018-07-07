@@ -63,16 +63,16 @@ inline void Write1(std::ostream_iterator<unsigned char>&out, size_t const c) noe
 	*out++ = static_cast<char>(c & 0xff);
 }
 
-namespace BigEndian {
+struct BigEndian {
 	template <typename T>
-	inline size_t Read2(T &in) noexcept {
+	static inline size_t Read2(T &in) noexcept {
 		size_t c = Read1(in) << 8;
 		c |= Read1(in);
 		return c;
 	}
 
 	template <typename T>
-	inline size_t Read4(T &in) noexcept {
+	static inline size_t Read4(T &in) noexcept {
 		size_t c = Read1(in) << 24;
 		c |= Read1(in) << 16;
 		c |= Read1(in) << 8;
@@ -81,7 +81,7 @@ namespace BigEndian {
 	}
 
 	template <typename T, int N>
-	inline size_t ReadN(T &in) noexcept {
+	static inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < N; i++) {
 			c = (c << 8) | Read1(in);
@@ -90,13 +90,13 @@ namespace BigEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t const c) noexcept {
+	static inline void Write2(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0xff00) >> 8);
 		Write1(out, c & 0xff);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t const c) noexcept {
+	static inline void Write4(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0xff000000) >> 24);
 		Write1(out, (c & 0x00ff0000) >> 16);
 		Write1(out, (c & 0x0000ff00) >> 8);
@@ -104,23 +104,23 @@ namespace BigEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t const c) noexcept {
+	static inline void WriteN(T &out, size_t const c) noexcept {
 		for (int i = 8 * (N - 1); i >= 0; i -= 8) {
 			Write1(out, (c >> i) & 0xff);
 		}
 	}
-}// namespace BigEndian
+};
 
-namespace LittleEndian {
+struct LittleEndian {
 	template <typename T>
-	inline size_t Read2(T &in) noexcept {
+	static inline size_t Read2(T &in) noexcept {
 		size_t c = Read1(in);
 		c |= Read1(in) << 8;
 		return c;
 	}
 
 	template <typename T>
-	inline size_t Read4(T &in) noexcept {
+	static inline size_t Read4(T &in) noexcept {
 		size_t c = Read1(in);
 		c |= Read1(in) << 8;
 		c |= Read1(in) << 16;
@@ -129,7 +129,7 @@ namespace LittleEndian {
 	}
 
 	template <typename T, int N>
-	inline size_t ReadN(T &in) noexcept {
+	static inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < 8 * N; i += 8) {
 			c = c | (Read1(in) << i);
@@ -138,13 +138,13 @@ namespace LittleEndian {
 	}
 
 	template <typename T>
-	inline void Write2(T &out, size_t const c) noexcept {
+	static inline void Write2(T &out, size_t const c) noexcept {
 		Write1(out, c & 0xff);
 		Write1(out, (c & 0xff00) >> 8);
 	}
 
 	template <typename T>
-	inline void Write4(T &out, size_t const c) noexcept {
+	static inline void Write4(T &out, size_t const c) noexcept {
 		Write1(out, (c & 0x000000ff));
 		Write1(out, (c & 0x0000ff00) >> 8);
 		Write1(out, (c & 0x00ff0000) >> 16);
@@ -152,11 +152,11 @@ namespace LittleEndian {
 	}
 
 	template <typename T, int N>
-	inline void WriteN(T &out, size_t const c) noexcept {
+	static inline void WriteN(T &out, size_t const c) noexcept {
 		for (size_t i = 0; i < 8 * N; i += 8) {
 			Write1(out, (c >> i) & 0xff);
 		}
 	}
-}// namespace LittleEndian
+};
 
 #endif

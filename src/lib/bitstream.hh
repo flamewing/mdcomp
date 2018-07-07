@@ -22,28 +22,6 @@
 #include <iosfwd>
 #include "bigendian_io.hh"
 
-template <typename T>
-class bigendian {
-public:
-	size_t read(std::istream &src) noexcept {
-		return BigEndian::ReadN<std::istream &, sizeof(T)>(src);
-	}
-	void write(std::ostream &dst, size_t const c) noexcept {
-		BigEndian::WriteN<std::ostream &, sizeof(T)>(dst, c);
-	}
-};
-
-template <typename T>
-class littleendian {
-public:
-	size_t read(std::istream &src) noexcept {
-		return LittleEndian::ReadN<std::istream &, sizeof(T)>(src);
-	}
-	void write(std::ostream &dst, size_t const c) noexcept {
-		LittleEndian::WriteN<std::ostream &, sizeof(T)>(dst, c);
-	}
-};
-
 template<typename T>
 static T reverseBits(T val) noexcept {
 	unsigned int sz = sizeof(T) * 8; // bit size; must be power of 2
@@ -59,15 +37,17 @@ static T reverseBits(T val) noexcept {
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <typename T, bool EarlyRead, bool LittleEndianBits = false,
-          typename Reader = bigendian<T> >
+          typename Endian = BigEndian>
 class ibitstream {
 private:
 	std::istream &src;
-	Reader r;
 	int readbits;
 	T bitbuffer;
+	size_t read() noexcept {
+		return Endian::template ReadN<std::istream &, sizeof(T)>(src);
+	}
 	T read_bits() noexcept {
-		T bits = r.read(src);
+		T bits = read();
 		return LittleEndianBits ? reverseBits(bits) : bits;
 	}
 	void check_buffer() noexcept {
@@ -134,15 +114,17 @@ public:
 
 // This class allows outputting bits into a stream.
 template <typename T, bool LittleEndianBits = false,
-         typename Writer = bigendian<T> >
+          typename Endian = BigEndian>
 class obitstream {
 private:
 	std::ostream &dst;
-	Writer w;
 	unsigned int waitingbits;
 	T bitbuffer;
+	void write(T const c) noexcept {
+		Endian::template WriteN<std::ostream &, sizeof(T)>(dst, c);
+	}
 	void write_bits(T const bits) noexcept {
-		w.write(dst, LittleEndianBits ? reverseBits(bits) : bits);
+		write(LittleEndianBits ? reverseBits(bits) : bits);
 	}
 public:
 	obitstream(std::ostream &d) noexcept : dst(d), waitingbits(0), bitbuffer(0) {

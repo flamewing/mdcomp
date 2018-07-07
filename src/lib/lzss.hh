@@ -111,7 +111,7 @@ public:
  *  struct LZSSAdaptor {
  *  	using stream_t     = unsigned char;
  *  	using descriptor_t = unsigned short;
- *  	using descriptor_endian_t = littleendian<descriptor_t>;
+ *  	using descriptor_endian_t = LittleEndian;
  *  	enum class EdgeType : size_t {
  *  		invalid,
  *  		// other cases
@@ -155,11 +155,12 @@ class LZSSGraph {
 public:
 	using EdgeType = typename Adaptor::EdgeType;
 	using Node_t = AdjListNode<EdgeType>;
+	using stream_t = typename Adaptor::stream_t;
 	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
 private:
 	// Source file data and its size; one node per character in source file.
-	typename Adaptor::stream_t const *data;
+	stream_t const *data;
 	size_t const nlen;
 	// Adjacency lists for all the nodes in the graph.
 	std::vector<AdjList> adjs;
@@ -220,8 +221,8 @@ private:
 public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(unsigned char const *dt, size_t const size) noexcept
-		: data(reinterpret_cast<typename Adaptor::stream_t const *>(dt)),
-		  nlen(size / sizeof(typename Adaptor::stream_t)) {
+		: data(reinterpret_cast<stream_t const *>(dt)),
+		  nlen(size / sizeof(stream_t)) {
 		// Making space for all nodes.
 		adjs.resize(nlen);
 		for (size_t ii = 0; ii < nlen; ii++) {
@@ -330,11 +331,11 @@ template <typename Adaptor>
 class LZSSOStream {
 private:
 	using descriptor_t = typename Adaptor::descriptor_t;
-	using BitWriter = typename Adaptor::descriptor_endian_t;
+	using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
 	// Where we will output to.
 	std::ostream &out;
 	// Internal bitstream output buffer.
-	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
+	obitstream<descriptor_t, Adaptor::DescriptorLittleEndianBits, descriptor_endian_t> bits;
 	// Internal parameter buffer.
 	std::string buffer;
 	void flushbuffer() noexcept {
@@ -395,12 +396,12 @@ template <typename Adaptor>
 class LZSSIStream {
 private:
 	using descriptor_t = typename Adaptor::descriptor_t;
-	using BitWriter = typename Adaptor::descriptor_endian_t;
+	using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
 	// Where we will input to.
 	std::istream &in;
 	// Internal bitstream input buffer.
 	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor,
-	 Adaptor::DescriptorLittleEndianBits, BitWriter> bits;
+	           Adaptor::DescriptorLittleEndianBits, descriptor_endian_t> bits;
 	// Internal parameter buffer.
 	std::string buffer;
 public:

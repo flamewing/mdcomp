@@ -39,7 +39,7 @@ class comper_internal {
 	struct ComperAdaptor {
 		using stream_t = uint16_t;
 		using descriptor_t = uint16_t;
-		using descriptor_endian_t = bigendian<descriptor_t>;
+		using descriptor_endian_t = BigEndian;
 		enum class EdgeType : size_t {
 			invalid,
 			symbolwise,
