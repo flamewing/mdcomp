@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; For format explanation see http://info.sonicretro.org/Enigma_compression
+; For format explanation see https://segaretro.org/Enigma_compression
 ; ---------------------------------------------------------------------------
 ; FUNCTION:
 ; 	EniDec

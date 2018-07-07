@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; For format explanation see http://info.sonicretro.org/Saxman_compression
+; For format explanation see https://segaretro.org/Saxman_compression
 ; ---------------------------------------------------------------------------
 ; FUNCTION:
 ; 	SaxDec

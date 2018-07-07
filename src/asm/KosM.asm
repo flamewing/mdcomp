@@ -1,5 +1,6 @@
 ; ---------------------------------------------------------------------------
 ; Moduled Kosinski decompression queue.
+; For format explanation see https://segaretro.org/Kosinski_compression
 ;
 ; This version is slightly optimized compared to S3&K version.
 ; Also, it uses the faster Kosinski compressor internally.

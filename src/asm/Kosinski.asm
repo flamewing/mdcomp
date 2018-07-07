@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; For format explanation see http://segaretro.org/Kosinski_compression
+; For format explanation see https://segaretro.org/Kosinski_compression
 ; New faster version written by vladikcomper, with additional improvements
 ; by MarkeyJester and Flamewing
 ; ---------------------------------------------------------------------------
