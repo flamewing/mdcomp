@@ -22,6 +22,7 @@
 #include <istream>
 #include <ostream>
 #include <sstream>
+#include <type_traits>
 
 #include "rocket.hh"
 #include "bigendian_io.hh"
@@ -115,19 +116,54 @@ class rocket_internal {
 		}
 	};
 
+	// Thin wrapper around an unsigned integer that wraps circularly.
+	template <typename T, T N, typename = std::enable_if<std::is_unsigned<T>::value>>
+	class CircularIndex {
+	public:
+		explicit constexpr CircularIndex(T val) noexcept
+		: index(val % N) {
+		}
+		constexpr CircularIndex& operator=(T val) noexcept {
+			setIndex(val);
+			return *this;
+		}
+		constexpr CircularIndex(const CircularIndex& other) noexcept = default;
+		constexpr CircularIndex& operator=(const CircularIndex& other) noexcept = default;
+		constexpr CircularIndex(CircularIndex&& other) noexcept = default;
+		constexpr CircularIndex& operator=(CircularIndex&& other) noexcept = default;
+		constexpr CircularIndex& operator++() noexcept {
+			setIndex(index + 1);
+			return *this;
+		}
+		constexpr CircularIndex operator++(int) noexcept {
+			CircularIndex result(*this);
+			++(*this);
+			return result;
+		}
+		constexpr operator T() const noexcept {
+			return index;
+		}
+	private:
+		constexpr void setIndex(T val) noexcept {
+			index = val % N;
+		}
+		T index = 0;
+	};
+
 public:
 	static void decode(istream &in, iostream &Dst, uint16_t const Size) {
 		using RockIStream = LZSSIStream<RocketAdaptor>;
+		using RockIndex = CircularIndex<size_t, RocketAdaptor::SearchBufSize>;
 
 		RockIStream src(in);
 
 		// Initialise buffer (needed by Rocket Knight Adventures plane maps)
 		// TODO: Make compressor perform matches for this
-		unsigned char buffer[0x400];
+		unsigned char buffer[RocketAdaptor::SearchBufSize];
 		for (size_t i = 0; i < 0x3C0; i++) {
 			buffer[i] = 0x20;
 		}
-		size_t buffer_index = 0x3C0;
+		RockIndex buffer_index{0x3C0};
 
 		while (in.good() && in.tellg() < Size) {
 			if (src.descbit() != 0u) {
@@ -135,7 +171,6 @@ public:
 				unsigned char const Byte = Read1(in);
 				Write1(Dst, Byte);
 				buffer[buffer_index++] = Byte;
-				buffer_index &= 0x3FF;
 			} else {
 				// Dictionary match.
 				// Distance and length of match.
@@ -143,14 +178,12 @@ public:
 					         low = src.getbyte();
 
 				size_t const length = (high&0xFC)>>2;
-				size_t index = ((high&3)<<8)|low;
+				RockIndex index{((high&3)<<8)|low};
 
 				for (size_t i = 0; i <= length; i++) {
 					unsigned char const Byte = buffer[index++];
-					index &= 0x3FF;
 					Write1(Dst, Byte);
 					buffer[buffer_index++] = Byte;
-					buffer_index &= 0x3FF;
 				}
 			}
 		}
@@ -160,6 +193,7 @@ public:
 		using EdgeType = typename RocketAdaptor::EdgeType;
 		using RockGraph = LZSSGraph<RocketAdaptor>;
 		using RockOStream = LZSSOStream<RocketAdaptor>;
+		using RockIndex = CircularIndex<size_t, RocketAdaptor::SearchBufSize>;
 
 		// Compute optimal Rocket parsing of input file.
 		RockGraph enc(Data, Size);
@@ -178,7 +212,7 @@ public:
 					size_t const len  = edge.get_length(),
 					             dist = edge.get_distance();
 					out.descbit(0);
-					uint16_t const index = (0x3C0 + pos - dist) & 0x3FF;
+					RockIndex const index{(0x3C0 + pos - dist)};
 					out.putbyte(((len-1)<<2)|(index>>8));
 					out.putbyte(index);
 					break;
