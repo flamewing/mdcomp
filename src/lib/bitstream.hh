@@ -19,13 +19,46 @@
 #ifndef __LIB_BITSTREAM_H
 #define __LIB_BITSTREAM_H
 
+#include <climits>
 #include <iosfwd>
+
 #include "bigendian_io.hh"
+
+#ifdef __GNUC__
+namespace {	// anonymous
+	template <typename T, size_t sz>
+	struct getMask {
+		constexpr inline T operator()(T mask) const noexcept {
+			constexpr const size_t nsz = sz >> 1;
+			return getMask<T, nsz>{}(mask ^(mask << nsz));
+		}
+	};
+
+	template <typename T>
+	struct getMask<T, CHAR_BIT> {
+		constexpr inline T operator()(T mask) const noexcept {
+			return mask;
+		}
+	};
+}
+#endif
 
 template<typename T>
 static T reverseBits(T val) noexcept {
-	unsigned int sz = sizeof(T) * 8; // bit size; must be power of 2
-	T mask = ~0;
+#ifdef __GNUC__
+	unsigned int sz = CHAR_BIT; // bit size; must be power of 2
+	T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
+	if (sizeof(T) == 2) {
+		val = __builtin_bswap16(val);
+	} else if (sizeof(T) == 4) {
+		val = __builtin_bswap32(val);
+	} else if (sizeof(T) == 8) {
+		val = __builtin_bswap64(val);
+	}
+#else
+	unsigned int sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
+	T mask = ~T(0);
+#endif
 	while ((sz >>= 1) > 0) {
 		mask ^= (mask << sz);
 		val = ((val >> sz) & mask) | ((val << sz) & ~mask);
@@ -57,13 +90,13 @@ private:
 
 		bitbuffer = read_bits();
 		if (src.good()) {
-			readbits = sizeof(T) * 8;
+			readbits = sizeof(T) * CHAR_BIT;
 		} else {
 			readbits = 16;
 		}
 	}
 public:
-	ibitstream(std::istream &s) noexcept : src(s), readbits(sizeof(T) * 8) {
+	ibitstream(std::istream &s) noexcept : src(s), readbits(sizeof(T) * CHAR_BIT) {
 		bitbuffer = read_bits();
 	}
 	// Gets a single bit from the stream. Remembers previously read bits, and
@@ -81,7 +114,7 @@ public:
 		}
 		return bit;
 	}
-	// Reads up to sizeof(T) * 8 bits from the stream. This remembers previously
+	// Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers previously
 	// read bits, and gets another T from the actual stream once all bits in the
 	// current T have been read.
 	T read(unsigned char const cnt) noexcept {
@@ -93,7 +126,7 @@ public:
 			int delta = (cnt - readbits);
 			bits = bitbuffer << delta;
 			bitbuffer = read_bits();
-			readbits = (sizeof(T) * 8) - delta;
+			readbits = (sizeof(T) * CHAR_BIT) - delta;
 			T newbits = (bitbuffer >> readbits);
 			bitbuffer ^= (newbits << readbits);
 			bits |= newbits;
@@ -130,11 +163,11 @@ public:
 	obitstream(std::ostream &d) noexcept : dst(d), waitingbits(0), bitbuffer(0) {
 	}
 	// Puts a single bit into the stream. Remembers previously written bits, and
-	// outputs a T to the actual stream once there are at least sizeof(T) * 8
+	// outputs a T to the actual stream once there are at least sizeof(T) * CHAR_BIT
 	// bits stored in the buffer.
 	bool push(T const data) noexcept {
 		bitbuffer = (bitbuffer << 1) | (data & 1);
-		if (++waitingbits >= sizeof(T) * 8) {
+		if (++waitingbits >= sizeof(T) * CHAR_BIT) {
 			write_bits(bitbuffer);
 			waitingbits = 0;
 			bitbuffer = 0;
@@ -142,16 +175,16 @@ public:
 		}
 		return false;
 	}
-	// Writes up to sizeof(T) * 8 bits to the stream. This remembers previously
+	// Writes up to sizeof(T) * CHAR_BIT bits to the stream. This remembers previously
 	// written bits, and outputs a T to the actual stream once there are at
-	// least sizeof(T) * 8 bits stored in the buffer.
+	// least sizeof(T) * CHAR_BIT bits stored in the buffer.
 	bool write(T const data, unsigned char const size) noexcept {
-		if (waitingbits + size >= sizeof(T) * 8) {
-			int delta = (sizeof(T) * 8 - waitingbits);
-			waitingbits = (waitingbits + size) % (sizeof(T) * 8);
+		if (waitingbits + size >= sizeof(T) * CHAR_BIT) {
+			int delta = (sizeof(T) * CHAR_BIT - waitingbits);
+			waitingbits = (waitingbits + size) % (sizeof(T) * CHAR_BIT);
 			T bits = (bitbuffer << delta) | (data >> waitingbits);
 			write_bits(bits);
-			bitbuffer = (data & (T(~0) >> (sizeof(T) * 8 - waitingbits)));
+			bitbuffer = (data & (T(~0) >> (sizeof(T) * CHAR_BIT - waitingbits)));
 			return true;
 		} else {
 			bitbuffer = (bitbuffer << size) | data;
@@ -163,7 +196,7 @@ public:
 	// padding with zeroes.
 	bool flush() noexcept {
 		if (waitingbits) {
-			bitbuffer <<= ((sizeof(T) * 8) - waitingbits);
+			bitbuffer <<= ((sizeof(T) * CHAR_BIT) - waitingbits);
 			write_bits(bitbuffer);
 			waitingbits = 0;
 			return true;
