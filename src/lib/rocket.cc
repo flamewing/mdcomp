@@ -101,13 +101,56 @@ class rocket_internal {
 					return numeric_limits<size_t>::max();
 			}
 		}
-		// Rocket finds no additional matches over normal LZSS.
-		// TODO: Lies. Plane maps rely on the buffer initially containing 0x20's
-		constexpr static void extra_matches(stream_t const *data,
+		// Rocket assumes there is a string of 0x20's of lenght 0x3C0 before the
+		// decompressed stream which can be used for overlapping matches.
+		static void extra_matches(stream_t const *data,
 			                      size_t const basenode,
 			                      size_t const ubound, size_t const lbound,
 			                      LZSSGraph<RocketAdaptor>::MatchVector &matches) noexcept {
-			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+			using Node_t = LZSSGraph<RocketAdaptor>::Node_t;
+			ignore_unused_variable_warning(lbound);
+			// Can't encode zero match after this point.
+			if (basenode >= SearchBufSize-1) {
+				return;
+			}
+			using diff_t = make_signed_t<size_t>;
+			// For c++17, make this lambda constexpr so that the function can be also.
+			// Its purpose is to pretend that there is a stream of 0x20's before the
+			// start of data which can be used for normal LZSS matches.
+			auto getValue = [&data](diff_t pos){
+					if (pos >= 0) {
+						return data[pos];
+					} else {
+						return stream_t(0x20);
+					}
+				};
+			diff_t const base = diff_t(basenode);
+			diff_t ii = base - 1;
+			diff_t const slbound = basenode >= LookAheadBufSize ?
+			                       base - SearchBufSize : diff_t(LookAheadBufSize - SearchBufSize);
+			diff_t const subound = diff_t(ubound);
+			do {
+				// Keep looking for dictionary matches.
+				diff_t jj = 0;
+				while (getValue(ii + jj) == data[base + jj]) {
+					++jj;
+					// We have found a match that links (basenode) with
+					// (basenode + jj) with length (jj) and distance (basenode-ii).
+					// Add it to the list if it is a better match.
+					EdgeType const ty = match_type(basenode - ii, jj);
+					if (ty != EdgeType::invalid) {
+						size_t const wgt = edge_weight(ty);
+						Node_t &best = matches[jj - 1];
+						if (wgt < best.get_weight()) {
+							best = Node_t(basenode, basenode - ii, jj, wgt, ty);
+						}
+					}
+					// We can find no more matches with the current starting node.
+					if (jj >= subound) {
+						break;
+					}
+				}
+			} while (ii-- > slbound);
 		}
 		// Rocket needs no additional padding at the end-of-file.
 		constexpr static size_t get_padding(size_t const totallen) noexcept {
@@ -116,74 +159,45 @@ class rocket_internal {
 		}
 	};
 
-	// Thin wrapper around an unsigned integer that wraps circularly.
-	template <typename T, T N, typename = std::enable_if<std::is_unsigned<T>::value>>
-	class CircularIndex {
-	public:
-		explicit constexpr CircularIndex(T val) noexcept
-		: index(val % N) {
-		}
-		constexpr CircularIndex& operator=(T val) noexcept {
-			setIndex(val);
-			return *this;
-		}
-		constexpr CircularIndex(const CircularIndex& other) noexcept = default;
-		constexpr CircularIndex& operator=(const CircularIndex& other) noexcept = default;
-		constexpr CircularIndex(CircularIndex&& other) noexcept = default;
-		constexpr CircularIndex& operator=(CircularIndex&& other) noexcept = default;
-		constexpr CircularIndex& operator++() noexcept {
-			setIndex(index + 1);
-			return *this;
-		}
-		constexpr CircularIndex operator++(int) noexcept {
-			CircularIndex result(*this);
-			++(*this);
-			return result;
-		}
-		constexpr operator T() const noexcept {
-			return index;
-		}
-	private:
-		constexpr void setIndex(T val) noexcept {
-			index = val % N;
-		}
-		T index = 0;
-	};
-
 public:
 	static void decode(istream &in, iostream &Dst, uint16_t const Size) {
 		using RockIStream = LZSSIStream<RocketAdaptor>;
-		using RockIndex = CircularIndex<size_t, RocketAdaptor::SearchBufSize>;
+		using diff_t = make_signed_t<size_t>;
 
 		RockIStream src(in);
 
-		// Initialise buffer (needed by Rocket Knight Adventures plane maps)
-		// TODO: Make compressor perform matches for this
-		unsigned char buffer[RocketAdaptor::SearchBufSize];
-		for (size_t i = 0; i < 0x3C0; i++) {
-			buffer[i] = 0x20;
-		}
-		RockIndex buffer_index{0x3C0};
+		auto getValue = [&Dst](diff_t src){
+				if (src >= 0) {
+					diff_t const Pointer = diff_t(Dst.tellp());
+					Dst.seekg(src);
+					RocketAdaptor::stream_t const Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					return Byte;
+				} else {
+					return RocketAdaptor::stream_t(0x20);
+				}
+			};
 
 		while (in.good() && in.tellg() < Size) {
 			if (src.descbit() != 0u) {
 				// Symbolwise match.
 				unsigned char const Byte = Read1(in);
 				Write1(Dst, Byte);
-				buffer[buffer_index++] = Byte;
 			} else {
 				// Dictionary match.
 				// Distance and length of match.
-				size_t const high = src.getbyte(),
-					         low = src.getbyte();
+				diff_t const high = src.getbyte(),
+					         low  = src.getbyte();
+				diff_t const length = ((high & 0xFC) >> 2) + 1u;
+				diff_t offset = ((high&3)<<8)|low;
+				// The offset is stored as being absolute within a 0x400-byte buffer,
+				// starting at position 0x3C0. We just rebase it around basedest + 0x3C0u.
+				constexpr diff_t const bias = diff_t(RocketAdaptor::SearchBufSize - RocketAdaptor::LookAheadBufSize);
+				diff_t const basedest = diff_t(Dst.tellp());
+				offset = diff_t(((offset - basedest - bias) % RocketAdaptor::SearchBufSize) + basedest - RocketAdaptor::SearchBufSize);
 
-				size_t const length = (high&0xFC)>>2;
-				RockIndex index{((high&3)<<8)|low};
-
-				for (size_t i = 0; i <= length; i++) {
-					unsigned char const Byte = buffer[index++];
-					Write1(Dst, Byte);
-					buffer[buffer_index++] = Byte;
+				for (diff_t src = offset; src < offset + length; src++) {
+					Write1(Dst, getValue(src));
 				}
 			}
 		}
@@ -193,7 +207,6 @@ public:
 		using EdgeType = typename RocketAdaptor::EdgeType;
 		using RockGraph = LZSSGraph<RocketAdaptor>;
 		using RockOStream = LZSSOStream<RocketAdaptor>;
-		using RockIndex = CircularIndex<size_t, RocketAdaptor::SearchBufSize>;
 
 		// Compute optimal Rocket parsing of input file.
 		RockGraph enc(Data, Size);
@@ -208,13 +221,13 @@ public:
 					out.putbyte(edge.get_symbol());
 					break;
 				case EdgeType::dictionary: {
+					constexpr size_t const bias = RocketAdaptor::SearchBufSize - RocketAdaptor::LookAheadBufSize;
 					size_t const len  = edge.get_length(),
 					             dist = edge.get_distance(),
-					             pos  = edge.get_pos();
+					             pos  = (edge.get_pos() + bias - dist) % RocketAdaptor::SearchBufSize;
 					out.descbit(0);
-					RockIndex const index{(0x3C0u + pos - dist)};
-					out.putbyte(((len-1)<<2)|(index>>8));
-					out.putbyte(index);
+					out.putbyte(((len-1)<<2)|(pos>>8));
+					out.putbyte(pos);
 					break;
 				}
 				default:
