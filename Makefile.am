@@ -19,6 +19,7 @@ includedir = ${prefix}/include/mdcomp
 
 include_HEADERS = \
 	src/lib/bigendian_io.hh \
+	src/lib/bitstream.hh \
 	src/lib/basic_decoder.hh \
 	src/lib/moduled_adaptor.hh \
 	src/lib/artc42.hh \
