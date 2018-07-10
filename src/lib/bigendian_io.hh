@@ -105,8 +105,8 @@ struct BigEndian {
 
 	template <typename T, size_t N>
 	static inline void WriteN(T &out, size_t const c) noexcept {
-		for (size_t i = 8 * (N - 1); i >= 0; i -= 8) {
-			Write1(out, (c >> i) & 0xff);
+		for (size_t i = 0; i < 8 * N; i += 8) {
+			Write1(out, (c >> (8 * (N - 1) - i)) & 0xff);
 		}
 	}
 };
