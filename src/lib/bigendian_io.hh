@@ -24,43 +24,43 @@
 #include <string>
 
 inline size_t Read1(std::istream &in) noexcept {
-	size_t c = static_cast<unsigned char>(in.get());
+	size_t c = static_cast<uint8_t>(in.get());
 	return c;
 }
 
-inline size_t Read1(char const *& in) noexcept {
-	size_t c = static_cast<unsigned char>(*in++);
+inline size_t Read1(int8_t const *& in) noexcept {
+	size_t c = static_cast<uint8_t>(*in++);
 	return c;
 }
 
-inline size_t Read1(unsigned char const *& in) noexcept {
+inline size_t Read1(uint8_t const *& in) noexcept {
 	size_t c = *in++;
 	return c;
 }
 
-inline size_t Read1(std::istream_iterator<unsigned char>& in) noexcept {
+inline size_t Read1(std::istream_iterator<uint8_t>& in) noexcept {
 	size_t c = *in++;
 	return c;
 }
 
 inline void Write1(std::ostream &out, size_t const c) noexcept {
-	out.put(static_cast<char>(c & 0xff));
+	out.put(static_cast<int8_t>(c & 0xff));
 }
 
-inline void Write1(char *&out, size_t const c) noexcept {
-	*out++ = static_cast<char>(c & 0xff);
+inline void Write1(int8_t *&out, size_t const c) noexcept {
+	*out++ = static_cast<int8_t>(c & 0xff);
 }
 
-inline void Write1(unsigned char *&out, size_t const c) noexcept {
-	*out++ = static_cast<char>(c & 0xff);
+inline void Write1(uint8_t *&out, size_t const c) noexcept {
+	*out++ = static_cast<int8_t>(c & 0xff);
 }
 
 inline void Write1(std::string &out, size_t const c) noexcept {
-	out.push_back(static_cast<char>(c & 0xff));
+	out.push_back(static_cast<int8_t>(c & 0xff));
 }
 
-inline void Write1(std::ostream_iterator<unsigned char>&out, size_t const c) noexcept {
-	*out++ = static_cast<char>(c & 0xff);
+inline void Write1(std::ostream_iterator<uint8_t>&out, size_t const c) noexcept {
+	*out++ = static_cast<int8_t>(c & 0xff);
 }
 
 struct BigEndian {
@@ -80,7 +80,7 @@ struct BigEndian {
 		return c;
 	}
 
-	template <typename T, int N>
+	template <typename T, size_t N>
 	static inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < N; i++) {
@@ -103,9 +103,9 @@ struct BigEndian {
 		Write1(out, (c & 0x000000ff));
 	}
 
-	template <typename T, int N>
+	template <typename T, size_t N>
 	static inline void WriteN(T &out, size_t const c) noexcept {
-		for (int i = 8 * (N - 1); i >= 0; i -= 8) {
+		for (size_t i = 8 * (N - 1); i >= 0; i -= 8) {
 			Write1(out, (c >> i) & 0xff);
 		}
 	}
@@ -128,7 +128,7 @@ struct LittleEndian {
 		return c;
 	}
 
-	template <typename T, int N>
+	template <typename T, size_t N>
 	static inline size_t ReadN(T &in) noexcept {
 		size_t c = 0;
 		for (size_t i = 0; i < 8 * N; i += 8) {
@@ -151,7 +151,7 @@ struct LittleEndian {
 		Write1(out, (c & 0xff000000) >> 24);
 	}
 
-	template <typename T, int N>
+	template <typename T, size_t N>
 	static inline void WriteN(T &out, size_t const c) noexcept {
 		for (size_t i = 0; i < 8 * N; i += 8) {
 			Write1(out, (c >> i) & 0xff);

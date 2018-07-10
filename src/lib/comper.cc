@@ -142,7 +142,7 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *Data, size_t const Size) {
+	static void encode(ostream &Dst, uint8_t const *Data, size_t const Size) {
 		using EdgeType = typename ComperAdaptor::EdgeType;
 		using CompGraph = LZSSGraph<ComperAdaptor>;
 		using CompOStream = LZSSOStream<ComperAdaptor>;
@@ -197,7 +197,7 @@ bool comper::decode(istream &Src, iostream &Dst) {
 	return true;
 }
 
-bool comper::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+bool comper::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	comper_internal::encode(Dst, data, Size);
 	return true;
 }

@@ -88,7 +88,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
 	Src.ignore(std::numeric_limits<std::streamsize>::max());
 	size_t FullSize = Src.gcount();
 	Src.seekg(Location);
-	std::vector<unsigned char> data;
+	std::vector<uint8_t> data;
 	data.resize(FullSize);
 	auto ptr = data.cbegin();
 	Src.read(reinterpret_cast<char*>(&(data.front())), data.size());

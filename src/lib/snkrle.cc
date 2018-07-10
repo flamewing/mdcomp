@@ -39,11 +39,11 @@ public:
 		if (Size == 0) {
 			return;
 		}
-		unsigned char cc = Read1(Src);
+		uint8_t cc = Read1(Src);
 		Write1(Dst, cc);
 		Size--;
 		while (Size > 0) {
-			unsigned char nc = Read1(Src);
+			uint8_t nc = Read1(Src);
 			Write1(Dst, nc);
 			Size--;
 			if (cc == nc) {
@@ -70,10 +70,10 @@ public:
 		size_t Size = Src.gcount();
 		Src.seekg(pos);
 		BigEndian::Write2(Dst, Size);
-		unsigned char cc = Read1(Src);
+		uint8_t cc = Read1(Src);
 		while (Src.good()) {
 			Write1(Dst, cc);
-			unsigned char nc = Read1(Src);
+			uint8_t nc = Read1(Src);
 			if (!Src.good()) {
 				break;
 			}
@@ -98,7 +98,7 @@ bool snkrle::decode(istream &Src, ostream &Dst) {
 	return true;
 }
 
-bool snkrle::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
+bool snkrle::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) {
 	stringstream Src(ios::in | ios::out | ios::binary);
 	Src.write(reinterpret_cast<char const*>(data), Size);
 	Src.seekg(0);

@@ -111,8 +111,8 @@ public:
  * The template parameter is an adaptor class/structure with the following
  * members:
  *  struct LZSSAdaptor {
- *  	using stream_t     = unsigned char;
- *  	using descriptor_t = unsigned short;
+ *  	using stream_t     = uint8_t;
+ *  	using descriptor_t = uint16_t;
  *  	using descriptor_endian_t = LittleEndian;
  *  	enum class EdgeType : size_t {
  *  		invalid,
@@ -222,7 +222,7 @@ private:
 	}
 public:
 	// Constructor: creates the graph from the input file.
-	LZSSGraph(unsigned char const *dt, size_t const size) noexcept
+	LZSSGraph(uint8_t const *dt, size_t const size) noexcept
 		: data(reinterpret_cast<stream_t const *>(dt)),
 		  nlen(size / sizeof(stream_t)) {
 		// Making space for all nodes.
@@ -419,7 +419,7 @@ public:
 		return bits.pop();
 	}
 	// Puts a byte in the input buffer.
-	unsigned char getbyte() noexcept {
+	uint8_t getbyte() noexcept {
 		return Read1(in);
 	}
 };

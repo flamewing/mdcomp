@@ -48,7 +48,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
 	Src.ignore(std::numeric_limits<std::streamsize>::max());
 	size_t FullSize = Src.gcount();
 	Src.seekg(Start);
-	std::vector<unsigned char> data;
+	std::vector<uint8_t> data;
 	if (Pad == PadMode::PadEven) {
 		data.resize(FullSize + (FullSize & 1));
 	} else {

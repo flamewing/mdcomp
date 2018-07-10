@@ -31,7 +31,7 @@ using moduled_comper = ModuledAdaptor<comper, 4096u, 1u>;
 class comper : public basic_comper, public moduled_comper {
 	friend basic_comper;
 	friend moduled_comper;
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
+	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
 public:
 	using basic_comper::encode;
 	static bool decode(std::istream &Src, std::iostream &Dst);

@@ -46,7 +46,7 @@ namespace {	// anonymous
 template<typename T>
 static T reverseBits(T val) noexcept {
 #ifdef __GNUC__
-	unsigned int sz = CHAR_BIT; // bit size; must be power of 2
+	size_t sz = CHAR_BIT; // bit size; must be power of 2
 	T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
 	if (sizeof(T) == 2) {
 		val = __builtin_bswap16(val);
@@ -56,7 +56,7 @@ static T reverseBits(T val) noexcept {
 		val = __builtin_bswap64(val);
 	}
 #else
-	unsigned int sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
+	size_t sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
 	T mask = ~T(0);
 #endif
 	while ((sz >>= 1) > 0) {
@@ -74,7 +74,7 @@ template <typename T, bool EarlyRead, bool LittleEndianBits = false,
 class ibitstream {
 private:
 	std::istream &src;
-	int readbits;
+	size_t readbits;
 	T bitbuffer;
 	size_t read() noexcept {
 		return Endian::template ReadN<std::istream &, sizeof(T)>(src);
@@ -117,13 +117,13 @@ public:
 	// Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers previously
 	// read bits, and gets another T from the actual stream once all bits in the
 	// current T have been read.
-	T read(unsigned char const cnt) noexcept {
+	T read(uint8_t const cnt) noexcept {
 		if (!EarlyRead) {
 			check_buffer();
 		}
 		T bits;
 		if (readbits < cnt) {
-			int delta = (cnt - readbits);
+			size_t delta = (cnt - readbits);
 			bits = bitbuffer << delta;
 			bitbuffer = read_bits();
 			readbits = (sizeof(T) * CHAR_BIT) - delta;
@@ -140,7 +140,7 @@ public:
 		}
 		return bits;
 	}
-	int have_waiting_bits() const noexcept {
+	size_t have_waiting_bits() const noexcept {
 		return readbits;
 	}
 };
@@ -151,7 +151,7 @@ template <typename T, bool LittleEndianBits = false,
 class obitstream {
 private:
 	std::ostream &dst;
-	unsigned int waitingbits;
+	size_t waitingbits;
 	T bitbuffer;
 	void write(T const c) noexcept {
 		Endian::template WriteN<std::ostream &, sizeof(T)>(dst, c);
@@ -178,9 +178,9 @@ public:
 	// Writes up to sizeof(T) * CHAR_BIT bits to the stream. This remembers previously
 	// written bits, and outputs a T to the actual stream once there are at
 	// least sizeof(T) * CHAR_BIT bits stored in the buffer.
-	bool write(T const data, unsigned char const size) noexcept {
+	bool write(T const data, uint8_t const size) noexcept {
 		if (waitingbits + size >= sizeof(T) * CHAR_BIT) {
-			int delta = (sizeof(T) * CHAR_BIT - waitingbits);
+			size_t delta = (sizeof(T) * CHAR_BIT - waitingbits);
 			waitingbits = (waitingbits + size) % (sizeof(T) * CHAR_BIT);
 			T bits = (bitbuffer << delta) | (data >> waitingbits);
 			write_bits(bits);
@@ -203,7 +203,7 @@ public:
 		}
 		return false;
 	}
-	int have_waiting_bits() const noexcept {
+	size_t have_waiting_bits() const noexcept {
 		return waitingbits;
 	}
 };

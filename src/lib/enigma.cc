@@ -48,16 +48,16 @@ public:
 	base_flag_io &operator=(base_flag_io &&other) noexcept = default;
 	virtual ~base_flag_io() = default;
 	static unique_ptr<base_flag_io> create(size_t const n);
-	virtual unsigned short read_bitfield(EniIBitstream &bits) const = 0;
-	virtual void write_bitfield(EniOBitstream &bits, unsigned short const flags) const = 0;
+	virtual uint16_t read_bitfield(EniIBitstream &bits) const = 0;
+	virtual void write_bitfield(EniOBitstream &bits, uint16_t const flags) const = 0;
 };
 
 // Templated for blazing speed.
-template<int const N>
+template<size_t const N>
 class flag_io : public base_flag_io {
 public:
-	unsigned short read_bitfield(EniIBitstream &bits) const override {
-		unsigned short flags = 0;
+	uint16_t read_bitfield(EniIBitstream &bits) const override {
+		uint16_t flags = 0;
 		if ((N & (1 << 4)) != 0) {
 			flags |= bits.pop() << 15;
 		}
@@ -75,7 +75,7 @@ public:
 		}
 		return flags;
 	}
-	void write_bitfield(EniOBitstream &bits, unsigned short const flags) const override {
+	void write_bitfield(EniOBitstream &bits, uint16_t const flags) const override {
 		if ((N & (1 << 4)) != 0) {
 			bits.push((flags >> 15) & 1);
 		}
@@ -168,16 +168,16 @@ unique_ptr<base_flag_io> base_flag_io::create(size_t const n) {
 }
 
 // Blazing fast function that gives the index of the MSB.
-static inline unsigned char slog2(unsigned short v) {
-	unsigned char r; // result of slog2(v) will go here
-	unsigned char shift;
+static inline uint8_t slog2(uint16_t v) {
+	uint8_t r; // result of slog2(v) will go here
+	uint8_t shift;
 
-	r = static_cast<int>(v > 0xFF) << 3;
+	r = static_cast<size_t>(v > 0xFF) << 3;
 	v >>= r;
-	shift = static_cast<int>(v > 0xF) << 2;
+	shift = static_cast<size_t>(v > 0xF) << 2;
 	v >>= shift;
 	r |= shift;
-	shift = static_cast<int>(v > 0x3) << 1;
+	shift = static_cast<size_t>(v > 0x3) << 1;
 	v >>= shift;
 	r |= shift;
 	r |= (v >> 1);
@@ -186,17 +186,17 @@ static inline unsigned char slog2(unsigned short v) {
 
 // Comparison functor, see below.
 struct Compare_count {
-	bool operator()(pair<unsigned short const, size_t> &it1,
-	                pair<unsigned short const, size_t> &it2) {
+	bool operator()(pair<uint16_t const, size_t> &it1,
+	                pair<uint16_t const, size_t> &it2) {
 		return (it1.second < it2.second);
 	}
 };
 
 // This flushes (if needed) the contents of the inlined data buffer.
-static inline void flush_buffer(vector<unsigned short> &buf,
+static inline void flush_buffer(vector<uint16_t> &buf,
                                 EniOBitstream &bits,
                                 unique_ptr<base_flag_io> &mask,
-                                unsigned short const packet_length) {
+                                uint16_t const packet_length) {
 	if (buf.empty()) {
 		return;
 	}
@@ -225,20 +225,20 @@ public:
 		size_t incrementing_value = BigEndian::Read2(in);
 		size_t const common_value = BigEndian::Read2(in);
 
-		ibitstream<unsigned short, true> bits(in);
+		ibitstream<uint16_t, true> bits(in);
 		constexpr static int const modeDeltaLUT[] = {0, 1, -1};
 
 		// Lets put in a safe termination condition here.
 		while (in.good()) {
 			if (bits.pop() != 0u) {
-				int const mode = bits.read(2);
+				size_t const mode = bits.read(2);
 				switch (mode) {
 					case 2:
 					case 1:
 					case 0: {
 						size_t const cnt = bits.read(4) + 1;
-						unsigned short const flags = mask->read_bitfield(bits);
-						unsigned short outv = bits.read(packet_length);
+						uint16_t const flags = mask->read_bitfield(bits);
+						uint16_t outv = bits.read(packet_length);
 						outv |= flags;
 
 						for (size_t i = 0; i < cnt; i++) {
@@ -255,8 +255,8 @@ public:
 						}
 
 						for (size_t i = 0; i <= cnt; i++) {
-							unsigned short flags = mask->read_bitfield(bits),
-								           outv  = bits.read(packet_length);
+							uint16_t flags = mask->read_bitfield(bits),
+								     outv  = bits.read(packet_length);
 							BigEndian::Write2(Dst, outv | flags);
 						}
 						break;
@@ -280,18 +280,18 @@ public:
 
 	static void encode(std::istream &Src, std::ostream &Dst) {
 		// To unpack source into 2-byte words.
-		vector<unsigned short> unpack;
+		vector<uint16_t> unpack;
 		// Frequency map.
-		map<unsigned short, size_t> counts;
+		map<uint16_t, size_t> counts;
 		// Presence map.
-		set<unsigned short> elems;
+		set<uint16_t> elems;
 
 		// Unpack source into array. Along the way, build frequency and presence maps.
-		unsigned short maskval = 0;
+		uint16_t maskval = 0;
 		Src.clear();
 		Src.seekg(0);
 		while (true) {
-			unsigned short v = BigEndian::Read2(Src);
+			uint16_t v = BigEndian::Read2(Src);
 			if (!Src.good()) {
 				break;
 			}
@@ -302,19 +302,19 @@ public:
 		}
 
 		auto mask = base_flag_io::create(maskval >> 11);
-		unsigned short const packet_length = slog2(maskval & 0x7ff) + 1;
+		uint16_t const packet_length = slog2(maskval & 0x7ff) + 1;
 
 		// Find the most common 2-byte value.
 		Compare_count cmp;
 		auto high = max_element(counts.begin(), counts.end(), cmp);
-		unsigned short const common_value = high->first;
+		uint16_t const common_value = high->first;
 		// No longer needed.
 		counts.clear();
 
 		// Find incrementing (not neccessarily contiguous) runs.
 		// The original algorithm does this for all 65536 2-byte words, while
 		// this version only checks the 2-byte words actually in the file.
-		map<unsigned short, size_t> runs;
+		map<uint16_t, size_t> runs;
 		for (auto next : elems) {
 			auto val = runs.emplace(next, 0).first;
 			for (auto & elem : unpack) {
@@ -329,7 +329,7 @@ public:
 
 		// Find the starting 2-byte value with the longest incrementing run.
 		auto incr = max_element(runs.begin(), runs.end(), cmp);
-		unsigned short incrementing_value = incr->first;
+		uint16_t incrementing_value = incr->first;
 		// No longer needed.
 		runs.clear();
 
@@ -341,13 +341,13 @@ public:
 
 		// Time now to compress the file.
 		EniOBitstream bits(Dst);
-		vector<unsigned short> buf;
+		vector<uint16_t> buf;
 		size_t pos = 0;
 		while (pos < unpack.size()) {
-			unsigned short const v = unpack[pos];
+			uint16_t const v = unpack[pos];
 			if (v == incrementing_value) {
 				flush_buffer(buf, bits, mask, packet_length);
-				unsigned short next = v + 1;
+				uint16_t next = v + 1;
 				size_t cnt = 0;
 				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
 					if (next != unpack[i]) {
@@ -361,7 +361,7 @@ public:
 				pos += cnt;
 			} else if (v == common_value) {
 				flush_buffer(buf, bits, mask, packet_length);
-				unsigned short next = v;
+				uint16_t next = v;
 				size_t cnt = 0;
 				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
 					if (next != unpack[i]) {
@@ -372,7 +372,7 @@ public:
 				bits.write(0x10 | cnt, 6);
 				pos += cnt;
 			} else {
-				unsigned short next = unpack[pos + 1];
+				uint16_t next = unpack[pos + 1];
 				int delta = int(next) - int(v);
 				if (pos + 1 < unpack.size() && next != incrementing_value &&
 					    (delta == -1 || delta == 0 || delta == 1)) {
@@ -425,7 +425,7 @@ bool enigma::encode(istream &Src, ostream &Dst) {
 	return true;
 }
 
-bool enigma::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
+bool enigma::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) {
 	stringstream Src(ios::in | ios::out | ios::binary);
 	Src.write(reinterpret_cast<char const*>(data), Size);
 	Src.seekg(0);

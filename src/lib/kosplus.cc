@@ -37,8 +37,8 @@ size_t moduled_kosplus::PadMaskBits = 1u;
 class kosplus_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosPlusAdaptor {
-		using stream_t = unsigned char;
-		using descriptor_t = unsigned char;
+		using stream_t = uint8_t;
+		using descriptor_t = uint8_t;
 		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {
 			invalid,
@@ -183,7 +183,7 @@ public:
 				for (size_t i = 0; i < Count; i++) {
 					size_t Pointer = Dst.tellp();
 					Dst.seekg(Pointer - distance);
-					unsigned char Byte = Read1(Dst);
+					uint8_t Byte = Read1(Dst);
 					Dst.seekp(Pointer);
 					Write1(Dst, Byte);
 				}
@@ -191,7 +191,7 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
+	static void encode(ostream &Dst, uint8_t const *&Data, size_t const Size) {
 		using EdgeType = typename KosPlusAdaptor::EdgeType;
 		using KosGraph = LZSSGraph<KosPlusAdaptor>;
 		using KosOStream = LZSSOStream<KosPlusAdaptor>;
@@ -265,7 +265,7 @@ bool kosplus::decode(istream &Src, iostream &Dst) {
 	return true;
 }
 
-bool kosplus::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+bool kosplus::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	kosplus_internal::encode(Dst, data, Size);
 	return true;
 }

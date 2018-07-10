@@ -38,8 +38,8 @@ size_t moduled_rocket::PadMaskBits = 1u;
 class rocket_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct RocketAdaptor {
-		using stream_t = unsigned char;
-		using descriptor_t = unsigned char;
+		using stream_t = uint8_t;
+		using descriptor_t = uint8_t;
 		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {
 			invalid,
@@ -181,7 +181,7 @@ public:
 		while (in.good() && in.tellg() < Size) {
 			if (src.descbit() != 0u) {
 				// Symbolwise match.
-				unsigned char const Byte = Read1(in);
+				uint8_t const Byte = Read1(in);
 				Write1(Dst, Byte);
 			} else {
 				// Dictionary match.
@@ -203,7 +203,7 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
+	static void encode(ostream &Dst, uint8_t const *&Data, size_t const Size) {
 		using EdgeType = typename RocketAdaptor::EdgeType;
 		using RockGraph = LZSSGraph<RocketAdaptor>;
 		using RockOStream = LZSSOStream<RocketAdaptor>;
@@ -252,7 +252,7 @@ bool rocket::decode(istream &Src, iostream &Dst) {
 	return true;
 }
 
-bool rocket::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+bool rocket::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	// Internal buffer.
 	stringstream outbuff(ios::in | ios::out | ios::binary);
 	rocket_internal::encode(outbuff, data, Size);

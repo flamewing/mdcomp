@@ -37,7 +37,7 @@ size_t moduled_kosinski::PadMaskBits = 1u;
 class kosinski_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct KosinskiAdaptor {
-		using stream_t = unsigned char;
+		using stream_t = uint8_t;
 		using descriptor_t = uint16_t;
 		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {
@@ -186,7 +186,7 @@ public:
 				for (size_t i = 0; i < Count; i++) {
 					size_t Pointer = Dst.tellp();
 					Dst.seekg(Pointer - distance);
-					unsigned char Byte = Read1(Dst);
+					uint8_t Byte = Read1(Dst);
 					Dst.seekp(Pointer);
 					Write1(Dst, Byte);
 				}
@@ -194,7 +194,7 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *Data, size_t const Size) {
+	static void encode(ostream &Dst, uint8_t const *Data, size_t const Size) {
 		using EdgeType = typename KosinskiAdaptor::EdgeType;
 		using KosGraph = LZSSGraph<KosinskiAdaptor>;
 		using KosOStream = LZSSOStream<KosinskiAdaptor>;
@@ -268,7 +268,7 @@ bool kosinski::decode(istream &Src, iostream &Dst) {
 	return true;
 }
 
-bool kosinski::encode(ostream &Dst, unsigned char const *data, size_t const Size) {
+bool kosinski::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	kosinski_internal::encode(Dst, data, Size);
 	return true;
 }

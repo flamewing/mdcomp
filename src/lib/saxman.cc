@@ -38,8 +38,8 @@ size_t moduled_saxman::PadMaskBits = 1u;
 class saxman_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct SaxmanAdaptor {
-		using stream_t = unsigned char;
-		using descriptor_t = unsigned char;
+		using stream_t = uint8_t;
+		using descriptor_t = uint8_t;
 		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {
 			invalid,
@@ -176,7 +176,7 @@ public:
 					for (size_t src = offset; src < offset + length; src++) {
 						size_t const Pointer = Dst.tellp();
 						Dst.seekg(src);
-						unsigned char const Byte = Read1(Dst);
+						uint8_t const Byte = Read1(Dst);
 						Dst.seekp(Pointer);
 						Write1(Dst, Byte);
 					}
@@ -190,7 +190,7 @@ public:
 		}
 	}
 
-	static void encode(ostream &Dst, unsigned char const *&Data, size_t const Size) {
+	static void encode(ostream &Dst, uint8_t const *&Data, size_t const Size) {
 		using EdgeType = typename SaxmanAdaptor::EdgeType;
 		using SaxGraph = LZSSGraph<SaxmanAdaptor>;
 		using SaxOStream = LZSSOStream<SaxmanAdaptor>;
@@ -243,7 +243,7 @@ bool saxman::decode(istream &Src, iostream &Dst, size_t Size) {
 	return true;
 }
 
-bool saxman::encode(ostream &Dst, unsigned char const *data, size_t const Size, bool const WithSize) {
+bool saxman::encode(ostream &Dst, uint8_t const *data, size_t const Size, bool const WithSize) {
 	stringstream outbuff(ios::in | ios::out | ios::binary);
 	size_t Start = outbuff.tellg();
 	saxman_internal::encode(outbuff, data, Size);

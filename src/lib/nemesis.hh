@@ -32,7 +32,7 @@ using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
 class nemesis : public basic_nemesis, public moduled_nemesis {
 	friend basic_nemesis;
 	friend moduled_nemesis;
-	static bool encode(std::ostream &Dst, unsigned char const *data, size_t const Size);
+	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
 public:
 	static bool encode(std::istream &Src, std::ostream &Dst);
 	static bool decode(std::istream &Src, std::ostream &Dst);

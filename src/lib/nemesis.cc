@@ -41,12 +41,12 @@ using namespace std;
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
-	unsigned char nibble{0};   // Nibble we are interested in.
-	unsigned char count{0};    // How many times the nibble is repeated.
+	uint8_t nibble{0};   // Nibble we are interested in.
+	uint8_t count{0};    // How many times the nibble is repeated.
 public:
 	// Constructors.
 	nibble_run() noexcept = default;
-	nibble_run(unsigned char n, unsigned char c) noexcept : nibble(n), count(c) {
+	nibble_run(uint8_t n, uint8_t c) noexcept : nibble(n), count(c) {
 	}
 	nibble_run(nibble_run const &other) noexcept = default;
 	nibble_run(nibble_run &&other) noexcept = default;
@@ -68,16 +68,16 @@ public:
 		return !(*this == other);
 	}
 	// Getters/setters for all properties.
-	unsigned char get_nibble() const noexcept {
+	uint8_t get_nibble() const noexcept {
 		return nibble;
 	}
-	unsigned char get_count() const noexcept {
+	uint8_t get_count() const noexcept {
 		return count;
 	}
-	void set_nibble(unsigned char const tf) noexcept {
+	void set_nibble(uint8_t const tf) noexcept {
 		nibble = tf;
 	}
-	void set_count(unsigned char const tf) noexcept {
+	void set_count(uint8_t const tf) noexcept {
 		count = tf;
 	}
 };
@@ -85,8 +85,8 @@ public:
 struct SizeFreqNibble {
 	size_t count{0};
 	nibble_run nibble;
-	unsigned char codelen{0};
-	SizeFreqNibble(size_t cnt, nibble_run const &nib, unsigned char const len) noexcept
+	uint8_t codelen{0};
+	SizeFreqNibble(size_t cnt, nibble_run const &nib, uint8_t const len) noexcept
 		: count(cnt), nibble(nib), codelen(len) {
 	}
 	SizeFreqNibble() noexcept = default;
@@ -99,11 +99,11 @@ struct SizeFreqNibble {
 
 struct Code {
 	size_t code;
-	unsigned char len;
+	uint8_t len;
 	bool operator<(Code const &rhs) const noexcept {
 		return code < rhs.code || (code == rhs.code && len < rhs.len);
 	}
-	Code(size_t const c, unsigned char const l) noexcept : code(c), len(l) {  }
+	Code(size_t const c, uint8_t const l) noexcept : code(c), len(l) {  }
 	Code() noexcept = default;
 	Code(Code const &other) noexcept = default;
 	Code(Code &&other) noexcept = default;
@@ -112,7 +112,7 @@ struct Code {
 	~Code() noexcept = default;
 };
 
-using CodeSizeMap = map<nibble_run, unsigned char>;
+using CodeSizeMap = map<nibble_run, uint8_t>;
 using RunCountMap = map<nibble_run, size_t>;
 using NibbleCodeMap = map<nibble_run, Code>;
 using CodeNibbleMap = map<Code, nibble_run>;
@@ -123,11 +123,11 @@ using CodeNibbleMap = map<Code, nibble_run>;
 class node : public enable_shared_from_this<node> {
 private:
 	shared_ptr<node> child0, child1;
-	int weight;
+	size_t weight;
 	nibble_run value;
 public:
 	// Construct a new leaf node for character c.
-	node(nibble_run const &val, int const wgt) noexcept
+	node(nibble_run const &val, size_t const wgt) noexcept
 		: weight(wgt), value(val) {
 	}
 	// Construct a new internal node that has children c1 and c2.
@@ -168,7 +168,7 @@ public:
 	shared_ptr<node const> get_child1() const noexcept {
 		return child1;
 	}
-	int get_weight() const noexcept {
+	size_t get_weight() const noexcept {
 		return weight;
 	}
 	nibble_run const &get_value() const noexcept {
@@ -180,7 +180,7 @@ public:
 	void set_child1(shared_ptr<node> c1) noexcept {
 		child1 = std::move(c1);
 	}
-	void set_weight(int w) noexcept {
+	void set_weight(size_t w) noexcept {
 		weight = w;
 	}
 	void set_value(nibble_run const &v) noexcept {
@@ -325,7 +325,7 @@ public:
 			nibble_run const run(out_val, ((in_val & 0x70) >> 4) + 1);
 
 			size_t const code = Read1(Src);
-			unsigned const char len = in_val & 0xf;
+			uint8_t const len = in_val & 0xf;
 			// Read the run's code from stream.
 			codemap[Code {code, len}] = run;
 		}
@@ -338,10 +338,10 @@ public:
 		stringstream dst(ios::in | ios::out | ios::binary);
 
 		// Set bit I/O streams.
-		ibitstream<unsigned char, true> bits(Src);
-		obitstream<unsigned char> out(dst);
+		ibitstream<uint8_t, true> bits(Src);
+		obitstream<uint8_t> out(dst);
 		size_t code = bits.pop();
-		unsigned char len = 1;
+		uint8_t len = 1;
 
 		// When to stop decoding: number of tiles * $20 bytes per tile * 8 bits per byte.
 		size_t total_bits = rtiles << 8, bits_written = 0;
@@ -485,7 +485,7 @@ public:
 						// in the supplementary codemap, which will later be merged
 						// into the main codemap.
 						size_t code = (it2->second).code;
-						unsigned char len = (it2->second).len;
+						uint8_t len = (it2->second).len;
 						code = (code << len) | code;
 						len <<= 1;
 						tempsize_est += len * count.second;
@@ -556,7 +556,7 @@ public:
 							break;
 					}
 
-					unsigned char const nibble = count.first.get_nibble();
+					uint8_t const nibble = count.first.get_nibble();
 					// Vector containing the code length of each nibble run, or 13
 					// if the nibble run is not in the codemap.
 					vector<size_t> runlen;
@@ -630,7 +630,7 @@ public:
 						} else {
 							// By construction, best_size is at most 12.
 							// Flag it as a false code.
-							unsigned char const len = best_size | 0x80;
+							uint8_t const len = best_size | 0x80;
 							// Add it to supplementary code map.
 							supcodemap[count.first] = Code {code, len};
 							tempsize_est += best_size * count.second;
@@ -651,13 +651,13 @@ public:
 	}
 
 	template <typename Compare>
-	static size_t encode(istream &Src, ostream &Dst, int mode,
+	static size_t encode(istream &Src, ostream &Dst, size_t mode,
 		                            size_t const sz, Compare const &comp) {
 		// Seek to start and clear all errors.
 		Src.clear();
 		Src.seekg(0);
 		// Unpack source so we don't have to deal with nibble IO after.
-		vector<unsigned char> unpack;
+		vector<uint8_t> unpack;
 		for (size_t i = 0; i < sz; i++) {
 			size_t const c = Read1(Src);
 			unpack.push_back((c & 0xf0) >> 4);
@@ -730,10 +730,10 @@ public:
 			NodeVector solution;
 			// This holds the packages from the last iteration.
 			CoinQueue q(q0);
-			int target = (q0.size() - 1) << 8, idx = 0;
+			size_t target = (q0.size() - 1) << 8, idx = 0;
 			while (target != 0) {
 				// Gets lowest bit set in its proper place:
-				int val = (target & -target), r = 1 << idx;
+				size_t val = (target & -target), r = 1 << idx;
 				// Is the current denomination equal to the least denomination?
 				if (r == val) {
 					// If yes, take the least valuable node and put it into the solution.
@@ -789,7 +789,7 @@ public:
 			using SizeSet = multiset<SizeFreqNibble, Compare_size>;
 			SizeSet sizemap;
 			for (auto & elem : basesizemap) {
-				unsigned char size = elem.second;
+				uint8_t size = elem.second;
 				size_t count = counts[elem.first];
 				sizecounts[size - 1]++;
 				sizemap.emplace(count, elem.first, size);
@@ -803,7 +803,7 @@ public:
 			size_t base = 0, carry = 0, cnt;
 			// This vector contains the codes sorted by size.
 			vector<Code> codes;
-			for (unsigned char i = 1; i <= 8; i++) {
+			for (uint8_t i = 1; i <= 8; i++) {
 				// How many nibble runs have the desired bit length.
 				cnt = sizecounts[i - 1] + carry;
 				carry = 0;
@@ -869,11 +869,11 @@ public:
 		// runs with their code. Now we write the file.
 		// Write header.
 		BigEndian::Write2(Dst, (mode << 15) | (sz >> 5));
-		unsigned char lastnibble = 0xff;
+		uint8_t lastnibble = 0xff;
 		for (auto & elem : codemap) {
 			nibble_run const &run = elem.first;
 			size_t const code = (elem.second).code;
-			unsigned char len = (elem.second).len;
+			uint8_t len = (elem.second).len;
 			// len with bit 7 set is a special device for further reducing file size, and
 			// should NOT be on the table.
 			if ((len & 0x80) != 0) {
@@ -893,7 +893,7 @@ public:
 		Write1(Dst, 0xff);
 
 		// Time to write the encoded bitstream.
-		obitstream<unsigned char> bits(Dst);
+		obitstream<uint8_t> bits(Dst);
 
 		// The RLE-encoded source makes for a far faster encode as we simply
 		// use the nibble runs as an index into the map, meaning a quick binary
@@ -903,7 +903,7 @@ public:
 			auto val = codemap.find(run);
 			if (val != codemap.end()) {
 				size_t const code = (val->second).code;
-				unsigned char len = (val->second).len;
+				uint8_t len = (val->second).len;
 				// len with bit 7 set is a device to bypass the code table at the
 				// start of the file. We need to clear the bit here before writing
 				// the code to the file.
@@ -912,10 +912,10 @@ public:
 				// inlined runs into smaller non-inlined runs. Deal with those high
 				// bits first, if needed.
 				if (len > 8) {
-					bits.write(static_cast<unsigned char>((code >> 8) & 0xff), len - 8);
+					bits.write(static_cast<uint8_t>((code >> 8) & 0xff), len - 8);
 					len = 8;
 				}
-				bits.write(static_cast<unsigned char>(code & 0xff), len);
+				bits.write(static_cast<uint8_t>(code & 0xff), len);
 			} else {
 				bits.write(0x3f, 6);
 				bits.write(run.get_count(), 3);
@@ -992,7 +992,7 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	return true;
 }
 
-bool nemesis::encode(std::ostream &Dst, unsigned char const *data, size_t const Size) {
+bool nemesis::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) {
 	stringstream Src(ios::in | ios::out | ios::binary);
 	Src.write(reinterpret_cast<char const*>(data), Size);
 	Src.seekg(0);
