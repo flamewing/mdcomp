@@ -19,152 +19,110 @@
  */
 
 #include <algorithm>
+#include <array>
+#include <functional>
 #include <iostream>
 #include <istream>
 #include <map>
-#include <memory>
 #include <ostream>
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "enigma.hh"
 #include "bigendian_io.hh"
 #include "bitstream.hh"
+#include "ignore_unused_variable_warning.hh"
 
 using namespace std;
 
 using EniIBitstream = ibitstream<uint16_t, true>;
 using EniOBitstream = obitstream<uint16_t>;
 
-// Pure virtual base class.
+template <typename R, typename... Args>
 class base_flag_io {
 public:
-	base_flag_io() noexcept = default;
-	base_flag_io(base_flag_io const &other) noexcept = default;
-	base_flag_io(base_flag_io &&other) noexcept = default;
-	base_flag_io &operator=(base_flag_io const &other) noexcept = default;
-	base_flag_io &operator=(base_flag_io &&other) noexcept = default;
-	virtual ~base_flag_io() = default;
-	static unique_ptr<base_flag_io> create(size_t const n);
-	virtual uint16_t read_bitfield(EniIBitstream &bits) const = 0;
-	virtual void write_bitfield(EniOBitstream &bits, uint16_t const flags) const = 0;
+	using Callback_t = R(Args...);
+	struct tag {};
+	static const base_flag_io& get(size_t const n);
+	constexpr base_flag_io(Callback_t callback_) noexcept
+	: callback(callback_) {}
+	constexpr base_flag_io(base_flag_io const &other) noexcept = default;
+	constexpr base_flag_io(base_flag_io &&other) noexcept = default;
+	constexpr base_flag_io &operator=(base_flag_io const &other) noexcept = default;
+	constexpr base_flag_io &operator=(base_flag_io &&other) noexcept = default;
+	template <typename... Ts>
+	R operator()(Ts&&... args) const {
+		return this->callback(forward<Ts>(args)...);
+	}
+private:
+	Callback_t* callback;
 };
 
-// Templated for blazing speed.
-template<size_t const N>
-class flag_io : public base_flag_io {
-public:
-	uint16_t read_bitfield(EniIBitstream &bits) const override {
-		uint16_t flags = 0;
-		if ((N & (1 << 4)) != 0) {
-			flags |= bits.pop() << 15;
+using flag_reader = base_flag_io<uint16_t, EniIBitstream &>;
+using flag_writer = base_flag_io<void, EniOBitstream&, uint16_t>;
+
+template <size_t N, int I>
+struct read_bitfield_helper {
+	uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
+		if ((N & (1 << I)) != 0) {
+			flags |= bits.pop() << (I + 11);
 		}
-		if ((N & (1 << 3)) != 0) {
-			flags |= bits.pop() << 14;
-		}
-		if ((N & (1 << 2)) != 0) {
-			flags |= bits.pop() << 13;
-		}
-		if ((N & (1 << 1)) != 0) {
-			flags |= bits.pop() << 12;
-		}
-		if ((N & (1 << 0)) != 0) {
-			flags |= bits.pop() << 11;
-		}
+		return read_bitfield_helper<N, I - 1>{}(bits, flags);
+	}
+};
+
+template <size_t N>
+struct read_bitfield_helper<N, -1> {
+	uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
+		ignore_unused_variable_warning(bits, flags);
 		return flags;
 	}
-	void write_bitfield(EniOBitstream &bits, uint16_t const flags) const override {
-		if ((N & (1 << 4)) != 0) {
-			bits.push((flags >> 15) & 1);
+};
+
+template <size_t N>
+uint16_t read_bitfield(EniIBitstream& bits) {
+	return read_bitfield_helper<N, 4>{}(bits, 0);
+}
+
+template <size_t N, int I>
+struct write_bitfield_helper {
+	void operator()(EniOBitstream &bits, uint16_t const flags) const {
+		if ((N & (1 << I)) != 0) {
+			bits.push((flags & (I + 11)) != 0);
 		}
-		if ((N & (1 << 3)) != 0) {
-			bits.push((flags >> 14) & 1);
-		}
-		if ((N & (1 << 2)) != 0) {
-			bits.push((flags >> 13) & 1);
-		}
-		if ((N & (1 << 1)) != 0) {
-			bits.push((flags >> 12) & 1);
-		}
-		if ((N & (1 << 0)) != 0) {
-			bits.push((flags >> 11) & 1);
-		}
+		write_bitfield_helper<N, I - 1>{}(bits, flags);
 	}
 };
 
-// Selects the appropriate template instance to be used.
-unique_ptr<base_flag_io> base_flag_io::create(size_t const n) {
-	switch ((n & 0x1F)) {
-		case 0x00:
-			return make_unique<flag_io<0x00>>();
-		case 0x01:
-			return make_unique<flag_io<0x01>>();
-		case 0x02:
-			return make_unique<flag_io<0x02>>();
-		case 0x03:
-			return make_unique<flag_io<0x03>>();
-		case 0x04:
-			return make_unique<flag_io<0x04>>();
-		case 0x05:
-			return make_unique<flag_io<0x05>>();
-		case 0x06:
-			return make_unique<flag_io<0x06>>();
-		case 0x07:
-			return make_unique<flag_io<0x07>>();
-		case 0x08:
-			return make_unique<flag_io<0x08>>();
-		case 0x09:
-			return make_unique<flag_io<0x09>>();
-		case 0x0a:
-			return make_unique<flag_io<0x0a>>();
-		case 0x0b:
-			return make_unique<flag_io<0x0b>>();
-		case 0x0c:
-			return make_unique<flag_io<0x0c>>();
-		case 0x0d:
-			return make_unique<flag_io<0x0d>>();
-		case 0x0e:
-			return make_unique<flag_io<0x0e>>();
-		case 0x0f:
-			return make_unique<flag_io<0x0f>>();
-		case 0x10:
-			return make_unique<flag_io<0x10>>();
-		case 0x11:
-			return make_unique<flag_io<0x11>>();
-		case 0x12:
-			return make_unique<flag_io<0x12>>();
-		case 0x13:
-			return make_unique<flag_io<0x13>>();
-		case 0x14:
-			return make_unique<flag_io<0x14>>();
-		case 0x15:
-			return make_unique<flag_io<0x15>>();
-		case 0x16:
-			return make_unique<flag_io<0x16>>();
-		case 0x17:
-			return make_unique<flag_io<0x17>>();
-		case 0x18:
-			return make_unique<flag_io<0x18>>();
-		case 0x19:
-			return make_unique<flag_io<0x19>>();
-		case 0x1a:
-			return make_unique<flag_io<0x1a>>();
-		case 0x1b:
-			return make_unique<flag_io<0x1b>>();
-		case 0x1c:
-			return make_unique<flag_io<0x1c>>();
-		case 0x1d:
-			return make_unique<flag_io<0x1d>>();
-		case 0x1e:
-			return make_unique<flag_io<0x1e>>();
-		case 0x1f:
-			return make_unique<flag_io<0x1f>>();
-		default:
-			cerr << "Divide By Cucumber Error. Please Reinstall Universe And Reboot." << endl;
-			return nullptr;
+template <size_t N>
+struct write_bitfield_helper<N, -1> {
+	void operator()(EniOBitstream &bits, uint16_t const flags) const {
+		ignore_unused_variable_warning(bits, flags);
 	}
+};
+
+template <size_t N>
+void write_bitfield(EniOBitstream &bits, uint16_t const flags) {
+	write_bitfield_helper<N, 4>{}(bits, flags);
+}
+
+template <std::size_t... I>
+constexpr auto createMaskArray(flag_reader::tag, std::index_sequence<I...>) {
+	return array<flag_reader, sizeof...(I)>{flag_reader(read_bitfield<I>)...};
+}
+
+template <std::size_t... I>
+constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
+	return array<flag_writer, sizeof...(I)>{flag_writer(write_bitfield<I>)...};
+}
+
+template <typename R, typename... Args>
+const base_flag_io<R, Args...>& base_flag_io<R, Args...>::get(size_t const n) {
+	constexpr static const auto Array = createMaskArray(tag{}, make_index_sequence<32>());
+	return Array[n];
 }
 
 // Blazing fast function that gives the index of the MSB.
@@ -195,7 +153,7 @@ struct Compare_count {
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(vector<uint16_t> &buf,
                                 EniOBitstream &bits,
-                                unique_ptr<base_flag_io> &mask,
+                                flag_writer &putMask,
                                 uint16_t const packet_length) {
 	if (buf.empty()) {
 		return;
@@ -203,7 +161,7 @@ static inline void flush_buffer(vector<uint16_t> &buf,
 
 	bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
 	for (const auto v : buf) {
-		mask->write_bitfield(bits, v);
+		putMask(bits, v);
 		bits.write(v & 0x7ff, packet_length);
 	}
 	buf.clear();
@@ -221,7 +179,7 @@ public:
 
 		// Read header.
 		size_t const packet_length = Read1(in);
-		auto mask = base_flag_io::create(Read1(in));
+		auto getMask = flag_reader::get(Read1(in));
 		size_t incrementing_value = BigEndian::Read2(in);
 		size_t const common_value = BigEndian::Read2(in);
 
@@ -237,7 +195,7 @@ public:
 					case 1:
 					case 0: {
 						size_t const cnt = bits.read(4) + 1;
-						uint16_t const flags = mask->read_bitfield(bits);
+						uint16_t const flags = getMask(bits);
 						uint16_t outv = bits.read(packet_length);
 						outv |= flags;
 
@@ -255,7 +213,7 @@ public:
 						}
 
 						for (size_t i = 0; i <= cnt; i++) {
-							uint16_t flags = mask->read_bitfield(bits),
+							uint16_t flags = getMask(bits),
 								     outv  = bits.read(packet_length);
 							BigEndian::Write2(Dst, outv | flags);
 						}
@@ -301,7 +259,7 @@ public:
 			unpack.push_back(v);
 		}
 
-		auto mask = base_flag_io::create(maskval >> 11);
+		auto putMask = flag_writer::get(maskval >> 11);
 		uint16_t const packet_length = slog2(maskval & 0x7ff) + 1;
 
 		// Find the most common 2-byte value.
@@ -346,7 +304,7 @@ public:
 		while (pos < unpack.size()) {
 			uint16_t const v = unpack[pos];
 			if (v == incrementing_value) {
-				flush_buffer(buf, bits, mask, packet_length);
+				flush_buffer(buf, bits, putMask, packet_length);
 				uint16_t next = v + 1;
 				size_t cnt = 0;
 				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
@@ -360,7 +318,7 @@ public:
 				incrementing_value = next;
 				pos += cnt;
 			} else if (v == common_value) {
-				flush_buffer(buf, bits, mask, packet_length);
+				flush_buffer(buf, bits, putMask, packet_length);
 				uint16_t next = v;
 				size_t cnt = 0;
 				for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
@@ -376,7 +334,7 @@ public:
 				int delta = int(next) - int(v);
 				if (pos + 1 < unpack.size() && next != incrementing_value &&
 					    (delta == -1 || delta == 0 || delta == 1)) {
-					flush_buffer(buf, bits, mask, packet_length);
+					flush_buffer(buf, bits, putMask, packet_length);
 					size_t cnt = 1;
 					next += delta;
 					for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++) {
@@ -393,12 +351,12 @@ public:
 
 					delta = ((delta | 4) << 4);
 					bits.write(delta | cnt, 7);
-					mask->write_bitfield(bits, v);
+					putMask(bits, v);
 					bits.write(v & 0x7ff, packet_length);
 					pos += cnt;
 				} else {
 					if (buf.size() >= 0xf) {
-						flush_buffer(buf, bits, mask, packet_length);
+						flush_buffer(buf, bits, putMask, packet_length);
 					}
 
 					buf.push_back(v);
@@ -407,7 +365,7 @@ public:
 			pos++;
 		}
 
-		flush_buffer(buf, bits, mask, packet_length);
+		flush_buffer(buf, bits, putMask, packet_length);
 
 		// Terminator.
 		bits.write(0x7f, 7);
