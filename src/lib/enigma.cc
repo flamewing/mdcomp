@@ -31,6 +31,11 @@
 #include <utility>
 #include <vector>
 
+#if defined(_MSC_VER)
+#include <intrin.h>  
+#pragma intrinsic(_BitScanReverse)  
+#endif
+
 #include "enigma.hh"
 #include "bigendian_io.hh"
 #include "bitstream.hh"
@@ -126,20 +131,31 @@ const base_flag_io<R, Args...>& base_flag_io<R, Args...>::get(size_t const n) {
 }
 
 // Blazing fast function that gives the index of the MSB.
-static inline uint8_t slog2(uint16_t v) {
-	uint8_t r; // result of slog2(v) will go here
-	uint8_t shift;
+constexpr int slog2(unsigned val) {
+#ifdef __GNUC__
+	return (sizeof(unsigned)*8u - 1u) ^ __builtin_clz(val);
+#elif defined(_MSC_VER)
+	unsigned long ret;
+	_BitScanReverse(&ret, val);
+	return ret;
+#else
+	unsigned ret = 0;
+	unsigned shift = 0;
 
-	r = static_cast<size_t>(v > 0xFF) << 3;
-	v >>= r;
-	shift = static_cast<size_t>(v > 0xF) << 2;
-	v >>= shift;
-	r |= shift;
-	shift = static_cast<size_t>(v > 0x3) << 1;
-	v >>= shift;
-	r |= shift;
-	r |= (v >> 1);
-	return r;
+	ret   = (val > 0xFFFF) << 4;
+	val >>= ret;
+	shift = (val > 0xFFu) << 3;
+	val >>= shift;
+	ret  |= shift;
+	shift = (val > 0xFu) << 2;
+	val >>= shift;
+	ret  |= shift;
+	shift = (val > 0x3u) << 1;
+	val >>= shift;
+	ret  |= shift;
+	ret  |= (val >> 1);
+	return ret;
+#endif
 }
 
 // Comparison functor, see below.
