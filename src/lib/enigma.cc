@@ -46,10 +46,10 @@ using namespace std;
 using EniIBitstream = ibitstream<uint16_t, true>;
 using EniOBitstream = obitstream<uint16_t>;
 
-template <typename R, typename... Args>
+template <typename Callback>
 class base_flag_io {
 public:
-	using Callback_t = R(Args...);
+	using Callback_t = Callback;
 	struct tag {};
 	static const base_flag_io& get(size_t const n);
 	constexpr base_flag_io(Callback_t callback_) noexcept
@@ -59,15 +59,15 @@ public:
 	constexpr base_flag_io &operator=(base_flag_io const &other) noexcept = default;
 	constexpr base_flag_io &operator=(base_flag_io &&other) noexcept = default;
 	template <typename... Ts>
-	R operator()(Ts&&... args) const {
+	auto operator()(Ts&&... args) const {
 		return this->callback(forward<Ts>(args)...);
 	}
 private:
 	Callback_t* callback;
 };
 
-using flag_reader = base_flag_io<uint16_t, EniIBitstream &>;
-using flag_writer = base_flag_io<void, EniOBitstream&, uint16_t>;
+using flag_reader = base_flag_io<uint16_t(EniIBitstream&)>;
+using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
 
 template <size_t N, int I>
 struct read_bitfield_helper {
@@ -124,8 +124,8 @@ constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
 	return array<flag_writer, sizeof...(I)>{flag_writer(write_bitfield<I>)...};
 }
 
-template <typename R, typename... Args>
-const base_flag_io<R, Args...>& base_flag_io<R, Args...>::get(size_t const n) {
+template <typename Callback>
+const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
 	constexpr static const auto Array = createMaskArray(tag{}, make_index_sequence<32>());
 	return Array[n];
 }
