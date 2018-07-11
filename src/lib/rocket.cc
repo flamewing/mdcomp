@@ -128,7 +128,7 @@ class rocket_internal {
 			diff_t ii = base - 1;
 			diff_t const slbound = basenode >= LookAheadBufSize ?
 			                       base - SearchBufSize : diff_t(LookAheadBufSize - SearchBufSize);
-			diff_t const subound = diff_t(ubound);
+			diff_t const subound = diff_t(ubound) - base;
 			do {
 				// Keep looking for dictionary matches.
 				diff_t jj = 0;

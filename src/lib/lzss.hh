@@ -105,6 +105,106 @@ public:
 	}
 };
 
+template <typename Adaptor>
+class SlidingWindow {
+public:
+	using EdgeType = typename Adaptor::EdgeType;
+	using stream_t = typename Adaptor::stream_t;
+	using Node_t = AdjListNode<Adaptor>;
+	using AdjList = std::list<Node_t>;
+	using MatchVector = std::vector<Node_t>;
+
+	SlidingWindow(uint8_t const *dt, size_t const size) noexcept
+		: data(reinterpret_cast<stream_t const *>(dt)),
+		  nlen(size / sizeof(stream_t)), basenode(0),
+		  ubound(basenode + getLookAheadBufSize()),
+		  lbound(basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0) {
+	}
+
+	size_t getDataSize() const {
+		return nlen;
+	}
+
+	size_t getSearchBufSize() const {
+		return basenode - lbound;
+	}
+
+	size_t getLookAheadBufSize() const {
+		return std::min(size_t(Adaptor::LookAheadBufSize), nlen - basenode);
+	}
+
+	size_t getWindowSize() const {
+		return ubound - lbound;
+	}
+
+	bool slideWindow() noexcept {
+		if (ubound != nlen) {
+			ubound++;
+		}
+		if (basenode != nlen) {
+			basenode++;
+		}
+		if (getSearchBufSize() > Adaptor::SearchBufSize) {
+			lbound++;
+		}
+		return getLookAheadBufSize() != 0;
+	}
+
+	MatchVector find_matches() const noexcept {
+		// This is what we produce.
+		MatchVector matches(ubound);
+		static_assert(noexcept(Adaptor::edge_weight(EdgeType())),
+		                       "Adaptor::edge_weight() is not noexcept");
+		static_assert(noexcept(Adaptor::match_type(basenode, basenode)),
+		                       "Adaptor::match_type() is not noexcept");
+		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
+		                       "Adaptor::extra_matches() is not noexcept");
+		// Start with the literal/symbolwise encoding of the current node.
+		EdgeType const ty = Adaptor::match_type(0, 1);
+		matches[0] = Node_t(basenode, data[basenode], ty);
+		// Get extra dictionary matches dependent on specific encoder.
+		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
+		// First node is special.
+		if (getSearchBufSize() == 0) {
+			return matches;
+		}
+		size_t ii = basenode - 1;
+		size_t const end = ubound - basenode;
+		do {
+			// Keep looking for dictionary matches.
+			size_t jj = 0;
+			while (data[ii + jj] == data[basenode + jj]) {
+				++jj;
+				// We have found a match that links (basenode) with
+				// (basenode + jj) with length (jj) and distance (basenode-ii).
+				// Add it to the list if it is a better match.
+				EdgeType const ty = Adaptor::match_type(basenode - ii, jj);
+				if (ty != EdgeType::invalid) {
+					size_t const wgt = Adaptor::edge_weight(ty);
+					Node_t &best = matches[jj - 1];
+					if (wgt < best.get_weight()) {
+						best = Node_t(basenode, basenode - ii, jj, wgt, ty);
+					}
+				}
+				// We can find no more matches with the current starting node.
+				if (jj >= end) {
+					break;
+				}
+			}
+		} while (ii-- > lbound);
+
+		return matches;
+	}
+
+private:
+	// Source file data and its size; one node per character in source file.
+	stream_t const *const data;
+	size_t const nlen;
+	size_t basenode;
+	size_t ubound;
+	size_t lbound;
+};
+
 /*
  * Graph structure for optimal LZSS encoding. This graph is a directed acyclic
  * graph (DAG) by construction, and is automatically sorted topologically.
@@ -160,83 +260,27 @@ public:
 	using Node_t = AdjListNode<Adaptor>;
 	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
+	using SlidingWindow_t = SlidingWindow<Adaptor>;
 private:
-	// Source file data and its size; one node per character in source file.
-	stream_t const *data;
-	size_t const nlen;
 	// Adjacency lists for all the nodes in the graph.
 	std::vector<AdjList> adjs;
-
-	/*
-	 * TODO: Improve speed with a smarter way to perform matches.
-	 * This is the main workhorse and bottleneck: it finds the least costly way
-	 * to reach all possible nodes reachable from the basenode and inserts them
-	 * into a map.
-	 */
-	MatchVector find_matches(size_t basenode) const noexcept {
-		static_assert(noexcept(Adaptor::edge_weight(EdgeType())),
-		                       "Adaptor::edge_weight() is not noexcept");
-		static_assert(noexcept(Adaptor::match_type(basenode, basenode)),
-		                       "Adaptor::match_type() is not noexcept");
-		// Upper and lower bounds for sliding window, starting node.
-		size_t const ubound = std::min(size_t(Adaptor::LookAheadBufSize), nlen - basenode),
-		             lbound = basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0;
-		size_t ii = basenode - 1;
-		// This is what we produce.
-		MatchVector matches(ubound);
-		// Start with the literal/symbolwise encoding of the current node.
-		EdgeType const ty = Adaptor::match_type(0, 1);
-		matches[0] = Node_t(basenode, data[basenode], ty);
-		// Get extra dictionary matches dependent on specific encoder.
-		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
-		                       "Adaptor::extra_matches() is not noexcept");
-		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
-		// First node is special.
-		if (basenode == 0) {
-			return matches;
-		}
-		do {
-			// Keep looking for dictionary matches.
-			size_t jj = 0;
-			while (data[ii + jj] == data[basenode + jj]) {
-				++jj;
-				// We have found a match that links (basenode) with
-				// (basenode + jj) with length (jj) and distance (basenode-ii).
-				// Add it to the list if it is a better match.
-				EdgeType const ty = Adaptor::match_type(basenode - ii, jj);
-				if (ty != EdgeType::invalid) {
-					size_t const wgt = Adaptor::edge_weight(ty);
-					Node_t &best = matches[jj - 1];
-					if (wgt < best.get_weight()) {
-						best = Node_t(basenode, basenode - ii, jj, wgt, ty);
-					}
-				}
-				// We can find no more matches with the current starting node.
-				if (jj >= ubound) {
-					break;
-				}
-			}
-		} while (ii-- > lbound);
-
-		return matches;
-	}
 public:
 	// Constructor: creates the graph from the input file.
-	LZSSGraph(uint8_t const *dt, size_t const size) noexcept
-		: data(reinterpret_cast<stream_t const *>(dt)),
-		  nlen(size / sizeof(stream_t)) {
+	LZSSGraph(uint8_t const *dt, size_t const size) noexcept {
 		// Making space for all nodes.
-		adjs.resize(nlen);
-		for (size_t ii = 0; ii < nlen; ii++) {
+		SlidingWindow_t win(dt, size);
+		adjs.reserve(win.getDataSize());
+		do {
 			// Find all matches for all subsequent nodes.
-			MatchVector const matches = find_matches(ii);
+			adjs.emplace_back();
+			MatchVector const matches = win.find_matches();
 			for (const auto & match : matches) {
 				// Insert the best (lowest cost) edge linking these two nodes.
 				if (match.get_weight() != std::numeric_limits<size_t>::max()) {
-					adjs[ii].push_back(match);
+					adjs.back().push_back(match);
 				}
 			}
-		}
+		} while (win.slideWindow());
 	}
 	/*
 	 * This function returns the shortest path through the file.
@@ -246,6 +290,7 @@ public:
 		                       "Adaptor::desc_bits() is not noexcept");
 		static_assert(noexcept(Adaptor::get_padding(0)),
 		                       "Adaptor::get_padding() is not noexcept");
+		size_t const nlen = adjs.size();
 		// Auxiliary data structures:
 		// * The parent of a node is the node that reaches that node with the
 		//   lowest cost from the start of the file.
