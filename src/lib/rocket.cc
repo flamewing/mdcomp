@@ -35,7 +35,7 @@ using namespace std;
 template<>
 size_t moduled_rocket::PadMaskBits = 1u;
 
-class rocket_internal {
+struct rocket_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct RocketAdaptor {
 		using stream_t = uint8_t;
@@ -58,6 +58,8 @@ class rocket_internal {
 		// Flag that marks the descriptor bits as being in big-endian bit
 		// order (that is, highest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = true;
+		// How many characters to skip looking for matchs for at the start.
+		constexpr static size_t const FirstMatchPosition = 0x3C0;
 		// Size of the search buffer.
 		constexpr static size_t const SearchBufSize = 0x400;
 		// Size of the look-ahead buffer.
@@ -101,56 +103,12 @@ class rocket_internal {
 					return numeric_limits<size_t>::max();
 			}
 		}
-		// Rocket assumes there is a string of 0x20's of lenght 0x3C0 before the
-		// decompressed stream which can be used for overlapping matches.
+		// Rocket finds no additional matches over normal LZSS.
 		static void extra_matches(stream_t const *data,
 			                      size_t const basenode,
 			                      size_t const ubound, size_t const lbound,
 			                      LZSSGraph<RocketAdaptor>::MatchVector &matches) noexcept {
-			using Node_t = LZSSGraph<RocketAdaptor>::Node_t;
-			ignore_unused_variable_warning(lbound);
-			// Can't encode zero match after this point.
-			if (basenode >= SearchBufSize-1) {
-				return;
-			}
-			using diff_t = make_signed_t<size_t>;
-			// For c++17, make this lambda constexpr so that the function can be also.
-			// Its purpose is to pretend that there is a stream of 0x20's before the
-			// start of data which can be used for normal LZSS matches.
-			auto getValue = [&data](diff_t pos){
-					if (pos >= 0) {
-						return data[pos];
-					} else {
-						return stream_t(0x20);
-					}
-				};
-			diff_t const base = diff_t(basenode);
-			diff_t ii = base - 1;
-			diff_t const slbound = basenode >= LookAheadBufSize ?
-			                       base - SearchBufSize : diff_t(LookAheadBufSize - SearchBufSize);
-			diff_t const subound = diff_t(ubound) - base;
-			do {
-				// Keep looking for dictionary matches.
-				diff_t jj = 0;
-				while (getValue(ii + jj) == data[base + jj]) {
-					++jj;
-					// We have found a match that links (basenode) with
-					// (basenode + jj) with length (jj) and distance (basenode-ii).
-					// Add it to the list if it is a better match.
-					EdgeType const ty = match_type(basenode - ii, jj);
-					if (ty != EdgeType::invalid) {
-						size_t const wgt = edge_weight(ty);
-						Node_t &best = matches[jj - 1];
-						if (wgt < best.get_weight()) {
-							best = Node_t(basenode, basenode - ii, jj, wgt, ty);
-						}
-					}
-					// We can find no more matches with the current starting node.
-					if (jj >= subound) {
-						break;
-					}
-				}
-			} while (ii-- > slbound);
+			ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
 		}
 		// Rocket needs no additional padding at the end-of-file.
 		constexpr static size_t get_padding(size_t const totallen) noexcept {
@@ -192,7 +150,7 @@ public:
 				diff_t offset = ((high&3)<<8)|low;
 				// The offset is stored as being absolute within a 0x400-byte buffer,
 				// starting at position 0x3C0. We just rebase it around basedest + 0x3C0u.
-				constexpr diff_t const bias = diff_t(RocketAdaptor::SearchBufSize - RocketAdaptor::LookAheadBufSize);
+				constexpr diff_t const bias = diff_t(RocketAdaptor::FirstMatchPosition);
 				diff_t const basedest = diff_t(Dst.tellp());
 				offset = diff_t(((offset - basedest - bias) % RocketAdaptor::SearchBufSize) + basedest - RocketAdaptor::SearchBufSize);
 
@@ -221,10 +179,9 @@ public:
 					out.putbyte(edge.get_symbol());
 					break;
 				case EdgeType::dictionary: {
-					constexpr size_t const bias = RocketAdaptor::SearchBufSize - RocketAdaptor::LookAheadBufSize;
 					size_t const len  = edge.get_length(),
 					             dist = edge.get_distance(),
-					             pos  = (edge.get_pos() + bias - dist) % RocketAdaptor::SearchBufSize;
+					             pos  = (edge.get_pos() - dist) % RocketAdaptor::SearchBufSize;
 					out.descbit(0);
 					out.putbyte(((len-1)<<2)|(pos>>8));
 					out.putbyte(pos);
@@ -250,6 +207,18 @@ bool rocket::decode(istream &Src, iostream &Dst) {
 	rocket_internal::decode(in, Dst, Size);
 	Src.seekg(Location + in.tellg());
 	return true;
+}
+
+bool rocket::encode(istream &Src, ostream &Dst) {
+	// We will pre-fill the buffer with 0x3C0 0x20's.
+	stringstream src(ios::in | ios::out | ios::binary);
+	for (size_t ii = 0; ii < rocket_internal::RocketAdaptor::FirstMatchPosition; ii++) {
+		Write1(src, 0x20);
+	}
+	// Copy to buffer.
+	src << Src.rdbuf();
+	src.seekg(0);
+	return basic_rocket::encode(src, Dst);
 }
 
 bool rocket::encode(ostream &Dst, uint8_t const *data, size_t const Size) {

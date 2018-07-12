@@ -59,6 +59,8 @@ class saxman_internal {
 		// Flag that marks the descriptor bits as being in little-endian bit
 		// order (that is, lowest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = true;
+		// How many characters to skip looking for matchs for at the start.
+		constexpr static size_t const FirstMatchPosition = 0;
 		// Size of the search buffer.
 		constexpr static size_t const SearchBufSize = 4096;
 		// Size of the look-ahead buffer.

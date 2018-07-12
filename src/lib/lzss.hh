@@ -116,7 +116,7 @@ public:
 
 	SlidingWindow(uint8_t const *dt, size_t const size) noexcept
 		: data(reinterpret_cast<stream_t const *>(dt)),
-		  nlen(size / sizeof(stream_t)), basenode(0),
+		  nlen(size / sizeof(stream_t)), basenode(Adaptor::FirstMatchPosition),
 		  ubound(basenode + getLookAheadBufSize()),
 		  lbound(basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0) {
 	}
@@ -228,6 +228,8 @@ private:
  *  	// Flag that marks the descriptor bits as being in little-endian bit
  *  	// order (that is, lowest bits come out first).
  *  	constexpr static bool const DescriptorLittleEndianBits = true;
+ *  	// How many characters to skip looking for matchs for at the start.
+ *  	constexpr static size_t const FirstMatchPosition = 0;
  *  	// Size of the search buffer.
  *  	constexpr static size_t const SearchBufSize = 8192;
  *  	// Size of the look-ahead buffer.
@@ -319,7 +321,7 @@ public:
 			size_t const basedesc = desccosts[ii];
 			for (const auto & elem : list) {
 				// Need destination ID and edge weight.
-				size_t const nextnode = elem.get_dest();
+				size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
 				size_t wgt = costs[ii] + elem.get_weight();
 				// Compute descriptor bits from using this edge.
 				size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());

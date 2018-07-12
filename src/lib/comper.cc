@@ -57,6 +57,8 @@ class comper_internal {
 		// Flag that marks the descriptor bits as being in big-endian bit
 		// order (that is, highest bits come out first).
 		constexpr static bool const DescriptorLittleEndianBits = false;
+		// How many characters to skip looking for matchs for at the start.
+		constexpr static size_t const FirstMatchPosition = 0;
 		// Size of the search buffer.
 		constexpr static size_t const SearchBufSize = 256;
 		// Size of the look-ahead buffer.
