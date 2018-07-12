@@ -227,8 +227,10 @@ bool rocket::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	rocket_internal::encode(outbuff, data, Size);
 
 	// Fill in header
-	BigEndian::Write2(Dst, Size);					// Size of decompressed file
-	BigEndian::Write2(Dst, outbuff.tellp());		// Size of compressed file
+	// Size of decompressed file
+	BigEndian::Write2(Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
+	// Size of compressed file
+	BigEndian::Write2(Dst, outbuff.tellp());
 
 	outbuff.seekg(0);
 	Dst << outbuff.rdbuf();
