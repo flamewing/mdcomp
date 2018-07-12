@@ -951,8 +951,8 @@ bool nemesis::encode(istream &Src, ostream &Dst) {
 	src << Src.rdbuf();
 
 	// Pad source with zeroes until it is a multiple of 32 bits.
-	while ((src.tellp() & 0x1f) != 0) {
-		Write1(src, 0);
+	if ((src.tellp() & 0x1f) != 0) {
+		fill_n(ostreambuf_iterator<char>(src), 32 - (src.tellp() & 0x1f), 0);
 	}
 	size_t const sz = src.tellp();
 

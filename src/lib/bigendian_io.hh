@@ -38,7 +38,7 @@ inline size_t Read1(uint8_t const *& in) noexcept {
 	return c;
 }
 
-inline size_t Read1(std::istream_iterator<uint8_t>& in) noexcept {
+inline size_t Read1(std::istreambuf_iterator<uint8_t>& in) noexcept {
 	size_t c = *in++;
 	return c;
 }
@@ -59,7 +59,7 @@ inline void Write1(std::string &out, size_t const c) noexcept {
 	out.push_back(static_cast<int8_t>(c & 0xff));
 }
 
-inline void Write1(std::ostream_iterator<uint8_t>&out, size_t const c) noexcept {
+inline void Write1(std::ostreambuf_iterator<uint8_t>&out, size_t const c) noexcept {
 	*out++ = static_cast<int8_t>(c & 0xff);
 }
 

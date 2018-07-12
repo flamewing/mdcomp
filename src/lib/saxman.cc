@@ -185,9 +185,7 @@ public:
 					}
 				} else {
 					// Otherwise, it is a zero fill.
-					for (size_t ii = 0; ii < length; ii++) {
-						Write1(Dst, 0);
-					}
+					fill_n(ostreambuf_iterator<char>(Dst), length, 0);
 				}
 			}
 		}

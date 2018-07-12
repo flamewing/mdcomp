@@ -124,18 +124,6 @@ public:
 
 		RockIStream src(in);
 
-		auto getValue = [&Dst](diff_t src){
-				if (src >= 0) {
-					diff_t const Pointer = diff_t(Dst.tellp());
-					Dst.seekg(src);
-					RocketAdaptor::stream_t const Byte = Read1(Dst);
-					Dst.seekp(Pointer);
-					return Byte;
-				} else {
-					return RocketAdaptor::stream_t(0x20);
-				}
-			};
-
 		while (in.good() && in.tellg() < Size) {
 			if (src.descbit() != 0u) {
 				// Symbolwise match.
@@ -146,7 +134,7 @@ public:
 				// Distance and length of match.
 				diff_t const high = src.getbyte(),
 					         low  = src.getbyte();
-				diff_t const length = ((high & 0xFC) >> 2) + 1u;
+				diff_t length = ((high & 0xFC) >> 2) + 1u;
 				diff_t offset = ((high&3)<<8)|low;
 				// The offset is stored as being absolute within a 0x400-byte buffer,
 				// starting at position 0x3C0. We just rebase it around basedest + 0x3C0u.
@@ -154,8 +142,18 @@ public:
 				diff_t const basedest = diff_t(Dst.tellp());
 				offset = diff_t(((offset - basedest - bias) % RocketAdaptor::SearchBufSize) + basedest - RocketAdaptor::SearchBufSize);
 
+				if (offset < 0) {
+					diff_t cnt = offset + length < 0 ? length : length - (offset + length);
+					fill_n(ostreambuf_iterator<char>(Dst), cnt, 0x20);
+					length -= cnt;
+					offset += cnt;
+				}
 				for (diff_t src = offset; src < offset + length; src++) {
-					Write1(Dst, getValue(src));
+					diff_t const Pointer = diff_t(Dst.tellp());
+					Dst.seekg(src);
+					uint8_t const Byte = Read1(Dst);
+					Dst.seekp(Pointer);
+					Write1(Dst, Byte);
 				}
 			}
 		}
@@ -212,9 +210,7 @@ bool rocket::decode(istream &Src, iostream &Dst) {
 bool rocket::encode(istream &Src, ostream &Dst) {
 	// We will pre-fill the buffer with 0x3C0 0x20's.
 	stringstream src(ios::in | ios::out | ios::binary);
-	for (size_t ii = 0; ii < rocket_internal::RocketAdaptor::FirstMatchPosition; ii++) {
-		Write1(src, 0x20);
-	}
+	fill_n(ostreambuf_iterator<char>(src), rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
 	// Copy to buffer.
 	src << Src.rdbuf();
 	src.seekg(0);
