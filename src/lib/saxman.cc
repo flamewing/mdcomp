@@ -116,8 +116,9 @@ class saxman_internal {
 			}
 			// Try matching zeroes.
 			size_t jj = 0;
+			size_t const end = ubound - basenode;
 			while (data[basenode + jj] == 0) {
-				if (++jj >= ubound) {
+				if (++jj >= end) {
 					break;
 				}
 			}
