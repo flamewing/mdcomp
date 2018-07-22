@@ -94,7 +94,12 @@ public:
 };
 
 bool snkrle::decode(istream &Src, ostream &Dst) {
-	snkrle_internal::decode(Src, Dst);
+	size_t const Location = Src.tellg();
+	stringstream in(ios::in | ios::out | ios::binary);
+	extract(Src, in);
+
+	snkrle_internal::decode(in, Dst);
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 

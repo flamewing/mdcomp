@@ -203,3 +203,4 @@ bool comper::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	comper_internal::encode(Dst, data, Size);
 	return true;
 }
+

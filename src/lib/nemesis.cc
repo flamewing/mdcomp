@@ -998,3 +998,4 @@ bool nemesis::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) 
 	Src.seekg(0);
 	return encode(Src, Dst);
 }
+

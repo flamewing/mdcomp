@@ -265,7 +265,6 @@ bool kosinski::decode(istream &Src, iostream &Dst) {
 	extract(Src, in);
 
 	kosinski_internal::decode(in, Dst);
-
 	Src.seekg(Location + in.tellg());
 	return true;
 }
@@ -274,3 +273,4 @@ bool kosinski::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	kosinski_internal::encode(Dst, data, Size);
 	return true;
 }
+

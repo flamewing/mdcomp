@@ -262,7 +262,6 @@ bool kosplus::decode(istream &Src, iostream &Dst) {
 	extract(Src, in);
 
 	kosplus_internal::decode(in, Dst);
-
 	Src.seekg(Location + in.tellg());
 	return true;
 }

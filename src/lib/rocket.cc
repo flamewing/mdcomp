@@ -118,13 +118,15 @@ struct rocket_internal {
 	};
 
 public:
-	static void decode(istream &in, iostream &Dst, uint16_t const Size) {
+	static void decode(istream &in, iostream &Dst) {
 		using RockIStream = LZSSIStream<RocketAdaptor>;
 		using diff_t = make_signed_t<size_t>;
 
+		in.ignore(2);
+		size_t const Size = BigEndian::Read2(in) + 4;
 		RockIStream src(in);
 
-		while (in.good() && in.tellg() < Size) {
+		while (in.good() && size_t(in.tellg()) < Size) {
 			if (src.descbit() != 0u) {
 				// Symbolwise match.
 				uint8_t const Byte = Read1(in);
@@ -195,26 +197,23 @@ public:
 };
 
 bool rocket::decode(istream &Src, iostream &Dst) {
-	Src.ignore(2);
-	size_t const Size = BigEndian::Read2(Src);
-
 	size_t const Location = Src.tellg();
 	stringstream in(ios::in | ios::out | ios::binary);
 	extract(Src, in);
 
-	rocket_internal::decode(in, Dst, Size);
+	rocket_internal::decode(in, Dst);
 	Src.seekg(Location + in.tellg());
 	return true;
 }
 
 bool rocket::encode(istream &Src, ostream &Dst) {
 	// We will pre-fill the buffer with 0x3C0 0x20's.
-	stringstream src(ios::in | ios::out | ios::binary);
-	fill_n(ostreambuf_iterator<char>(src), rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
+	stringstream in(ios::in | ios::out | ios::binary);
+	fill_n(ostreambuf_iterator<char>(in), rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
 	// Copy to buffer.
-	src << Src.rdbuf();
-	src.seekg(0);
-	return basic_rocket::encode(src, Dst);
+	in << Src.rdbuf();
+	in.seekg(0);
+	return basic_rocket::encode(in, Dst);
 }
 
 bool rocket::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
@@ -232,3 +231,4 @@ bool rocket::encode(ostream &Dst, uint8_t const *data, size_t const Size) {
 	Dst << outbuff.rdbuf();
 	return true;
 }
+

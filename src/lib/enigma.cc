@@ -188,11 +188,7 @@ size_t moduled_enigma::PadMaskBits = 1u;
 
 class enigma_internal {
 public:
-	static void decode(std::istream &Src, std::ostream &Dst) {
-		stringstream in(ios::in | ios::out | ios::binary);
-		in << Src.rdbuf();
-		in.seekg(0);
-
+	static void decode(std::istream &in, std::ostream &Dst) {
 		// Read header.
 		size_t const packet_length = Read1(in);
 		auto getMask = flag_reader::get(Read1(in));
@@ -390,7 +386,12 @@ public:
 };
 
 bool enigma::decode(istream &Src, ostream &Dst) {
-	enigma_internal::decode(Src, Dst);
+	size_t const Location = Src.tellg();
+	stringstream in(ios::in | ios::out | ios::binary);
+	extract(Src, in);
+
+	enigma_internal::decode(in, Dst);
+	Src.seekg(Location + in.tellg());
 	return true;
 }
 
@@ -405,3 +406,4 @@ bool enigma::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) {
 	Src.seekg(0);
 	return encode(Src, Dst);
 }
+
