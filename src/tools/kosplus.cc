@@ -36,24 +36,23 @@ static void usage(char *prog) {
 	     << "\t            \tto input_filename. All parameters affect only the output file, except" << endl
 	     << "\t            \tfor the -m parameter, which makes both input and output files moduled" << endl
 	     << "\t            \t(but the optional module size affects only the output file)." << endl;
-	cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << endl
-	     << "\t            \tthe size of each module (default: " << moduled_kosplus::ModuleSize << ")." << endl;
+	cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << endl;
 }
 
 int main(int argc, char *argv[]) {
 	static option long_options[] = {
 		{"extract", optional_argument, nullptr, 'x'},
-		{"moduled", optional_argument, nullptr, 'm'},
+		{"moduled", no_argument      , nullptr, 'm'},
 		{"crunch" , no_argument      , nullptr, 'c'},
 		{nullptr, 0, nullptr, 0}
 	};
 
 	bool extract = false, moduled = false, crunch = false;
-	size_t pointer = 0, modulesize = 0x1000;
+	size_t pointer = 0;
 
 	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::m::c",
+		int c = getopt_long(argc, argv, "x::mc",
 		                    static_cast<option*>(long_options), &option_index);
 		if (c == -1) {
 			break;
@@ -71,12 +70,6 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'm':
 				moduled = true;
-				if (optarg != nullptr) {
-					modulesize = strtoul(optarg, nullptr, 0);
-				}
-				if (modulesize == 0u) {
-					modulesize = 0x1000;
-				}
 				break;
 		}
 	}
@@ -116,7 +109,7 @@ int main(int argc, char *argv[]) {
 			return 3;
 		}
 		if (moduled) {
-			kosplus::moduled_encode(buffer, fout, modulesize);
+			kosplus::moduled_encode(buffer, fout);
 		} else {
 			kosplus::encode(buffer, fout);
 		}
@@ -136,7 +129,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else {
 			if (moduled) {
-				kosplus::moduled_encode(fin, fout, modulesize);
+				kosplus::moduled_encode(fin, fout);
 			} else {
 				kosplus::encode(fin, fout);
 			}

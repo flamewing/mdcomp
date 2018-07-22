@@ -38,12 +38,8 @@ public:
 	                           size_t const ModulePadding = DefaultModulePadding);
 
 	static bool moduled_encode(std::istream &Src, std::ostream &Dst,
-	                           size_t const ModuleSize = DefaultModuleSize,
 	                           size_t const ModulePadding = DefaultModulePadding);
 };
-
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-size_t ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::PadMaskBits = 1u;
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
@@ -81,7 +77,6 @@ template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding
 bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
 	std::istream &Src,
 	std::ostream &Dst,
-	size_t const ModuleSize,
 	size_t const ModulePadding
 ) {
 	size_t Location = Src.tellg();

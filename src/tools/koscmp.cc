@@ -28,7 +28,7 @@
 using namespace std;
 
 static void usage(char *prog) {
-	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled=[{size}]] [-p|--padding=[{len}]] {input_filename} {output_filename}" << endl;
+	cerr << "Usage: " << prog << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] [-p|--padding=[{len}]] {input_filename} {output_filename}" << endl;
 	cerr << endl;
 	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
 	cerr << "\t-c,--crunch \tAssume input file is Kosinski-compressed and recompress to output file." << endl
@@ -36,17 +36,16 @@ static void usage(char *prog) {
 	     << "\t            \tto input_filename. All parameters affect only the output file, except" << endl
 	     << "\t            \tfor the -m parameter, which makes both input and output files moduled" << endl
 	     << "\t            \t(but the optional module size affects only the output file)." << endl;
-	cerr << "\t-m,--moduled\tUse compression in modules (S3&K). {size} only affects compression; it is" << endl
-	     << "\t            \tthe size of each module (default: " << moduled_kosinski::ModuleSize << ")." << endl;
+	cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << endl;
 	cerr << "\t-p|--padding\tFor moduled compression only. Changes internal module padding to {len}." << endl
 	     << "\t            \tEach module will be padded to a multiple of the given number; use 1 for" << endl
-	     << "\t            \tno padding. Must be a power of 2 (defaults: " << moduled_kosinski::ModulePadding << ")." << endl << endl;
+	     << "\t            \tno padding. Must be a power of 2 (default: " << moduled_kosinski::ModulePadding << ")." << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
 	static option long_options[] = {
 		{"extract", optional_argument, nullptr, 'x'},
-		{"moduled", optional_argument, nullptr, 'm'},
+		{"moduled", no_argument      , nullptr, 'm'},
 		{"crunch" , no_argument      , nullptr, 'c'},
 		{"padding", required_argument, nullptr, 'p'},
 		{nullptr, 0, nullptr, 0}
@@ -54,12 +53,11 @@ int main(int argc, char *argv[]) {
 
 	bool extract = false, moduled = false, crunch = false;
 	size_t pointer = 0ull,
-	       modulesize = moduled_kosinski::ModuleSize,
 	       padding = moduled_kosinski::ModulePadding;
 
 	while (true) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::m::cr:s:p:",
+		int c = getopt_long(argc, argv, "x::mcr:s:p:",
 		                    static_cast<option*>(long_options), &option_index);
 		if (c == -1) {
 			break;
@@ -77,12 +75,6 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'm':
 				moduled = true;
-				if (optarg != nullptr) {
-					modulesize = strtoul(optarg, nullptr, 0);
-				}
-				if (modulesize == 0u) {
-					modulesize = 4096;
-				}
 				break;
 			case 'p':
 				if (optarg != nullptr) {
@@ -130,7 +122,7 @@ int main(int argc, char *argv[]) {
 			return 3;
 		}
 		if (moduled) {
-			kosinski::moduled_encode(buffer, fout, modulesize, padding);
+			kosinski::moduled_encode(buffer, fout, padding);
 		} else {
 			kosinski::encode(buffer, fout);
 		}
@@ -150,7 +142,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else {
 			if (moduled) {
-				kosinski::moduled_encode(fin, fout, modulesize, padding);
+				kosinski::moduled_encode(fin, fout, padding);
 			} else {
 				kosinski::encode(fin, fout);
 			}
