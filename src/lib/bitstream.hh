@@ -23,19 +23,45 @@
 #include <iosfwd>
 
 #include "bigendian_io.hh"
+#include "ignore_unused_variable_warning.hh"
 
-#ifdef __GNUC__
+#if !defined(__clang__)
 namespace {	// anonymous
 	template <typename T, size_t sz>
-	struct getMask {
-		constexpr inline T operator()(T mask) const noexcept {
+	constexpr inline T nextMask(T mask) noexcept {
+		return mask ^ (mask << sz);
+	}
+
+	template <typename T, size_t sz>
+	struct reverseByteBits {
+		constexpr inline T operator()(T val, T mask) const noexcept {
 			constexpr const size_t nsz = sz >> 1;
-			return getMask<T, nsz>{}(mask ^(mask << nsz));
+			mask = nextMask<T, nsz>(mask);
+			T val1 = (val & mask);
+			T val2 = val ^ val1;
+			constexpr const T factor = T(1) << nsz;
+			val = factor * val1 + val2 / factor;
+			return reverseByteBits<T, nsz>{}(val, mask);
 		}
 	};
 
 	template <typename T>
-	struct getMask<T, CHAR_BIT> {
+	struct reverseByteBits<T, 0> {
+		constexpr inline T operator()(T val, T mask) const noexcept {
+		ignore_unused_variable_warning(mask);
+			return val;
+		}
+	};
+
+	template <typename T, size_t sz>
+	struct getMask {
+		constexpr inline T operator()(T mask) const noexcept {
+			return getMask<T, (sz >> 1)>{}(nextMask<T, (sz >> 1)>(mask));
+		}
+	};
+
+	template <typename T>
+	struct getMask<T, 8> {
 		constexpr inline T operator()(T mask) const noexcept {
 			return mask;
 		}
@@ -44,10 +70,32 @@ namespace {	// anonymous
 #endif
 
 template<typename T>
-static T reverseBits(T val) noexcept {
-#ifdef __GNUC__
-	size_t sz = CHAR_BIT; // bit size; must be power of 2
-	T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
+static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_unsigned<T>::value, T> {
+#ifdef __clang__
+	if (sizeof(T) == 1) {
+		val = __builtin_bitreverse8(val);
+	} else if (sizeof(T) == 2) {
+		val = __builtin_bitreverse16(val);
+	} else if (sizeof(T) == 4) {
+		val = __builtin_bitreverse32(val);
+	} else if (sizeof(T) == 8) {
+		val = __builtin_bitreverse64(val);
+	}
+	return val;
+#else
+#ifdef _MSC_VER
+	constexpr size_t sz = 8; // bit size; must be power of 2
+	constexpr T mask = getMask<T, sizeof(T) * 8>{}(~T(0));
+	if (sizeof(T) == 2) {
+		val = _byteswap_ushort(val);
+	} else if (sizeof(T) == 4) {
+		val = _byteswap_ulong(val);
+	} else if (sizeof(T) == 8) {
+		val = _byteswap_uint64(val);
+	}
+#elif defined(__GNUC__)
+	constexpr size_t sz = 8; // bit size; must be power of 2
+	constexpr T mask = getMask<T, sizeof(T) * 8>{}(~T(0));
 	if (sizeof(T) == 2) {
 		val = __builtin_bswap16(val);
 	} else if (sizeof(T) == 4) {
@@ -56,14 +104,16 @@ static T reverseBits(T val) noexcept {
 		val = __builtin_bswap64(val);
 	}
 #else
-	size_t sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
-	T mask = ~T(0);
+	constexpr size_t sz = sizeof(T) * 8; // bit size; must be power of 2
+	constexpr T mask = ~T(0);
 #endif
-	while ((sz >>= 1) > 0) {
-		mask ^= (mask << sz);
-		val = ((val >> sz) & mask) | ((val << sz) & ~mask);
-	}
-	return val;
+	return reverseByteBits<T, sz>{}(val, mask);
+#endif
+}
+
+template<typename T>
+static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_signed<T>::value, T> {
+	return reverseBits(std::make_unsigned_t<T>(val));
 }
 
 // This class allows reading bits from a stream.
