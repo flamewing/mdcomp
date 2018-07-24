@@ -27,6 +27,12 @@
 
 #if !defined(__clang__)
 namespace {	// anonymous
+#if defined(_MSC_VER) && _MSC_VER < 1910
+// MSVC compiler is not c++14 compliant before 19.10.
+#define CONSTEXPR
+#else
+#define CONSTEXPR constexpr
+#endif
 	template <typename T, size_t sz>
 	constexpr inline T nextMask(T mask) noexcept {
 		return mask ^ (mask << sz);
@@ -34,7 +40,7 @@ namespace {	// anonymous
 
 	template <typename T, size_t sz>
 	struct reverseByteBits {
-		constexpr inline T operator()(T val, T mask) const noexcept {
+		CONSTEXPR inline T operator()(T val, T mask) const noexcept {
 			constexpr const size_t nsz = sz >> 1;
 			mask = nextMask<T, nsz>(mask);
 			T val1 = (val & mask);
@@ -61,7 +67,7 @@ namespace {	// anonymous
 	};
 
 	template <typename T>
-	struct getMask<T, 8> {
+	struct getMask<T, CHAR_BIT> {
 		constexpr inline T operator()(T mask) const noexcept {
 			return mask;
 		}
@@ -83,19 +89,9 @@ static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_unsigned<T>:
 	}
 	return val;
 #else
-#ifdef _MSC_VER
-	constexpr size_t sz = 8; // bit size; must be power of 2
-	constexpr T mask = getMask<T, sizeof(T) * 8>{}(~T(0));
-	if (sizeof(T) == 2) {
-		val = _byteswap_ushort(val);
-	} else if (sizeof(T) == 4) {
-		val = _byteswap_ulong(val);
-	} else if (sizeof(T) == 8) {
-		val = _byteswap_uint64(val);
-	}
-#elif defined(__GNUC__)
-	constexpr size_t sz = 8; // bit size; must be power of 2
-	constexpr T mask = getMask<T, sizeof(T) * 8>{}(~T(0));
+#ifdef __GNUG__
+	constexpr size_t sz = CHAR_BIT; // bit size; must be power of 2
+	constexpr T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
 	if (sizeof(T) == 2) {
 		val = __builtin_bswap16(val);
 	} else if (sizeof(T) == 4) {
@@ -103,8 +99,18 @@ static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_unsigned<T>:
 	} else if (sizeof(T) == 8) {
 		val = __builtin_bswap64(val);
 	}
+#elif defined(_MSC_VER)
+	constexpr size_t sz = CHAR_BIT; // bit size; must be power of 2
+	constexpr T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
+	if (sizeof(T) == 2) {
+		val = _byteswap_ushort(val);
+	} else if (sizeof(T) == 4) {
+		val = _byteswap_ulong(val);
+	} else if (sizeof(T) == 8) {
+		val = _byteswap_uint64(val);
+	}
 #else
-	constexpr size_t sz = sizeof(T) * 8; // bit size; must be power of 2
+	constexpr size_t sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
 	constexpr T mask = ~T(0);
 #endif
 	return reverseByteBits<T, sz>{}(val, mask);

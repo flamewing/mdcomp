@@ -131,11 +131,11 @@ const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
 }
 
 // Blazing fast function that gives the index of the MSB.
-constexpr int slog2(unsigned val) {
-#ifdef __GNUC__
+int slog2(unsigned val) {
+#ifdef __GNUG__
 	return (sizeof(unsigned)*8u - 1u) ^ __builtin_clz(val);
 #elif defined(_MSC_VER)
-	unsigned long ret;
+	unsigned long ret = 0;
 	_BitScanReverse(&ret, val);
 	return ret;
 #else
