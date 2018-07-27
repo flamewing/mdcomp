@@ -25,14 +25,14 @@
 #include "bigendian_io.hh"
 #include "ignore_unused_variable_warning.hh"
 
+namespace detail {
 #if !defined(__clang__)
-namespace {	// anonymous
-#if defined(_MSC_VER) && _MSC_VER < 1910
-// MSVC compiler is not c++14 compliant before 19.10.
-#define CONSTEXPR
-#else
-#define CONSTEXPR constexpr
-#endif
+	#if defined(_MSC_VER) && _MSC_VER < 1910
+		// MSVC compiler is not c++14 compliant before 19.10.
+		#define CONSTEXPR
+	#else
+		#define CONSTEXPR constexpr
+	#endif
 	template <typename T, size_t sz>
 	constexpr inline T nextMask(T mask) noexcept {
 		return mask ^ (mask << sz);
@@ -52,9 +52,9 @@ namespace {	// anonymous
 	};
 
 	template <typename T>
-	struct reverseByteBits<T, 0> {
+	struct reverseByteBits<T, 1> {
 		constexpr inline T operator()(T val, T mask) const noexcept {
-		ignore_unused_variable_warning(mask);
+			ignore_unused_variable_warning(mask);
 			return val;
 		}
 	};
@@ -72,54 +72,33 @@ namespace {	// anonymous
 			return mask;
 		}
 	};
-}
 #endif
 
-template<typename T>
-static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_unsigned<T>::value, T> {
-#ifdef __clang__
-	if (sizeof(T) == 1) {
-		val = __builtin_bitreverse8(val);
-	} else if (sizeof(T) == 2) {
-		val = __builtin_bitreverse16(val);
-	} else if (sizeof(T) == 4) {
-		val = __builtin_bitreverse32(val);
-	} else if (sizeof(T) == 8) {
-		val = __builtin_bitreverse64(val);
+	template<typename T>
+	static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_unsigned<T>::value, T> {
+	#ifdef __clang__
+		if (sizeof(T) == 1) {
+			val = __builtin_bitreverse8(val);
+		} else if (sizeof(T) == 2) {
+			val = __builtin_bitreverse16(val);
+		} else if (sizeof(T) == 4) {
+			val = __builtin_bitreverse32(val);
+		} else if (sizeof(T) == 8) {
+			val = __builtin_bitreverse64(val);
+		}
+		return val;
+	#else
+		constexpr size_t sz = CHAR_BIT; // bit size; must be power of 2
+		constexpr T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
+		val = bswap(val);
+		return reverseByteBits<T, sz>{}(val, mask);
+	#endif
 	}
-	return val;
-#else
-#ifdef __GNUG__
-	constexpr size_t sz = CHAR_BIT; // bit size; must be power of 2
-	constexpr T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
-	if (sizeof(T) == 2) {
-		val = __builtin_bswap16(val);
-	} else if (sizeof(T) == 4) {
-		val = __builtin_bswap32(val);
-	} else if (sizeof(T) == 8) {
-		val = __builtin_bswap64(val);
-	}
-#elif defined(_MSC_VER)
-	constexpr size_t sz = CHAR_BIT; // bit size; must be power of 2
-	constexpr T mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
-	if (sizeof(T) == 2) {
-		val = _byteswap_ushort(val);
-	} else if (sizeof(T) == 4) {
-		val = _byteswap_ulong(val);
-	} else if (sizeof(T) == 8) {
-		val = _byteswap_uint64(val);
-	}
-#else
-	constexpr size_t sz = sizeof(T) * CHAR_BIT; // bit size; must be power of 2
-	constexpr T mask = ~T(0);
-#endif
-	return reverseByteBits<T, sz>{}(val, mask);
-#endif
-}
 
-template<typename T>
-static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_signed<T>::value, T> {
-	return reverseBits(std::make_unsigned_t<T>(val));
+	template<typename T>
+	static auto reverseBits(T val) noexcept -> std::enable_if_t<std::is_signed<T>::value, T> {
+		return reverseBits(std::make_unsigned_t<T>(val));
+	}
 }
 
 // This class allows reading bits from a stream.
@@ -137,7 +116,7 @@ private:
 	}
 	T read_bits() noexcept {
 		T bits = read();
-		return LittleEndianBits ? reverseBits(bits) : bits;
+		return LittleEndianBits ? detail::reverseBits(bits) : bits;
 	}
 	void check_buffer() noexcept {
 		if (readbits) {
@@ -213,7 +192,7 @@ private:
 		Endian::template WriteN<std::ostream &, sizeof(T)>(dst, c);
 	}
 	void write_bits(T const bits) noexcept {
-		write(LittleEndianBits ? reverseBits(bits) : bits);
+		write(LittleEndianBits ? detail::reverseBits(bits) : bits);
 	}
 public:
 	obitstream(std::ostream &d) noexcept : dst(d), waitingbits(0), bitbuffer(0) {
