@@ -39,6 +39,7 @@ struct rocket_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct RocketAdaptor {
 		using stream_t = uint8_t;
+		using stream_endian_t = BigEndian;
 		using descriptor_t = uint8_t;
 		using descriptor_endian_t = LittleEndian;
 		enum class EdgeType : size_t {

@@ -38,6 +38,7 @@ class comper_internal {
 	// NOTE: This has to be changed for other LZSS-based compression schemes.
 	struct ComperAdaptor {
 		using stream_t = uint16_t;
+		using stream_endian_t = BigEndian;
 		using descriptor_t = uint16_t;
 		using descriptor_endian_t = BigEndian;
 		enum class EdgeType : size_t {

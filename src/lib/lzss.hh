@@ -110,8 +110,8 @@ class SlidingWindow {
 public:
 	using EdgeType = typename Adaptor::EdgeType;
 	using stream_t = typename Adaptor::stream_t;
+	using stream_endian_t = typename Adaptor::stream_endian_t;
 	using Node_t = AdjListNode<Adaptor>;
-	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
 
 	SlidingWindow(uint8_t const *dt, size_t const size) noexcept
@@ -160,8 +160,12 @@ public:
 		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
 		                       "Adaptor::extra_matches() is not noexcept");
 		// Start with the literal/symbolwise encoding of the current node.
-		EdgeType const ty = Adaptor::match_type(0, 1);
-		matches[0] = Node_t(basenode, data[basenode], ty);
+		{
+			EdgeType const ty = Adaptor::match_type(0, 1);
+			auto ptr = reinterpret_cast<const uint8_t*>(data + basenode);
+			stream_t val = stream_endian_t::template ReadN<decltype(ptr), sizeof(stream_t)>(ptr);
+			matches[0] = Node_t(basenode, val, ty);
+		}
 		// Get extra dictionary matches dependent on specific encoder.
 		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
@@ -212,6 +216,7 @@ private:
  * members:
  *  struct LZSSAdaptor {
  *  	using stream_t     = uint8_t;
+ *  	using stream_endian_t = BigEndian;
  *  	using descriptor_t = uint16_t;
  *  	using descriptor_endian_t = LittleEndian;
  *  	enum class EdgeType : size_t {
