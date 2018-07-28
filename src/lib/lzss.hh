@@ -114,9 +114,8 @@ public:
 	using Node_t = AdjListNode<Adaptor>;
 	using MatchVector = std::vector<Node_t>;
 
-	SlidingWindow(uint8_t const *dt, size_t const size) noexcept
-		: data(reinterpret_cast<stream_t const *>(dt)),
-		  nlen(size / sizeof(stream_t)), basenode(Adaptor::FirstMatchPosition),
+	SlidingWindow(stream_t const *dt, size_t const size) noexcept
+		: data(dt), nlen(size), basenode(Adaptor::FirstMatchPosition),
 		  ubound(std::min(size_t(Adaptor::LookAheadBufSize) + basenode, nlen)),
 		  lbound(basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0) {
 	}
@@ -271,24 +270,12 @@ public:
 	using SlidingWindow_t = SlidingWindow<Adaptor>;
 private:
 	// Adjacency lists for all the nodes in the graph.
-	std::vector<AdjList> adjs;
+	stream_t const *const data;
+	size_t const nlen;
 public:
 	// Constructor: creates the graph from the input file.
-	LZSSGraph(uint8_t const *dt, size_t const size) noexcept {
-		// Making space for all nodes.
-		SlidingWindow_t win(dt, size);
-		adjs.reserve(win.getDataSize());
-		do {
-			// Find all matches for all subsequent nodes.
-			adjs.emplace_back();
-			MatchVector const matches = win.find_matches();
-			for (const auto & match : matches) {
-				// Insert the best (lowest cost) edge linking these two nodes.
-				if (match.get_type() != EdgeType::invalid) {
-					adjs.back().push_back(match);
-				}
-			}
-		} while (win.slideWindow());
+	LZSSGraph(uint8_t const *dt, size_t const size) noexcept
+		: data(reinterpret_cast<stream_t const *>(dt)), nlen(size / sizeof(stream_t)) {
 	}
 	/*
 	 * This function returns the shortest path through the file.
@@ -298,34 +285,38 @@ public:
 		                       "Adaptor::desc_bits() is not noexcept");
 		static_assert(noexcept(Adaptor::get_padding(0)),
 		                       "Adaptor::get_padding() is not noexcept");
-		size_t const nlen = adjs.size();
+		size_t numNodes = nlen - Adaptor::FirstMatchPosition;
 		// Auxiliary data structures:
 		// * The parent of a node is the node that reaches that node with the
 		//   lowest cost from the start of the file.
-		std::vector<size_t> parents(nlen + 1);
+		std::vector<size_t> parents(numNodes + 1);
 		// * This is the edge used to go from the parent of a node to said node.
-		std::vector<Node_t> pedges(nlen + 1);
+		std::vector<Node_t> pedges(numNodes + 1);
 		// * This is the total cost to reach the edge. They start as high as
 		//   possible for all nodes but the first, which starts at 0.
-		std::vector<size_t> costs(nlen + 1, std::numeric_limits<size_t>::max());
+		std::vector<size_t> costs(numNodes + 1, std::numeric_limits<size_t>::max());
 		costs[0] = 0;
 		// * And this is a vector that tallies up the amount of bits in
 		//   the descriptor bitfield for the shortest path up to this node.
 		//   After tallying up the ending node, the end-of-file marker may cause
 		//   an additional dummy descriptor bitfield to be emitted; this vector
 		//   is used to counteract that.
-		std::vector<size_t> desccosts(nlen + 1, std::numeric_limits<size_t>::max());
+		std::vector<size_t> desccosts(numNodes + 1, std::numeric_limits<size_t>::max());
 		desccosts[0] = 0;
 
 		// Since the LZSS graph is a topologically-sorted DAG by construction,
 		// computing the shortest distance is very quick and easy: just go
 		// through the nodes in order and update the distances.
-		for (size_t ii = 0; ii < nlen; ii++) {
-			// Get the adjacency list for this node.
-			AdjList const &list = adjs[ii];
+		SlidingWindow_t win(data, nlen);
+		for (size_t ii = 0; ii < numNodes && win.getLookAheadBufSize() != 0; ii++, win.slideWindow()) {
 			// Get remaining unused descriptor bits up to this node.
 			size_t const basedesc = desccosts[ii];
-			for (const auto & elem : list) {
+			// Get the adjacency list for this node.
+			MatchVector const matches = win.find_matches();
+			for (const auto & elem : matches) {
+				if (elem.get_type() == EdgeType::invalid) {
+					continue;
+				}
 				// Need destination ID and edge weight.
 				size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
 				size_t wgt = costs[ii] + elem.get_weight();
@@ -363,7 +354,7 @@ public:
 
 		// This is what we will produce.
 		AdjList parselist;
-		for (size_t ii = nlen; ii != 0;) {
+		for (size_t ii = numNodes; ii != 0;) {
 			// Insert the edge up front...
 			parselist.push_front(pedges[ii]);
 			// ... and switch to parent node.
