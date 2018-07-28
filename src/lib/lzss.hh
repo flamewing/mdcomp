@@ -149,7 +149,7 @@ public:
 		return getLookAheadBufSize() != 0;
 	}
 
-	MatchVector find_matches() const noexcept {
+	void find_matches(MatchVector& matches) const noexcept {
 		static_assert(noexcept(Adaptor::edge_weight(EdgeType())),
 		                       "Adaptor::edge_weight() is not noexcept");
 		static_assert(noexcept(Adaptor::match_type(basenode, basenode)),
@@ -159,7 +159,8 @@ public:
 		                       "Adaptor::extra_matches() is not noexcept");
 		size_t const end = getLookAheadBufSize();
 		// This is what we produce.
-		MatchVector matches(end);
+		matches.clear();
+		matches.resize(end);
 		// Start with the literal/symbolwise encoding of the current node.
 		{
 			EdgeType const ty = Adaptor::match_type(0, 1);
@@ -171,7 +172,7 @@ public:
 		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
 		if (getSearchBufSize() == 0) {
-			return matches;
+			return;
 		}
 		size_t ii = basenode - 1;
 		do {
@@ -196,8 +197,6 @@ public:
 				}
 			}
 		} while (ii-- > lbound);
-
-		return matches;
 	}
 
 private:
@@ -308,11 +307,13 @@ public:
 		// computing the shortest distance is very quick and easy: just go
 		// through the nodes in order and update the distances.
 		SlidingWindow_t win(data, nlen);
+		MatchVector matches;
+		matches.reserve(Adaptor::LookAheadBufSize);
 		for (size_t ii = 0; ii < numNodes && win.getLookAheadBufSize() != 0; ii++, win.slideWindow()) {
 			// Get remaining unused descriptor bits up to this node.
 			size_t const basedesc = desccosts[ii];
 			// Get the adjacency list for this node.
-			MatchVector const matches = win.find_matches();
+			win.find_matches(matches);
 			for (const auto & elem : matches) {
 				if (elem.get_type() == EdgeType::invalid) {
 					continue;
