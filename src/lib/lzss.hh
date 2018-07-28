@@ -21,6 +21,7 @@
 #define __LIB_LZSS_H
 
 #include <algorithm>
+#include <array>
 #include <iosfwd>
 #include <limits>
 #include <list>
@@ -54,7 +55,6 @@ private:
 	// The first character after the match ends.
 	size_t currpos;
 	// Cost, in bits, of "covering" all of the characters in the match.
-	size_t weight;
 	EdgeType type;
 	union {
 		struct {
@@ -68,14 +68,13 @@ private:
 public:
 	// Constructors.
 	constexpr AdjListNode() noexcept
-		: currpos(0), weight(std::numeric_limits<size_t>::max()),
-		  type(EdgeType::invalid), symbol(stream_t(0)) {
+		: currpos(0), type(EdgeType::invalid), symbol(stream_t(0)) {
 	}
 	constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
-		: currpos(pos), weight(Adaptor::edge_weight(ty)), type(ty), symbol(sym) {
+		: currpos(pos), type(ty), symbol(sym) {
 	}
-	constexpr AdjListNode(size_t pos, size_t dist, size_t len, size_t wgt, EdgeType ty) noexcept
-		: currpos(pos), weight(wgt), type(ty), match({dist, len}) {
+	constexpr AdjListNode(size_t pos, size_t dist, size_t len, EdgeType ty) noexcept
+		: currpos(pos), type(ty), match({dist, len}) {
 	}
 	constexpr AdjListNode(AdjListNode<Adaptor> const &other) noexcept = default;
 	constexpr AdjListNode(AdjListNode<Adaptor> &&other) noexcept = default;
@@ -89,7 +88,7 @@ public:
 		return currpos + get_length();
 	}
 	constexpr size_t get_weight() const noexcept {
-		return weight;
+		return Adaptor::edge_weight(type);
 	}
 	constexpr size_t get_distance() const noexcept {
 		return type == EdgeType::symbolwise ? 0 : match.distance;
@@ -113,10 +112,11 @@ public:
 	using Node_t = AdjListNode<Adaptor>;
 	using MatchVector = std::vector<Node_t>;
 
-	SlidingWindow(stream_t const *dt, size_t const size) noexcept
-		: data(dt), nlen(size), basenode(Adaptor::FirstMatchPosition),
-		  ubound(std::min(size_t(Adaptor::LookAheadBufSize) + basenode, nlen)),
-		  lbound(basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0) {
+	SlidingWindow(stream_t const *dt, size_t const size, size_t const bufsize,
+	              size_t const minmatch, size_t const labuflen, EdgeType const ty) noexcept
+		: data(dt), nlen(size), srchbufsize(bufsize), minmatchlen(minmatch),
+		  basenode(Adaptor::FirstMatchPosition), ubound(std::min(labuflen + basenode, nlen)),
+		  lbound(basenode > srchbufsize ? basenode - srchbufsize : 0), type(ty) {
 	}
 
 	size_t getDataSize() const {
@@ -142,7 +142,7 @@ public:
 		if (basenode != nlen) {
 			basenode++;
 		}
-		if (getSearchBufSize() > Adaptor::SearchBufSize) {
+		if (getSearchBufSize() > srchbufsize) {
 			lbound++;
 		}
 		return getLookAheadBufSize() != 0;
@@ -153,51 +153,62 @@ public:
 		                       "Adaptor::edge_weight() is not noexcept");
 		static_assert(noexcept(Adaptor::match_type(basenode, basenode)),
 		                       "Adaptor::match_type() is not noexcept");
-		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound,
-		                       std::declval<MatchVector&>())),
-		                       "Adaptor::extra_matches() is not noexcept");
 		size_t const end = getLookAheadBufSize();
 		// This is what we produce.
 		matches.clear();
-		matches.resize(end - 1);
-		// Get extra dictionary matches dependent on specific encoder.
-		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
 		if (getSearchBufSize() == 0) {
 			return;
 		}
 		size_t ii = basenode - 1;
+		size_t best_pos = 0;
+		size_t best_len = 0;
 		do {
 			// Keep looking for dictionary matches.
 			size_t jj = 0;
-			while (data[ii + jj] == data[basenode + jj]) {
+			while (jj < end && data[ii + jj] == data[basenode + jj]) {
 				++jj;
-				// We have found a match that links (basenode) with
-				// (basenode + jj) with length (jj) and distance (basenode-ii).
-				// Add it to the list if it is a better match.
-				EdgeType const ty = Adaptor::match_type(basenode - ii, jj);
-				if (jj > 1 && ty != EdgeType::invalid) {
-					size_t const wgt = Adaptor::edge_weight(ty);
-					Node_t &best = matches[jj - 2];
-					if (wgt < best.get_weight()) {
-						best = Node_t(basenode, basenode - ii, jj, wgt, ty);
-					}
-				}
-				// We can find no more matches with the current starting node.
-				if (jj >= end) {
-					break;
-				}
+			}
+			if (best_len < jj) {
+				best_pos = ii;
+				best_len = jj;
+			}
+			if (jj == end) {
+				break;
 			}
 		} while (ii-- > lbound);
+
+		if (best_len >= minmatchlen) {
+			// We have found a match that links (basenode) with
+			// (basenode + best_len) with length (best_len) and distance
+			// equal to (basenode-best_pos).
+			// Add it, and all prefixes, to the list, as long as it is a better match.
+			for (size_t jj = minmatchlen; jj <= best_len; ++jj) {
+				matches.emplace_back(basenode, basenode - best_pos, jj, type);
+			}
+		}
+	}
+
+	void find_extra_matches(MatchVector& matches) const noexcept {
+		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound,
+		                       std::declval<MatchVector&>())),
+		                       "Adaptor::extra_matches() is not noexcept");
+		// This is what we produce.
+		matches.clear();
+		// Get extra dictionary matches dependent on specific encoder.
+		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 	}
 
 private:
 	// Source file data and its size; one node per character in source file.
 	stream_t const *const data;
 	size_t const nlen;
+	size_t const srchbufsize;
+	size_t const minmatchlen;
 	size_t basenode;
 	size_t ubound;
 	size_t lbound;
+	EdgeType const type;
 };
 
 /*
@@ -336,10 +347,10 @@ public:
 		// Since the LZSS graph is a topologically-sorted DAG by construction,
 		// computing the shortest distance is very quick and easy: just go
 		// through the nodes in order and update the distances.
-		SlidingWindow_t win(data, nlen);
+		auto winSet = Adaptor::create_sliding_window(data, nlen);
 		MatchVector matches;
 		matches.reserve(Adaptor::LookAheadBufSize);
-		for (size_t ii = 0; ii < numNodes && win.getLookAheadBufSize() != 0; ii++, win.slideWindow()) {
+		for (size_t ii = 0; ii < numNodes; ii++) {
 			// Get remaining unused descriptor bits up to this node.
 			size_t const basedesc = desccosts[ii];
 			// Start with the literal/symbolwise encoding of the current node.
@@ -350,12 +361,20 @@ public:
 				Relax(ii, basedesc, Node_t(ii + Adaptor::FirstMatchPosition, val, ty));
 			}
 			// Get the adjacency list for this node.
-			win.find_matches(matches);
-			for (const auto & elem : matches) {
-				if (elem.get_type() == EdgeType::invalid) {
-					continue;
+			for (auto& win : winSet) {
+				win.find_matches(matches);
+				for (const auto & elem : matches) {
+					if (elem.get_type() != EdgeType::invalid) {
+						Relax(ii, basedesc, elem);
+					}
 				}
-				Relax(ii, basedesc, elem);
+				win.find_extra_matches(matches);
+				for (const auto & elem : matches) {
+					if (elem.get_type() != EdgeType::invalid) {
+						Relax(ii, basedesc, elem);
+					}
+				}
+				win.slideWindow();
 			}
 		}
 

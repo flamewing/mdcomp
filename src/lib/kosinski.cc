@@ -41,6 +41,7 @@ class kosinski_internal {
 		using stream_endian_t = BigEndian;
 		using descriptor_t = uint16_t;
 		using descriptor_endian_t = LittleEndian;
+		using SlidingWindow_t = SlidingWindow<KosinskiAdaptor>;
 		enum class EdgeType : size_t {
 			invalid,
 			symbolwise,
@@ -67,6 +68,14 @@ class kosinski_internal {
 		constexpr static size_t const LookAheadBufSize = 256;
 		// Total size of the sliding window.
 		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Creates the (multilayer) sliding window structure.
+		static auto create_sliding_window(stream_t const *dt, size_t const size) noexcept {
+			return array<SlidingWindow_t, 3>{
+				SlidingWindow_t{dt, size, 256, 2, 5, EdgeType::dictionary_inline},
+				SlidingWindow_t{dt, size, SearchBufSize, 3, 9, EdgeType::dictionary_short},
+				SlidingWindow_t{dt, size, SearchBufSize, 10, LookAheadBufSize, EdgeType::dictionary_long}
+			};
+		}
 		// Computes the type of edge that covers all of the "len" vertices starting from
 		// "off" vertices ago.
 		// Returns EdgeType::invalid if there is no such edge.

@@ -41,6 +41,7 @@ class comper_internal {
 		using stream_endian_t = BigEndian;
 		using descriptor_t = uint16_t;
 		using descriptor_endian_t = BigEndian;
+		using SlidingWindow_t = SlidingWindow<ComperAdaptor>;
 		enum class EdgeType : size_t {
 			invalid,
 			symbolwise,
@@ -66,6 +67,12 @@ class comper_internal {
 		constexpr static size_t const LookAheadBufSize = 256;
 		// Total size of the sliding window.
 		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Creates the (multilayer) sliding window structure.
+		static auto create_sliding_window(stream_t const *dt, size_t const size) noexcept {
+			return array<SlidingWindow_t, 1>{
+				SlidingWindow_t{dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}
+			};
+		}
 		// Computes the type of edge that covers all of the "len" vertices starting from
 		// "off" vertices ago.
 		// Returns EdgeType::invalid if there is no such edge.

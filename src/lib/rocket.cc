@@ -42,6 +42,7 @@ struct rocket_internal {
 		using stream_endian_t = BigEndian;
 		using descriptor_t = uint8_t;
 		using descriptor_endian_t = LittleEndian;
+		using SlidingWindow_t = SlidingWindow<RocketAdaptor>;
 		enum class EdgeType : size_t {
 			invalid,
 			symbolwise,
@@ -67,6 +68,12 @@ struct rocket_internal {
 		constexpr static size_t const LookAheadBufSize = 0x40;
 		// Total size of the sliding window.
 		constexpr static size_t const SlidingWindowSize = SearchBufSize + LookAheadBufSize;
+		// Creates the (multilayer) sliding window structure.
+		static auto create_sliding_window(stream_t const *dt, size_t const size) noexcept {
+			return array<SlidingWindow_t,1>{
+				SlidingWindow_t{dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}
+			};
+		}
 		// Computes the cost of a symbolwise encoding, that is, the cost of encoding
 		// one single symbol.
 		// Computes the type of edge that covers all of the "len" vertices starting from
