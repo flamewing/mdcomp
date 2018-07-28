@@ -362,13 +362,10 @@ public:
 			}
 			// Get the adjacency list for this node.
 			for (auto& win : winSet) {
-				win.find_matches(matches);
-				for (const auto & elem : matches) {
-					if (elem.get_type() != EdgeType::invalid) {
-						Relax(ii, basedesc, elem);
-					}
-				}
 				win.find_extra_matches(matches);
+				if (matches.empty()) {
+					win.find_matches(matches);
+				}
 				for (const auto & elem : matches) {
 					if (elem.get_type() != EdgeType::invalid) {
 						Relax(ii, basedesc, elem);
