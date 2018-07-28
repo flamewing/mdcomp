@@ -96,7 +96,7 @@ template <size_t N, int I>
 struct write_bitfield_helper {
 	void operator()(EniOBitstream &bits, uint16_t const flags) const {
 		if ((N & (1 << I)) != 0) {
-			bits.push((flags & (I + 11)) != 0);
+			bits.push((flags & (1u << (I + 11))) != 0);
 		}
 		write_bitfield_helper<N, I - 1>{}(bits, flags);
 	}
