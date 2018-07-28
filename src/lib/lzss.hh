@@ -456,8 +456,6 @@ private:
 	// Internal bitstream input buffer.
 	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor,
 	           Adaptor::DescriptorLittleEndianBits, descriptor_endian_t> bits;
-	// Internal parameter buffer.
-	std::string buffer;
 public:
 	// Constructor.
 	LZSSIStream(std::istream &Src) noexcept : in(Src), bits(in) {
@@ -466,7 +464,7 @@ public:
 	~LZSSIStream() noexcept {
 	}
 	// Writes a bit to the descriptor bitfield. When the descriptor field is
-	// full, inputs it and the input parameter buffer.
+	// full, it is written out.
 	descriptor_t descbit() noexcept {
 		return bits.pop();
 	}
