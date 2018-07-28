@@ -117,7 +117,7 @@ public:
 	SlidingWindow(uint8_t const *dt, size_t const size) noexcept
 		: data(reinterpret_cast<stream_t const *>(dt)),
 		  nlen(size / sizeof(stream_t)), basenode(Adaptor::FirstMatchPosition),
-		  ubound(basenode + getLookAheadBufSize()),
+		  ubound(std::min(size_t(Adaptor::LookAheadBufSize) + basenode, nlen)),
 		  lbound(basenode > Adaptor::SearchBufSize ? basenode - Adaptor::SearchBufSize : 0) {
 	}
 
@@ -130,7 +130,7 @@ public:
 	}
 
 	size_t getLookAheadBufSize() const {
-		return std::min(size_t(Adaptor::LookAheadBufSize), nlen - basenode);
+		return ubound - basenode;
 	}
 
 	size_t getWindowSize() const {
@@ -151,14 +151,16 @@ public:
 	}
 
 	MatchVector find_matches() const noexcept {
-		// This is what we produce.
-		MatchVector matches(ubound);
 		static_assert(noexcept(Adaptor::edge_weight(EdgeType())),
 		                       "Adaptor::edge_weight() is not noexcept");
 		static_assert(noexcept(Adaptor::match_type(basenode, basenode)),
 		                       "Adaptor::match_type() is not noexcept");
-		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound, matches)),
+		static_assert(noexcept(Adaptor::extra_matches(data, basenode, ubound, lbound,
+		                       std::declval<MatchVector&>())),
 		                       "Adaptor::extra_matches() is not noexcept");
+		size_t const end = getLookAheadBufSize();
+		// This is what we produce.
+		MatchVector matches(end);
 		// Start with the literal/symbolwise encoding of the current node.
 		{
 			EdgeType const ty = Adaptor::match_type(0, 1);
@@ -173,7 +175,6 @@ public:
 			return matches;
 		}
 		size_t ii = basenode - 1;
-		size_t const end = ubound - basenode;
 		do {
 			// Keep looking for dictionary matches.
 			size_t jj = 0;
