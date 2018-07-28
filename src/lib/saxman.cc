@@ -128,9 +128,9 @@ class saxman_internal {
 				// Got them, so add them to the list.
 				EdgeType const ty = EdgeType::zerofill;
 				for (size_t len = 2; len < jj; len++) {
-					matches[len] = Node_t(basenode,
-					                      numeric_limits<size_t>::max(),
-					                      len + 1, edge_weight(ty), ty);
+					matches[len-1] = Node_t(basenode,
+					                        numeric_limits<size_t>::max(),
+					                        len + 1, edge_weight(ty), ty);
 				}
 			}
 		}

@@ -110,7 +110,6 @@ class SlidingWindow {
 public:
 	using EdgeType = typename Adaptor::EdgeType;
 	using stream_t = typename Adaptor::stream_t;
-	using stream_endian_t = typename Adaptor::stream_endian_t;
 	using Node_t = AdjListNode<Adaptor>;
 	using MatchVector = std::vector<Node_t>;
 
@@ -160,14 +159,7 @@ public:
 		size_t const end = getLookAheadBufSize();
 		// This is what we produce.
 		matches.clear();
-		matches.resize(end);
-		// Start with the literal/symbolwise encoding of the current node.
-		{
-			EdgeType const ty = Adaptor::match_type(0, 1);
-			auto ptr = reinterpret_cast<const uint8_t*>(data + basenode);
-			stream_t val = stream_endian_t::template ReadN<decltype(ptr), sizeof(stream_t)>(ptr);
-			matches[0] = Node_t(basenode, val, ty);
-		}
+		matches.resize(end - 1);
 		// Get extra dictionary matches dependent on specific encoder.
 		Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
 		// First node is special.
@@ -184,9 +176,9 @@ public:
 				// (basenode + jj) with length (jj) and distance (basenode-ii).
 				// Add it to the list if it is a better match.
 				EdgeType const ty = Adaptor::match_type(basenode - ii, jj);
-				if (ty != EdgeType::invalid) {
+				if (jj > 1 && ty != EdgeType::invalid) {
 					size_t const wgt = Adaptor::edge_weight(ty);
-					Node_t &best = matches[jj - 1];
+					Node_t &best = matches[jj - 2];
 					if (wgt < best.get_weight()) {
 						best = Node_t(basenode, basenode - ii, jj, wgt, ty);
 					}
@@ -263,6 +255,7 @@ class LZSSGraph {
 public:
 	using EdgeType = typename Adaptor::EdgeType;
 	using stream_t = typename Adaptor::stream_t;
+	using stream_endian_t = typename Adaptor::stream_endian_t;
 	using Node_t = AdjListNode<Adaptor>;
 	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
@@ -303,21 +296,9 @@ public:
 		std::vector<size_t> desccosts(numNodes + 1, std::numeric_limits<size_t>::max());
 		desccosts[0] = 0;
 
-		// Since the LZSS graph is a topologically-sorted DAG by construction,
-		// computing the shortest distance is very quick and easy: just go
-		// through the nodes in order and update the distances.
-		SlidingWindow_t win(data, nlen);
-		MatchVector matches;
-		matches.reserve(Adaptor::LookAheadBufSize);
-		for (size_t ii = 0; ii < numNodes && win.getLookAheadBufSize() != 0; ii++, win.slideWindow()) {
-			// Get remaining unused descriptor bits up to this node.
-			size_t const basedesc = desccosts[ii];
-			// Get the adjacency list for this node.
-			win.find_matches(matches);
-			for (const auto & elem : matches) {
-				if (elem.get_type() == EdgeType::invalid) {
-					continue;
-				}
+		// Extracting distance relax logic from the loop so it can be used more often.
+		auto Relax = [nlen = this->nlen, &costs, &desccosts, &parents, &pedges]
+		             (size_t ii, size_t const basedesc, const auto& elem) {
 				// Need destination ID and edge weight.
 				size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
 				size_t wgt = costs[ii] + elem.get_weight();
@@ -350,6 +331,31 @@ public:
 					pedges[nextnode] = elem;
 					desccosts[nextnode] = desccost;
 				}
+			};
+
+		// Since the LZSS graph is a topologically-sorted DAG by construction,
+		// computing the shortest distance is very quick and easy: just go
+		// through the nodes in order and update the distances.
+		SlidingWindow_t win(data, nlen);
+		MatchVector matches;
+		matches.reserve(Adaptor::LookAheadBufSize);
+		for (size_t ii = 0; ii < numNodes && win.getLookAheadBufSize() != 0; ii++, win.slideWindow()) {
+			// Get remaining unused descriptor bits up to this node.
+			size_t const basedesc = desccosts[ii];
+			// Start with the literal/symbolwise encoding of the current node.
+			{
+				EdgeType const ty = Adaptor::match_type(0, 1);
+				auto ptr = reinterpret_cast<const uint8_t*>(data + ii + Adaptor::FirstMatchPosition);
+				stream_t val = stream_endian_t::template ReadN<decltype(ptr), sizeof(stream_t)>(ptr);
+				Relax(ii, basedesc, Node_t(ii + Adaptor::FirstMatchPosition, val, ty));
+			}
+			// Get the adjacency list for this node.
+			win.find_matches(matches);
+			for (const auto & elem : matches) {
+				if (elem.get_type() == EdgeType::invalid) {
+					continue;
+				}
+				Relax(ii, basedesc, elem);
 			}
 		}
 
