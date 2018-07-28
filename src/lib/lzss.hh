@@ -69,7 +69,7 @@ public:
 	// Constructors.
 	constexpr AdjListNode() noexcept
 		: currpos(0), weight(std::numeric_limits<size_t>::max()),
-		  type(EdgeType::symbolwise), symbol(stream_t(0)) {
+		  type(EdgeType::invalid), symbol(stream_t(0)) {
 	}
 	constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
 		: currpos(pos), weight(Adaptor::edge_weight(ty)), type(ty), symbol(sym) {
@@ -283,7 +283,7 @@ public:
 			MatchVector const matches = win.find_matches();
 			for (const auto & match : matches) {
 				// Insert the best (lowest cost) edge linking these two nodes.
-				if (match.get_weight() != std::numeric_limits<size_t>::max()) {
+				if (match.get_type() != EdgeType::invalid) {
 					adjs.back().push_back(match);
 				}
 			}

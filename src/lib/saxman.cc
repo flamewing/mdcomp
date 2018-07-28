@@ -127,9 +127,11 @@ class saxman_internal {
 			if (jj >= 3) {
 				// Got them, so add them to the list.
 				EdgeType const ty = EdgeType::zerofill;
-				matches[jj - 1] = Node_t(basenode,
-					                     numeric_limits<size_t>::max(),
-					                     jj, edge_weight(ty), ty);
+				for (size_t len = 2; len < jj; len++) {
+					matches[len] = Node_t(basenode,
+					                      numeric_limits<size_t>::max(),
+					                      len + 1, edge_weight(ty), ty);
+				}
 			}
 		}
 		// Saxman needs no additional padding at the end-of-file.
