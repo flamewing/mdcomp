@@ -204,9 +204,9 @@ namespace detail {
 	#elif defined(_MSC_VER)
 		return _byteswap_uint64(val);
 	#else
-		val = ((val & 0xffffffffu) << 32) | ((val >> 32) & 0xffffffffu);
-		val = ((val & 0xffff0000ffffu) << 16) | ((val >> 16) & 0xffff0000ffffu);
-		return ((val & 0xff00ff00ff00ffu) << 8) | ((val >> 8) & 0xff00ff00ff00ffu);
+		val = ((val & 0xffffffffull) << 32) | ((val >> 32) & 0xffffffffull);
+		val = ((val & 0xffff0000ffffull) << 16) | ((val >> 16) & 0xffff0000ffffull);
+		return ((val & 0xff00ff00ff00ffull) << 8) | ((val >> 8) & 0xff00ff00ff00ffull);
 	#endif
 	}
 
