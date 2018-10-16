@@ -28,6 +28,7 @@
 #include <type_traits>
 
 #include <boost/mpl/has_xxx.hpp>
+#include <boost/tti/has_member_function.hpp>
 
 #ifdef _MSC_VER
 	#include <stdlib.h>
@@ -69,26 +70,27 @@ namespace detail {
 	struct is_any_of<Value, B1, Bn...> : boost::mpl::bool_<
 			std::is_same<Value, B1>::value || is_any_of<Value, Bn...>::value> {};
 
+    BOOST_TTI_HAS_MEMBER_FUNCTION(push_back)
 	template <typename Cont>
-	struct has_push_back : boost::mpl::bool_<
-		std::is_same<decltype(std::declval<Cont>().push_back(typename Cont::value_type{})), void>::value> {
-	};
+	using has_push_back = disjunction<
+            has_member_function_push_back<void (Cont::*)(typename Cont::value_type)>,
+            has_member_function_push_back<void (Cont::*)(const typename Cont::value_type&)>,
+            has_member_function_push_back<void (Cont::*)(typename Cont::value_type&&)>>;
 
+    BOOST_TTI_HAS_MEMBER_FUNCTION(size)
 	template <typename Cont>
-	struct has_size : boost::mpl::bool_<
-		std::is_same<decltype(std::declval<Cont>().size()), typename Cont::size_type>::value> {
-	};
+	using has_size = has_member_function_size<typename Cont::size_type (Cont::*)() const>;
 
+    BOOST_TTI_HAS_MEMBER_FUNCTION(resize)
 	template <typename Cont>
-	struct has_resize : boost::mpl::bool_<
-		std::is_same<decltype(std::declval<Cont>().resize(typename Cont::size_type{})), void>::value> {
-	};
+	using has_resize = has_member_function_resize<void (Cont::*)(typename Cont::size_type)>;
 
+    BOOST_TTI_HAS_MEMBER_FUNCTION(data)
 	template <typename Cont>
-	struct has_data : boost::mpl::bool_<
-				is_any_of<decltype(std::declval<Cont>().data()),
-				          typename Cont::pointer, typename Cont::const_pointer>::value> {
-	};
+	using has_data = disjunction<
+            has_member_function_data<typename Cont::pointer (Cont::*)()>,
+            has_member_function_data<typename Cont::const_pointer (Cont::*)()>,
+            has_member_function_data<typename Cont::const_pointer (Cont::*)() const>>;
 
 	BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type)
 	BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator)
@@ -146,6 +148,17 @@ namespace detail {
 
 	template <typename T>
 	struct is_contiguous_container<T&> : is_contiguous_container<T> {
+	};
+
+	template <typename T>
+	struct is_pushback_container : boost::mpl::bool_<
+			conjunction<std::is_class<T>, has_value_type<T>, has_iterator<T>, has_size_type<T>,
+			            has_reference<T>, has_push_back<T>, has_size<T>, has_resize<T>, negation<has_data<T>>,
+			            has_iterator_tag<T, std::random_access_iterator_tag>>::value> {
+	};
+
+	template <typename T>
+	struct is_pushback_container<T&> : is_pushback_container<T> {
 	};
 
 	template <typename T>
@@ -308,6 +321,13 @@ namespace detail {
 			auto sz = out.size();
 			out.resize(sz + sizeof(T));
 			std::memcpy(&out[sz], &val, sizeof(T));
+		}
+
+		template <typename Cont, typename T>
+		static inline auto Write(Cont& out, T val) noexcept
+					-> std::enable_if_t<detail::is_pushback_container<Cont>::value, void> {
+            auto iter{std::back_inserter(out)};
+            WriteInternal(iter, val, typename std::iterator_traits<decltype(iter)>::iterator_category());
 		}
 
 		template <typename Iter, typename T>
