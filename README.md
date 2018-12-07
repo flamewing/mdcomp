@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/flamewing/mdcomp.svg?branch=master)](https://travis-ci.org/flamewing/mdcomp)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/13715/badge.svg)](https://scan.coverity.com/projects/13715)
+[![CodeFactor](https://www.codefactor.io/repository/github/flamewing/mdcomp/badge)](https://www.codefactor.io/repository/github/flamewing/mdcomp)
 
 # mdcomp
 Assorted compression formats for the Sega Mega Drive
