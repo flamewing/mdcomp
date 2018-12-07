@@ -130,6 +130,7 @@ private:
 			readbits = 16;
 		}
 	}
+
 public:
 	ibitstream(std::istream &s) noexcept : src(s), readbits(sizeof(T) * CHAR_BIT) {
 		bitbuffer = read_bits();
@@ -194,6 +195,7 @@ private:
 	void write_bits(T const bits) noexcept {
 		write(LittleEndianBits ? detail::reverseBits(bits) : bits);
 	}
+
 public:
 	obitstream(std::ostream &d) noexcept : dst(d), waitingbits(0), bitbuffer(0) {
 	}
