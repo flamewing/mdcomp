@@ -1,8 +1,7 @@
 /* -*- Mode: C++; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright (C) Flamewing 2011-2016 <flamewing.sonic@gmail.com>
- * Loosely based on code by Roger Sanders (AKA Nemesis) and William Sanders
- * (AKA Milamber)
+ * Copyright (C) Flamewing 2017 <flamewing.sonic@gmail.com>
+ * Loosely based on code by snkenjoi
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -18,24 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_NEMESIS_H
-#define __LIB_NEMESIS_H
+#pragma once
 
 #include <iosfwd>
-#include "basic_decoder.hh"
-#include "moduled_adaptor.hh"
+#include <mdcomp/basic_decoder.hh>
+#include <mdcomp/moduled_adaptor.hh>
 
-class nemesis;
-using basic_nemesis = BasicDecoder<nemesis, PadMode::DontPad>;
-using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
+class snkrle;
+using basic_snkrle = BasicDecoder<snkrle, PadMode::PadEven>;
+using moduled_snkrle = ModuledAdaptor<snkrle, 4096u, 1u>;
 
-class nemesis : public basic_nemesis, public moduled_nemesis {
-	friend basic_nemesis;
-	friend moduled_nemesis;
+class snkrle : public basic_snkrle, public moduled_snkrle {
+	friend basic_snkrle;
+	friend moduled_snkrle;
 	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
+	using basic_snkrle::encode;
 	static bool decode(std::istream &Src, std::ostream &Dst);
 };
-
-#endif // __LIB_NEMESIS_H

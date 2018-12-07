@@ -24,7 +24,7 @@
 #include <iosfwd>
 #include <limits>
 #include <vector>
-#include "bigendian_io.hh"
+#include <mdcomp/bigendian_io.hh>
 
 enum class PadMode {
 	DontPad,

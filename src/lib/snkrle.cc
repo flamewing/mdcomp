@@ -23,9 +23,9 @@
 #include <sstream>
 #include <string>
 
-#include "snkrle.hh"
-#include "bigendian_io.hh"
-#include "ignore_unused_variable_warning.hh"
+#include <mdcomp/snkrle.hh>
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
 
 using namespace std;
 

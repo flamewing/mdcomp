@@ -24,7 +24,7 @@
 
 #include <getopt.h>
 
-#include "saxman.hh"
+#include <mdcomp/saxman.hh>
 
 using namespace std;
 

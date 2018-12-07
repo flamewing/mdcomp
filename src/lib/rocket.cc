@@ -24,11 +24,11 @@
 #include <sstream>
 #include <type_traits>
 
-#include "rocket.hh"
-#include "bigendian_io.hh"
-#include "bitstream.hh"
-#include "ignore_unused_variable_warning.hh"
-#include "lzss.hh"
+#include <mdcomp/rocket.hh>
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/lzss.hh>
 
 using namespace std;
 

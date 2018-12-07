@@ -28,8 +28,8 @@
 #include <string>
 #include <vector>
 
-#include "bigendian_io.hh"
-#include "bitstream.hh"
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
 
 #ifdef _MSC_VER
 #ifndef __clang__

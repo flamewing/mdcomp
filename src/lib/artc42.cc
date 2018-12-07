@@ -22,10 +22,10 @@
 #include <istream>
 #include <ostream>
 
-#include "artc42.hh"
-#include "bigendian_io.hh"
-#include "bitstream.hh"
-#include "ignore_unused_variable_warning.hh"
+#include <mdcomp/artc42.hh>
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
 
 using namespace std;
 

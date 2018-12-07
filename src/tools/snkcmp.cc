@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "snkrle.hh"
+#include <mdcomp/snkrle.hh>
 
 using namespace std;
 

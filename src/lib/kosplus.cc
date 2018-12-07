@@ -23,11 +23,11 @@
 #include <ostream>
 #include <sstream>
 
-#include "kosplus.hh"
-#include "bigendian_io.hh"
-#include "bitstream.hh"
-#include "ignore_unused_variable_warning.hh"
-#include "lzss.hh"
+#include <mdcomp/kosplus.hh>
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/lzss.hh>
 
 using namespace std;
 

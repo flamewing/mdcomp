@@ -24,7 +24,7 @@
 #include <limits>
 #include <sstream>
 #include <vector>
-#include "bigendian_io.hh"
+#include <mdcomp/bigendian_io.hh>
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class ModuledAdaptor {

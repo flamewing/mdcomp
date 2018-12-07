@@ -36,10 +36,10 @@
 #pragma intrinsic(_BitScanReverse)  
 #endif
 
-#include "enigma.hh"
-#include "bigendian_io.hh"
-#include "bitstream.hh"
-#include "ignore_unused_variable_warning.hh"
+#include <mdcomp/enigma.hh>
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
 
 using namespace std;
 
