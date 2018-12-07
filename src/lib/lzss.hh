@@ -65,6 +65,7 @@ private:
 		} match;
 		stream_t symbol;
 	};
+
 public:
 	// Constructors.
 	constexpr AdjListNode() noexcept
@@ -271,10 +272,12 @@ public:
 	using AdjList = std::list<Node_t>;
 	using MatchVector = std::vector<Node_t>;
 	using SlidingWindow_t = SlidingWindow<Adaptor>;
+
 private:
 	// Adjacency lists for all the nodes in the graph.
 	stream_t const *const data;
 	size_t const nlen;
+
 public:
 	// Constructor: creates the graph from the input file.
 	LZSSGraph(uint8_t const *dt, size_t const size) noexcept
@@ -471,6 +474,7 @@ private:
 	// Internal bitstream input buffer.
 	ibitstream<descriptor_t, Adaptor::NeedEarlyDescriptor,
 	           Adaptor::DescriptorLittleEndianBits, descriptor_endian_t> bits;
+
 public:
 	// Constructor.
 	LZSSIStream(std::istream &Src) noexcept : in(Src), bits(in) {
