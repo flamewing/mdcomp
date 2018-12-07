@@ -23,7 +23,6 @@
 #include <iosfwd>
 
 #include <mdcomp/bigendian_io.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
 
 namespace detail {
 #if !defined(__clang__)
@@ -53,8 +52,7 @@ namespace detail {
 
 	template <typename T>
 	struct reverseByteBits<T, 1> {
-		constexpr inline T operator()(T val, T mask) const noexcept {
-			ignore_unused_variable_warning(mask);
+		constexpr inline T operator()(T val, T /*mask*/) const noexcept {
 			return val;
 		}
 	};
