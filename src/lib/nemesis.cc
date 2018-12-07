@@ -43,6 +43,7 @@ class nibble_run {
 private:
 	uint8_t nibble{0};   // Nibble we are interested in.
 	uint8_t count{0};    // How many times the nibble is repeated.
+
 public:
 	// Constructors.
 	nibble_run() noexcept = default;
@@ -125,6 +126,7 @@ private:
 	shared_ptr<node> child0, child1;
 	size_t weight;
 	nibble_run value;
+
 public:
 	// Construct a new leaf node for character c.
 	node(nibble_run const &val, size_t const wgt) noexcept
