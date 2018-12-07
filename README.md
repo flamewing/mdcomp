@@ -1,5 +1,5 @@
-[![ASM License: 0BSD](https://img.shields.io/badge/License-BSD%200--Clause-orange.svg)](https://tldrlegal.com/license/bsd-0-clause-license)
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![ASM License: 0BSD](https://img.shields.io/badge/ASM%20License-BSD%200--Clause-orange.svg)](https://tldrlegal.com/license/bsd-0-clause-license)
+[![Non-ASM License: LGPL v3](https://img.shields.io/badge/Non--ASM%20License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Build Status](https://travis-ci.org/flamewing/mdcomp.svg?branch=master)](https://travis-ci.org/flamewing/mdcomp)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/13715/badge.svg)](https://scan.coverity.com/projects/13715)
 [![CodeFactor](https://www.codefactor.io/repository/github/flamewing/mdcomp/badge)](https://www.codefactor.io/repository/github/flamewing/mdcomp)
