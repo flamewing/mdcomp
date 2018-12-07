@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-srcdir=`dirname $0`
+srcdir=$(dirname $0)
 test -z "$srcdir" && srcdir=.
 
 DIE=0
@@ -71,7 +71,7 @@ rm -f configure config.log config.guess config.sub config.cache
 rm -f libtool ltmain.sh missing mkinstalldirs install-sh
 rm -f autoconfig.h.in
 rm -f config.status aclocal.m4
-rm -f `find . -name 'Makefile.in'` `find . -name 'Makefile'`
+rm -f $(find . -name 'Makefile.in') $(find . -name 'Makefile')
 
 # Regenerate everything
 echo "Running aclocal $aclocalinclude ..."
