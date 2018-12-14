@@ -1,0 +1,33 @@
+*.ac		text
+*.am		text
+*.in		text
+*.m4		eol=lf
+
+*.sh		text
+
+*.cfg		text
+*.txt		text
+
+*.asm		text diff=cpp
+*.c			text diff=cpp
+*.cc		text diff=cpp
+*.cpp		text diff=cpp
+*.cxx		text diff=cpp
+*.c++		text diff=cpp
+*.h			text diff=cpp
+*.hh 		text diff=cpp
+*.hpp		text diff=cpp
+*.ll		text diff=cpp
+*.rc		text
+*.uc		text
+*.yy		text diff=cpp
+
+Makefile*	text
+
+AUTHORS		text
+COPYING		text
+FAQ			text
+INSTALL		text
+NEWS		text
+README*		text
+
