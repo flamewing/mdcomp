@@ -21,22 +21,22 @@ matrix:
         # Coverity with GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8 && export DO_COVERITY=1"
+          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=1
 
         ##########################################################################
         # clang on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=clang++-7 && export CC=clang-7 && export DO_COVERITY=0"
+          env: MATRIX_EVAL="export CXX=clang++-7 && export CC=clang-7" DO_COVERITY=0
 
         ##########################################################################
         # GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-7 && export CC=gcc-7 && export DO_COVERITY=0"
+          env: MATRIX_EVAL="export CXX=g++-7 && export CC=gcc-7" DO_COVERITY=0
 
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8 && export DO_COVERITY=0"
+          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=0
 
 before_install:
   # Exit immediately if the branch is the "coverity_scan" branch and DO_COVERITY is "0"
@@ -45,7 +45,7 @@ before_install:
   - eval "${MATRIX_EVAL}"
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update; fi
   - if [ "$TRAVIS_BRANCH" != "coverity_scan" -a "${DO_COVERITY}" == "1" ] ; then exit 0; fi
-  - if [ "$DO_COVERITY" == "1" ]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
+  - if [ "${DO_COVERITY}" == "1" ]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
 
 addons:
   apt:
