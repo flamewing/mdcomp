@@ -77,13 +77,13 @@ rm -f $(find . -name 'Makefile.in') $(find . -name 'Makefile')
 echo "Running aclocal $aclocalinclude ..."
 aclocal $aclocalincludes
 echo "Running $libtoolize..."
-$libtoolize --force --copy
+$libtoolize --copy
+echo "Running autoconf ..."
+autoconf
 echo "Running autoheader..."
 autoheader
 echo "Running automake --foreign $am_opt ..."
 automake --add-missing --copy --foreign $am_opt
-echo "Running autoconf ..."
-autoconf
 
 if test x$NOCONFIGURE = x; then
 	echo Running $srcdir/configure "$@" ...
