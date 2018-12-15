@@ -1,6 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Created by Anjuta application wizard.
-
+AC_PREREQ([2.63])
 AC_INIT(mdcomp, 0.2.0)
 
 AC_CONFIG_HEADERS([config.h])
@@ -13,6 +12,7 @@ AM_SILENT_RULES([yes])
 AC_PROG_CXX
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
+AC_PROG_CXXCPP
 AC_HEADER_STDC
 
 # ---------------------------------------------------------------------
@@ -26,6 +26,19 @@ for cxxflag in $CXXFLAGS; do
 		[NEWCXXFLAGS="$NEWCXXFLAGS $cxxflag"])
 done
 CXXFLAGS="$NEWCXXFLAGS"
+
+# ---------------------------------------------------------------------
+# Workaround for 'ar' warning in libtool
+# ---------------------------------------------------------------------
+
+if test "x$AR_FLAGS" = "xcru" ; then
+	AR_FLAGS="cr"
+fi
+
+# ---------------------------------------------------------------------
+# Optimization options
+# ---------------------------------------------------------------------
+
 
 AC_ARG_WITH([optimization],
             AS_HELP_STRING([--with-optimization=none|size|debug|light|normal|heavy],
@@ -136,20 +149,33 @@ CXXFLAGS="$CXXFLAGS $SANITIZERS"
 # Warning level
 # ---------------------------------------------------------------------
 
-CHK_WARN="-Wall -Wextra -pedantic -Wcast-qual -Wwrite-strings -Wredundant-decls -Wdisabled-optimization -fcheck-new"
-CHK_WARN="$CHK_WARN -Wctor-dtor-privacy -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wuseless-cast"
-CHK_WARN="$CHK_WARN -Wno-format-nonliteral -Wformat-security -Wshift-negative-value -Wshift-overflow -Wtrigraphs"
-CHK_WARN="$CHK_WARN -Wuninitialized -fstrict-aliasing -Wduplicated-cond -Wplacement-new -Wcast-align"
-CHK_WARN="$CHK_WARN -Wlogical-op -Wlogical-not-parentheses -Wunused-const-variable -Wpointer-sign"
-CHK_WARN="$CHK_WARN -Wundef"
-#CHK_WARN="$CHK_WARN -Wpadded -Wshadow -Wconditionally-supported"
-CHK_WARN="$CHK_WARN -Wc++17-compat -Wc++17-compat-pedantic -Wc++17-extensions -Wc++2a-compat -Wc++2a-extensions"
+CHK_WARN="-Wall -Wextra -pedantic"
+CHK_WARN="$CHK_WARN -Walloc-zero -Walloca"
+CHK_WARN="$CHK_WARN -Wc++14-compat -Wc++17-compat"
+CHK_WARN="$CHK_WARN -Wcatch-value=3 -Wcast-align -Wcast-qual"
+CHK_WARN="$CHK_WARN -Wconditionally-supported -Wctor-dtor-privacy -Wdisabled-optimization"
+CHK_WARN="$CHK_WARN -Wduplicated-branches -Wduplicated-cond -Wextra-semi"
+CHK_WARN="$CHK_WARN -Wformat-nonliteral -Wformat-security"
+CHK_WARN="$CHK_WARN -Wlogical-not-parentheses -Wlogical-op"
+CHK_WARN="$CHK_WARN -Wmissing-include-dirs -Wnon-virtual-dtor -Wnull-dereference"
+CHK_WARN="$CHK_WARN -Wold-style-cast -Woverloaded-virtual -Wplacement-new"
+CHK_WARN="$CHK_WARN -Wredundant-decls -Wshift-negative-value -Wshift-overflow"
+CHK_WARN="$CHK_WARN -Wtrigraphs -Wundef -Wuninitialized -Wuseless-cast -Wwrite-strings"
+# Warnings that give lots of warnings
+#CHK_WARN="$CHK_WARN -Wformat-signedness -Wcast-align=strict -Weffc++ -Wpadded -Wshadow -Wsign-conversion"
 # GCC attributes
-#CHK_WARN="$CHK_WARN -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format"
+#CHK_WARN="$CHK_WARN -Wsuggest-attribute=cold -Wsuggest-attribute=const -Wsuggest-attribute=format -Wsuggest-attribute=malloc -Wsuggest-attribute=noreturn -Wsuggest-attribute=pure"
 # C++11 and newer
-#CHK_WARN="$CHK_WARN -Wsuggest-final-types -Wsuggest-final-methods -Wsuggest-override -Wzero-as-null-pointer-constant"
+#CHK_WARN="$CHK_WARN -Wsuggest-final-methods -Wsuggest-final-types -Wsuggest-override -Wzero-as-null-pointer-constant"
+CHK_WARN="$CHK_WARN -Wzero-as-null-pointer-constant"
 # Clang warnings
 CHK_WARN="$CHK_WARN -Wunused-const-variables -Wabsolute-value -Wdeprecated-register -Wmismatched-tags -Wunused-private-field"
+
+# Eliminate some spurious warnings due to low optimization level.
+if test x$opt_level = xnone -o x$opt_level = xdebug; then
+	CHK_WARN="$CHK_WARN -Wno-maybe-uninitialized"
+fi
+
 # Warnings give errors
 AC_ARG_ENABLE(warning-errors, AS_HELP_STRING([--enable-warning-errors], [Turn all warnings into errors @<:@default no@:>@]),,enable_warning_errors=no)
 if test x$enable_warning_errors = xyes; then
