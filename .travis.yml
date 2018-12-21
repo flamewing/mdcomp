@@ -28,6 +28,7 @@ matrix:
         # Coverity with GCC on Linux
         ##########################################################################
         - os: linux
+          compiler: gcc
           env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=1
           addons:
             apt:
@@ -51,6 +52,7 @@ matrix:
         # clang on Linux
         ##########################################################################
         - os: linux
+          compiler: clang
           env: MATRIX_EVAL="export CXX=clang++ && export CC=clang" DO_COVERITY=0
           addons:
             apt:
@@ -66,6 +68,7 @@ matrix:
         # GCC on Linux
         ##########################################################################
         - os: linux
+          compiler: gcc
           env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
           addons:
             apt:
@@ -78,6 +81,7 @@ matrix:
             - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1000
 
         - os: linux
+          compiler: gcc
           env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
           addons:
             apt:
