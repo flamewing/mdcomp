@@ -57,11 +57,10 @@ matrix:
               sources: llvm-toolchain-xenial-7
               packages:
                 - *common_depends
+                - clang-7
           before_script:
-            - which clang++-7
-            - which clang-7
-            - sudo update-alternatives --install /usr/bin/clang++ clang++ $(which clang++-7) 1000
-            - sudo update-alternatives --install /usr/bin/clang clang $(which clang-7) 1000
+            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
+            - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 1000
 
         ##########################################################################
         # GCC on Linux
