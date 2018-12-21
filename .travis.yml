@@ -8,6 +8,13 @@ cache:
     directories:
         - ${TRAVIS_BUILLD_DIR}/deps
 
+addons:
+  apt:
+    sources: &common_sources
+      - ubuntu-toolchain-r-test
+    packages: &common_depends
+      - libboost-all-dev
+
 env:
   global:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
@@ -21,22 +28,70 @@ matrix:
         # Coverity with GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=1
+          compiler: gcc
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=1
+          addons:
+            apt:
+              sources: *common_sources
+              packages:
+                - *common_depends
+                - g++-7
+            coverity_scan:
+              project:
+                name: "flamewing/mdcomp"
+                description: "Assorted compression formats for the Sega Mega Drive"
+              notification_email: flamewing.sonic@gmail.com
+              build_command_prepend: "./autogen.sh"
+              build_command: "make"
+              branch_pattern: coverity_scan
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1000
 
         ##########################################################################
         # clang on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=clang++-7 && export CC=clang-7" DO_COVERITY=0
+          compiler: clang
+          env: MATRIX_EVAL="export CXX=clang++ && export CC=clang" DO_COVERITY=0
+          addons:
+            apt:
+              sources: llvm-toolchain-xenial-7
+              packages:
+                - *common_depends
+                - clang-7
+          before_script:
+            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
+            - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 1000
 
         ##########################################################################
         # GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-7 && export CC=gcc-7" DO_COVERITY=0
+          compiler: gcc
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
+          addons:
+            apt:
+              sources: *common_sources
+              packages:
+                - *common_depends
+                - g++-7
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1000
 
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=0
+          compiler: gcc
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
+          addons:
+            apt:
+              sources: *common_sources
+              packages:
+                - *common_depends
+                - g++-8
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1000
 
 before_install:
   # Exit immediately if the branch is the "coverity_scan" branch and DO_COVERITY is "0"
@@ -46,25 +101,6 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update; fi
   - if [ "$TRAVIS_BRANCH" != "coverity_scan" -a "${DO_COVERITY}" == "1" ] ; then exit 0; fi
   - if [ "${DO_COVERITY}" == "1" ]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-7
-    packages:
-      - clang-7
-      - g++-7
-      - g++-8
-      - libboost-all-dev
-  coverity_scan:
-    project:
-      name: "flamewing/mdcomp"
-      description: "Assorted compression formats for the Sega Mega Drive"
-    notification_email: flamewing.sonic@gmail.com
-    build_command_prepend: "./autogen.sh"
-    build_command:   "make"
-    branch_pattern: coverity_scan
 
 script: if [ "$TRAVIS_BRANCH" != "coverity_scan" ]; then .travis/script.sh; elif [ -e cov-int/scm_log.txt ] ; then cat cov-int/scm_log.txt; fi
 
