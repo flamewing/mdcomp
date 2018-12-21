@@ -59,7 +59,7 @@ matrix:
                 - *common_depends
           before_script:
             - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
-            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
+            - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 1000
 
         ##########################################################################
         # GCC on Linux
@@ -103,3 +103,4 @@ notifications:
   email: true
   on_success: change
   on_failure: always
+
