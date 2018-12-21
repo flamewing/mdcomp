@@ -28,7 +28,7 @@ matrix:
         # Coverity with GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=1
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=1
           addons:
             apt:
               sources: *common_sources
@@ -40,42 +40,52 @@ matrix:
                 name: "flamewing/mdcomp"
                 description: "Assorted compression formats for the Sega Mega Drive"
               notification_email: flamewing.sonic@gmail.com
-              build_command_prepend: "cov-configure --gcc && ./autogen.sh"
+              build_command_prepend: "./autogen.sh"
               build_command: "make"
               branch_pattern: coverity_scan
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1000
 
         ##########################################################################
         # clang on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=clang++-7 && export CC=clang-7" DO_COVERITY=0
+          env: MATRIX_EVAL="export CXX=clang++ && export CC=clang" DO_COVERITY=0
           addons:
             apt:
               sources: llvm-toolchain-xenial-7
               packages:
                 - *common_depends
-                - clang-7
+            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
+            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
 
         ##########################################################################
         # GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-7 && export CC=gcc-7" DO_COVERITY=0
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
           addons:
             apt:
               sources: *common_sources
               packages:
                 - *common_depends
                 - g++-7
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1000
 
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=0
+          env: MATRIX_EVAL="export CXX=g++ && export CC=gcc" DO_COVERITY=0
           addons:
             apt:
               sources: *common_sources
               packages:
                 - *common_depends
                 - g++-8
+          before_script:
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1000
 
 before_install:
   # Exit immediately if the branch is the "coverity_scan" branch and DO_COVERITY is "0"
