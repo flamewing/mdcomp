@@ -8,12 +8,12 @@ cache:
     directories:
         - ${TRAVIS_BUILLD_DIR}/deps
 
-env:
-  global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    #   via the "travis encrypt" command using the project repo's public key
-    - secure: "UOJM4pESOoVBY4E0njHNhLEex8L9k1kge76FrNwdWcz+hZJOJOErvLJv3ySjIwtL7KMWM+T7nCbkCyCsFoHtrCbBWf3HvBkuhfSqp3DJ1r+HqMkxDMAmu4xT49BOn5yfH0SmMDSpeCumUq7YSAZzoOXDuPeUEhj4wlDlP81SG8qrENdbdUxL2GuR0SlcFFEb/p/atgL6vXVIyobFbz1pjhU/swOa5KzimyKJP5cnSSU2egG3pZrT5rNIkjRXxSJd/zLNlf+k6gGWNMzwUbXp6LUhdHF1ZisF77DPjc1/hyVvIPvA/k8K7BWLEJ8+Vz3TAjOV1gSiBvpyrTdHu1gkGdKT+gYJXb9bnBdN9NQx3Z/a7ax+yAwrNM91IgJnOMx+kWtrNvOzbrZ6kevc/xRiiGAuTvmrxXGUD0W316Iq1LmghVBe95tS0uXj5v3XCuaPrvlTr4721GRFy5EEbQpoJ/8GT/f5VeGY6ZswG/yFYI868DOJ3GON/fBuqRV3NKyY/ny3jzLFfmaw9441HYhsnUOMtS7ZV6Y32xZu9UgePyTuhtdp2YcPiie6akS6KI0h+TTazPh27R4aeQgjVLnbfYYEPBcy0u1ipdzBV9yUgDFJLQZcckf6nWcIe++mUk46uxSIC1shAKhB7vOF7KE96M0BdgYnkx3Y/eK8k3Wwrn4="
-    - MAKEFLAGS="-j 2"
+addons:
+  sources: &common_sources
+    - ubuntu-toolchain-r-test
+  apt:
+    packages: &common_depends
+      - libboost-all-dev
 
 matrix:
     include:
@@ -21,22 +21,65 @@ matrix:
         # Coverity with GCC on Linux
         ##########################################################################
         - os: linux
-          env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=1
+          env:
+            global:
+              - MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8"
+              - DO_COVERITY=1
+              # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+              #   via the "travis encrypt" command using the project repo's public key
+              - secure: "UOJM4pESOoVBY4E0njHNhLEex8L9k1kge76FrNwdWcz+hZJOJOErvLJv3ySjIwtL7KMWM+T7nCbkCyCsFoHtrCbBWf3HvBkuhfSqp3DJ1r+HqMkxDMAmu4xT49BOn5yfH0SmMDSpeCumUq7YSAZzoOXDuPeUEhj4wlDlP81SG8qrENdbdUxL2GuR0SlcFFEb/p/atgL6vXVIyobFbz1pjhU/swOa5KzimyKJP5cnSSU2egG3pZrT5rNIkjRXxSJd/zLNlf+k6gGWNMzwUbXp6LUhdHF1ZisF77DPjc1/hyVvIPvA/k8K7BWLEJ8+Vz3TAjOV1gSiBvpyrTdHu1gkGdKT+gYJXb9bnBdN9NQx3Z/a7ax+yAwrNM91IgJnOMx+kWtrNvOzbrZ6kevc/xRiiGAuTvmrxXGUD0W316Iq1LmghVBe95tS0uXj5v3XCuaPrvlTr4721GRFy5EEbQpoJ/8GT/f5VeGY6ZswG/yFYI868DOJ3GON/fBuqRV3NKyY/ny3jzLFfmaw9441HYhsnUOMtS7ZV6Y32xZu9UgePyTuhtdp2YcPiie6akS6KI0h+TTazPh27R4aeQgjVLnbfYYEPBcy0u1ipdzBV9yUgDFJLQZcckf6nWcIe++mUk46uxSIC1shAKhB7vOF7KE96M0BdgYnkx3Y/eK8k3Wwrn4="
+            
+          addons:
+            sources:
+              - *common_sources
+            apt:
+              packages:
+                - g++-8
+                - *common_depends
+            coverity_scan:
+              project:
+                name: "flamewing/mdcomp"
+                description: "Assorted compression formats for the Sega Mega Drive"
+              notification_email: flamewing.sonic@gmail.com
+              build_command_prepend: "cov-configure --comptype gcc --compiler ${CXX} --template && ./autogen.sh"
+              build_command: "make"
+              branch_pattern: coverity_scan
 
         ##########################################################################
         # clang on Linux
         ##########################################################################
         - os: linux
           env: MATRIX_EVAL="export CXX=clang++-7 && export CC=clang-7" DO_COVERITY=0
+          addons:
+            sources:
+              - llvm-toolchain-xenial-7
+            apt:
+              packages:
+                - clang-7
+                - *common_depends
 
         ##########################################################################
         # GCC on Linux
         ##########################################################################
         - os: linux
           env: MATRIX_EVAL="export CXX=g++-7 && export CC=gcc-7" DO_COVERITY=0
+          addons:
+            sources:
+              - *common_sources
+            apt:
+              packages:
+                - g++-7
+                - *common_depends
 
         - os: linux
           env: MATRIX_EVAL="export CXX=g++-8 && export CC=gcc-8" DO_COVERITY=0
+          addons:
+            sources:
+              - *common_sources
+            apt:
+              packages:
+                - g++-8
+                - *common_depends
 
 before_install:
   # Exit immediately if the branch is the "coverity_scan" branch and DO_COVERITY is "0"
@@ -46,25 +89,6 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update; fi
   - if [ "$TRAVIS_BRANCH" != "coverity_scan" -a "${DO_COVERITY}" == "1" ] ; then exit 0; fi
   - if [ "${DO_COVERITY}" == "1" ]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca- ; fi
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-7
-    packages:
-      - clang-7
-      - g++-7
-      - g++-8
-      - libboost-all-dev
-  coverity_scan:
-    project:
-      name: "flamewing/mdcomp"
-      description: "Assorted compression formats for the Sega Mega Drive"
-    notification_email: flamewing.sonic@gmail.com
-    build_command_prepend: "./autogen.sh"
-    build_command:   "make"
-    branch_pattern: coverity_scan
 
 script: if [ "$TRAVIS_BRANCH" != "coverity_scan" ]; then .travis/script.sh; elif [ -e cov-int/scm_log.txt ] ; then cat cov-int/scm_log.txt; fi
 
