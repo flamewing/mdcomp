@@ -34,7 +34,7 @@ matrix:
               sources: *common_sources
               packages:
                 - *common_depends
-                - g++-8
+                - g++-7
             coverity_scan:
               project:
                 name: "flamewing/mdcomp"
@@ -44,8 +44,8 @@ matrix:
               build_command: "make"
               branch_pattern: coverity_scan
           before_script:
-            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1000
-            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1000
+            - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1000
+            - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1000
 
         ##########################################################################
         # clang on Linux
@@ -103,4 +103,3 @@ notifications:
   email: true
   on_success: change
   on_failure: always
-
