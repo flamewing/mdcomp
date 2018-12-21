@@ -58,8 +58,8 @@ matrix:
               packages:
                 - *common_depends
           before_script:
-            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 1000
-            - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 1000
+            - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7.0 1000
+            - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7.0 1000
 
         ##########################################################################
         # GCC on Linux
