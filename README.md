@@ -8,9 +8,9 @@
 Assorted compression formats for the Sega Mega Drive
 
 # License
-The src/asm directory is lixensed under a bsd 0-Clause License (0BSD). The tl;dr version is [here](https://tldrlegal.com/license/bsd-0-clause-license).
+The src/asm directory is licensed under a bsd 0-Clause License (0BSD). The tl;dr version is [here](https://tldrlegal.com/license/bsd-0-clause-license).
 
-Basically, you can use however you want, and you don't have to add credits, licenses, or anything to your hack.
+Basically, you can use it however you want, and you don't have to add credits, licenses, or anything to your hack.
 
 I only ask for the courtesy of giving some credit if you use it, but you are not forced to do it.
 
