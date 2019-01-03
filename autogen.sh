@@ -74,19 +74,19 @@ rm -f config.status aclocal.m4
 rm -f $(find . -name 'Makefile.in') $(find . -name 'Makefile')
 
 # Regenerate everything
-echo "Running aclocal $aclocalinclude ..."
+echo "Running aclocal $aclocalinclude..."
 aclocal $aclocalincludes
 echo "Running $libtoolize..."
 $libtoolize --copy
-echo "Running autoconf ..."
+echo "Running autoconf..."
 autoconf
 echo "Running autoheader..."
 autoheader
-echo "Running automake --foreign $am_opt ..."
+echo "Running automake --foreign $am_opt..."
 automake --add-missing --copy --foreign $am_opt
 
 if test x$NOCONFIGURE = x; then
-	echo Running $srcdir/configure "$@" ...
+	echo Running $srcdir/configure "$@"...
 	$srcdir/configure "$@" \
 	&& echo Now type \`make\' to compile. || exit 1
 else
