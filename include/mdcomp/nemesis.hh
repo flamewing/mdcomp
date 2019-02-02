@@ -18,24 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_NEMESIS_H
-#define __LIB_NEMESIS_H
+#ifndef LIB_NEMESIS_HH
+#define LIB_NEMESIS_HH
 
 #include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
 
 class nemesis;
-using basic_nemesis = BasicDecoder<nemesis, PadMode::DontPad>;
-using moduled_nemesis = ModuledAdaptor<nemesis, 4096u, 1u>;
+using basic_nemesis   = BasicDecoder<nemesis, PadMode::DontPad>;
+using moduled_nemesis = ModuledAdaptor<nemesis, 4096U, 1U>;
 
 class nemesis : public basic_nemesis, public moduled_nemesis {
-	friend basic_nemesis;
-	friend moduled_nemesis;
-	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
+    friend basic_nemesis;
+    friend moduled_nemesis;
+    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
-	static bool decode(std::istream &Src, std::ostream &Dst);
+    static bool encode(std::istream& Src, std::ostream& Dst);
+    static bool decode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // __LIB_NEMESIS_H
+#endif // LIB_NEMESIS_HH

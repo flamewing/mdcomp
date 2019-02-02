@@ -18,103 +18,104 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
-#ifndef __LIB_MODULED_ADAPTOR_H
-#define __LIB_MODULED_ADAPTOR_H
+#ifndef LIB_MODULED_ADAPTOR_HH
+#define LIB_MODULED_ADAPTOR_HH
 
 #include <limits>
+#include <mdcomp/bigendian_io.hh>
 #include <sstream>
 #include <vector>
-#include <mdcomp/bigendian_io.hh>
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+template <
+    typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class ModuledAdaptor {
 public:
-	enum {
-		ModuleSize = DefaultModuleSize,
-		ModulePadding = DefaultModulePadding
-	};
-	static size_t PadMaskBits;
-	static bool moduled_decode(std::istream &Src, std::iostream &Dst,
-	                           size_t const ModulePadding = DefaultModulePadding);
+    enum {
+        ModuleSize    = DefaultModuleSize,
+        ModulePadding = DefaultModulePadding
+    };
+    static size_t PadMaskBits;
+    static bool   moduled_decode(
+          std::istream& Src, std::iostream& Dst,
+          size_t ModulePadding = DefaultModulePadding);
 
-	static bool moduled_encode(std::istream &Src, std::ostream &Dst,
-	                           size_t const ModulePadding = DefaultModulePadding);
+    static bool moduled_encode(
+        std::istream& Src, std::ostream& Dst,
+        size_t ModulePadding = DefaultModulePadding);
 };
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
-	std::istream &Src,
-	std::iostream &Dst,
-	size_t const ModulePadding
-) {
-	long long const FullSize = BigEndian::Read2(Src);
-	std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
-	in << Src.rdbuf();
+template <
+    typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
+    moduled_decode(
+        std::istream& Src, std::iostream& Dst, size_t const ModulePadding) {
+    int64_t const     FullSize = BigEndian::Read2(Src);
+    std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
+    in << Src.rdbuf();
 
-	// Pad to even length, for safety.
-	if ((in.tellp() & 1) != 0) {
-		in.put(0);
-	}
+    // Pad to even length, for safety.
+    if ((in.tellp() & 1) != 0) {
+        in.put(0);
+    }
 
-	in.seekg(0);
-	size_t const PadMask = ModulePadding - 1;
+    in.seekg(0);
+    size_t const PadMask = ModulePadding - 1;
 
-	while (true) {
-		Format::decode(in, Dst);
-		if (Dst.tellp() >= FullSize) {
-			break;
-		}
+    while (true) {
+        Format::decode(in, Dst);
+        if (Dst.tellp() >= FullSize) {
+            break;
+        }
 
-		// Skip padding between modules
-		size_t const paddingEnd = (size_t(in.tellg()) + PadMask) & ~PadMask;
-		in.seekg(paddingEnd);
-	}
+        // Skip padding between modules
+        size_t const paddingEnd = (size_t(in.tellg()) + PadMask) & ~PadMask;
+        in.seekg(paddingEnd);
+    }
 
-	return true;
+    return true;
 }
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
-	std::istream &Src,
-	std::ostream &Dst,
-	size_t const ModulePadding
-) {
-	size_t Location = Src.tellg();
-	Src.ignore(std::numeric_limits<std::streamsize>::max());
-	size_t FullSize = Src.gcount();
-	Src.seekg(Location);
-	std::vector<uint8_t> data;
-	data.resize(FullSize);
-	auto ptr = data.cbegin();
-	Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
+template <
+    typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
+    moduled_encode(
+        std::istream& Src, std::ostream& Dst, size_t const ModulePadding) {
+    size_t Location = Src.tellg();
+    Src.ignore(std::numeric_limits<std::streamsize>::max());
+    size_t FullSize = Src.gcount();
+    Src.seekg(Location);
+    std::vector<uint8_t> data;
+    data.resize(FullSize);
+    auto ptr = data.cbegin();
+    Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
 
-	size_t const PadMask = ModulePadding - 1;
+    size_t const PadMask = ModulePadding - 1;
 
-	BigEndian::Write2(Dst, FullSize);
-	std::stringstream sout(std::ios::in | std::ios::out | std::ios::binary);
+    BigEndian::Write2(Dst, FullSize);
+    std::stringstream sout(std::ios::in | std::ios::out | std::ios::binary);
 
-	while (FullSize > ModuleSize) {
-		// We want to manage internal padding for all modules but the last.
-		PadMaskBits = 8 * ModulePadding - 1u;
-		Format::encode(sout, &(*ptr), ModuleSize);
-		FullSize -= ModuleSize;
-		ptr += ModuleSize;
+    while (FullSize > ModuleSize) {
+        // We want to manage internal padding for all modules but the last.
+        PadMaskBits = 8 * ModulePadding - 1U;
+        Format::encode(sout, &(*ptr), ModuleSize);
+        FullSize -= ModuleSize;
+        ptr += ModuleSize;
 
-		// Padding between modules
-		long long const paddingEnd = (size_t(sout.tellp()) + PadMask) & ~PadMask;
-		for (; sout.tellp() < paddingEnd; sout.put(0)) {
-		}
-	}
+        // Padding between modules
+        int64_t const paddingEnd = (size_t(sout.tellp()) + PadMask) & ~PadMask;
+        for (; sout.tellp() < paddingEnd; sout.put(0)) {
+        }
+    }
 
-	PadMaskBits = 7u;
-	Format::encode(sout, &(*ptr), FullSize);
+    PadMaskBits = 7U;
+    Format::encode(sout, &(*ptr), FullSize);
 
-	// Pad to even size.
-	Dst << sout.rdbuf();
-	if ((Dst.tellp() & 1) != 0) {
-		Dst.put(0);
-	}
-	return true;
+    // Pad to even size.
+    Dst << sout.rdbuf();
+    if ((Dst.tellp() & 1) != 0) {
+        Dst.put(0);
+    }
+    return true;
 }
 
-#endif // __LIB_MODULED_ADAPTOR_H
+#endif // LIB_MODULED_ADAPTOR_HH

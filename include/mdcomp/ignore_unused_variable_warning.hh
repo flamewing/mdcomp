@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H
-#define __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H
+#ifndef LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH
+#define LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH
 
 template <typename... T>
-constexpr inline void ignore_unused_variable_warning(T const&...) {  }
+constexpr inline void ignore_unused_variable_warning(T const&...) {}
 
-#endif // __LIB_IGNORE_UNUSED_VARIABLE_WARNING_H
+#endif // LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH

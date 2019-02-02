@@ -17,24 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_KOSPLUS_H
-#define __LIB_KOSPLUS_H
+#ifndef LIB_KOSPLUS_HH
+#define LIB_KOSPLUS_HH
 
 #include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
 
 class kosplus;
-using basic_kosplus = BasicDecoder<kosplus, PadMode::DontPad>;
-using moduled_kosplus = ModuledAdaptor<kosplus, 4096u, 1u>;
+using basic_kosplus   = BasicDecoder<kosplus, PadMode::DontPad>;
+using moduled_kosplus = ModuledAdaptor<kosplus, 4096U, 1U>;
 
 class kosplus : public basic_kosplus, public moduled_kosplus {
-	friend basic_kosplus;
-	friend moduled_kosplus;
-	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
+    friend basic_kosplus;
+    friend moduled_kosplus;
+    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+
 public:
-	using basic_kosplus::encode;
-	static bool decode(std::istream &Src, std::iostream &Dst);
+    using basic_kosplus::encode;
+    static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // __LIB_KOSPLUS_H
+#endif // LIB_KOSPLUS_HH

@@ -17,15 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_ARTC42_H
-#define __LIB_ARTC42_H
+#ifndef LIB_ARTC42_HH
+#define LIB_ARTC42_HH
 
 #include <iosfwd>
 
 class artc42 {
 public:
-	static bool decode(std::istream &Src, std::ostream &Dst);
-	static bool encode(std::istream &Src, std::ostream &Dst);
+    static bool decode(std::istream& Src, std::ostream& Dst);
+    static bool encode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // __LIB_ARTC42_H
+#endif // LIB_ARTC42_HH

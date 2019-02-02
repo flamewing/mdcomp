@@ -26,62 +26,68 @@
 
 using namespace std;
 
-static void usage(char *prog) {
-	cerr << "Usage: " << prog << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
-	cerr << endl;
-	cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl << endl;
+static void usage(char* prog) {
+    cerr << "Usage: " << prog
+         << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}"
+         << endl;
+    cerr << endl;
+    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl
+         << endl;
 }
 
-int main(int argc, char *argv[]) {
-	static option long_options[] = {
-		{"extract", optional_argument, nullptr, 'x'},
-		{nullptr, 0, nullptr, 0}
-	};
+int main(int argc, char* argv[]) {
+    static option long_options[] = {
+        {"extract", optional_argument, nullptr, 'x'}, {nullptr, 0, nullptr, 0}};
 
-	bool extract = false;
-	size_t pointer = 0;
+    bool   extract = false;
+    size_t pointer = 0;
 
-	while (true) {
-		int option_index = 0;
-		int c = getopt_long(argc, argv, "x::",
-		                    static_cast<option*>(long_options), &option_index);
-		if (c == -1) {
-			break;
-		}
+    while (true) {
+        int option_index = 0;
+        int c            = getopt_long(
+            argc, argv, "x::", static_cast<option*>(long_options),
+            &option_index);
+        if (c == -1) {
+            break;
+        }
 
-		switch (c) {
-			case 'x':
-				extract = true;
-				if (optarg != nullptr) {
-					pointer = strtoul(optarg, nullptr, 0);
-				}
-				break;
-		}
-	}
+        switch (c) {
+        case 'x':
+            extract = true;
+            if (optarg != nullptr) {
+                pointer = strtoul(optarg, nullptr, 0);
+            }
+            break;
+        }
+    }
 
-	if (argc - optind < 2) {
-		usage(argv[0]);
-		return 1;
-	}
+    if (argc - optind < 2) {
+        usage(argv[0]);
+        return 1;
+    }
 
-	ifstream fin(argv[optind], ios::in | ios::binary);
-	if (!fin.good()) {
-		cerr << "Input file '" << argv[optind] << "' could not be opened." << endl << endl;
-		return 2;
-	}
+    ifstream fin(argv[optind], ios::in | ios::binary);
+    if (!fin.good()) {
+        cerr << "Input file '" << argv[optind] << "' could not be opened."
+             << endl
+             << endl;
+        return 2;
+    }
 
-	ofstream fout(argv[optind + 1], ios::out | ios::binary);
-	if (!fout.good()) {
-		cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl << endl;
-		return 3;
-	}
+    ofstream fout(argv[optind + 1], ios::out | ios::binary);
+    if (!fout.good()) {
+        cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+             << endl
+             << endl;
+        return 3;
+    }
 
-	if (extract) {
-		fin.seekg(pointer);
-		enigma::decode(fin, fout);
-	} else {
-		enigma::encode(fin, fout);
-	}
+    if (extract) {
+        fin.seekg(pointer);
+        enigma::decode(fin, fout);
+    } else {
+        enigma::encode(fin, fout);
+    }
 
-	return 0;
+    return 0;
 }

@@ -17,21 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#ifndef LIB_SNKRLE_HH
+#define LIB_SNKRLE_HH
 
 #include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
 
 class snkrle;
-using basic_snkrle = BasicDecoder<snkrle, PadMode::PadEven>;
-using moduled_snkrle = ModuledAdaptor<snkrle, 4096u, 1u>;
+using basic_snkrle   = BasicDecoder<snkrle, PadMode::PadEven>;
+using moduled_snkrle = ModuledAdaptor<snkrle, 4096U, 1U>;
 
 class snkrle : public basic_snkrle, public moduled_snkrle {
-	friend basic_snkrle;
-	friend moduled_snkrle;
-	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
+    friend basic_snkrle;
+    friend moduled_snkrle;
+    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+
 public:
-	using basic_snkrle::encode;
-	static bool decode(std::istream &Src, std::ostream &Dst);
+    using basic_snkrle::encode;
+    static bool decode(std::istream& Src, std::ostream& Dst);
 };
+
+#endif // LIB_SNKRLE_HH

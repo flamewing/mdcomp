@@ -17,24 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_COMPER_H
-#define __LIB_COMPER_H
+#ifndef LIB_COMPER_HH
+#define LIB_COMPER_HH
 
 #include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
 
 class comper;
-using basic_comper = BasicDecoder<comper, PadMode::PadEven>;
-using moduled_comper = ModuledAdaptor<comper, 4096u, 1u>;
+using basic_comper   = BasicDecoder<comper, PadMode::PadEven>;
+using moduled_comper = ModuledAdaptor<comper, 4096U, 1U>;
 
 class comper : public basic_comper, public moduled_comper {
-	friend basic_comper;
-	friend moduled_comper;
-	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
+    friend basic_comper;
+    friend moduled_comper;
+    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+
 public:
-	using basic_comper::encode;
-	static bool decode(std::istream &Src, std::iostream &Dst);
+    using basic_comper::encode;
+    static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // __LIB_COMPER_H
+#endif // LIB_COMPER_HH

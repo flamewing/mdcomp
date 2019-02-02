@@ -18,24 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIB_ENIGMA_H
-#define __LIB_ENIGMA_H
+#ifndef LIB_ENIGMA_HH
+#define LIB_ENIGMA_HH
 
 #include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
 
 class enigma;
-using basic_enigma = BasicDecoder<enigma, PadMode::DontPad>;
-using moduled_enigma = ModuledAdaptor<enigma, 4096u, 1u>;
+using basic_enigma   = BasicDecoder<enigma, PadMode::DontPad>;
+using moduled_enigma = ModuledAdaptor<enigma, 4096U, 1U>;
 
 class enigma : public basic_enigma, public moduled_enigma {
-	friend basic_enigma;
-	friend moduled_enigma;
-	static bool encode(std::ostream &Dst, uint8_t const *data, size_t const Size);
+    friend basic_enigma;
+    friend moduled_enigma;
+    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+
 public:
-	static bool encode(std::istream &Src, std::ostream &Dst);
-	static bool decode(std::istream &Src, std::ostream &Dst);
+    static bool encode(std::istream& Src, std::ostream& Dst);
+    static bool decode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // __LIB_ENIGMA_H
+#endif // LIB_ENIGMA_HH

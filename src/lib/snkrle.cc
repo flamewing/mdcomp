@@ -17,97 +17,96 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <limits>
 #include <istream>
+#include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
 
-#include <mdcomp/snkrle.hh>
 #include <mdcomp/bigendian_io.hh>
 #include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/snkrle.hh>
 
 using namespace std;
 
-template<>
+template <>
 size_t moduled_snkrle::PadMaskBits = 1u;
 
 class snkrle_internal {
 public:
-	static void decode(std::istream &Src, std::ostream &Dst) {
-		size_t Size = BigEndian::Read2(Src);
-		if (Size == 0) {
-			return;
-		}
-		uint8_t cc = Read1(Src);
-		Write1(Dst, cc);
-		Size--;
-		while (Size > 0) {
-			uint8_t nc = Read1(Src);
-			Write1(Dst, nc);
-			Size--;
-			if (cc == nc) {
-				// RLE marker. Get repeat count.
-				size_t Count = Read1(Src);
-				for (size_t ii = 0; ii < Count; ii++) {
-					Write1(Dst, nc);
-				}
-				Size -= Count;
-				if (Count == 255 && Size > 0) {
-					cc = Read1(Src);
-					Write1(Dst, nc);
-					Size--;
-				}
-			} else {
-				cc = nc;
-			}
-		}
-	}
+    static void decode(std::istream& Src, std::ostream& Dst) {
+        size_t Size = BigEndian::Read2(Src);
+        if (Size == 0) {
+            return;
+        }
+        uint8_t cc = Read1(Src);
+        Write1(Dst, cc);
+        Size--;
+        while (Size > 0) {
+            uint8_t nc = Read1(Src);
+            Write1(Dst, nc);
+            Size--;
+            if (cc == nc) {
+                // RLE marker. Get repeat count.
+                size_t Count = Read1(Src);
+                for (size_t ii = 0; ii < Count; ii++) {
+                    Write1(Dst, nc);
+                }
+                Size -= Count;
+                if (Count == 255 && Size > 0) {
+                    cc = Read1(Src);
+                    Write1(Dst, nc);
+                    Size--;
+                }
+            } else {
+                cc = nc;
+            }
+        }
+    }
 
-	static void encode(istream &Src, ostream &Dst) {
-		size_t pos = Src.tellg();
-		Src.ignore(std::numeric_limits<std::streamsize>::max());
-		size_t Size = Src.gcount();
-		Src.seekg(pos);
-		BigEndian::Write2(Dst, Size);
-		uint8_t cc = Read1(Src);
-		while (Src.good()) {
-			Write1(Dst, cc);
-			uint8_t nc = Read1(Src);
-			if (!Src.good()) {
-				break;
-			}
-			if (nc == cc) {
-				Write1(Dst, nc);
-				size_t Count = 0;
-				cc = Read1(Src);
-				while (Src.good() && nc == cc && Count < 255) {
-					Count++;
-					cc = Read1(Src);
-				}
-				Write1(Dst, Count);
-			} else {
-				cc = nc;
-			}
-		}
-	}
+    static void encode(istream& Src, ostream& Dst) {
+        size_t pos = Src.tellg();
+        Src.ignore(std::numeric_limits<std::streamsize>::max());
+        size_t Size = Src.gcount();
+        Src.seekg(pos);
+        BigEndian::Write2(Dst, Size);
+        uint8_t cc = Read1(Src);
+        while (Src.good()) {
+            Write1(Dst, cc);
+            uint8_t nc = Read1(Src);
+            if (!Src.good()) {
+                break;
+            }
+            if (nc == cc) {
+                Write1(Dst, nc);
+                size_t Count = 0;
+                cc           = Read1(Src);
+                while (Src.good() && nc == cc && Count < 255) {
+                    Count++;
+                    cc = Read1(Src);
+                }
+                Write1(Dst, Count);
+            } else {
+                cc = nc;
+            }
+        }
+    }
 };
 
-bool snkrle::decode(istream &Src, ostream &Dst) {
-	size_t const Location = Src.tellg();
-	stringstream in(ios::in | ios::out | ios::binary);
-	extract(Src, in);
+bool snkrle::decode(istream& Src, ostream& Dst) {
+    size_t const Location = Src.tellg();
+    stringstream in(ios::in | ios::out | ios::binary);
+    extract(Src, in);
 
-	snkrle_internal::decode(in, Dst);
-	Src.seekg(Location + in.tellg());
-	return true;
+    snkrle_internal::decode(in, Dst);
+    Src.seekg(Location + in.tellg());
+    return true;
 }
 
-bool snkrle::encode(std::ostream &Dst, uint8_t const *data, size_t const Size) {
-	stringstream Src(ios::in | ios::out | ios::binary);
-	Src.write(reinterpret_cast<char const*>(data), Size);
-	Src.seekg(0);
-	snkrle_internal::encode(Src, Dst);
-	return true;
+bool snkrle::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
+    stringstream Src(ios::in | ios::out | ios::binary);
+    Src.write(reinterpret_cast<char const*>(data), Size);
+    Src.seekg(0);
+    snkrle_internal::encode(Src, Dst);
+    return true;
 }
-

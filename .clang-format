@@ -1,0 +1,14 @@
+Language:        Cpp
+BasedOnStyle:  LLVM
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlwaysBreakTemplateDeclarations: Yes
+IndentPPDirectives: AfterHash
+IndentWidth:     4
+KeepEmptyLinesAtTheStartOfBlocks: false
+NamespaceIndentation: All
+PointerAlignment: Left
+SpacesInContainerLiterals: false
+TabWidth:        4

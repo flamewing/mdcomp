@@ -34,21 +34,21 @@ using EniOBitstream = obitstream<uint16_t>;
 
 class artc42_internal {
 public:
-	static void decode(std::istream &Src, std::ostream &Dst) {
-		ignore_unused_variable_warning(Src, Dst);
-	}
+    static void decode(std::istream& Src, std::ostream& Dst) {
+        ignore_unused_variable_warning(Src, Dst);
+    }
 
-	static void encode(std::istream &Src, std::ostream &Dst) {
-		ignore_unused_variable_warning(Src, Dst);
-	}
+    static void encode(std::istream& Src, std::ostream& Dst) {
+        ignore_unused_variable_warning(Src, Dst);
+    }
 };
 
-bool artc42::decode(istream &Src, ostream &Dst) {
-	ignore_unused_variable_warning(Src, Dst);
-	return false;
+bool artc42::decode(istream& Src, ostream& Dst) {
+    ignore_unused_variable_warning(Src, Dst);
+    return false;
 }
 
-bool artc42::encode(istream &Src, ostream &Dst) {
-	ignore_unused_variable_warning(Src, Dst);
-	return false;
+bool artc42::encode(istream& Src, ostream& Dst) {
+    ignore_unused_variable_warning(Src, Dst);
+    return false;
 }
