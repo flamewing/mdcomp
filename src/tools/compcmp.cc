@@ -25,7 +25,13 @@
 
 #include <mdcomp/comper.hh>
 
-using namespace std;
+using std::cerr;
+using std::endl;
+using std::fstream;
+using std::ifstream;
+using std::ios;
+using std::ofstream;
+using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
@@ -50,7 +56,8 @@ int main(int argc, char* argv[]) {
         {"crunch", no_argument, nullptr, 'c'},
         {nullptr, 0, nullptr, 0}};
 
-    bool   extract = false, crunch = false;
+    bool   extract = false;
+    bool   crunch  = false;
     size_t pointer = 0;
 
     while (true) {
@@ -71,6 +78,8 @@ int main(int argc, char* argv[]) {
             break;
         case 'c':
             crunch = true;
+            break;
+        default:
             break;
         }
     }

@@ -27,18 +27,19 @@
 #include <mdcomp/bitstream.hh>
 #include <mdcomp/ignore_unused_variable_warning.hh>
 
-using namespace std;
+using std::istream;
+using std::ostream;
 
 using EniIBitstream = ibitstream<uint16_t, true>;
 using EniOBitstream = obitstream<uint16_t>;
 
 class artc42_internal {
 public:
-    static void decode(std::istream& Src, std::ostream& Dst) {
+    static void decode(istream& Src, ostream& Dst) {
         ignore_unused_variable_warning(Src, Dst);
     }
 
-    static void encode(std::istream& Src, std::ostream& Dst) {
+    static void encode(istream& Src, ostream& Dst) {
         ignore_unused_variable_warning(Src, Dst);
     }
 };

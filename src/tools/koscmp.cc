@@ -25,7 +25,13 @@
 
 #include <mdcomp/kosinski.hh>
 
-using namespace std;
+using std::cerr;
+using std::endl;
+using std::fstream;
+using std::ifstream;
+using std::ios;
+using std::ofstream;
+using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
@@ -69,8 +75,11 @@ int main(int argc, char* argv[]) {
         {"padding", required_argument, nullptr, 'p'},
         {nullptr, 0, nullptr, 0}};
 
-    bool   extract = false, moduled = false, crunch = false;
-    size_t pointer = 0ull, padding = moduled_kosinski::ModulePadding;
+    bool   extract = false;
+    bool   moduled = false;
+    bool   crunch  = false;
+    size_t pointer = 0ULL;
+    size_t padding = moduled_kosinski::ModulePadding;
 
     while (true) {
         int option_index = 0;
@@ -98,9 +107,11 @@ int main(int argc, char* argv[]) {
             if (optarg != nullptr) {
                 padding = strtoul(optarg, nullptr, 0);
             }
-            if ((padding == 0u) || (padding & (padding - 1)) != 0) {
+            if ((padding == 0U) || (padding & (padding - 1)) != 0) {
                 padding = 16;
             }
+            break;
+        default:
             break;
         }
     }

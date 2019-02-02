@@ -29,10 +29,18 @@
 #include <mdcomp/kosplus.hh>
 #include <mdcomp/lzss.hh>
 
-using namespace std;
+using std::array;
+using std::ios;
+using std::iostream;
+using std::istream;
+using std::make_signed_t;
+using std::numeric_limits;
+using std::ostream;
+using std::streamsize;
+using std::stringstream;
 
 template <>
-size_t moduled_kosplus::PadMaskBits = 1u;
+size_t moduled_kosplus::PadMaskBits = 1U;
 
 class kosplus_internal {
     // NOTE: This has to be changed for other LZSS-based compression schemes.
@@ -90,16 +98,19 @@ class kosplus_internal {
             // SearchBufSize
             if (len == 1) {
                 return EdgeType::symbolwise;
-            } else if (len == 2 && dist > 256) {
+            }
+            if (len == 2 && dist > 256) {
                 // Can't represent this except by inlining both nodes.
                 return EdgeType::invalid;
-            } else if (len <= 5 && dist <= 256) {
-                return EdgeType::dictionary_inline;
-            } else if (len >= 3 && len <= 9) {
-                return EdgeType::dictionary_short;
-            } else { // if (len >= 10 && len <= 264)
-                return EdgeType::dictionary_long;
             }
+            if (len <= 5 && dist <= 256) {
+                return EdgeType::dictionary_inline;
+            }
+            if (len >= 3 && len <= 9) {
+                return EdgeType::dictionary_short;
+            }
+            // if (len >= 10 && len <= 264)
+            return EdgeType::dictionary_long;
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -115,7 +126,7 @@ class kosplus_internal {
             case EdgeType::dictionary_long:
                 // 2-bit descriptor.
                 return 2;
-            default:
+            case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
         }
@@ -137,7 +148,7 @@ class kosplus_internal {
                 // 13-bit distance, 3-bit marker (zero),
                 // 8-bit length.
                 return desc_bits(type) + 13 + 8 + 3;
-            default:
+            case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
         }
@@ -163,25 +174,26 @@ public:
         KosIStream src(in);
 
         while (in.good()) {
-            if (src.descbit() != 0u) {
+            if (src.descbit() != 0U) {
                 // Symbolwise match.
                 Write1(Dst, src.getbyte());
             } else {
                 // Dictionary matches.
                 // Count and distance
-                size_t Count    = 0u;
-                size_t distance = 0u;
+                size_t Count    = 0U;
+                size_t distance = 0U;
 
-                if (src.descbit() != 0u) {
+                if (src.descbit() != 0U) {
                     // Separate dictionary match.
-                    size_t High = src.getbyte(), Low = src.getbyte();
+                    size_t High = src.getbyte();
+                    size_t Low  = src.getbyte();
 
-                    Count = High & 0x07u;
+                    Count = High & 0x07U;
 
-                    if (Count == 0u) {
+                    if (Count == 0U) {
                         // 3-byte dictionary match.
                         Count = src.getbyte();
-                        if (Count == 0u) {
+                        if (Count == 0U) {
                             break;
                         }
                         Count += 9;
@@ -190,12 +202,13 @@ public:
                         Count = 10 - Count;
                     }
 
-                    distance = 0x2000u - (((0xF8u & High) << 5) | Low);
+                    distance = 0x2000U - (((0xF8U & High) << 5) | Low);
                 } else {
                     // Inline dictionary match.
-                    distance = 0x100u - src.getbyte();
+                    distance = 0x100U - src.getbyte();
 
-                    size_t High = src.descbit(), Low = src.descbit();
+                    size_t High = src.descbit();
+                    size_t Low  = src.descbit();
 
                     Count = ((High << 1) | Low) + 2;
                 }
@@ -229,8 +242,8 @@ public:
                 out.putbyte(edge.get_symbol());
                 break;
             case EdgeType::dictionary_inline: {
-                size_t const len  = edge.get_length() - 2,
-                             dist = 0x100u - edge.get_distance();
+                size_t const len  = edge.get_length() - 2;
+                size_t const dist = 0x100U - edge.get_distance();
                 out.descbit(0);
                 out.descbit(0);
                 out.putbyte(dist);
@@ -240,9 +253,10 @@ public:
             }
             case EdgeType::dictionary_short:
             case EdgeType::dictionary_long: {
-                size_t const len  = edge.get_length(),
-                             dist = 0x2000u - edge.get_distance();
-                size_t high = (dist >> 5) & 0xF8u, low = (dist & 0xFFu);
+                size_t const len  = edge.get_length();
+                size_t const dist = 0x2000U - edge.get_distance();
+                size_t       high = (dist >> 5) & 0xF8U;
+                size_t       low  = (dist & 0xFFU);
                 out.descbit(0);
                 out.descbit(1);
                 if (edge.get_type() == EdgeType::dictionary_short) {
@@ -255,7 +269,7 @@ public:
                 }
                 break;
             }
-            default:
+            case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << std::endl;

@@ -41,7 +41,20 @@
 #include <mdcomp/enigma.hh>
 #include <mdcomp/ignore_unused_variable_warning.hh>
 
-using namespace std;
+using std::array;
+using std::forward;
+using std::ios;
+using std::iostream;
+using std::istream;
+using std::make_index_sequence;
+using std::make_signed_t;
+using std::map;
+using std::ostream;
+using std::pair;
+using std::set;
+using std::streamsize;
+using std::stringstream;
+using std::vector;
 
 using EniIBitstream = ibitstream<uint16_t, true>;
 using EniOBitstream = obitstream<uint16_t>;
@@ -51,14 +64,9 @@ class base_flag_io {
 public:
     using Callback_t = Callback;
     struct tag {};
-    static const base_flag_io& get(size_t const n);
-    constexpr base_flag_io(Callback_t callback_) noexcept
+    static const base_flag_io& get(size_t n);
+    constexpr explicit base_flag_io(Callback_t callback_) noexcept
         : callback(callback_) {}
-    constexpr base_flag_io(base_flag_io const& other) noexcept = default;
-    constexpr base_flag_io(base_flag_io&& other) noexcept      = default;
-    constexpr base_flag_io&
-                            operator=(base_flag_io const& other) noexcept = default;
-    constexpr base_flag_io& operator=(base_flag_io&& other) noexcept = default;
     template <typename... Ts>
     auto operator()(Ts&&... args) const {
         return this->callback(forward<Ts>(args)...);
@@ -74,6 +82,7 @@ using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
 template <size_t N, int I>
 struct read_bitfield_helper {
     uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
+        // NOLINTNEXTLINE(misc-redundant-expression)
         if ((N & (1 << I)) != 0) {
             flags |= bits.pop() << (I + 11);
         }
@@ -97,8 +106,9 @@ uint16_t read_bitfield(EniIBitstream& bits) {
 template <size_t N, int I>
 struct write_bitfield_helper {
     void operator()(EniOBitstream& bits, uint16_t const flags) const {
+        // NOLINTNEXTLINE(misc-redundant-expression)
         if ((N & (1 << I)) != 0) {
-            bits.push((flags & (1u << (I + 11))) != 0);
+            bits.push(static_cast<uint16_t>((flags & (1U << (I + 11))) != 0));
         }
         write_bitfield_helper<N, I - 1>{}(bits, flags);
     }
@@ -136,7 +146,7 @@ const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
 // Blazing fast function that gives the index of the MSB.
 int slog2(unsigned val) {
 #ifdef __GNUG__
-    return (sizeof(unsigned) * 8u - 1u) ^ __builtin_clz(val);
+    return static_cast<int>((sizeof(unsigned) * 8U - 1U) ^ __builtin_clz(val));
 #elif defined(_MSC_VER)
     unsigned long ret = 0;
     _BitScanReverse(&ret, val);
@@ -186,7 +196,7 @@ static inline void flush_buffer(
 }
 
 template <>
-size_t moduled_enigma::PadMaskBits = 1u;
+size_t moduled_enigma::PadMaskBits = 1U;
 
 class enigma_internal {
 public:
@@ -202,7 +212,7 @@ public:
 
         // Lets put in a safe termination condition here.
         while (in.good()) {
-            if (bits.pop() != 0u) {
+            if (bits.pop() != 0U) {
                 size_t const mode = bits.read(2);
                 switch (mode) {
                 case 2:
@@ -227,15 +237,17 @@ public:
                     }
 
                     for (size_t i = 0; i <= cnt; i++) {
-                        uint16_t flags = getMask(bits),
-                                 outv  = bits.read(packet_length);
+                        uint16_t flags = getMask(bits);
+                        uint16_t outv  = bits.read(packet_length);
                         BigEndian::Write2(Dst, outv | flags);
                     }
                     break;
                 }
+                default:
+                    __builtin_unreachable();
                 }
             } else {
-                if (bits.pop() == 0u) {
+                if (bits.pop() == 0U) {
                     size_t const cnt = bits.read(4) + 1;
                     for (size_t i = 0; i < cnt; i++) {
                         BigEndian::Write2(Dst, incrementing_value++);

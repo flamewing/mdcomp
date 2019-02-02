@@ -30,10 +30,20 @@
 #include <mdcomp/lzss.hh>
 #include <mdcomp/rocket.hh>
 
-using namespace std;
+using std::array;
+using std::fill_n;
+using std::ios;
+using std::iostream;
+using std::istream;
+using std::make_signed_t;
+using std::numeric_limits;
+using std::ostream;
+using std::ostreambuf_iterator;
+using std::streamsize;
+using std::stringstream;
 
 template <>
-size_t moduled_rocket::PadMaskBits = 1u;
+size_t moduled_rocket::PadMaskBits = 1U;
 
 struct rocket_internal {
     // NOTE: This has to be changed for other LZSS-based compression schemes.
@@ -85,9 +95,8 @@ struct rocket_internal {
             ignore_unused_variable_warning(dist);
             if (len == 1) {
                 return EdgeType::symbolwise;
-            } else {
-                return EdgeType::dictionary;
             }
+            return EdgeType::dictionary;
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -107,7 +116,7 @@ struct rocket_internal {
             case EdgeType::dictionary:
                 // 10-bit distance, 6-bit length.
                 return desc_bits(type) + 10 + 6;
-            default:
+            case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
         }
@@ -136,20 +145,21 @@ public:
         RockIStream  src(in);
 
         while (in.good() && size_t(in.tellg()) < Size) {
-            if (src.descbit() != 0u) {
+            if (src.descbit() != 0U) {
                 // Symbolwise match.
                 uint8_t const Byte = Read1(in);
                 Write1(Dst, Byte);
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                diff_t const high = src.getbyte(), low = src.getbyte();
-                diff_t       length = ((high & 0xFC) >> 2) + 1u;
+                diff_t const high   = src.getbyte();
+                diff_t const low    = src.getbyte();
+                diff_t       length = ((high & 0xFC) >> 2) + 1U;
                 diff_t       offset = ((high & 3) << 8) | low;
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
                 // basedest + 0x3C0u.
-                constexpr diff_t const bias =
+                constexpr auto const bias =
                     diff_t(RocketAdaptor::FirstMatchPosition);
                 diff_t const basedest = diff_t(Dst.tellp());
                 offset                = diff_t(
@@ -165,9 +175,9 @@ public:
                     length -= cnt;
                     offset += cnt;
                 }
-                for (diff_t src = offset; src < offset + length; src++) {
+                for (diff_t csrc = offset; csrc < offset + length; csrc++) {
                     diff_t const Pointer = diff_t(Dst.tellp());
-                    Dst.seekg(src);
+                    Dst.seekg(csrc);
                     uint8_t const Byte = Read1(Dst);
                     Dst.seekp(Pointer);
                     Write1(Dst, Byte);
@@ -194,21 +204,21 @@ public:
                 out.putbyte(edge.get_symbol());
                 break;
             case EdgeType::dictionary: {
-                size_t const len  = edge.get_length(),
-                             dist = edge.get_distance(),
-                             pos  = (edge.get_pos() - dist) %
-                                   RocketAdaptor::SearchBufSize;
+                size_t const len  = edge.get_length();
+                size_t const dist = edge.get_distance();
+                size_t const pos =
+                    (edge.get_pos() - dist) % RocketAdaptor::SearchBufSize;
                 out.descbit(0);
                 out.putbyte(((len - 1) << 2) | (pos >> 8));
                 out.putbyte(pos);
                 break;
             }
-            default:
+            case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << std::endl;
                 __builtin_unreachable();
-            };
+            }
         }
     }
 };

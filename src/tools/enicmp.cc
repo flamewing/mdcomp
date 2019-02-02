@@ -24,7 +24,13 @@
 
 #include <mdcomp/enigma.hh>
 
-using namespace std;
+using std::cerr;
+using std::endl;
+using std::fstream;
+using std::ifstream;
+using std::ios;
+using std::ofstream;
+using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
@@ -51,13 +57,11 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        switch (c) {
-        case 'x':
+        if (c == 'x') {
             extract = true;
             if (optarg != nullptr) {
                 pointer = strtoul(optarg, nullptr, 0);
             }
-            break;
         }
     }
 

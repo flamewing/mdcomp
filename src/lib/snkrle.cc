@@ -27,14 +27,19 @@
 #include <mdcomp/ignore_unused_variable_warning.hh>
 #include <mdcomp/snkrle.hh>
 
-using namespace std;
+using std::ios;
+using std::istream;
+using std::numeric_limits;
+using std::ostream;
+using std::streamsize;
+using std::stringstream;
 
 template <>
-size_t moduled_snkrle::PadMaskBits = 1u;
+size_t moduled_snkrle::PadMaskBits = 1U;
 
 class snkrle_internal {
 public:
-    static void decode(std::istream& Src, std::ostream& Dst) {
+    static void decode(istream& Src, ostream& Dst) {
         size_t Size = BigEndian::Read2(Src);
         if (Size == 0) {
             return;
@@ -66,7 +71,7 @@ public:
 
     static void encode(istream& Src, ostream& Dst) {
         size_t pos = Src.tellg();
-        Src.ignore(std::numeric_limits<std::streamsize>::max());
+        Src.ignore(numeric_limits<streamsize>::max());
         size_t Size = Src.gcount();
         Src.seekg(pos);
         BigEndian::Write2(Dst, Size);
@@ -103,7 +108,7 @@ bool snkrle::decode(istream& Src, ostream& Dst) {
     return true;
 }
 
-bool snkrle::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
+bool snkrle::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
     Src.write(reinterpret_cast<char const*>(data), Size);
     Src.seekg(0);

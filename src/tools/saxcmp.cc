@@ -26,7 +26,13 @@
 
 #include <mdcomp/saxman.hh>
 
-using namespace std;
+using std::cerr;
+using std::endl;
+using std::fstream;
+using std::ifstream;
+using std::ios;
+using std::ofstream;
+using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
@@ -58,8 +64,11 @@ int main(int argc, char* argv[]) {
         {"crunch", no_argument, nullptr, 'c'},
         {nullptr, 0, nullptr, 0}};
 
-    bool   extract = false, crunch = false, WithSize = true;
-    size_t pointer = 0, BSize = 0;
+    bool   extract  = false;
+    bool   crunch   = false;
+    bool   WithSize = true;
+    size_t pointer  = 0;
+    size_t BSize    = 0;
 
     while (true) {
         int option_index = 0;
@@ -92,6 +101,8 @@ int main(int argc, char* argv[]) {
             break;
         case 'S':
             WithSize = false;
+            break;
+        default:
             break;
         }
     }
@@ -126,7 +137,7 @@ int main(int argc, char* argv[]) {
         fin.close();
         buffer.seekg(0);
 
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        ofstream fout(outfile, ios::out | ios::binary);
         if (!fout.good()) {
             cerr << "Output file '" << argv[optind + 1]
                  << "' could not be opened." << endl

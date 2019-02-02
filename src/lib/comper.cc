@@ -29,10 +29,18 @@
 #include <mdcomp/ignore_unused_variable_warning.hh>
 #include <mdcomp/lzss.hh>
 
-using namespace std;
+using std::array;
+using std::ios;
+using std::iostream;
+using std::istream;
+using std::make_signed_t;
+using std::numeric_limits;
+using std::ostream;
+using std::streamsize;
+using std::stringstream;
 
 template <>
-size_t moduled_comper::PadMaskBits = 1u;
+size_t moduled_comper::PadMaskBits = 1U;
 
 class comper_internal {
     // NOTE: This has to be changed for other LZSS-based compression schemes.
@@ -83,9 +91,8 @@ class comper_internal {
             ignore_unused_variable_warning(dist);
             if (len == 1) {
                 return EdgeType::symbolwise;
-            } else {
-                return EdgeType::dictionary;
             }
+            return EdgeType::dictionary;
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -105,7 +112,7 @@ class comper_internal {
             case EdgeType::dictionary:
                 // 8-bit distance, 8-bit length.
                 return desc_bits(type) + 8 + 8;
-            default:
+            case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
         }
@@ -131,14 +138,14 @@ public:
         CompIStream src(in);
 
         while (in.good()) {
-            if (src.descbit() == 0u) {
+            if (src.descbit() == 0U) {
                 // Symbolwise match.
                 BigEndian::Write2(Dst, BigEndian::Read2(in));
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                size_t const distance = (0x100 - src.getbyte()) * 2,
-                             length   = src.getbyte();
+                size_t const distance = (0x100 - src.getbyte()) * 2;
+                size_t const length   = src.getbyte();
                 if (length == 0) {
                     break;
                 }
@@ -169,26 +176,27 @@ public:
             switch (edge.get_type()) {
             case EdgeType::symbolwise: {
                 auto         value = edge.get_symbol();
-                size_t const high = (value >> 8) & 0xFFu, low = (value & 0xFFu);
+                size_t const high  = (value >> 8) & 0xFFU;
+                size_t const low   = (value & 0xFFU);
                 out.descbit(0);
                 out.putbyte(high);
                 out.putbyte(low);
                 break;
             }
             case EdgeType::dictionary: {
-                size_t const len  = edge.get_length(),
-                             dist = edge.get_distance();
+                size_t const len  = edge.get_length();
+                size_t const dist = edge.get_distance();
                 out.descbit(1);
                 out.putbyte(-dist);
                 out.putbyte(len - 1);
                 break;
             }
-            default:
+            case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << std::endl;
                 __builtin_unreachable();
-            };
+            }
         }
 
         // Push descriptor for end-of-file marker.
