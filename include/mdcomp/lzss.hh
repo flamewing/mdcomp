@@ -430,9 +430,9 @@ public:
     // Constructor.
     explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
     LZSSOStream(LZSSOStream const&)     = default;
-    LZSSOStream(LZSSOStream&&) noexcept = default;
+    LZSSOStream(LZSSOStream&&) = default;
     LZSSOStream& operator=(LZSSOStream const&) = default;
-    LZSSOStream& operator=(LZSSOStream&&) noexcept = default;
+    LZSSOStream& operator=(LZSSOStream&&) = default;
     // Destructor: writes anything that hasn't been written.
     ~LZSSOStream() noexcept {
         // We need a dummy descriptor field if we have exactly zero bits left
