@@ -115,6 +115,7 @@ class comper_internal {
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
+            __builtin_unreachable();
         }
         // Comper finds no additional matches over normal LZSS.
         constexpr static void extra_matches(

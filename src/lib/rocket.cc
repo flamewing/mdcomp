@@ -119,6 +119,7 @@ struct rocket_internal {
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
+            __builtin_unreachable();
         }
         // Rocket finds no additional matches over normal LZSS.
         static void extra_matches(

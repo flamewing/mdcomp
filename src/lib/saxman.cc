@@ -125,6 +125,7 @@ class saxman_internal {
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
+            __builtin_unreachable();
         }
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.

@@ -129,6 +129,7 @@ class kosinski_internal {
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
+            __builtin_unreachable();
         }
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
@@ -151,6 +152,7 @@ class kosinski_internal {
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
+            __builtin_unreachable();
         }
         // Kosinski finds no additional matches over normal LZSS.
         constexpr static void extra_matches(
