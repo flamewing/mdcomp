@@ -95,11 +95,18 @@ namespace detail {
               decltype(std::declval<Cont>().data()), typename Cont::pointer,
               typename Cont::const_pointer>::value> {};
 
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type)
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator)
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(size_type)
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(reference)
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator_category)
+    #ifdef __GNUG__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+    #endif
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type) // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator) // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(size_type) // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(reference) // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator_category) // NOLINT
+    #ifdef __GNUG__
+    #pragma GCC diagnostic pop
+    #endif
 
     template <typename Cont>
     struct get_iterator_tag {
