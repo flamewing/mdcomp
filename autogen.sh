@@ -86,7 +86,7 @@ echo "Running automake --foreign $am_opt..."
 automake --add-missing --copy --foreign $am_opt
 
 if test x$NOCONFIGURE = x; then
-	echo Running $srcdir/configure "$@"...
+	echo Running $srcdir/configure "$*" ...
 	$srcdir/configure "$@" \
 	&& echo Now type \`make\' to compile. || exit 1
 else
