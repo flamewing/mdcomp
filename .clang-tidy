@@ -24,6 +24,7 @@ Checks: "-*\
 ,-cppcoreguidelines-pro-bounds-pointer-arithmetic\
 ,-cppcoreguidelines-pro-type-vararg\
 ,-cppcoreguidelines-avoid-magic-numbers\
+,-cppcoreguidelines-init-variables\
 ,google-build-using-namespace\
 ,google-explicit-constructor\
 ,google-global-names-in-headers\
@@ -38,6 +39,7 @@ Checks: "-*\
 ,misc-*\
 ,modernize-*\
 ,-modernize-avoid-c-arrays\
+,-modernize-use-trailing-return-type\
 ,performance-*\
 ,readability-*\
 ,-readability-named-parameter\
