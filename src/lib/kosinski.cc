@@ -144,10 +144,8 @@ class kosinski_internal {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
-                // 8-bit value.
-                return desc_bits(type) + 8;
             case EdgeType::dictionary_inline:
-                // 8-bit distance.
+                // 8-bit value / distance.
                 return desc_bits(type) + 8;
             case EdgeType::dictionary_short:
                 // 13-bit distance, 3-bit length.

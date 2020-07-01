@@ -121,7 +121,7 @@ private:
         return LittleEndianBits ? detail::reverseBits(bits) : bits;
     }
     void check_buffer() noexcept {
-        if (readbits) {
+        if (readbits != 0U) {
             return;
         }
 
@@ -231,7 +231,7 @@ public:
     // Flushes remaining bits (if any) to the buffer, completing the byte by
     // padding with zeroes.
     bool flush() noexcept {
-        if (waitingbits) {
+        if (waitingbits != 0U) {
             bitbuffer <<= ((sizeof(T) * CHAR_BIT) - waitingbits);
             write_bits(bitbuffer);
             waitingbits = 0;
