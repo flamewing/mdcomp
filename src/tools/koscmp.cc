@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+#include <mdcomp/kosinski.hh>
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-#include <getopt.h>
-
-#include <mdcomp/kosinski.hh>
 
 using std::cerr;
 using std::endl;
@@ -68,12 +68,12 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static option long_options[] = {
-        {"extract", optional_argument, nullptr, 'x'},
-        {"moduled", no_argument, nullptr, 'm'},
-        {"crunch", no_argument, nullptr, 'c'},
-        {"padding", required_argument, nullptr, 'p'},
-        {nullptr, 0, nullptr, 0}};
+    static option long_options[]
+            = {{"extract", optional_argument, nullptr, 'x'},
+               {"moduled", no_argument, nullptr, 'm'},
+               {"crunch", no_argument, nullptr, 'c'},
+               {"padding", required_argument, nullptr, 'p'},
+               {nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
     bool   moduled = false;
@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-            argc, argv, "x::mcr:s:p:", static_cast<option*>(long_options),
-            &option_index);
+                argc, argv, "x::mcr:s:p:", static_cast<option*>(long_options),
+                &option_index);
         if (c == -1) {
             break;
         }
@@ -128,8 +128,8 @@ int main(int argc, char* argv[]) {
         return 4;
     }
 
-    char* outfile =
-        crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
+    char* outfile
+            = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);
     if (!fin.good()) {

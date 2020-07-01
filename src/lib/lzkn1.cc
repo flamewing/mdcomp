@@ -17,17 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/lzkn1.hh>
+#include <mdcomp/lzss.hh>
+
 #include <cstdint>
 #include <iostream>
 #include <istream>
 #include <ostream>
 #include <sstream>
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
-#include <mdcomp/lzkn1.hh>
-#include <mdcomp/lzss.hh>
 
 using std::array;
 using std::ios;
@@ -77,23 +78,23 @@ class lzkn1_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 33;
         // Total size of the sliding window.
-        constexpr static size_t const SlidingWindowSize =
-            SearchBufSize + LookAheadBufSize;
+        constexpr static size_t const SlidingWindowSize
+                = SearchBufSize + LookAheadBufSize;
         // Creates the (multilayer) sliding window structure.
-        static auto
-        create_sliding_window(stream_t const* dt, size_t const size) noexcept {
+        static auto create_sliding_window(
+                stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 2>{
-                SlidingWindow_t{
-                    dt, size, 15, 2, 5, EdgeType::dictionary_short},
-                SlidingWindow_t{
-                    dt, size, SearchBufSize, 3, LookAheadBufSize,
-                    EdgeType::dictionary_long}};
+                    SlidingWindow_t{
+                            dt, size, 15, 2, 5, EdgeType::dictionary_short},
+                    SlidingWindow_t{
+                            dt, size, SearchBufSize, 3, LookAheadBufSize,
+                            EdgeType::dictionary_long}};
         }
         // Computes the type of edge that covers all of the "len" vertices
         // starting from "off" vertices ago. Returns EdgeType::invalid if there
         // is no such edge.
         constexpr static EdgeType
-        match_type(size_t const dist, size_t const len) noexcept {
+                match_type(size_t const dist, size_t const len) noexcept {
             // Preconditions:
             // len >= 1 && len <= LookAheadBufSize && dist != 0 && dist <=
             // SearchBufSize
@@ -118,7 +119,7 @@ class lzkn1_internal {
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
         constexpr static size_t
-        edge_weight(EdgeType const type, size_t length) noexcept {
+                edge_weight(EdgeType const type, size_t length) noexcept {
             switch (type) {
             case EdgeType::symbolwise:
                 // 8-bit value.
@@ -142,16 +143,16 @@ class lzkn1_internal {
         }
         // lzkn1 finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-            stream_t const* data, size_t const basenode, size_t const ubound,
-            size_t const                          lbound,
-            LZSSGraph<Lzkn1Adaptor>::MatchVector& matches) noexcept {
+                stream_t const* data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
+                LZSSGraph<Lzkn1Adaptor>::MatchVector& matches) noexcept {
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
             size_t const end = std::min(ubound - basenode, size_t(72));
             for (size_t ii = 8; ii < end; ii++) {
                 matches.emplace_back(
-                    basenode, numeric_limits<size_t>::max(), ii,
-                    EdgeType::packed_symbolwise);
+                        basenode, numeric_limits<size_t>::max(), ii,
+                        EdgeType::packed_symbolwise);
             }
             // Do normal matches.
             return false;
@@ -170,9 +171,9 @@ public:
         size_t const UncompressedSize = BigEndian::Read2(in);
 
         Lzkn1IStream           src(in);
-        constexpr size_t const eof_marker = 0x1FU;
+        constexpr size_t const eof_marker               = 0x1FU;
         constexpr size_t const packed_symbolwise_marker = 0xC0U;
-        constexpr size_t const short_match_marker = 0x80U;
+        constexpr size_t const short_match_marker       = 0x80U;
 
         size_t BytesWritten = 0U;
 
@@ -188,7 +189,8 @@ public:
                     // Terminator.
                     break;
                 }
-                if ((Data & packed_symbolwise_marker) == packed_symbolwise_marker) {
+                if ((Data & packed_symbolwise_marker)
+                    == packed_symbolwise_marker) {
                     // Packed symbolwise.
                     size_t const Count = Data - packed_symbolwise_marker + 8U;
                     for (size_t i = 0; i < Count; i++) {
@@ -197,9 +199,10 @@ public:
                     BytesWritten += Count;
                 } else {
                     // Dictionary matches.
-                    bool const long_match = (Data & short_match_marker) != short_match_marker;
-                    size_t     Count      = 0U;
-                    size_t     distance   = 0U;
+                    bool const long_match
+                            = (Data & short_match_marker) != short_match_marker;
+                    size_t Count    = 0U;
+                    size_t distance = 0U;
 
                     if (long_match == true) {
                         // Long dictionary match.
@@ -243,8 +246,8 @@ public:
         Lzkn1Graph                   enc(Data, Size);
         typename Lzkn1Graph::AdjList list = enc.find_optimal_parse();
         Lzkn1OStream                 out(Dst);
-        constexpr size_t const eof_marker = 0x1FU;
-        constexpr size_t const packed_symbolwise_marker = 0xC0U;
+        constexpr size_t const       eof_marker               = 0x1FU;
+        constexpr size_t const       packed_symbolwise_marker = 0xC0U;
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {
@@ -255,11 +258,12 @@ public:
                 break;
             case EdgeType::packed_symbolwise: {
                 out.descbit(1);
-                size_t const Count    = edge.get_length();
-                size_t const position = edge.get_pos();
-                uint8_t const data    = Count + packed_symbolwise_marker - 8;
+                size_t const  Count    = edge.get_length();
+                size_t const  position = edge.get_pos();
+                uint8_t const data     = Count + packed_symbolwise_marker - 8;
                 out.putbyte(data);
-                for (size_t currpos = position; currpos < position + Count; currpos++) {
+                for (size_t currpos = position; currpos < position + Count;
+                     currpos++) {
                     out.putbyte(Data[currpos]);
                 }
                 break;

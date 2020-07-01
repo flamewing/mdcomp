@@ -21,9 +21,11 @@
 #ifndef LIB_NEMESIS_HH
 #define LIB_NEMESIS_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class nemesis;
 using basic_nemesis   = BasicDecoder<nemesis, PadMode::DontPad>;
@@ -39,4 +41,4 @@ public:
     static bool decode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // LIB_NEMESIS_HH
+#endif    // LIB_NEMESIS_HH

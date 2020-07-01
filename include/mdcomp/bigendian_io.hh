@@ -19,6 +19,8 @@
 #ifndef LIB_BIGENDIAN_IO_HH
 #define LIB_BIGENDIAN_IO_HH
 
+#include <boost/mpl/has_xxx.hpp>
+
 #include <algorithm>
 #include <cstring>
 #include <iostream>
@@ -27,7 +29,6 @@
 #include <string>
 #include <type_traits>
 
-#include <boost/mpl/has_xxx.hpp>
 
 #ifdef _MSC_VER
 #    include <stdlib.h>
@@ -51,7 +52,7 @@ namespace detail {
 
     template <typename B1, typename... Bn>
     struct conjunction<B1, Bn...>
-        : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
+            : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
 
     // Disjunction (ported from C++17).
     template <typename...>
@@ -62,48 +63,49 @@ namespace detail {
 
     template <typename B1, typename... Bn>
     struct disjunction<B1, Bn...>
-        : std::conditional_t<bool(B1::value), B1, disjunction<Bn...>> {};
+            : std::conditional_t<bool(B1::value), B1, disjunction<Bn...>> {};
 
     template <typename Value, typename...>
     struct is_any_of : std::false_type {};
 
     template <typename Value, typename B1, typename... Bn>
-    struct is_any_of<Value, B1, Bn...> : boost::mpl::bool_<
-                                             std::is_same<Value, B1>::value ||
-                                             is_any_of<Value, Bn...>::value> {};
+    struct is_any_of<Value, B1, Bn...>
+            : boost::mpl::bool_<
+                      std::is_same<Value, B1>::value
+                      || is_any_of<Value, Bn...>::value> {};
 
     template <typename Cont>
     struct has_push_back : boost::mpl::bool_<std::is_same<
-                               decltype(std::declval<Cont>().push_back(
-                                   typename Cont::value_type{})),
-                               void>::value> {};
+                                   decltype(std::declval<Cont>().push_back(
+                                           typename Cont::value_type{})),
+                                   void>::value> {};
 
     template <typename Cont>
     struct has_size : boost::mpl::bool_<std::is_same<
-                          decltype(std::declval<Cont>().size()),
-                          typename Cont::size_type>::value> {};
+                              decltype(std::declval<Cont>().size()),
+                              typename Cont::size_type>::value> {};
 
     template <typename Cont>
-    struct has_resize
-        : boost::mpl::bool_<std::is_same<
-              decltype(std::declval<Cont>().resize(typename Cont::size_type{})),
-              void>::value> {};
+    struct has_resize : boost::mpl::bool_<std::is_same<
+                                decltype(std::declval<Cont>().resize(
+                                        typename Cont::size_type{})),
+                                void>::value> {};
 
     template <typename Cont>
-    struct has_data
-        : boost::mpl::bool_<is_any_of<
-              decltype(std::declval<Cont>().data()), typename Cont::pointer,
-              typename Cont::const_pointer>::value> {};
+    struct has_data : boost::mpl::bool_<is_any_of<
+                              decltype(std::declval<Cont>().data()),
+                              typename Cont::pointer,
+                              typename Cont::const_pointer>::value> {};
 
 #ifdef __GNUG__
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type)        // NOLINT
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator)          // NOLINT
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(size_type)         // NOLINT
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(reference)         // NOLINT
-    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator_category) // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(value_type)           // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator)             // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(size_type)            // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(reference)            // NOLINT
+    BOOST_MPL_HAS_XXX_TRAIT_DEF(iterator_category)    // NOLINT
 #ifdef __GNUG__
 #    pragma GCC diagnostic pop
 #endif
@@ -126,39 +128,41 @@ namespace detail {
 
     template <typename Cont, typename Tag>
     struct has_iterator_tag
-        : boost::mpl::bool_<
-              std::is_same<get_iterator_tag_t<Cont>, Tag>::value> {};
+            : boost::mpl::bool_<
+                      std::is_same<get_iterator_tag_t<Cont>, Tag>::value> {};
 
     template <typename Ptr>
     struct is_byte_pointer
-        : boost::mpl::bool_<conjunction<
-              std::is_pointer<Ptr>,
-              is_any_of<
-                  typename std::iterator_traits<Ptr>::value_type, char,
-                  unsigned char, signed char>>::value> {};
+            : boost::mpl::bool_<conjunction<
+                      std::is_pointer<Ptr>,
+                      is_any_of<
+                              typename std::iterator_traits<Ptr>::value_type,
+                              char, unsigned char, signed char>>::value> {};
 
     template <typename T>
     struct is_void_pointer
-        : boost::mpl::bool_<conjunction<
-              std::is_pointer<T>,
-              std::is_same<
-                  std::remove_cv_t<
-                      typename std::pointer_traits<T>::element_type>,
-                  void>>::value> {};
+            : boost::mpl::bool_<conjunction<
+                      std::is_pointer<T>,
+                      std::is_same<
+                              std::remove_cv_t<typename std::pointer_traits<
+                                      T>::element_type>,
+                              void>>::value> {};
 
     template <typename T>
     struct is_pointer_like
-        : boost::mpl::bool_<conjunction<
-              negation<is_void_pointer<T>>,
-              has_iterator_category<get_iterator_traits_t<T>>>::value> {};
+            : boost::mpl::bool_<conjunction<
+                      negation<is_void_pointer<T>>,
+                      has_iterator_category<get_iterator_traits_t<T>>>::value> {
+    };
 
     template <typename T>
     struct is_contiguous_container
-        : boost::mpl::bool_<conjunction<
-              std::is_class<T>, has_value_type<T>, has_iterator<T>,
-              has_size_type<T>, has_reference<T>, has_push_back<T>, has_size<T>,
-              has_resize<T>, has_data<T>,
-              has_iterator_tag<T, std::random_access_iterator_tag>>::value> {};
+            : boost::mpl::bool_<conjunction<
+                      std::is_class<T>, has_value_type<T>, has_iterator<T>,
+                      has_size_type<T>, has_reference<T>, has_push_back<T>,
+                      has_size<T>, has_resize<T>, has_data<T>,
+                      has_iterator_tag<T, std::random_access_iterator_tag>>::
+                                        value> {};
 
     template <typename T>
     struct is_contiguous_container<T&> : is_contiguous_container<T> {};
@@ -175,21 +179,24 @@ namespace detail {
     // recursive case: check using numeric_limits
     template <size_t Size, typename T, typename... Ts>
     struct select_unsigned<Size, T, Ts...>
-        : std::conditional_t<
-              Size == sizeof(T), tag<T>, select_unsigned<Size, Ts...>> {};
+            : std::conditional_t<
+                      Size == sizeof(T), tag<T>, select_unsigned<Size, Ts...>> {
+    };
 
     template <uint64_t Size>
     using select_unsigned_t = typename select_unsigned<
-        Size, uint8_t, uint16_t, uint32_t, uint64_t>::type;
+            Size, uint8_t, uint16_t, uint32_t, uint64_t>::type;
 
 #ifdef __GNUG__
-#    define PURE __attribute__((const))
+#    define PURE      __attribute__((const))
 #    define CONSTEXPR constexpr
 #else
 #    define PURE
 #    define CONSTEXPR
 #endif
-    CONSTEXPR PURE inline uint8_t bswap(uint8_t val) noexcept { return val; }
+    CONSTEXPR PURE inline uint8_t bswap(uint8_t val) noexcept {
+        return val;
+    }
 
     CONSTEXPR PURE inline uint16_t bswap(uint16_t val) noexcept {
 #ifdef __GNUG__
@@ -219,10 +226,10 @@ namespace detail {
         return _byteswap_uint64(val);
 #else
         val = ((val & 0xffffffffull) << 32) | ((val >> 32) & 0xffffffffull);
-        val = ((val & 0xffff0000ffffull) << 16) |
-              ((val >> 16) & 0xffff0000ffffull);
-        return ((val & 0xff00ff00ff00ffull) << 8) |
-               ((val >> 8) & 0xff00ff00ff00ffull);
+        val = ((val & 0xffff0000ffffull) << 16)
+              | ((val >> 16) & 0xffff0000ffffull);
+        return ((val & 0xff00ff00ff00ffull) << 8)
+               | ((val >> 8) & 0xff00ff00ff00ffull);
 #endif
     }
 
@@ -234,28 +241,28 @@ namespace detail {
         // std::copy_n).
         template <typename Ptr, typename T>
         static inline auto ReadBase(Ptr& in, T& val) noexcept
-            -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
+                -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
             std::memcpy(&val, in, sizeof(T));
         }
 
         template <typename Iter, typename T>
         static inline auto ReadBase(Iter& in, T& val) noexcept
-            -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
+                -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
             char buffer[sizeof(T)];
             std::copy_n(in, sizeof(T), buffer);
             std::memcpy(&val, buffer, sizeof(T));
         }
 
         template <typename Iter, typename T>
-        static inline void
-        ReadInternal(Iter& in, T& val, std::forward_iterator_tag) noexcept {
+        static inline void ReadInternal(
+                Iter& in, T& val, std::forward_iterator_tag) noexcept {
             ReadBase(in, val);
             std::advance(in, sizeof(T));
         }
 
         template <typename Iter, typename T>
-        static inline void
-        ReadInternal(Iter& in, T& val, std::input_iterator_tag) noexcept {
+        static inline void ReadInternal(
+                Iter& in, T& val, std::input_iterator_tag) noexcept {
             ReadBase(in, val);
         }
 
@@ -264,28 +271,28 @@ namespace detail {
         // memmove.
         template <typename Ptr, typename T>
         static inline auto WriteBase(Ptr& out, T val) noexcept
-            -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
+                -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
             std::memcpy(out, &val, sizeof(T));
         }
 
         template <typename Iter, typename T>
         static inline auto WriteBase(Iter& out, T val) noexcept
-            -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
+                -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
             char buffer[sizeof(T)];
             std::memcpy(buffer, &val, sizeof(T));
             std::copy_n(buffer, sizeof(T), out);
         }
 
         template <typename Ptr, typename T>
-        static inline void
-        WriteInternal(Ptr& out, T val, std::forward_iterator_tag) noexcept {
+        static inline void WriteInternal(
+                Ptr& out, T val, std::forward_iterator_tag) noexcept {
             WriteBase(out, val);
             std::advance(out, sizeof(T));
         }
 
         template <typename Iter, typename T>
-        static inline void
-        WriteInternal(Iter& out, T val, std::output_iterator_tag) noexcept {
+        static inline void WriteInternal(
+                Iter& out, T val, std::output_iterator_tag) noexcept {
             WriteBase(out, val);
         }
 
@@ -305,11 +312,11 @@ namespace detail {
         }
 
         template <typename Iter, typename T>
-        static inline auto Read(Iter& in, T& val) noexcept
-            -> std::enable_if_t<detail::is_pointer_like<Iter>::value, void> {
+        static inline auto Read(Iter& in, T& val) noexcept -> std::enable_if_t<
+                detail::is_pointer_like<Iter>::value, void> {
             ReadInternal(
-                in, val,
-                typename std::iterator_traits<Iter>::iterator_category());
+                    in, val,
+                    typename std::iterator_traits<Iter>::iterator_category());
         }
 
         template <typename T>
@@ -328,18 +335,18 @@ namespace detail {
 
         template <typename Cont, typename T>
         static inline auto Write(Cont& out, T val) noexcept -> std::enable_if_t<
-            detail::is_contiguous_container<Cont>::value, void> {
+                detail::is_contiguous_container<Cont>::value, void> {
             auto sz = out.size();
             out.resize(sz + sizeof(T));
             std::memcpy(&out[sz], &val, sizeof(T));
         }
 
         template <typename Iter, typename T>
-        static inline auto Write(Iter& out, T val) noexcept
-            -> std::enable_if_t<detail::is_pointer_like<Iter>::value, void> {
+        static inline auto Write(Iter& out, T val) noexcept -> std::enable_if_t<
+                detail::is_pointer_like<Iter>::value, void> {
             WriteInternal(
-                out, val,
-                typename std::iterator_traits<Iter>::iterator_category());
+                    out, val,
+                    typename std::iterator_traits<Iter>::iterator_category());
         }
     };
 
@@ -388,7 +395,7 @@ namespace detail {
 
         template <typename Src, size_t Size>
         static inline auto ReadN(Src& in) noexcept
-            -> detail::select_unsigned_t<Size> {
+                -> detail::select_unsigned_t<Size> {
             using uint_t = detail::select_unsigned_t<Size>;
             uint_t val;
             Base::Read(in, val);
@@ -397,7 +404,7 @@ namespace detail {
 
         template <typename Src, typename T>
         static inline auto Read(Src& in, T& val) noexcept
-            -> std::enable_if_t<std::is_unsigned<T>::value, void> {
+                -> std::enable_if_t<std::is_unsigned<T>::value, void> {
             Base::Read(in, val);
         }
 
@@ -422,19 +429,19 @@ namespace detail {
         }
 
         template <
-            typename Dst, size_t Size,
-            typename Uint_t = detail::select_unsigned_t<Size>>
+                typename Dst, size_t Size,
+                typename Uint_t = detail::select_unsigned_t<Size>>
         static inline void WriteN(Dst& out, Uint_t val) noexcept {
             Base::Write(out, val);
         }
 
         template <typename Dst, typename T>
         static inline auto Write(Dst& out, T val) noexcept
-            -> std::enable_if_t<std::is_unsigned<T>::value, void> {
+                -> std::enable_if_t<std::is_unsigned<T>::value, void> {
             Base::Write(out, val);
         }
     };
-} // namespace detail
+}    // namespace detail
 
 template <typename Src>
 inline size_t Read1(Src& in) noexcept {
@@ -452,4 +459,4 @@ inline void Write1(Dst& out, size_t const val) noexcept {
 using BigEndian    = detail::EndianBase<detail::ReverseEndian>;
 using LittleEndian = detail::EndianBase<detail::SourceEndian>;
 
-#endif // LIB_BIGENDIAN_IO_HH
+#endif    // LIB_BIGENDIAN_IO_HH

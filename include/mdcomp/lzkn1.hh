@@ -20,9 +20,11 @@
 #ifndef LIB_LZKN1_HH
 #define LIB_LZKN1_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class lzkn1;
 using basic_lzkn1   = BasicDecoder<lzkn1, PadMode::DontPad>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // LIB_LZKN1_HH
+#endif    // LIB_LZKN1_HH

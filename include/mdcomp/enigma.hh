@@ -21,9 +21,11 @@
 #ifndef LIB_ENIGMA_HH
 #define LIB_ENIGMA_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class enigma;
 using basic_enigma   = BasicDecoder<enigma, PadMode::DontPad>;
@@ -39,4 +41,4 @@ public:
     static bool decode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // LIB_ENIGMA_HH
+#endif    // LIB_ENIGMA_HH

@@ -17,6 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/lzss.hh>
+#include <mdcomp/rocket.hh>
+
 #include <cstdint>
 #include <iostream>
 #include <istream>
@@ -24,11 +30,6 @@
 #include <sstream>
 #include <type_traits>
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
-#include <mdcomp/lzss.hh>
-#include <mdcomp/rocket.hh>
 
 using std::array;
 using std::fill_n;
@@ -75,21 +76,21 @@ struct rocket_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 0x40;
         // Total size of the sliding window.
-        constexpr static size_t const SlidingWindowSize =
-            SearchBufSize + LookAheadBufSize;
+        constexpr static size_t const SlidingWindowSize
+                = SearchBufSize + LookAheadBufSize;
         // Creates the (multilayer) sliding window structure.
-        static auto
-        create_sliding_window(stream_t const* dt, size_t const size) noexcept {
-            return array<SlidingWindow_t, 1>{
-                SlidingWindow_t{dt, size, SearchBufSize, 2, LookAheadBufSize,
-                                EdgeType::dictionary}};
+        static auto create_sliding_window(
+                stream_t const* dt, size_t const size) noexcept {
+            return array<SlidingWindow_t, 1>{SlidingWindow_t{
+                    dt, size, SearchBufSize, 2, LookAheadBufSize,
+                    EdgeType::dictionary}};
         }
         // Computes the cost of a symbolwise encoding, that is, the cost of
         // encoding one single symbol. Computes the type of edge that covers all
         // of the "len" vertices starting from "off" vertices ago. Returns
         // EdgeType::invalid if there is no such edge.
         constexpr static EdgeType
-        match_type(size_t const dist, size_t const len) noexcept {
+                match_type(size_t const dist, size_t const len) noexcept {
             // Preconditions:
             // len >= 1 && len <= LookAheadBufSize && dist != 0 && dist <=
             // SearchBufSize Dictionary match: 1-bit descriptor, 8-bit distance,
@@ -110,7 +111,8 @@ struct rocket_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+        constexpr static size_t
+                edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
@@ -126,11 +128,11 @@ struct rocket_internal {
         }
         // Rocket finds no additional matches over normal LZSS.
         static bool extra_matches(
-            stream_t const* data, size_t const basenode, size_t const ubound,
-            size_t const                           lbound,
-            LZSSGraph<RocketAdaptor>::MatchVector& matches) noexcept {
+                stream_t const* data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
+                LZSSGraph<RocketAdaptor>::MatchVector& matches) noexcept {
             ignore_unused_variable_warning(
-                data, basenode, ubound, lbound, matches);
+                    data, basenode, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
@@ -165,18 +167,18 @@ public:
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
                 // basedest + 0x3C0u.
-                constexpr auto const bias =
-                    diff_t(RocketAdaptor::FirstMatchPosition);
+                constexpr auto const bias
+                        = diff_t(RocketAdaptor::FirstMatchPosition);
                 diff_t const basedest = diff_t(Dst.tellp());
                 offset                = diff_t(
-                    ((offset - basedest - bias) %
-                     RocketAdaptor::SearchBufSize) +
-                    basedest - RocketAdaptor::SearchBufSize);
+                        ((offset - basedest - bias)
+                         % RocketAdaptor::SearchBufSize)
+                        + basedest - RocketAdaptor::SearchBufSize);
 
                 if (offset < 0) {
                     diff_t cnt = offset + length < 0
-                                     ? length
-                                     : length - (offset + length);
+                                         ? length
+                                         : length - (offset + length);
                     fill_n(ostreambuf_iterator<char>(Dst), cnt, 0x20);
                     length -= cnt;
                     offset += cnt;
@@ -212,8 +214,8 @@ public:
             case EdgeType::dictionary: {
                 size_t const len  = edge.get_length();
                 size_t const dist = edge.get_distance();
-                size_t const pos =
-                    (edge.get_pos() - dist) % RocketAdaptor::SearchBufSize;
+                size_t const pos  = (edge.get_pos() - dist)
+                                   % RocketAdaptor::SearchBufSize;
                 out.descbit(0);
                 out.putbyte(((len - 1) << 2) | (pos >> 8));
                 out.putbyte(pos);
@@ -242,9 +244,8 @@ bool rocket::decode(istream& Src, iostream& Dst) {
 bool rocket::encode(istream& Src, ostream& Dst) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
     stringstream in(ios::in | ios::out | ios::binary);
-    fill_n(
-        ostreambuf_iterator<char>(in),
-        rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
+    fill_n(ostreambuf_iterator<char>(in),
+           rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
     // Copy to buffer.
     in << Src.rdbuf();
     in.seekg(0);
@@ -259,7 +260,7 @@ bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
     // Fill in header
     // Size of decompressed file
     BigEndian::Write2(
-        Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
+            Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
     // Size of compressed file
     BigEndian::Write2(Dst, outbuff.tellp());
 

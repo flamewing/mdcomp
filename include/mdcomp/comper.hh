@@ -20,9 +20,11 @@
 #ifndef LIB_COMPER_HH
 #define LIB_COMPER_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class comper;
 using basic_comper   = BasicDecoder<comper, PadMode::PadEven>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // LIB_COMPER_HH
+#endif    // LIB_COMPER_HH

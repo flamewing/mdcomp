@@ -16,17 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/io/ios_state.hpp>
+#include <getopt.h>
+#include <mdcomp/nemesis.hh>
+
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-#include <getopt.h>
-
-#include <boost/io/ios_state.hpp>
-
-#include <mdcomp/nemesis.hh>
 
 using std::cerr;
 using std::cout;
@@ -63,10 +62,10 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static option long_options[] = {
-        {"extract", optional_argument, nullptr, 'x'},
-        {"crunch", no_argument, nullptr, 'c'},
-        {nullptr, 0, nullptr, 0}};
+    static option long_options[]
+            = {{"extract", optional_argument, nullptr, 'x'},
+               {"crunch", no_argument, nullptr, 'c'},
+               {nullptr, 0, nullptr, 0}};
 
     bool   extract  = false;
     bool   printend = false;
@@ -76,8 +75,8 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-            argc, argv, "x::ic", static_cast<option*>(long_options),
-            &option_index);
+                argc, argv, "x::ic", static_cast<option*>(long_options),
+                &option_index);
         if (c == -1) {
             break;
         }
@@ -116,8 +115,8 @@ int main(int argc, char* argv[]) {
         return 5;
     }
 
-    char* outfile =
-        crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
+    char* outfile
+            = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);
     if (!fin.good()) {

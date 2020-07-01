@@ -66,7 +66,7 @@ public:
     struct tag {};
     static const base_flag_io& get(size_t n);
     constexpr explicit base_flag_io(Callback_t callback_) noexcept
-        : callback(callback_) {}
+            : callback(callback_) {}
     template <typename... Ts>
     auto operator()(Ts&&... args) const {
         return this->callback(forward<Ts>(args)...);
@@ -138,8 +138,8 @@ constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
 
 template <typename Callback>
 const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
-    constexpr static const auto Array =
-        createMaskArray(tag{}, make_index_sequence<32>());
+    constexpr static const auto Array
+            = createMaskArray(tag{}, make_index_sequence<32>());
     return Array[n];
 }
 
@@ -174,15 +174,16 @@ int slog2(unsigned val) {
 // Comparison functor, see below.
 struct Compare_count {
     bool operator()(
-        pair<uint16_t const, size_t>& it1, pair<uint16_t const, size_t>& it2) {
+            pair<uint16_t const, size_t>& it1,
+            pair<uint16_t const, size_t>& it2) {
         return (it1.second < it2.second);
     }
 };
 
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(
-    vector<uint16_t>& buf, EniOBitstream& bits, flag_writer& putMask,
-    uint16_t const packet_length) {
+        vector<uint16_t>& buf, EniOBitstream& bits, flag_writer& putMask,
+        uint16_t const packet_length) {
     if (buf.empty()) {
         return;
     }
@@ -359,8 +360,8 @@ public:
             } else {
                 uint16_t next  = unpack[pos + 1];
                 int      delta = int(next) - int(v);
-                if (pos + 1 < unpack.size() && next != incrementing_value &&
-                    (delta == -1 || delta == 0 || delta == 1)) {
+                if (pos + 1 < unpack.size() && next != incrementing_value
+                    && (delta == -1 || delta == 0 || delta == 1)) {
                     flush_buffer(buf, bits, putMask, packet_length);
                     size_t cnt = 1;
                     next += delta;

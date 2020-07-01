@@ -28,4 +28,4 @@ public:
     static bool encode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // LIB_ARTC42_HH
+#endif    // LIB_ARTC42_HH

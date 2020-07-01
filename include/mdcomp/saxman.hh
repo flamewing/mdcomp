@@ -20,9 +20,11 @@
 #ifndef LIB_SAXMAN_HH
 #define LIB_SAXMAN_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class saxman;
 using basic_saxman   = BasicDecoder<saxman, PadMode::DontPad, bool>;
@@ -31,13 +33,13 @@ using moduled_saxman = ModuledAdaptor<saxman, 4096U, 1U>;
 class saxman : public basic_saxman, public moduled_saxman {
     friend basic_saxman;
     friend moduled_saxman;
-    static bool encode(
-        std::ostream& Dst, uint8_t const* data, size_t Size,
-        bool WithSize = true);
+    static bool
+            encode(std::ostream& Dst, uint8_t const* data, size_t Size,
+                   bool WithSize = true);
 
 public:
     using basic_saxman::encode;
     static bool decode(std::istream& Src, std::iostream& Dst, size_t Size = 0);
 };
 
-#endif // LIB_SAXMAN_HH
+#endif    // LIB_SAXMAN_HH

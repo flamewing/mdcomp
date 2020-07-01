@@ -20,9 +20,11 @@
 #ifndef LIB_KOSINSKI_HH
 #define LIB_KOSINSKI_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class kosinski;
 using basic_kosinski   = BasicDecoder<kosinski, PadMode::DontPad>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // LIB_KOSINSKI_HH
+#endif    // LIB_KOSINSKI_HH

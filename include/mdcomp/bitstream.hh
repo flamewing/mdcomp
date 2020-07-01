@@ -19,10 +19,11 @@
 #ifndef LIB_BITSTREAM_HH
 #define LIB_BITSTREAM_HH
 
+#include <mdcomp/bigendian_io.hh>
+
 #include <climits>
 #include <iosfwd>
 
-#include <mdcomp/bigendian_io.hh>
 
 namespace detail {
 #if !defined(__clang__)
@@ -66,13 +67,15 @@ namespace detail {
 
     template <typename T>
     struct getMask<T, CHAR_BIT> {
-        constexpr inline T operator()(T mask) const noexcept { return mask; }
+        constexpr inline T operator()(T mask) const noexcept {
+            return mask;
+        }
     };
 #endif
 
     template <typename T>
     auto reverseBits(T val) noexcept
-        -> std::enable_if_t<std::is_unsigned<T>::value, T> {
+            -> std::enable_if_t<std::is_unsigned<T>::value, T> {
 #ifdef __clang__
         if (sizeof(T) == 1) {
             val = __builtin_bitreverse8(val);
@@ -85,7 +88,7 @@ namespace detail {
         }
         return val;
 #else
-        constexpr size_t sz   = CHAR_BIT; // bit size; must be power of 2
+        constexpr size_t sz   = CHAR_BIT;    // bit size; must be power of 2
         constexpr T      mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
         val                   = bswap(val);
         return reverseByteBits<T, sz>{}(val, mask);
@@ -94,17 +97,17 @@ namespace detail {
 
     template <typename T>
     auto reverseBits(T val) noexcept
-        -> std::enable_if_t<std::is_signed<T>::value, T> {
+            -> std::enable_if_t<std::is_signed<T>::value, T> {
         return reverseBits(std::make_unsigned_t<T>(val));
     }
-} // namespace detail
+}    // namespace detail
 
 // This class allows reading bits from a stream.
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
-    typename T, bool EarlyRead, bool LittleEndianBits = false,
-    typename Endian = BigEndian>
+        typename T, bool EarlyRead, bool LittleEndianBits = false,
+        typename Endian = BigEndian>
 class ibitstream {
 private:
     std::istream& src;
@@ -128,7 +131,7 @@ private:
 
 public:
     explicit ibitstream(std::istream& s) noexcept
-        : src(s), readbits(sizeof(T) * CHAR_BIT) {
+            : src(s), readbits(sizeof(T) * CHAR_BIT) {
         bitbuffer = read_bits();
     }
     // Gets a single bit from the stream. Remembers previously read bits, and
@@ -172,12 +175,14 @@ public:
         }
         return bits;
     }
-    size_t have_waiting_bits() const noexcept { return readbits; }
+    size_t have_waiting_bits() const noexcept {
+        return readbits;
+    }
 };
 
 // This class allows outputting bits into a stream.
 template <
-    typename T, bool LittleEndianBits = false, typename Endian = BigEndian>
+        typename T, bool LittleEndianBits = false, typename Endian = BigEndian>
 class obitstream {
 private:
     std::ostream& dst;
@@ -192,7 +197,7 @@ private:
 
 public:
     explicit obitstream(std::ostream& d) noexcept
-        : dst(d), waitingbits(0), bitbuffer(0) {}
+            : dst(d), waitingbits(0), bitbuffer(0) {}
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
@@ -215,8 +220,8 @@ public:
             waitingbits  = (waitingbits + size) % (sizeof(T) * CHAR_BIT);
             T bits       = (bitbuffer << delta) | (data >> waitingbits);
             write_bits(bits);
-            bitbuffer =
-                (data & (T(~0) >> (sizeof(T) * CHAR_BIT - waitingbits)));
+            bitbuffer
+                    = (data & (T(~0) >> (sizeof(T) * CHAR_BIT - waitingbits)));
             return true;
         }
         bitbuffer = (bitbuffer << size) | data;
@@ -234,7 +239,9 @@ public:
         }
         return false;
     }
-    size_t have_waiting_bits() const noexcept { return waitingbits; }
+    size_t have_waiting_bits() const noexcept {
+        return waitingbits;
+    }
 };
 
-#endif // LIB_BITSTREAM_HH
+#endif    // LIB_BITSTREAM_HH

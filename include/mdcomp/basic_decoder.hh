@@ -21,10 +21,12 @@
 #ifndef __LIB_BASIC_DECODER_H
 #define __LIB_BASIC_DECODER_H
 
+#include <mdcomp/bigendian_io.hh>
+
 #include <iosfwd>
 #include <limits>
-#include <mdcomp/bigendian_io.hh>
 #include <vector>
+
 
 enum class PadMode { DontPad, PadEven };
 
@@ -37,7 +39,7 @@ public:
 
 template <typename Format, PadMode Pad, typename... Args>
 bool BasicDecoder<Format, Pad, Args...>::encode(
-    std::istream& Src, std::ostream& Dst, Args... args) {
+        std::istream& Src, std::ostream& Dst, Args... args) {
     size_t Start = Src.tellg();
     Src.ignore(std::numeric_limits<std::streamsize>::max());
     size_t FullSize = Src.gcount();
@@ -53,7 +55,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
         data.back() = 0;
     }
     if (Format::encode(
-            Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
+                Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
         // Pad to even size.
         if ((Dst.tellp() & 1) != 0) {
             Dst.put(0);
@@ -65,7 +67,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
 
 template <typename Format, PadMode Pad, typename... Args>
 void BasicDecoder<Format, Pad, Args...>::extract(
-    std::istream& Src, std::iostream& Dst) {
+        std::istream& Src, std::iostream& Dst) {
     Dst << Src.rdbuf();
     // Pad to even size.
     if ((Dst.tellp() & 1) != 0) {
@@ -74,4 +76,4 @@ void BasicDecoder<Format, Pad, Args...>::extract(
     Dst.seekg(0);
 }
 
-#endif // __LIB_MODULED_ADAPTOR_H
+#endif    // __LIB_MODULED_ADAPTOR_H

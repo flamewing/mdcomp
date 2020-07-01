@@ -20,9 +20,11 @@
 #ifndef LIB_ROCKET_HH
 #define LIB_ROCKET_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class rocket;
 using basic_rocket   = BasicDecoder<rocket, PadMode::DontPad>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // LIB_ROCKET_HH
+#endif    // LIB_ROCKET_HH

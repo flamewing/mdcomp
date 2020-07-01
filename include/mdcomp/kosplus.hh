@@ -20,9 +20,11 @@
 #ifndef LIB_KOSPLUS_HH
 #define LIB_KOSPLUS_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class kosplus;
 using basic_kosplus   = BasicDecoder<kosplus, PadMode::DontPad>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::iostream& Dst);
 };
 
-#endif // LIB_KOSPLUS_HH
+#endif    // LIB_KOSPLUS_HH

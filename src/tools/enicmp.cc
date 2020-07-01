@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+#include <mdcomp/enigma.hh>
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 
-#include <getopt.h>
-
-#include <mdcomp/enigma.hh>
 
 using std::cerr;
 using std::endl;
@@ -42,8 +42,9 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static option long_options[] = {
-        {"extract", optional_argument, nullptr, 'x'}, {nullptr, 0, nullptr, 0}};
+    static option long_options[]
+            = {{"extract", optional_argument, nullptr, 'x'},
+               {nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
     size_t pointer = 0;
@@ -51,8 +52,8 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-            argc, argv, "x::", static_cast<option*>(long_options),
-            &option_index);
+                argc, argv, "x::", static_cast<option*>(long_options),
+                &option_index);
         if (c == -1) {
             break;
         }

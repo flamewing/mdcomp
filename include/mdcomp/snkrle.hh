@@ -20,9 +20,11 @@
 #ifndef LIB_SNKRLE_HH
 #define LIB_SNKRLE_HH
 
-#include <iosfwd>
 #include <mdcomp/basic_decoder.hh>
 #include <mdcomp/moduled_adaptor.hh>
+
+#include <iosfwd>
+
 
 class snkrle;
 using basic_snkrle   = BasicDecoder<snkrle, PadMode::PadEven>;
@@ -38,4 +40,4 @@ public:
     static bool decode(std::istream& Src, std::ostream& Dst);
 };
 
-#endif // LIB_SNKRLE_HH
+#endif    // LIB_SNKRLE_HH

@@ -18,6 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/nemesis.hh>
+
 #include <algorithm>
 #include <cstdint>
 #include <istream>
@@ -31,10 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
-#include <mdcomp/nemesis.hh>
 
 using std::enable_shared_from_this;
 using std::fill_n;
@@ -57,8 +58,8 @@ using std::vector;
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
-    uint8_t nibble{0}; // Nibble we are interested in.
-    uint8_t count{0};  // How many times the nibble is repeated.
+    uint8_t nibble{0};    // Nibble we are interested in.
+    uint8_t count{0};     // How many times the nibble is repeated.
 
 public:
     // Constructors.
@@ -71,8 +72,8 @@ public:
     ~nibble_run() noexcept                             = default;
     // Sorting operator.
     bool operator<(nibble_run const& other) const noexcept {
-        return (nibble < other.nibble) ||
-               (nibble == other.nibble && count < other.count);
+        return (nibble < other.nibble)
+               || (nibble == other.nibble && count < other.count);
     }
     // Sorting operator.
     bool operator>(nibble_run const& other) const noexcept {
@@ -85,10 +86,18 @@ public:
         return !(*this == other);
     }
     // Getters/setters for all properties.
-    uint8_t get_nibble() const noexcept { return nibble; }
-    uint8_t get_count() const noexcept { return count; }
-    void    set_nibble(uint8_t const tf) noexcept { nibble = tf; }
-    void    set_count(uint8_t const tf) noexcept { count = tf; }
+    uint8_t get_nibble() const noexcept {
+        return nibble;
+    }
+    uint8_t get_count() const noexcept {
+        return count;
+    }
+    void set_nibble(uint8_t const tf) noexcept {
+        nibble = tf;
+    }
+    void set_count(uint8_t const tf) noexcept {
+        count = tf;
+    }
 };
 
 struct SizeFreqNibble {
@@ -96,8 +105,8 @@ struct SizeFreqNibble {
     nibble_run nibble;
     uint8_t    codelen{0};
     SizeFreqNibble(
-        size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
-        : count(cnt), nibble(nib), codelen(len) {}
+            size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
+            : count(cnt), nibble(nib), codelen(len) {}
     SizeFreqNibble() noexcept                            = default;
     SizeFreqNibble(SizeFreqNibble const& other) noexcept = default;
     SizeFreqNibble(SizeFreqNibble&& other) noexcept      = default;
@@ -138,7 +147,7 @@ private:
 public:
     // Construct a new leaf node for character c.
     node(nibble_run const& val, size_t const wgt) noexcept
-        : weight(wgt), value(val) {}
+            : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
     node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept {
         value  = nibble_run{0, 0};
@@ -163,20 +172,38 @@ public:
     bool operator<(node const& other) const noexcept {
         return weight < other.weight;
     }
-    bool operator>(node const& other) const noexcept { return other < *this; }
+    bool operator>(node const& other) const noexcept {
+        return other < *this;
+    }
     // This tells if the node is a leaf or a branch.
     bool is_leaf() const noexcept {
         return child0 == nullptr && child1 == nullptr;
     }
     // Getters/setters for all properties.
-    shared_ptr<node const> get_child0() const noexcept { return child0; }
-    shared_ptr<node const> get_child1() const noexcept { return child1; }
-    size_t                 get_weight() const noexcept { return weight; }
-    nibble_run const&      get_value() const noexcept { return value; }
-    void set_child0(shared_ptr<node> c0) noexcept { child0 = std::move(c0); }
-    void set_child1(shared_ptr<node> c1) noexcept { child1 = std::move(c1); }
-    void set_weight(size_t w) noexcept { weight = w; }
-    void set_value(nibble_run const& v) noexcept { value = v; }
+    shared_ptr<node const> get_child0() const noexcept {
+        return child0;
+    }
+    shared_ptr<node const> get_child1() const noexcept {
+        return child1;
+    }
+    size_t get_weight() const noexcept {
+        return weight;
+    }
+    nibble_run const& get_value() const noexcept {
+        return value;
+    }
+    void set_child0(shared_ptr<node> c0) noexcept {
+        child0 = std::move(c0);
+    }
+    void set_child1(shared_ptr<node> c1) noexcept {
+        child1 = std::move(c1);
+    }
+    void set_weight(size_t w) noexcept {
+        weight = w;
+    }
+    void set_value(nibble_run const& v) noexcept {
+        value = v;
+    }
     // This goes through the tree, starting with the current node, generating
     // a map associating a nibble run with its code length.
     void traverse(CodeSizeMap& sizemap) const noexcept {
@@ -196,9 +223,8 @@ public:
 using NodeVector = vector<shared_ptr<node>>;
 
 struct Compare_size {
-    bool
-    operator()(SizeFreqNibble const& lhs, SizeFreqNibble const& rhs) const
-        noexcept {
+    bool operator()(SizeFreqNibble const& lhs, SizeFreqNibble const& rhs)
+            const noexcept {
         if (lhs.codelen < rhs.codelen) {
             return true;
         }
@@ -215,17 +241,15 @@ struct Compare_size {
         // rhs.count == lhs.count
         nibble_run const& left  = lhs.nibble;
         nibble_run const  right = rhs.nibble;
-        return (
-            left.get_nibble() < right.get_nibble() ||
-            (left.get_nibble() == right.get_nibble() &&
-             left.get_count() > right.get_count()));
+        return (left.get_nibble() < right.get_nibble()
+                || (left.get_nibble() == right.get_nibble()
+                    && left.get_count() > right.get_count()));
     }
 };
 
 struct Compare_node {
-    bool
-    operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const
-        noexcept {
+    bool operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs)
+            const noexcept {
 #if 1
         if (*lhs > *rhs) {
             return true;
@@ -248,9 +272,8 @@ struct Compare_node {
 
 struct Compare_node2 {
     static NibbleCodeMap codemap;
-    bool
-    operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const
-        noexcept {
+    bool operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs)
+            const noexcept {
         if (codemap.empty()) {
             if (*lhs < *rhs) {
                 return true;
@@ -337,9 +360,9 @@ public:
         }
     }
 
-    static void decode(
-        std::istream& Src, std::ostream& Dst, CodeNibbleMap& codemap,
-        size_t const rtiles, bool const alt_out = false) {
+    static void
+            decode(std::istream& Src, std::ostream& Dst, CodeNibbleMap& codemap,
+                   size_t const rtiles, bool const alt_out = false) {
         // This buffer is used for alternating mode decoding.
         stringstream dst(ios::in | ios::out | ios::binary);
 
@@ -438,8 +461,8 @@ public:
         }
     }
 
-    static size_t
-    estimate_file_size(NibbleCodeMap& tempcodemap, RunCountMap& counts) {
+    static size_t estimate_file_size(
+            NibbleCodeMap& tempcodemap, RunCountMap& counts) {
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
@@ -500,7 +523,7 @@ public:
                         code         = (code << len) | code;
                         len <<= 1;
                         tempsize_est += len * count.second;
-                        len |= 0x80; // Flag this as a false code.
+                        len |= 0x80;    // Flag this as a false code.
                         supcodemap[count.first] = Code{code, len};
                     }
                 } else {
@@ -513,38 +536,38 @@ public:
                     // for each line.
                     size_t const* linear_coeffs;
                     // Here are some hard-coded tables, obtained by brute-force:
-                    constexpr static size_t const linear_coeffs2[2][2] = {
-                        {3, 0}, {1, 1}};
-                    constexpr static size_t const linear_coeffs3[4][3] = {
-                        {4, 0, 0}, {2, 1, 0}, {1, 0, 1}, {0, 2, 0}};
-                    constexpr static size_t const linear_coeffs4[6][4] = {
-                        {5, 0, 0, 0}, {3, 1, 0, 0}, {2, 0, 1, 0},
-                        {1, 2, 0, 0}, {1, 0, 0, 1}, {0, 1, 1, 0}};
+                    constexpr static size_t const linear_coeffs2[2][2]
+                            = {{3, 0}, {1, 1}};
+                    constexpr static size_t const linear_coeffs3[4][3]
+                            = {{4, 0, 0}, {2, 1, 0}, {1, 0, 1}, {0, 2, 0}};
+                    constexpr static size_t const linear_coeffs4[6][4]
+                            = {{5, 0, 0, 0}, {3, 1, 0, 0}, {2, 0, 1, 0},
+                               {1, 2, 0, 0}, {1, 0, 0, 1}, {0, 1, 1, 0}};
                     constexpr static size_t const linear_coeffs5[10][5] = {
-                        {6, 0, 0, 0, 0}, {4, 1, 0, 0, 0}, {3, 0, 1, 0, 0},
-                        {2, 2, 0, 0, 0}, {2, 0, 0, 1, 0}, {1, 1, 1, 0, 0},
-                        {1, 0, 0, 0, 1}, {0, 3, 0, 0, 0}, {0, 1, 0, 1, 0},
-                        {0, 0, 2, 0, 0}};
-                    constexpr static size_t const linear_coeffs6[14][6] = {
-                        {7, 0, 0, 0, 0, 0}, {5, 1, 0, 0, 0, 0},
-                        {4, 0, 1, 0, 0, 0}, {3, 2, 0, 0, 0, 0},
-                        {3, 0, 0, 1, 0, 0}, {2, 1, 1, 0, 0, 0},
-                        {2, 0, 0, 0, 1, 0}, {1, 3, 0, 0, 0, 0},
-                        {1, 1, 0, 1, 0, 0}, {1, 0, 2, 0, 0, 0},
-                        {1, 0, 0, 0, 0, 1}, {0, 2, 1, 0, 0, 0},
-                        {0, 1, 0, 0, 1, 0}, {0, 0, 1, 1, 0, 0}};
-                    constexpr static size_t const linear_coeffs7[21][7] = {
-                        {8, 0, 0, 0, 0, 0, 0}, {6, 1, 0, 0, 0, 0, 0},
-                        {5, 0, 1, 0, 0, 0, 0}, {4, 2, 0, 0, 0, 0, 0},
-                        {4, 0, 0, 1, 0, 0, 0}, {3, 1, 1, 0, 0, 0, 0},
-                        {3, 0, 0, 0, 1, 0, 0}, {2, 3, 0, 0, 0, 0, 0},
-                        {2, 1, 0, 1, 0, 0, 0}, {2, 0, 2, 0, 0, 0, 0},
-                        {2, 0, 0, 0, 0, 1, 0}, {1, 2, 1, 0, 0, 0, 0},
-                        {1, 1, 0, 0, 1, 0, 0}, {1, 0, 1, 1, 0, 0, 0},
-                        {1, 0, 0, 0, 0, 0, 1}, {0, 4, 0, 0, 0, 0, 0},
-                        {0, 2, 0, 1, 0, 0, 0}, {0, 1, 2, 0, 0, 0, 0},
-                        {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
-                        {0, 0, 0, 2, 0, 0, 0}};
+                            {6, 0, 0, 0, 0}, {4, 1, 0, 0, 0}, {3, 0, 1, 0, 0},
+                            {2, 2, 0, 0, 0}, {2, 0, 0, 1, 0}, {1, 1, 1, 0, 0},
+                            {1, 0, 0, 0, 1}, {0, 3, 0, 0, 0}, {0, 1, 0, 1, 0},
+                            {0, 0, 2, 0, 0}};
+                    constexpr static size_t const linear_coeffs6[14][6]
+                            = {{7, 0, 0, 0, 0, 0}, {5, 1, 0, 0, 0, 0},
+                               {4, 0, 1, 0, 0, 0}, {3, 2, 0, 0, 0, 0},
+                               {3, 0, 0, 1, 0, 0}, {2, 1, 1, 0, 0, 0},
+                               {2, 0, 0, 0, 1, 0}, {1, 3, 0, 0, 0, 0},
+                               {1, 1, 0, 1, 0, 0}, {1, 0, 2, 0, 0, 0},
+                               {1, 0, 0, 0, 0, 1}, {0, 2, 1, 0, 0, 0},
+                               {0, 1, 0, 0, 1, 0}, {0, 0, 1, 1, 0, 0}};
+                    constexpr static size_t const linear_coeffs7[21][7]
+                            = {{8, 0, 0, 0, 0, 0, 0}, {6, 1, 0, 0, 0, 0, 0},
+                               {5, 0, 1, 0, 0, 0, 0}, {4, 2, 0, 0, 0, 0, 0},
+                               {4, 0, 0, 1, 0, 0, 0}, {3, 1, 1, 0, 0, 0, 0},
+                               {3, 0, 0, 0, 1, 0, 0}, {2, 3, 0, 0, 0, 0, 0},
+                               {2, 1, 0, 1, 0, 0, 0}, {2, 0, 2, 0, 0, 0, 0},
+                               {2, 0, 0, 0, 0, 1, 0}, {1, 2, 1, 0, 0, 0, 0},
+                               {1, 1, 0, 0, 1, 0, 0}, {1, 0, 1, 1, 0, 0, 0},
+                               {1, 0, 0, 0, 0, 0, 1}, {0, 4, 0, 0, 0, 0, 0},
+                               {0, 2, 0, 1, 0, 0, 0}, {0, 1, 2, 0, 0, 0, 0},
+                               {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
+                               {0, 0, 0, 2, 0, 0, 0}};
                     size_t const n = count.first.get_count();
                     size_t       rows;
                     // Get correct coefficient table:
@@ -672,9 +695,9 @@ public:
     }
 
     template <typename Compare>
-    static size_t encode(
-        istream& Src, ostream& Dst, size_t mode, size_t const sz,
-        Compare const& comp) {
+    static size_t
+            encode(istream& Src, ostream& Dst, size_t mode, size_t const sz,
+                   Compare const& comp) {
         // Seek to start and clear all errors.
         Src.clear();
         Src.seekg(0);
@@ -694,8 +717,8 @@ public:
         nibble_run         curr{unpack[0], 0};
         for (size_t i = 1; i < unpack.size(); i++) {
             nibble_run next{unpack[i], 0};
-            if (next.get_nibble() != curr.get_nibble() ||
-                curr.get_count() >= 7) {
+            if (next.get_nibble() != curr.get_nibble()
+                || curr.get_count() >= 7) {
                 rleSrc.push_back(curr);
                 counts[curr] += 1;
                 curr = next;
@@ -745,8 +768,8 @@ public:
         // find *the* lowest file size.
         while (qt.size() > 1) {
             // Make a copy of the basic coin collection.
-            using CoinQueue =
-                priority_queue<shared_ptr<node>, NodeVector, Compare_node>;
+            using CoinQueue = priority_queue<
+                    shared_ptr<node>, NodeVector, Compare_node>;
             CoinQueue q0(qt.begin(), qt.end());
 
             // We now solve the Coin collector's problem using the Package-merge
@@ -839,8 +862,8 @@ public:
                 cnt         = sizecounts[i - 1] + carry;
                 carry       = 0;
                 size_t mask = (size_t(1) << i) - 1;
-                size_t mask2 =
-                    (i > 6) ? (mask & ~((size_t(1) << (i - 6)) - 1)) : 0;
+                size_t mask2
+                        = (i > 6) ? (mask & ~((size_t(1) << (i - 6)) - 1)) : 0;
                 for (size_t j = 0; j < cnt; j++) {
                     // Sequential binary numbers for codes.
                     size_t code = base + j;
@@ -946,7 +969,7 @@ public:
                 // those high bits first, if needed.
                 if (len > 8) {
                     bits.write(
-                        static_cast<uint8_t>((code >> 8) & 0xff), len - 8);
+                            static_cast<uint8_t>((code >> 8) & 0xff), len - 8);
                     len = 8;
                 }
                 bits.write(static_cast<uint8_t>(code & 0xff), len);
@@ -1008,11 +1031,11 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
 
     // Four different attempts to encode, for improved file size.
     sizes[0] = nemesis_internal::encode(src, buffers[0], 0, sz, Compare_node());
-    sizes[1] =
-        nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2());
+    sizes[1]
+            = nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2());
     sizes[2] = nemesis_internal::encode(alt, buffers[2], 1, sz, Compare_node());
-    sizes[3] =
-        nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2());
+    sizes[3]
+            = nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2());
 
     // Figure out what was the best encoding.
     size_t bestsz     = numeric_limits<size_t>::max();
@@ -1030,7 +1053,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
 }
 
 bool nemesis::encode(
-    std::ostream& Dst, uint8_t const* data, size_t const Size) {
+        std::ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
     Src.write(reinterpret_cast<char const*>(data), Size);
     Src.seekg(0);

@@ -17,6 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/lzss.hh>
+#include <mdcomp/saxman.hh>
+
 #include <cstdint>
 #include <iostream>
 #include <istream>
@@ -24,11 +30,6 @@
 #include <ostream>
 #include <sstream>
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
-#include <mdcomp/lzss.hh>
-#include <mdcomp/saxman.hh>
 
 using std::array;
 using std::fill_n;
@@ -79,20 +80,20 @@ class saxman_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 18;
         // Total size of the sliding window.
-        constexpr static size_t const SlidingWindowSize =
-            SearchBufSize + LookAheadBufSize;
+        constexpr static size_t const SlidingWindowSize
+                = SearchBufSize + LookAheadBufSize;
         // Creates the (multilayer) sliding window structure.
-        static auto
-        create_sliding_window(stream_t const* dt, size_t const size) noexcept {
-            return array<SlidingWindow_t, 1>{
-                SlidingWindow_t{dt, size, SearchBufSize, 3, LookAheadBufSize,
-                                EdgeType::dictionary}};
+        static auto create_sliding_window(
+                stream_t const* dt, size_t const size) noexcept {
+            return array<SlidingWindow_t, 1>{SlidingWindow_t{
+                    dt, size, SearchBufSize, 3, LookAheadBufSize,
+                    EdgeType::dictionary}};
         }
         // Computes the type of edge that covers all of the "len" vertices
         // starting from "off" vertices ago. Returns EdgeType::invalid if there
         // is no such edge.
         constexpr static EdgeType
-        match_type(size_t const dist, size_t const len) noexcept {
+                match_type(size_t const dist, size_t const len) noexcept {
             // Preconditions:
             // len >= 1 && len <= LookAheadBufSize && dist != 0 && dist <=
             // SearchBufSize
@@ -115,7 +116,8 @@ class saxman_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+        constexpr static size_t
+                edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
@@ -133,9 +135,9 @@ class saxman_internal {
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
         constexpr static bool extra_matches(
-            stream_t const* data, size_t const basenode, size_t const ubound,
-            size_t const                           lbound,
-            LZSSGraph<SaxmanAdaptor>::MatchVector& matches) noexcept {
+                stream_t const* data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
+                LZSSGraph<SaxmanAdaptor>::MatchVector& matches) noexcept {
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
             if (basenode >= SearchBufSize - 1) {
@@ -155,8 +157,8 @@ class saxman_internal {
                 // Got them, so add them to the list.
                 for (size_t len = 3; len <= jj; len++) {
                     matches.emplace_back(
-                        basenode, numeric_limits<size_t>::max(), len,
-                        EdgeType::zerofill);
+                            basenode, numeric_limits<size_t>::max(), len,
+                            EdgeType::zerofill);
                 }
             }
             return matches.empty();
@@ -203,8 +205,8 @@ public:
                 // of the previous 0x1000-byte block. We just rebase it around
                 // basedest.
                 size_t const basedest = Dst.tellp();
-                offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize) +
-                         basedest - SaxmanAdaptor::SearchBufSize;
+                offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize)
+                         + basedest - SaxmanAdaptor::SearchBufSize;
 
                 if (offset < basedest) {
                     // If the offset is before the current output position, we
@@ -248,8 +250,8 @@ public:
                 size_t const pos  = edge.get_pos();
                 size_t const base = (pos - dist - 0x12U) & 0xFFFU;
                 size_t const low  = base & 0xFFU;
-                size_t const high =
-                    ((len - 3U) & 0x0FU) | ((base >> 4) & 0xF0U);
+                size_t const high
+                        = ((len - 3U) & 0x0FU) | ((base >> 4) & 0xF0U);
                 out.descbit(0);
                 out.putbyte(low);
                 out.putbyte(high);
@@ -280,7 +282,8 @@ bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
 }
 
 bool saxman::encode(
-    ostream& Dst, uint8_t const* data, size_t const Size, bool const WithSize) {
+        ostream& Dst, uint8_t const* data, size_t const Size,
+        bool const WithSize) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
     size_t       Start = outbuff.tellg();
     saxman_internal::encode(outbuff, data, Size);

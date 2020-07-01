@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/snkrle.hh>
+
 #include <istream>
 #include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
-#include <mdcomp/snkrle.hh>
 
 using std::ios;
 using std::istream;
