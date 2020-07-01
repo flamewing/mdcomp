@@ -59,6 +59,8 @@ struct rocket_internal {
         // Number of bits used in descriptor bitfield to signal the end-of-file
         // marker sequence.
         constexpr static size_t const NumTermBits = 0;
+        // Number of bits for end-of-file marker.
+        constexpr static size_t const TerminatorWeight = 0;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
@@ -108,7 +110,8 @@ struct rocket_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+            ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
                 // 8-bit value.
@@ -122,12 +125,14 @@ struct rocket_internal {
             __builtin_unreachable();
         }
         // Rocket finds no additional matches over normal LZSS.
-        static void extra_matches(
+        static bool extra_matches(
             stream_t const* data, size_t const basenode, size_t const ubound,
             size_t const                           lbound,
             LZSSGraph<RocketAdaptor>::MatchVector& matches) noexcept {
             ignore_unused_variable_warning(
                 data, basenode, ubound, lbound, matches);
+            // Do normal matches.
+            return false;
         }
         // Rocket needs no additional padding at the end-of-file.
         constexpr static size_t get_padding(size_t const totallen) noexcept {

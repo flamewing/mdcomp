@@ -85,7 +85,7 @@ public:
         return currpos + get_length();
     }
     constexpr size_t get_weight() const noexcept {
-        return Adaptor::edge_weight(type);
+        return Adaptor::edge_weight(type, get_length());
     }
     constexpr size_t get_distance() const noexcept {
         return type == EdgeType::symbolwise ? 0 : match.distance;
@@ -116,6 +116,12 @@ public:
           ubound(std::min(labuflen + basenode, nlen)),
           lbound(basenode > srchbufsize ? basenode - srchbufsize : 0),
           type(ty) {}
+    SlidingWindow(SlidingWindow const&)     = default;
+    SlidingWindow(SlidingWindow&&) noexcept = default;
+    SlidingWindow& operator=(SlidingWindow const&) = default;
+    SlidingWindow& operator=(SlidingWindow&&) noexcept = default;
+    // Destructor.
+    ~SlidingWindow() noexcept = default;
 
     size_t getDataSize() const { return nlen; }
 
@@ -140,7 +146,7 @@ public:
 
     void find_matches(MatchVector& matches) const noexcept {
         static_assert(
-            noexcept(Adaptor::edge_weight(EdgeType())),
+            noexcept(Adaptor::edge_weight(EdgeType(), size_t())),
             "Adaptor::edge_weight() is not noexcept");
         static_assert(
             noexcept(Adaptor::match_type(basenode, basenode)),
@@ -182,7 +188,7 @@ public:
         }
     }
 
-    void find_extra_matches(MatchVector& matches) const noexcept {
+    bool find_extra_matches(MatchVector& matches) const noexcept {
         static_assert(
             noexcept(Adaptor::extra_matches(
                 data, basenode, ubound, lbound, std::declval<MatchVector&>())),
@@ -190,7 +196,7 @@ public:
         // This is what we produce.
         matches.clear();
         // Get extra dictionary matches dependent on specific encoder.
-        Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
+        return Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
     }
 
 private:
@@ -223,6 +229,8 @@ private:
  *  	// Number of bits used in descriptor bitfield to signal the end-of-file
  *  	// marker sequence.
  *  	constexpr static size_t const NumTermBits = 2;
+ *  	// Number of bits for end-of-file marker.
+ *  	constexpr static size_t const TerminatorWeight = NumTermBits + 3 * 8;
  *  	// Flag that tells the compressor that new descriptor fields are needed
  *  	// as soon as the last bit in the previous one is used up.
  *  	constexpr static bool const NeedEarlyDescriptor = true;
@@ -250,11 +258,11 @@ private:
  * edge.
  *  	// A return of "numeric_limits<size_t>::max()" means "infinite",
  *  	// or "no edge".
- *  	constexpr static size_t edge_weight(EdgeType const type) noexcept;
+ *  	constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept;
  *  	// Function that finds extra matches in the data that are specific to
  * the
  *  	// given encoder and not general LZSS dictionary matches. May be
- * constexpr. static void extra_matches(stream_t const *data, size_t const
+ * constexpr. static bool extra_matches(stream_t const *data, size_t const
  * basenode, size_t const ubound, size_t const lbound,
  *  	                          LZSSGraph<KosinskiAdaptor>::MatchVector
  * &matches) noexcept;
@@ -282,6 +290,12 @@ public:
     LZSSGraph(uint8_t const* dt, size_t const size) noexcept
         : data(reinterpret_cast<stream_t const*>(dt)),
           nlen(size / sizeof(stream_t)) {}
+    LZSSGraph(LZSSGraph const&)     = default;
+    LZSSGraph(LZSSGraph&&) noexcept = default;
+    LZSSGraph& operator=(LZSSGraph const&) = default;
+    LZSSGraph& operator=(LZSSGraph&&) noexcept = default;
+    // Destructor.
+    ~LZSSGraph() noexcept = default;
     /*
      * This function returns the shortest path through the file.
      */
@@ -326,7 +340,7 @@ public:
             if (nextnode == nlen) {
                 // This is the ending node. Add the descriptor bits for the
                 // end-of-file marker.
-                wgt += Adaptor::NumTermBits;
+                wgt += Adaptor::TerminatorWeight;
                 desccost += Adaptor::NumTermBits;
                 // If the descriptor bitfield had exactly 0 bits left after
                 // this, we may need to emit a new descriptor bitfield (the
@@ -364,7 +378,7 @@ public:
             // Start with the literal/symbolwise encoding of the current node.
             {
                 EdgeType const ty  = Adaptor::match_type(0, 1);
-                auto           ptr = reinterpret_cast<const uint8_t*>(
+                const auto*    ptr = reinterpret_cast<const uint8_t*>(
                     data + ii + Adaptor::FirstMatchPosition);
                 stream_t val = stream_endian_t::template ReadN<
                     decltype(ptr), sizeof(stream_t)>(ptr);
@@ -374,8 +388,7 @@ public:
             }
             // Get the adjacency list for this node.
             for (auto& win : winSet) {
-                win.find_extra_matches(matches);
-                if (matches.empty()) {
+                if (!win.find_extra_matches(matches)) {
                     win.find_matches(matches);
                 }
                 for (const auto& elem : matches) {
@@ -430,9 +443,9 @@ public:
     // Constructor.
     explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
     LZSSOStream(LZSSOStream const&)     = default;
-    LZSSOStream(LZSSOStream&&) = default;
+    LZSSOStream(LZSSOStream&&) noexcept = default;
     LZSSOStream& operator=(LZSSOStream const&) = default;
-    LZSSOStream& operator=(LZSSOStream&&) = default;
+    LZSSOStream& operator=(LZSSOStream&&) noexcept = default;
     // Destructor: writes anything that hasn't been written.
     ~LZSSOStream() noexcept {
         // We need a dummy descriptor field if we have exactly zero bits left
@@ -492,6 +505,12 @@ private:
 public:
     // Constructor.
     explicit LZSSIStream(std::istream& Src) noexcept : in(Src), bits(in) {}
+    LZSSIStream(LZSSIStream const&)     = default;
+    LZSSIStream(LZSSIStream&&) noexcept = default;
+    LZSSIStream& operator=(LZSSIStream const&) = default;
+    LZSSIStream& operator=(LZSSIStream&&) noexcept = default;
+    // Destructor.
+    ~LZSSIStream() noexcept = default;
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
     descriptor_t descbit() noexcept { return bits.pop(); }

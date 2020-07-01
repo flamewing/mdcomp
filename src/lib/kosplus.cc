@@ -62,6 +62,8 @@ class kosplus_internal {
         // Number of bits used in descriptor bitfield to signal the end-of-file
         // marker sequence.
         constexpr static size_t const NumTermBits = 2;
+        // Number of bits for end-of-file marker.
+        constexpr static size_t const TerminatorWeight = NumTermBits + 3 * 8;
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = false;
@@ -134,7 +136,8 @@ class kosplus_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+            ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
                 // 8-bit value.
@@ -155,12 +158,14 @@ class kosplus_internal {
             __builtin_unreachable();
         }
         // KosPlus finds no additional matches over normal LZSS.
-        constexpr static void extra_matches(
+        constexpr static bool extra_matches(
             stream_t const* data, size_t const basenode, size_t const ubound,
             size_t const                            lbound,
             LZSSGraph<KosPlusAdaptor>::MatchVector& matches) noexcept {
             ignore_unused_variable_warning(
                 data, basenode, ubound, lbound, matches);
+            // Do normal matches.
+            return false;
         }
         // KosPlusM needs no additional padding at the end-of-file.
         constexpr static size_t get_padding(size_t const totallen) noexcept {

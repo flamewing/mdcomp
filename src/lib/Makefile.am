@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libartc42.la libcomper.la libenigma.la libkosinski.la libkosplus.la libnemesis.la librocket.la libsaxman.la libsnkrle.la
+lib_LTLIBRARIES = libartc42.la libcomper.la libenigma.la libkosinski.la libkosplus.la liblzkn1.la libnemesis.la librocket.la libsaxman.la libsnkrle.la
 
 libartc42_la_SOURCES = artc42.cc
 
@@ -9,6 +9,8 @@ libenigma_la_SOURCES = enigma.cc
 libkosinski_la_SOURCES = kosinski.cc
 
 libkosplus_la_SOURCES = kosplus.cc
+
+liblzkn1_la_SOURCES = lzkn1.cc
 
 libnemesis_la_SOURCES = nemesis.cc
 
