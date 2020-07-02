@@ -143,7 +143,7 @@ class saxman_internal {
                             EdgeType::zerofill);
                 }
             }
-            return matches.empty();
+            return !matches.empty();
         }
         // Saxman needs no additional padding at the end-of-file.
         constexpr static size_t get_padding(size_t const totallen) noexcept {
