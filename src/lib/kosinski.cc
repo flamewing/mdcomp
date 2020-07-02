@@ -29,7 +29,6 @@
 #include <ostream>
 #include <sstream>
 
-
 using std::array;
 using std::ios;
 using std::iostream;
@@ -171,9 +170,7 @@ class kosinski_internal {
         }
         // KosinskiM needs to pad each module to a multiple of 16 bytes.
         static size_t get_padding(size_t const totallen) noexcept {
-            // Add in the size of the end-of-file marker.
-            size_t padding = totallen + 3 * 8;
-            return ((padding + moduled_kosinski::PadMaskBits)
+            return ((totallen + moduled_kosinski::PadMaskBits)
                     & ~moduled_kosinski::PadMaskBits)
                    - totallen;
         }
