@@ -22,3 +22,4 @@ libsnkrle_la_SOURCES = snkrle.cc
 
 AM_CPPFLAGS = -I$(srcdir)/../../include
 
+AM_LDFLAGS = -no-undefined

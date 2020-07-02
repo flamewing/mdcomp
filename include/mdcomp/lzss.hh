@@ -31,7 +31,6 @@
 #include <string>
 #include <vector>
 
-
 #ifdef _MSC_VER
 #    ifndef __clang__
 [[noreturn]] inline void __builtin_unreachable() {
@@ -163,9 +162,6 @@ public:
         static_assert(
                 noexcept(Adaptor::edge_weight(EdgeType(), size_t())),
                 "Adaptor::edge_weight() is not noexcept");
-        static_assert(
-                noexcept(Adaptor::match_type(basenode, basenode)),
-                "Adaptor::match_type() is not noexcept");
         size_t const end = getLookAheadBufSize();
         // This is what we produce.
         matches.clear();
@@ -262,12 +258,6 @@ private:
  *  	// Total size of the sliding window.
  *  	constexpr static size_t const SlidingWindowSize = SearchBufSize +
  * LookAheadBufSize;
- *  	// Computes the type of edge that covers all of the "len" vertices
- * starting from
- *  	// "off" vertices ago.
- *  	// Returns EdgeType::invalid if there is no such edge.
- *  	constexpr static EdgeType match_type(size_t const dist, size_t const
- * len) noexcept
  *  	// Given an edge type, computes how many bits are used in the descriptor
  * field. constexpr static size_t desc_bits(EdgeType const type) noexcept;
  *  	// Given an edge type, computes how many bits are used in total by this
@@ -395,13 +385,13 @@ public:
             size_t const basedesc = desccosts[ii];
             // Start with the literal/symbolwise encoding of the current node.
             {
-                EdgeType const ty  = Adaptor::match_type(0, 1);
                 const auto*    ptr = reinterpret_cast<const uint8_t*>(
                         data + ii + Adaptor::FirstMatchPosition);
                 stream_t val = stream_endian_t::template ReadN<
                         decltype(ptr), sizeof(stream_t)>(ptr);
                 Relax(ii, basedesc,
-                      Node_t(ii + Adaptor::FirstMatchPosition, val, ty));
+                      Node_t(ii + Adaptor::FirstMatchPosition, val,
+                             EdgeType::symbolwise));
             }
             // Get the adjacency list for this node.
             for (auto& win : winSet) {

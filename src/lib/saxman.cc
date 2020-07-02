@@ -88,23 +88,6 @@ class saxman_internal {
                     dt, size, SearchBufSize, 3, LookAheadBufSize,
                     EdgeType::dictionary}};
         }
-        // Computes the type of edge that covers all of the "len" vertices
-        // starting from "off" vertices ago. Returns EdgeType::invalid if there
-        // is no such edge.
-        constexpr static EdgeType
-                match_type(size_t const dist, size_t const len) noexcept {
-            // Preconditions:
-            // len >= 1 && len <= LookAheadBufSize && dist != 0 && dist <=
-            // SearchBufSize
-            ignore_unused_variable_warning(dist);
-            if (len == 1) {
-                return EdgeType::symbolwise;
-            }
-            if (len == 2) {
-                return EdgeType::invalid;
-            }
-            return EdgeType::dictionary;
-        }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
         constexpr static size_t desc_bits(EdgeType const type) noexcept {
