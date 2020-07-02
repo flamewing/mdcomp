@@ -313,7 +313,10 @@ public:
         static_assert(
                 noexcept(Adaptor::get_padding(0)),
                 "Adaptor::get_padding() is not noexcept");
+        auto assume = [](bool result) {if (!result) {__builtin_unreachable();}};
+        assume(nlen >= Adaptor::FirstMatchPosition);
         size_t numNodes = nlen - Adaptor::FirstMatchPosition;
+        assume(nlen < std::numeric_limits<size_t>::max() - 1);
         // Auxiliary data structures:
         // * The parent of a node is the node that reaches that node with the
         //   lowest cost from the start of the file.
