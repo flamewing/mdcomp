@@ -30,7 +30,6 @@
 #include <ostream>
 #include <sstream>
 
-
 using std::array;
 using std::fill_n;
 using std::ios;
@@ -134,7 +133,7 @@ class saxman_internal {
         }
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
-        constexpr static bool extra_matches(
+        static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
                 LZSSGraph<SaxmanAdaptor>::MatchVector& matches) noexcept {
