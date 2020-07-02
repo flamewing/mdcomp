@@ -307,10 +307,10 @@ public:
     LZSSGraph(uint8_t const* dt, size_t const size) noexcept
             : data(reinterpret_cast<stream_t const*>(dt)),
               nlen(size / sizeof(stream_t)) {}
-    LZSSGraph(LZSSGraph const&)     = default;
-    LZSSGraph(LZSSGraph&&) noexcept = default;
-    LZSSGraph& operator=(LZSSGraph const&) = default;
-    LZSSGraph& operator=(LZSSGraph&&) noexcept = default;
+    LZSSGraph(LZSSGraph const&)     = delete;
+    LZSSGraph(LZSSGraph&&) noexcept = delete;
+    LZSSGraph& operator=(LZSSGraph const&) = delete;
+    LZSSGraph& operator=(LZSSGraph&&) noexcept = delete;
     // Destructor.
     ~LZSSGraph() noexcept = default;
     /*
@@ -460,10 +460,10 @@ private:
 public:
     // Constructor.
     explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
-    LZSSOStream(LZSSOStream const&)     = default;
-    LZSSOStream(LZSSOStream&&) noexcept = default;
-    LZSSOStream& operator=(LZSSOStream const&) = default;
-    LZSSOStream& operator=(LZSSOStream&&) noexcept = default;
+    LZSSOStream(LZSSOStream const&)     = delete;
+    LZSSOStream(LZSSOStream&&) noexcept = delete;
+    LZSSOStream& operator=(LZSSOStream const&) = delete;
+    LZSSOStream& operator=(LZSSOStream&&) noexcept = delete;
     // Destructor: writes anything that hasn't been written.
     ~LZSSOStream() noexcept {
         // We need a dummy descriptor field if we have exactly zero bits left
@@ -525,12 +525,6 @@ private:
 public:
     // Constructor.
     explicit LZSSIStream(std::istream& Src) noexcept : in(Src), bits(in) {}
-    LZSSIStream(LZSSIStream const&)     = default;
-    LZSSIStream(LZSSIStream&&) noexcept = default;
-    LZSSIStream& operator=(LZSSIStream const&) = default;
-    LZSSIStream& operator=(LZSSIStream&&) noexcept = default;
-    // Destructor.
-    ~LZSSIStream() noexcept = default;
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
     descriptor_t descbit() noexcept {

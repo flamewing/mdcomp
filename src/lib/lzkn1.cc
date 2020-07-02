@@ -29,7 +29,6 @@
 #include <ostream>
 #include <sstream>
 
-
 using std::array;
 using std::ios;
 using std::iostream;
@@ -142,7 +141,7 @@ class lzkn1_internal {
             __builtin_unreachable();
         }
         // lzkn1 finds no additional matches over normal LZSS.
-        constexpr static bool extra_matches(
+        static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
                 LZSSGraph<Lzkn1Adaptor>::MatchVector& matches) noexcept {
