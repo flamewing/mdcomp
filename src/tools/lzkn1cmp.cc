@@ -36,7 +36,7 @@ using std::stringstream;
 static void usage(char* prog) {
     cerr << "Usage: " << prog
          << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
-            "[-p|--padding=[{len}]] {input_filename} {output_filename}"
+            "{input_filename} {output_filename}"
          << endl;
     cerr << endl;
     cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
@@ -72,14 +72,12 @@ int main(int argc, char* argv[]) {
             = {{"extract", optional_argument, nullptr, 'x'},
                {"moduled", no_argument, nullptr, 'm'},
                {"crunch", no_argument, nullptr, 'c'},
-               {"padding", required_argument, nullptr, 'p'},
                {nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
     bool   moduled = false;
     bool   crunch  = false;
     size_t pointer = 0ULL;
-    size_t padding = moduled_lzkn1::ModulePadding;
 
     while (true) {
         int option_index = 0;
@@ -102,14 +100,6 @@ int main(int argc, char* argv[]) {
             break;
         case 'm':
             moduled = true;
-            break;
-        case 'p':
-            if (optarg != nullptr) {
-                padding = strtoul(optarg, nullptr, 0);
-            }
-            if ((padding == 0U) || (padding & (padding - 1)) != 0) {
-                padding = 16;
-            }
             break;
         default:
             break;
@@ -143,7 +133,7 @@ int main(int argc, char* argv[]) {
         stringstream buffer(ios::in | ios::out | ios::binary);
         fin.seekg(pointer);
         if (moduled) {
-            lzkn1::moduled_decode(fin, buffer, padding);
+            lzkn1::moduled_decode(fin, buffer);
         } else {
             lzkn1::decode(fin, buffer);
         }
@@ -158,7 +148,7 @@ int main(int argc, char* argv[]) {
             return 3;
         }
         if (moduled) {
-            lzkn1::moduled_encode(buffer, fout, padding);
+            lzkn1::moduled_encode(buffer, fout);
         } else {
             lzkn1::encode(buffer, fout);
         }
@@ -174,13 +164,13 @@ int main(int argc, char* argv[]) {
         if (extract) {
             fin.seekg(pointer);
             if (moduled) {
-                lzkn1::moduled_decode(fin, fout, padding);
+                lzkn1::moduled_decode(fin, fout);
             } else {
                 lzkn1::decode(fin, fout);
             }
         } else {
             if (moduled) {
-                lzkn1::moduled_encode(fin, fout, padding);
+                lzkn1::moduled_encode(fin, fout);
             } else {
                 lzkn1::encode(fin, fout);
             }
