@@ -35,7 +35,7 @@ using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
-         << " [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} "
+         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] {input_filename} "
             "{output_filename}"
          << endl;
     cerr << endl;
@@ -46,24 +46,29 @@ static void usage(char* prog) {
          << "\t            \tIf --chunch is in effect, a missing "
             "output_filename means recompress"
          << endl
-         << "\t            \tto input_filename." << endl
+         << "\t            \tto input_filename."
          << endl;
+    cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes."
+         << endl;
+
 }
 
 int main(int argc, char* argv[]) {
     static option long_options[]
             = {{"extract", optional_argument, nullptr, 'x'},
+               {"moduled", no_argument, nullptr, 'm'},
                {"crunch", no_argument, nullptr, 'c'},
                {nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
+    bool   moduled = false;
     bool   crunch  = false;
     size_t pointer = 0;
 
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-                argc, argv, "x::c", static_cast<option*>(long_options),
+                argc, argv, "x::mc", static_cast<option*>(long_options),
                 &option_index);
         if (c == -1) {
             break;
@@ -78,6 +83,9 @@ int main(int argc, char* argv[]) {
             break;
         case 'c':
             crunch = true;
+            break;
+        case 'm':
+            moduled = true;
             break;
         default:
             break;
@@ -121,7 +129,11 @@ int main(int argc, char* argv[]) {
                  << endl;
             return 3;
         }
-        comper::encode(buffer, fout);
+        if (moduled) {
+            comper::moduled_encode(buffer, fout);
+        } else {
+            comper::encode(buffer, fout);
+        }
     } else {
         fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
         if (!fout.good()) {
@@ -133,9 +145,17 @@ int main(int argc, char* argv[]) {
 
         if (extract) {
             fin.seekg(pointer);
-            comper::decode(fin, fout);
+            if (moduled) {
+                comper::moduled_decode(fin, fout);
+            } else {
+                comper::decode(fin, fout);
+            }
         } else {
-            comper::encode(fin, fout);
+            if (moduled) {
+                comper::moduled_encode(fin, fout);
+            } else {
+                comper::encode(fin, fout);
+            }
         }
     }
 
