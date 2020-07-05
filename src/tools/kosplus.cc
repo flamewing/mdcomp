@@ -35,7 +35,7 @@ using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
-         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled=[{size}]] "
+         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
             "{input_filename} {output_filename}"
          << endl;
     cerr << endl;
