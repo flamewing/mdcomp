@@ -47,6 +47,7 @@ Makefile.in
 /src/tools/enicmp
 /src/tools/koscmp
 /src/tools/kosplus
+/src/tools/lzkn1cmp
 /src/tools/mkoscmp
 /src/tools/nemcmp
 /src/tools/saxcmp
