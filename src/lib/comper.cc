@@ -29,7 +29,6 @@
 #include <ostream>
 #include <sstream>
 
-
 using std::array;
 using std::ios;
 using std::iostream;

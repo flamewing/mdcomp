@@ -27,7 +27,6 @@
 #include <sstream>
 #include <string>
 
-
 using std::ios;
 using std::istream;
 using std::numeric_limits;

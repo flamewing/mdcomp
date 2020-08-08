@@ -26,7 +26,6 @@
 
 #include <iosfwd>
 
-
 class nemesis;
 using basic_nemesis   = BasicDecoder<nemesis, PadMode::DontPad>;
 using moduled_nemesis = ModuledAdaptor<nemesis, 4096U, 1U>;

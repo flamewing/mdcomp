@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class comper;
 using basic_comper   = BasicDecoder<comper, PadMode::PadEven>;
 using moduled_comper = ModuledAdaptor<comper, 4096U, 1U>;

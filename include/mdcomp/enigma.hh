@@ -26,7 +26,6 @@
 
 #include <iosfwd>
 
-
 class enigma;
 using basic_enigma   = BasicDecoder<enigma, PadMode::DontPad>;
 using moduled_enigma = ModuledAdaptor<enigma, 4096U, 1U>;

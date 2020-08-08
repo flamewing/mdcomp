@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class saxman;
 using basic_saxman   = BasicDecoder<saxman, PadMode::DontPad, bool>;
 using moduled_saxman = ModuledAdaptor<saxman, 4096U, 1U>;

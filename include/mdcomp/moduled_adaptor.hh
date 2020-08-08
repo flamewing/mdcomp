@@ -27,7 +27,6 @@
 #include <sstream>
 #include <vector>
 
-
 template <
         typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class ModuledAdaptor {

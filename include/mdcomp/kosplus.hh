@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class kosplus;
 using basic_kosplus   = BasicDecoder<kosplus, PadMode::DontPad>;
 using moduled_kosplus = ModuledAdaptor<kosplus, 4096U, 1U>;

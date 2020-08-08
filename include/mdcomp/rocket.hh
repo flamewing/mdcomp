@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class rocket;
 using basic_rocket   = BasicDecoder<rocket, PadMode::DontPad>;
 using moduled_rocket = ModuledAdaptor<rocket, 4096U, 1U>;

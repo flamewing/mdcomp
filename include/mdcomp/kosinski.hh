@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class kosinski;
 using basic_kosinski   = BasicDecoder<kosinski, PadMode::DontPad>;
 using moduled_kosinski = ModuledAdaptor<kosinski, 4096U, 16U>;

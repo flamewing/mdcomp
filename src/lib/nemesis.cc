@@ -36,7 +36,6 @@
 #include <utility>
 #include <vector>
 
-
 using std::enable_shared_from_this;
 using std::fill_n;
 using std::ios;

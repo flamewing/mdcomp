@@ -27,7 +27,6 @@
 #include <istream>
 #include <ostream>
 
-
 using std::istream;
 using std::ostream;
 

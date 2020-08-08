@@ -313,7 +313,11 @@ public:
         static_assert(
                 noexcept(Adaptor::get_padding(0)),
                 "Adaptor::get_padding() is not noexcept");
-        auto assume = [](bool result) {if (!result) {__builtin_unreachable();}};
+        auto assume = [](bool result) {
+            if (!result) {
+                __builtin_unreachable();
+            }
+        };
         assume(nlen >= Adaptor::FirstMatchPosition);
         size_t numNodes = nlen - Adaptor::FirstMatchPosition;
         assume(nlen < std::numeric_limits<size_t>::max() - 1);
@@ -388,7 +392,7 @@ public:
             size_t const basedesc = desccosts[ii];
             // Start with the literal/symbolwise encoding of the current node.
             {
-                const auto*    ptr = reinterpret_cast<const uint8_t*>(
+                const auto* ptr = reinterpret_cast<const uint8_t*>(
                         data + ii + Adaptor::FirstMatchPosition);
                 stream_t val = stream_endian_t::template ReadN<
                         decltype(ptr), sizeof(stream_t)>(ptr);

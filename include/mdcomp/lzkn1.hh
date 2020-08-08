@@ -25,7 +25,6 @@
 
 #include <iosfwd>
 
-
 class lzkn1;
 using basic_lzkn1   = BasicDecoder<lzkn1, PadMode::DontPad>;
 using moduled_lzkn1 = ModuledAdaptor<lzkn1, 4096U, 16U>;

@@ -27,7 +27,6 @@
 #include <limits>
 #include <vector>
 
-
 enum class PadMode { DontPad, PadEven };
 
 template <typename Format, PadMode Pad, typename... Args>

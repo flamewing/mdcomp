@@ -30,7 +30,6 @@
 #include <sstream>
 #include <type_traits>
 
-
 using std::array;
 using std::fill_n;
 using std::ios;

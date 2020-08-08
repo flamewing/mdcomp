@@ -25,7 +25,6 @@
 #include <iostream>
 #include <sstream>
 
-
 using std::cerr;
 using std::endl;
 using std::fstream;
