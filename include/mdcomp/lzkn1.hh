@@ -27,7 +27,7 @@
 
 class lzkn1;
 using basic_lzkn1   = BasicDecoder<lzkn1, PadMode::DontPad>;
-using moduled_lzkn1 = ModuledAdaptor<lzkn1, 4096U, 16U>;
+using moduled_lzkn1 = ModuledAdaptor<lzkn1, 4096U, 1U>;
 
 class lzkn1 : public basic_lzkn1, public moduled_lzkn1 {
     friend basic_lzkn1;
