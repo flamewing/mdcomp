@@ -265,7 +265,7 @@ namespace detail {
             ReadBase(in, val);
         }
 
-        // Both ReadBase versions generate optimal code in GCC and clang.
+        // Both WriteBase versions generate optimal code in GCC and clang.
         // I am splitting these cases because MSVC compiler does not understand
         // memmove.
         template <typename Ptr, typename T>
