@@ -187,17 +187,17 @@ namespace detail {
             Size, uint8_t, uint16_t, uint32_t, uint64_t>::type;
 
 #ifdef __GNUG__
-#    define PURE      __attribute__((const))
+#    define ATTR_CONST __attribute__((const))
 #    define CONSTEXPR constexpr
 #else
-#    define PURE
+#    define ATTR_CONST
 #    define CONSTEXPR
 #endif
-    CONSTEXPR PURE inline uint8_t bswap(uint8_t val) noexcept {
+    CONSTEXPR ATTR_CONST inline uint8_t bswap(uint8_t val) noexcept {
         return val;
     }
 
-    CONSTEXPR PURE inline uint16_t bswap(uint16_t val) noexcept {
+    CONSTEXPR ATTR_CONST inline uint16_t bswap(uint16_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap16(val);
 #elif defined(_MSC_VER)
@@ -207,7 +207,7 @@ namespace detail {
 #endif
     }
 
-    CONSTEXPR PURE inline uint32_t bswap(uint32_t val) noexcept {
+    CONSTEXPR ATTR_CONST inline uint32_t bswap(uint32_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap32(val);
 #elif defined(_MSC_VER)
@@ -218,7 +218,7 @@ namespace detail {
 #endif
     }
 
-    CONSTEXPR PURE inline uint64_t bswap(uint64_t val) noexcept {
+    CONSTEXPR ATTR_CONST inline uint64_t bswap(uint64_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap64(val);
 #elif defined(_MSC_VER)
