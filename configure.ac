@@ -11,7 +11,7 @@ AM_SILENT_RULES([yes])
 
 AC_PROG_CXX
 AC_LANG([C++])
-AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
+AX_CXX_COMPILE_STDCXX([14], [noext],[mandatory])
 AC_PROG_CXXCPP
 AC_HEADER_STDC
 
