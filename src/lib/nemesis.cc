@@ -285,22 +285,17 @@ struct Compare_node2 {
         nibble_run const lnib = lhs->get_value();
         nibble_run const rnib = rhs->get_value();
 
-        size_t     lclen;
-        size_t     rclen;
-        auto const lit = codemap.find(lnib);
-        auto const rit = codemap.find(rnib);
-        if (lit == codemap.end()) {
-            lclen = (6 + 7) * lhs->get_weight();
-        } else {
-            size_t bitcnt = (lit->second).len;
-            lclen         = (bitcnt & 0x7f) * lhs->get_weight() + 16;
-        }
-        if (rit == codemap.end()) {
-            rclen = (6 + 7) * rhs->get_weight();
-        } else {
-            size_t bitcnt = (rit->second).len;
-            rclen         = (bitcnt & 0x7f) * rhs->get_weight() + 16;
-        }
+        auto get_len = [&](shared_ptr<node> const& node, nibble_run nib) {
+            auto const it = codemap.find(nib);
+            if (it == codemap.end()) {
+                return (6 + 7) * node->get_weight();
+            }
+            size_t bitcnt = (it->second).len;
+            return (bitcnt & 0x7f) * node->get_weight() + 16;
+        };
+
+        size_t const lclen = get_len(lhs, lnib);
+        size_t const rclen = get_len(rhs, rnib);
         if (lclen > rclen) {
             return true;
         }
@@ -308,10 +303,8 @@ struct Compare_node2 {
             return false;
         }
 
-        size_t lblen;
-        size_t rblen;
-        lblen = (lnib.get_count() + 1) * lhs->get_weight();
-        rblen = (rnib.get_count() + 1) * rhs->get_weight();
+        size_t const lblen = (lnib.get_count() + 1) * lhs->get_weight();
+        size_t const rblen = (rnib.get_count() + 1) * rhs->get_weight();
         if (lblen < rblen) {
             return true;
         }
@@ -530,10 +523,7 @@ public:
 
                     // This is a linear optimization problem subjected to 2
                     // constraints. If the number of repeats of the current
-                    // nibble run is N, then we have N dimensions. Pointer to
-                    // table of linear coefficients. This table has N columns
-                    // for each line.
-                    size_t const* linear_coeffs;
+                    // nibble run is N, then we have N dimensions.
                     // Here are some hard-coded tables, obtained by brute-force:
                     constexpr static size_t const linear_coeffs2[2][2]
                             = {{3, 0}, {1, 1}};
@@ -568,7 +558,10 @@ public:
                                {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
                                {0, 0, 0, 2, 0, 0, 0}};
                     size_t const n = count.first.get_count();
-                    size_t       rows;
+                    // Pointer to table of linear coefficients. This table has N
+                    // columns for each line.
+                    size_t const* linear_coeffs;
+                    size_t        rows;
                     // Get correct coefficient table:
                     switch (n) {
                     case 2:
@@ -853,16 +846,15 @@ public:
             // a given bit length.
             size_t base  = 0;
             size_t carry = 0;
-            size_t cnt;
             // This vector contains the codes sorted by size.
             vector<Code> codes;
             for (uint8_t i = 1; i <= 8; i++) {
                 // How many nibble runs have the desired bit length.
-                cnt         = sizecounts[i - 1] + carry;
-                carry       = 0;
-                size_t mask = (size_t(1) << i) - 1;
-                size_t mask2
+                size_t       cnt  = sizecounts[i - 1] + carry;
+                size_t const mask = (size_t(1) << i) - 1;
+                size_t const mask2
                         = (i > 6) ? (mask & ~((size_t(1) << (i - 6)) - 1)) : 0;
+                carry = 0;
                 for (size_t j = 0; j < cnt; j++) {
                     // Sequential binary numbers for codes.
                     size_t code = base + j;

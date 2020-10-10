@@ -125,7 +125,7 @@ class lzkn1_internal {
         static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
-                LZSSGraph<Lzkn1Adaptor>::MatchVector& matches) noexcept {
+                std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
             size_t const end = std::min(ubound - basenode, size_t(72));
@@ -217,14 +217,12 @@ public:
 
     static void encode(ostream& Dst, uint8_t const* Data, size_t const Size) {
         using EdgeType     = typename Lzkn1Adaptor::EdgeType;
-        using Lzkn1Graph   = LZSSGraph<Lzkn1Adaptor>;
         using Lzkn1OStream = LZSSOStream<Lzkn1Adaptor>;
 
         BigEndian::Write2(Dst, Size);
 
         // Compute optimal lzkn1 parsing of input file.
-        Lzkn1Graph                   enc(Data, Size);
-        typename Lzkn1Graph::AdjList list = enc.find_optimal_parse();
+        auto list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
         Lzkn1OStream                 out(Dst);
         constexpr size_t const       eof_marker               = 0x1FU;
         constexpr size_t const       packed_symbolwise_marker = 0xC0U;

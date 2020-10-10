@@ -20,6 +20,8 @@
 #ifndef LIB_LZSS_HH
 #define LIB_LZSS_HH
 
+#include "ignore_unused_variable_warning.hh"
+
 #include <mdcomp/bigendian_io.hh>
 #include <mdcomp/bitstream.hh>
 
@@ -224,210 +226,189 @@ private:
 };
 
 /*
- * Graph structure for optimal LZSS encoding. This graph is a directed acyclic
- * graph (DAG) by construction, and is automatically sorted topologically.
+ * Function which creates a LZSS structure and finds the optimal parse.
+ *
  * The template parameter is an adaptor class/structure with the following
  * members:
  *  struct LZSSAdaptor {
- *  	using stream_t     = uint8_t;
- *  	using stream_endian_t = BigEndian;
- *  	using descriptor_t = uint16_t;
- *  	using descriptor_endian_t = LittleEndian;
- *  	enum class EdgeType : size_t {
- *  		invalid,
- *  		// other cases
- *  	};
- *  	constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
- *  	// Number of bits used in descriptor bitfield to signal the end-of-file
- *  	// marker sequence.
- *  	constexpr static size_t const NumTermBits = 2;
- *  	// Number of bits for end-of-file marker.
- *  	constexpr static size_t const TerminatorWeight = NumTermBits + 3 * 8;
- *  	// Flag that tells the compressor that new descriptor fields are needed
- *  	// as soon as the last bit in the previous one is used up.
- *  	constexpr static bool const NeedEarlyDescriptor = true;
- *  	// Flag that marks the descriptor bits as being in little-endian bit
- *  	// order (that is, lowest bits come out first).
- *  	constexpr static bool const DescriptorLittleEndianBits = true;
- *  	// How many characters to skip looking for matchs for at the start.
- *  	constexpr static size_t const FirstMatchPosition = 0;
- *  	// Size of the search buffer.
- *  	constexpr static size_t const SearchBufSize = 8192;
- *  	// Size of the look-ahead buffer.
- *  	constexpr static size_t const LookAheadBufSize = 256;
- *  	// Total size of the sliding window.
- *  	constexpr static size_t const SlidingWindowSize = SearchBufSize +
- * LookAheadBufSize;
- *  	// Given an edge type, computes how many bits are used in the descriptor
- * field. constexpr static size_t desc_bits(EdgeType const type) noexcept;
- *  	// Given an edge type, computes how many bits are used in total by this
- * edge.
- *  	// A return of "numeric_limits<size_t>::max()" means "infinite",
- *  	// or "no edge".
- *  	constexpr static size_t edge_weight(EdgeType const type, size_t length)
- * noexcept;
- *  	// Function that finds extra matches in the data that are specific to
- * the
- *  	// given encoder and not general LZSS dictionary matches. May be
- * constexpr. static bool extra_matches(stream_t const *data, size_t const
- * basenode, size_t const ubound, size_t const lbound,
- *  	                          LZSSGraph<KosinskiAdaptor>::MatchVector
- * &matches) noexcept;
- *  	// Function that computes padding between modules, if any. May be
- * constexpr. static size_t get_padding(size_t const totallen) noexcept;
+ *    using stream_t     = uint8_t;
+ *    using stream_endian_t = BigEndian;
+ *    using descriptor_t = uint16_t;
+ *    using descriptor_endian_t = LittleEndian;
+ *    enum class EdgeType : size_t {
+ *        invalid,
+ *        // other cases
+ *    };
+ *    constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+ *    // Number of bits used in descriptor bitfield to signal the end-of-file
+ *    // marker sequence.
+ *    constexpr static size_t const NumTermBits = 2;
+ *    // Number of bits for end-of-file marker.
+ *    constexpr static size_t const TerminatorWeight = NumTermBits + 3 * 8;
+ *    // Flag that tells the compressor that new descriptor fields are needed
+ *    // as soon as the last bit in the previous one is used up.
+ *    constexpr static bool const NeedEarlyDescriptor = true;
+ *    // Flag that marks the descriptor bits as being in little-endian bit
+ *    // order (that is, lowest bits come out first).
+ *    constexpr static bool const DescriptorLittleEndianBits = true;
+ *    // How many characters to skip looking for matchs for at the start.
+ *    constexpr static size_t const FirstMatchPosition = 0;
+ *    // Size of the search buffer.
+ *    constexpr static size_t const SearchBufSize = 8192;
+ *    // Size of the look-ahead buffer.
+ *    constexpr static size_t const LookAheadBufSize = 256;
+ *    // Total size of the sliding window.
+ *    constexpr static size_t const SlidingWindowSize = SearchBufSize +
+ *                                                      LookAheadBufSize;
+ *    // Given an edge type, computes how many bits are used in the descriptor
+ *    // field.
+ *    constexpr static size_t desc_bits(EdgeType const type) noexcept;
+ *    // Given an edge type, computes how many bits are used in total by this
+ *    // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
+ *    // or "no edge".
+ *    constexpr static size_t edge_weight(EdgeType const type,
+ *                                        size_t length) noexcept;
+ *    // Function that finds extra matches in the data that are specific to
+ *    // the given encoder and not general LZSS dictionary matches. May be
+ *    // constexpr.
+ *    static bool extra_matches(stream_t const *data, size_t const basenode,
+ *                      size_t const ubound, size_t const lbound,
+ *                      std::vector<AdjListNode<Adaptor>> &matches) noexcept;
+ *    // Function that computes padding between modules, if any. May be
+ *    //constexpr.
+ *    static size_t get_padding(size_t const totallen) noexcept;
  */
 template <typename Adaptor>
-class LZSSGraph {
-public:
+auto find_optimal_lzss_parse(
+        uint8_t const* dt, size_t const size, Adaptor adaptor) noexcept {
+    ignore_unused_variable_warning(adaptor);
     using EdgeType        = typename Adaptor::EdgeType;
     using stream_t        = typename Adaptor::stream_t;
     using stream_endian_t = typename Adaptor::stream_endian_t;
     using Node_t          = AdjListNode<Adaptor>;
     using AdjList         = std::list<Node_t>;
     using MatchVector     = std::vector<Node_t>;
-    using SlidingWindow_t = SlidingWindow<Adaptor>;
 
-private:
     // Adjacency lists for all the nodes in the graph.
-    stream_t const* const data;
-    size_t const          nlen;
-
-public:
-    // Constructor: creates the graph from the input file.
-    LZSSGraph(uint8_t const* dt, size_t const size) noexcept
-            : data(reinterpret_cast<stream_t const*>(dt)),
-              nlen(size / sizeof(stream_t)) {}
-    LZSSGraph(LZSSGraph const&)     = delete;
-    LZSSGraph(LZSSGraph&&) noexcept = delete;
-    LZSSGraph& operator=(LZSSGraph const&) = delete;
-    LZSSGraph& operator=(LZSSGraph&&) noexcept = delete;
-    // Destructor.
-    ~LZSSGraph() noexcept = default;
-    /*
-     * This function returns the shortest path through the file.
-     */
-    AdjList find_optimal_parse() const noexcept {
-        static_assert(
-                noexcept(Adaptor::desc_bits(EdgeType())),
-                "Adaptor::desc_bits() is not noexcept");
-        static_assert(
-                noexcept(Adaptor::get_padding(0)),
-                "Adaptor::get_padding() is not noexcept");
-        auto assume = [](bool result) {
-            if (!result) {
-                __builtin_unreachable();
-            }
-        };
-        assume(nlen >= Adaptor::FirstMatchPosition);
-        size_t numNodes = nlen - Adaptor::FirstMatchPosition;
-        assume(nlen < std::numeric_limits<size_t>::max() - 1);
-        // Auxiliary data structures:
-        // * The parent of a node is the node that reaches that node with the
-        //   lowest cost from the start of the file.
-        std::vector<size_t> parents(numNodes + 1);
-        // * This is the edge used to go from the parent of a node to said node.
-        std::vector<Node_t> pedges(numNodes + 1);
-        // * This is the total cost to reach the edge. They start as high as
-        //   possible for all nodes but the first, which starts at 0.
-        std::vector<size_t> costs(
-                numNodes + 1, std::numeric_limits<size_t>::max());
-        costs[0] = 0;
-        // * And this is a vector that tallies up the amount of bits in
-        //   the descriptor bitfield for the shortest path up to this node.
-        //   After tallying up the ending node, the end-of-file marker may cause
-        //   an additional dummy descriptor bitfield to be emitted; this vector
-        //   is used to counteract that.
-        std::vector<size_t> desccosts(
-                numNodes + 1, std::numeric_limits<size_t>::max());
-        desccosts[0] = 0;
-
-        // Extracting distance relax logic from the loop so it can be used more
-        // often.
-        auto Relax = [nlen = this->nlen, &costs, &desccosts, &parents, &pedges](
-                             size_t ii, size_t const basedesc,
-                             const auto& elem) {
-            // Need destination ID and edge weight.
-            size_t const nextnode
-                    = elem.get_dest() - Adaptor::FirstMatchPosition;
-            size_t wgt = costs[ii] + elem.get_weight();
-            // Compute descriptor bits from using this edge.
-            size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());
-            if (nextnode == nlen) {
-                // This is the ending node. Add the descriptor bits for the
-                // end-of-file marker.
-                wgt += Adaptor::TerminatorWeight;
-                desccost += Adaptor::NumTermBits;
-                // If the descriptor bitfield had exactly 0 bits left after
-                // this, we may need to emit a new descriptor bitfield (the
-                // full Adaptor::NumDescBits bits). Otherwise, we need to
-                // pads the last descriptor bitfield to full size. This line
-                // accomplishes both.
-                size_t const descmod = desccost % Adaptor::NumDescBits;
-                if (descmod != 0 || Adaptor::NeedEarlyDescriptor) {
-                    wgt += (Adaptor::NumDescBits - descmod);
-                    desccost += (Adaptor::NumDescBits - descmod);
-                }
-                // Compensate for the Adaptor's padding, if any.
-                wgt += Adaptor::get_padding(wgt);
-            }
-            // Is the cost to reach the target node through this edge less
-            // than the current cost?
-            if (costs[nextnode] > wgt) {
-                // If so, update the data structures with new best edge.
-                costs[nextnode]     = wgt;
-                parents[nextnode]   = ii;
-                pedges[nextnode]    = elem;
-                desccosts[nextnode] = desccost;
-            }
-        };
-
-        // Since the LZSS graph is a topologically-sorted DAG by construction,
-        // computing the shortest distance is very quick and easy: just go
-        // through the nodes in order and update the distances.
-        auto        winSet = Adaptor::create_sliding_window(data, nlen);
-        MatchVector matches;
-        matches.reserve(Adaptor::LookAheadBufSize);
-        for (size_t ii = 0; ii < numNodes; ii++) {
-            // Get remaining unused descriptor bits up to this node.
-            size_t const basedesc = desccosts[ii];
-            // Start with the literal/symbolwise encoding of the current node.
-            {
-                const auto* ptr = reinterpret_cast<const uint8_t*>(
-                        data + ii + Adaptor::FirstMatchPosition);
-                stream_t val = stream_endian_t::template ReadN<
-                        decltype(ptr), sizeof(stream_t)>(ptr);
-                Relax(ii, basedesc,
-                      Node_t(ii + Adaptor::FirstMatchPosition, val,
-                             EdgeType::symbolwise));
-            }
-            // Get the adjacency list for this node.
-            for (auto& win : winSet) {
-                if (!win.find_extra_matches(matches)) {
-                    win.find_matches(matches);
-                }
-                for (const auto& elem : matches) {
-                    if (elem.get_type() != EdgeType::invalid) {
-                        Relax(ii, basedesc, elem);
-                    }
-                }
-                win.slideWindow();
-            }
+    stream_t const* const data{reinterpret_cast<stream_t const*>(dt)};
+    size_t const          nlen{size / sizeof(stream_t)};
+    static_assert(
+            noexcept(Adaptor::desc_bits(EdgeType())),
+            "Adaptor::desc_bits() is not noexcept");
+    static_assert(
+            noexcept(Adaptor::get_padding(0)),
+            "Adaptor::get_padding() is not noexcept");
+    auto assume = [](bool result) {
+        if (!result) {
+            __builtin_unreachable();
         }
+    };
+    assume(nlen >= Adaptor::FirstMatchPosition);
+    size_t numNodes = nlen - Adaptor::FirstMatchPosition;
+    assume(nlen < std::numeric_limits<size_t>::max() - 1);
+    // Auxiliary data structures:
+    // * The parent of a node is the node that reaches that node with the
+    //   lowest cost from the start of the file.
+    std::vector<size_t> parents(numNodes + 1);
+    // * This is the edge used to go from the parent of a node to said node.
+    std::vector<Node_t> pedges(numNodes + 1);
+    // * This is the total cost to reach the edge. They start as high as
+    //   possible for all nodes but the first, which starts at 0.
+    std::vector<size_t> costs(numNodes + 1, std::numeric_limits<size_t>::max());
+    costs[0] = 0;
+    // * And this is a vector that tallies up the amount of bits in
+    //   the descriptor bitfield for the shortest path up to this node.
+    //   After tallying up the ending node, the end-of-file marker may cause
+    //   an additional dummy descriptor bitfield to be emitted; this vector
+    //   is used to counteract that.
+    std::vector<size_t> desccosts(
+            numNodes + 1, std::numeric_limits<size_t>::max());
+    desccosts[0] = 0;
 
-        // This is what we will produce.
-        AdjList parselist;
-        for (size_t ii = numNodes; ii != 0;) {
-            // Insert the edge up front...
-            parselist.push_front(pedges[ii]);
-            // ... and switch to parent node.
-            ii = parents[ii];
+    // Extracting distance relax logic from the loop so it can be used more
+    // often.
+    auto Relax = [nlen, &costs, &desccosts, &parents,
+                  &pedges](size_t ii, size_t const basedesc, const auto& elem) {
+        // Need destination ID and edge weight.
+        size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
+        size_t       wgt      = costs[ii] + elem.get_weight();
+        // Compute descriptor bits from using this edge.
+        size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());
+        if (nextnode == nlen) {
+            // This is the ending node. Add the descriptor bits for the
+            // end-of-file marker.
+            wgt += Adaptor::TerminatorWeight;
+            desccost += Adaptor::NumTermBits;
+            // If the descriptor bitfield had exactly 0 bits left after
+            // this, we may need to emit a new descriptor bitfield (the
+            // full Adaptor::NumDescBits bits). Otherwise, we need to
+            // pads the last descriptor bitfield to full size. This line
+            // accomplishes both.
+            size_t const descmod = desccost % Adaptor::NumDescBits;
+            if (descmod != 0 || Adaptor::NeedEarlyDescriptor) {
+                wgt += (Adaptor::NumDescBits - descmod);
+                desccost += (Adaptor::NumDescBits - descmod);
+            }
+            // Compensate for the Adaptor's padding, if any.
+            wgt += Adaptor::get_padding(wgt);
         }
+        // Is the cost to reach the target node through this edge less
+        // than the current cost?
+        if (costs[nextnode] > wgt) {
+            // If so, update the data structures with new best edge.
+            costs[nextnode]     = wgt;
+            parents[nextnode]   = ii;
+            pedges[nextnode]    = elem;
+            desccosts[nextnode] = desccost;
+        }
+    };
 
-        // We are done: this is the optimal parsing of the input file, giving
-        // *the* best possible compressed file size.
-        return parselist;
+    // Since the LZSS graph is a topologically-sorted DAG by construction,
+    // computing the shortest distance is very quick and easy: just go
+    // through the nodes in order and update the distances.
+    auto        winSet = Adaptor::create_sliding_window(data, nlen);
+    MatchVector matches;
+    matches.reserve(Adaptor::LookAheadBufSize);
+    for (size_t ii = 0; ii < numNodes; ii++) {
+        // Get remaining unused descriptor bits up to this node.
+        size_t const basedesc = desccosts[ii];
+        // Start with the literal/symbolwise encoding of the current node.
+        {
+            const auto* ptr = reinterpret_cast<const uint8_t*>(
+                    data + ii + Adaptor::FirstMatchPosition);
+            stream_t val = stream_endian_t::template ReadN<
+                    decltype(ptr), sizeof(stream_t)>(ptr);
+            Relax(ii, basedesc,
+                  Node_t(ii + Adaptor::FirstMatchPosition, val,
+                         EdgeType::symbolwise));
+        }
+        // Get the adjacency list for this node.
+        for (auto& win : winSet) {
+            if (!win.find_extra_matches(matches)) {
+                win.find_matches(matches);
+            }
+            for (const auto& elem : matches) {
+                if (elem.get_type() != EdgeType::invalid) {
+                    Relax(ii, basedesc, elem);
+                }
+            }
+            win.slideWindow();
+        }
     }
-};
+
+    // This is what we will produce.
+    AdjList parselist;
+    for (size_t ii = numNodes; ii != 0;) {
+        // Insert the edge up front...
+        parselist.push_front(pedges[ii]);
+        // ... and switch to parent node.
+        ii = parents[ii];
+    }
+
+    // We are done: this is the optimal parsing of the input file, giving
+    // *the* best possible compressed file size.
+    return parselist;
+}
 
 /*
  * This class abstracts away an LZSS output stream composed of one or more bytes

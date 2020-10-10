@@ -138,7 +138,7 @@ class kosinski_internal {
         constexpr static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
-                LZSSGraph<KosinskiAdaptor>::MatchVector& matches) noexcept {
+                std::vector<AdjListNode<KosinskiAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(
                     data, basenode, ubound, lbound, matches);
             // Do normal matches.
@@ -214,12 +214,10 @@ public:
 
     static void encode(ostream& Dst, uint8_t const* Data, size_t const Size) {
         using EdgeType   = typename KosinskiAdaptor::EdgeType;
-        using KosGraph   = LZSSGraph<KosinskiAdaptor>;
         using KosOStream = LZSSOStream<KosinskiAdaptor>;
 
         // Compute optimal Kosinski parsing of input file.
-        KosGraph                   enc(Data, Size);
-        typename KosGraph::AdjList list = enc.find_optimal_parse();
+        auto list = find_optimal_lzss_parse(Data, Size, KosinskiAdaptor{});
         KosOStream                 out(Dst);
 
         // Go through each edge in the optimal path.

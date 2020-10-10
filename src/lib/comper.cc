@@ -110,7 +110,7 @@ class comper_internal {
         constexpr static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
-                LZSSGraph<ComperAdaptor>::MatchVector& matches) noexcept {
+                std::vector<AdjListNode<ComperAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(
                     data, basenode, ubound, lbound, matches);
             // Do normal matches.
@@ -155,13 +155,11 @@ public:
 
     static void encode(ostream& Dst, uint8_t const* Data, size_t const Size) {
         using EdgeType    = typename ComperAdaptor::EdgeType;
-        using CompGraph   = LZSSGraph<ComperAdaptor>;
         using CompOStream = LZSSOStream<ComperAdaptor>;
 
         // Compute optimal Comper parsing of input file.
-        CompGraph          enc(Data, Size);
-        CompGraph::AdjList list = enc.find_optimal_parse();
-        CompOStream        out(Dst);
+        auto        list = find_optimal_lzss_parse(Data, Size, ComperAdaptor{});
+        CompOStream out(Dst);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {

@@ -1,6 +1,6 @@
 Checks: "-*\
 ,bugprone-*\
-,-cert-dcl21-cpp\
+,cert-dcl21-cpp\
 ,cert-dcl50-cpp\
 ,cert-env33-c\
 ,cert-err34-c\
@@ -10,19 +10,19 @@ Checks: "-*\
 ,cert-msc50-cpp\
 ,cert-msc51-cpp\
 ,clang-diagnostic-*\
-,-clang-diagnostic-implicit-fallthrough\
-,-clang-diagnostic-weak-template-vtables\
+,clang-diagnostic-implicit-fallthrough\
+,clang-diagnostic-weak-template-vtables\
 ,clang-analyzer-*\
-,-clang-analyzer-alpha*\
+,clang-analyzer-alpha*\
 ,cppcoreguidelines-*\
 ,-cppcoreguidelines-avoid-c-arrays\
-,-cppcoreguidelines-pro-bounds-array-to-pointer-decay\
+,cppcoreguidelines-pro-bounds-array-to-pointer-decay\
 ,-cppcoreguidelines-pro-bounds-constant-array-index\
 ,-cppcoreguidelines-macro-usage\
 ,-cppcoreguidelines-pro-type-reinterpret-cast\
 ,-cppcoreguidelines-pro-type-union-access\
 ,-cppcoreguidelines-pro-bounds-pointer-arithmetic\
-,-cppcoreguidelines-pro-type-vararg\
+,cppcoreguidelines-pro-type-vararg\
 ,-cppcoreguidelines-avoid-magic-numbers\
 ,-cppcoreguidelines-init-variables\
 ,google-build-using-namespace\
@@ -33,9 +33,9 @@ Checks: "-*\
 ,google-runtime-operator\
 ,hicpp-*\
 ,-hicpp-avoid-c-arrays\
-,-hicpp-no-array-decay\
+,hicpp-no-array-decay\
 ,-hicpp-signed-bitwise\
-,-hicpp-vararg\
+,hicpp-vararg\
 ,misc-*\
 ,modernize-*\
 ,-modernize-avoid-c-arrays\

@@ -119,7 +119,7 @@ class saxman_internal {
         static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
-                LZSSGraph<SaxmanAdaptor>::MatchVector& matches) noexcept {
+                std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
             if (basenode >= SearchBufSize - 1) {
@@ -210,12 +210,10 @@ public:
 
     static void encode(ostream& Dst, uint8_t const*& Data, size_t const Size) {
         using EdgeType   = typename SaxmanAdaptor::EdgeType;
-        using SaxGraph   = LZSSGraph<SaxmanAdaptor>;
         using SaxOStream = LZSSOStream<SaxmanAdaptor>;
 
         // Compute optimal Saxman parsing of input file.
-        SaxGraph          enc(Data, Size);
-        SaxGraph::AdjList list = enc.find_optimal_parse();
+        auto list = find_optimal_lzss_parse(Data, Size, SaxmanAdaptor{});
         SaxOStream        out(Dst);
 
         // Go through each edge in the optimal path.

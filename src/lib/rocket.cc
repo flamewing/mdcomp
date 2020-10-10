@@ -113,7 +113,7 @@ struct rocket_internal {
         static bool extra_matches(
                 stream_t const* data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
-                LZSSGraph<RocketAdaptor>::MatchVector& matches) noexcept {
+                std::vector<AdjListNode<RocketAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(
                     data, basenode, ubound, lbound, matches);
             // Do normal matches.
@@ -179,12 +179,10 @@ public:
 
     static void encode(ostream& Dst, uint8_t const*& Data, size_t const Size) {
         using EdgeType    = typename RocketAdaptor::EdgeType;
-        using RockGraph   = LZSSGraph<RocketAdaptor>;
         using RockOStream = LZSSOStream<RocketAdaptor>;
 
         // Compute optimal Rocket parsing of input file.
-        RockGraph          enc(Data, Size);
-        RockGraph::AdjList list = enc.find_optimal_parse();
+        auto list = find_optimal_lzss_parse(Data, Size, RocketAdaptor{});
         RockOStream        out(Dst);
 
         // Go through each edge in the optimal path.
