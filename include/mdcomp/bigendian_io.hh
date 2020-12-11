@@ -247,7 +247,7 @@ namespace detail {
         template <typename Iter, typename T>
         static inline auto ReadBase(Iter& in, T& val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             std::copy_n(in, sizeof(T), buffer);
             std::memcpy(&val, buffer, sizeof(T));
         }
@@ -277,7 +277,7 @@ namespace detail {
         template <typename Iter, typename T>
         static inline auto WriteBase(Iter& out, T val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             std::memcpy(buffer, &val, sizeof(T));
             std::copy_n(buffer, sizeof(T), out);
         }
@@ -298,14 +298,14 @@ namespace detail {
     public:
         template <typename T>
         static inline void Read(std::istream& in, T& val) noexcept {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             in.read(buffer, sizeof(T));
             std::memcpy(&val, buffer, sizeof(T));
         }
 
         template <typename T>
         static inline void Read(std::streambuf& in, T& val) noexcept {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             in.sgetn(buffer, sizeof(T));
             std::memcpy(&val, buffer, sizeof(T));
         }
@@ -320,14 +320,14 @@ namespace detail {
 
         template <typename T>
         static inline void Write(std::ostream& out, T val) noexcept {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             std::memcpy(buffer, &val, sizeof(T));
             out.write(buffer, sizeof(T));
         }
 
         template <typename T>
         static inline void Write(std::streambuf& out, T val) noexcept {
-            char buffer[sizeof(T)];
+            alignas(alignof(T)) char buffer[sizeof(T)];
             std::memcpy(buffer, &val, sizeof(T));
             out.sputn(buffer, sizeof(T));
         }
