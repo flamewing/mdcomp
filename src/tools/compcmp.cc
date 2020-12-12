@@ -34,7 +34,8 @@ using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
-         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] {input_filename} "
+         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
+            "{input_filename} "
             "{output_filename}"
          << endl;
     cerr << endl;
@@ -45,11 +46,8 @@ static void usage(char* prog) {
          << "\t            \tIf --chunch is in effect, a missing "
             "output_filename means recompress"
          << endl
-         << "\t            \tto input_filename."
-         << endl;
-    cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes."
-         << endl;
-
+         << "\t            \tto input_filename." << endl;
+    cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -103,7 +101,7 @@ int main(int argc, char* argv[]) {
         return 4;
     }
 
-    char* outfile
+    const char* outfile
             = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);

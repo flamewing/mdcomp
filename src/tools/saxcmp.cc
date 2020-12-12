@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
         return 4;
     }
 
-    char* outfile
+    const char* outfile
             = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);
