@@ -18,18 +18,21 @@ DISTCLEANFILES =
 includedir = ${prefix}/include/mdcomp
 
 include_HEADERS = \
+	include/mdcomp/artc42.hh \
+	include/mdcomp/basic_decoder.hh \
 	include/mdcomp/bigendian_io.hh \
 	include/mdcomp/bitstream.hh \
-	include/mdcomp/basic_decoder.hh \
-	include/mdcomp/moduled_adaptor.hh \
-	include/mdcomp/artc42.hh \
 	include/mdcomp/comper.hh \
 	include/mdcomp/enigma.hh \
+	include/mdcomp/ignore_unused_variable_warning.hh \
 	include/mdcomp/kosinski.hh \
 	include/mdcomp/kosplus.hh \
+	include/mdcomp/lzkn1.hh \
+	include/mdcomp/lzss.hh \
+	include/mdcomp/moduled_adaptor.hh \
 	include/mdcomp/nemesis.hh \
-	include/mdcomp/saxman.hh \
 	include/mdcomp/rocket.hh \
+	include/mdcomp/saxman.hh \
 	include/mdcomp/snkrle.hh
 
 # Remove doc directory on uninstall
