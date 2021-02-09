@@ -207,8 +207,8 @@ public:
         size_t       incrementing_value = BigEndian::Read2(in);
         size_t const common_value       = BigEndian::Read2(in);
 
-        ibitstream<uint16_t, true> bits(in);
-        constexpr static int const modeDeltaLUT[] = {0, 1, -1};
+        ibitstream<uint16_t, true>                bits(in);
+        constexpr static std::array<int, 3> const modeDeltaLUT = {0, 1, -1};
 
         // Lets put in a safe termination condition here.
         while (in.good()) {

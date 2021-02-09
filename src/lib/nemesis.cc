@@ -453,6 +453,11 @@ public:
         }
     }
 
+    template <size_t N>
+    using Row = std::array<size_t, N>;
+    template <size_t M, size_t N>
+    using Matrix = std::array<Row<N>, M>;
+
     static size_t estimate_file_size(
             NibbleCodeMap& tempcodemap, RunCountMap& counts) {
         // We now compute the final file size for this code table.
@@ -525,38 +530,51 @@ public:
                     // constraints. If the number of repeats of the current
                     // nibble run is N, then we have N dimensions.
                     // Here are some hard-coded tables, obtained by brute-force:
-                    constexpr static size_t const linear_coeffs2[2][2]
-                            = {{3, 0}, {1, 1}};
-                    constexpr static size_t const linear_coeffs3[4][3]
-                            = {{4, 0, 0}, {2, 1, 0}, {1, 0, 1}, {0, 2, 0}};
-                    constexpr static size_t const linear_coeffs4[6][4]
-                            = {{5, 0, 0, 0}, {3, 1, 0, 0}, {2, 0, 1, 0},
-                               {1, 2, 0, 0}, {1, 0, 0, 1}, {0, 1, 1, 0}};
-                    constexpr static size_t const linear_coeffs5[10][5] = {
-                            {6, 0, 0, 0, 0}, {4, 1, 0, 0, 0}, {3, 0, 1, 0, 0},
-                            {2, 2, 0, 0, 0}, {2, 0, 0, 1, 0}, {1, 1, 1, 0, 0},
-                            {1, 0, 0, 0, 1}, {0, 3, 0, 0, 0}, {0, 1, 0, 1, 0},
-                            {0, 0, 2, 0, 0}};
-                    constexpr static size_t const linear_coeffs6[14][6]
-                            = {{7, 0, 0, 0, 0, 0}, {5, 1, 0, 0, 0, 0},
-                               {4, 0, 1, 0, 0, 0}, {3, 2, 0, 0, 0, 0},
-                               {3, 0, 0, 1, 0, 0}, {2, 1, 1, 0, 0, 0},
-                               {2, 0, 0, 0, 1, 0}, {1, 3, 0, 0, 0, 0},
-                               {1, 1, 0, 1, 0, 0}, {1, 0, 2, 0, 0, 0},
-                               {1, 0, 0, 0, 0, 1}, {0, 2, 1, 0, 0, 0},
-                               {0, 1, 0, 0, 1, 0}, {0, 0, 1, 1, 0, 0}};
-                    constexpr static size_t const linear_coeffs7[21][7]
-                            = {{8, 0, 0, 0, 0, 0, 0}, {6, 1, 0, 0, 0, 0, 0},
-                               {5, 0, 1, 0, 0, 0, 0}, {4, 2, 0, 0, 0, 0, 0},
-                               {4, 0, 0, 1, 0, 0, 0}, {3, 1, 1, 0, 0, 0, 0},
-                               {3, 0, 0, 0, 1, 0, 0}, {2, 3, 0, 0, 0, 0, 0},
-                               {2, 1, 0, 1, 0, 0, 0}, {2, 0, 2, 0, 0, 0, 0},
-                               {2, 0, 0, 0, 0, 1, 0}, {1, 2, 1, 0, 0, 0, 0},
-                               {1, 1, 0, 0, 1, 0, 0}, {1, 0, 1, 1, 0, 0, 0},
-                               {1, 0, 0, 0, 0, 0, 1}, {0, 4, 0, 0, 0, 0, 0},
-                               {0, 2, 0, 1, 0, 0, 0}, {0, 1, 2, 0, 0, 0, 0},
-                               {0, 1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0, 0},
-                               {0, 0, 0, 2, 0, 0, 0}};
+                    constexpr static Matrix<2, 2> const linear_coeffs2{
+                            Row<2>{3, 0}, Row<2>{1, 1}};
+                    constexpr static Matrix<4, 3> const linear_coeffs3{
+                            Row<3>{4, 0, 0}, Row<3>{2, 1, 0}, Row<3>{1, 0, 1},
+                            Row<3>{0, 2, 0}};
+                    constexpr static Matrix<6, 4> const linear_coeffs4{
+                            Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0},
+                            Row<4>{2, 0, 1, 0}, Row<4>{1, 2, 0, 0},
+                            Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
+                    constexpr static Matrix<10, 5> const linear_coeffs5{
+                            Row<5>{6, 0, 0, 0, 0}, Row<5>{4, 1, 0, 0, 0},
+                            Row<5>{3, 0, 1, 0, 0}, Row<5>{2, 2, 0, 0, 0},
+                            Row<5>{2, 0, 0, 1, 0}, Row<5>{1, 1, 1, 0, 0},
+                            Row<5>{1, 0, 0, 0, 1}, Row<5>{0, 3, 0, 0, 0},
+                            Row<5>{0, 1, 0, 1, 0}, Row<5>{0, 0, 2, 0, 0}};
+                    constexpr static Matrix<14, 6> const linear_coeffs6{
+                            Row<6>{7, 0, 0, 0, 0, 0}, Row<6>{5, 1, 0, 0, 0, 0},
+                            Row<6>{4, 0, 1, 0, 0, 0}, Row<6>{3, 2, 0, 0, 0, 0},
+                            Row<6>{3, 0, 0, 1, 0, 0}, Row<6>{2, 1, 1, 0, 0, 0},
+                            Row<6>{2, 0, 0, 0, 1, 0}, Row<6>{1, 3, 0, 0, 0, 0},
+                            Row<6>{1, 1, 0, 1, 0, 0}, Row<6>{1, 0, 2, 0, 0, 0},
+                            Row<6>{1, 0, 0, 0, 0, 1}, Row<6>{0, 2, 1, 0, 0, 0},
+                            Row<6>{0, 1, 0, 0, 1, 0}, Row<6>{0, 0, 1, 1, 0, 0}};
+                    constexpr static Matrix<21, 7> const linear_coeffs7{
+                            Row<7>{8, 0, 0, 0, 0, 0, 0},
+                            Row<7>{6, 1, 0, 0, 0, 0, 0},
+                            Row<7>{5, 0, 1, 0, 0, 0, 0},
+                            Row<7>{4, 2, 0, 0, 0, 0, 0},
+                            Row<7>{4, 0, 0, 1, 0, 0, 0},
+                            Row<7>{3, 1, 1, 0, 0, 0, 0},
+                            Row<7>{3, 0, 0, 0, 1, 0, 0},
+                            Row<7>{2, 3, 0, 0, 0, 0, 0},
+                            Row<7>{2, 1, 0, 1, 0, 0, 0},
+                            Row<7>{2, 0, 2, 0, 0, 0, 0},
+                            Row<7>{2, 0, 0, 0, 0, 1, 0},
+                            Row<7>{1, 2, 1, 0, 0, 0, 0},
+                            Row<7>{1, 1, 0, 0, 1, 0, 0},
+                            Row<7>{1, 0, 1, 1, 0, 0, 0},
+                            Row<7>{1, 0, 0, 0, 0, 0, 1},
+                            Row<7>{0, 4, 0, 0, 0, 0, 0},
+                            Row<7>{0, 2, 0, 1, 0, 0, 0},
+                            Row<7>{0, 1, 2, 0, 0, 0, 0},
+                            Row<7>{0, 1, 0, 0, 0, 1, 0},
+                            Row<7>{0, 0, 1, 0, 1, 0, 0},
+                            Row<7>{0, 0, 0, 2, 0, 0, 0}};
                     size_t const n = count.first.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
@@ -566,28 +584,28 @@ public:
                     switch (n) {
                     case 2:
                         linear_coeffs = &linear_coeffs2[0][0];
-                        rows          = 2;
+                        rows          = linear_coeffs2.size();
                         break;
                     case 3:
                         linear_coeffs = &linear_coeffs3[0][0];
-                        rows          = 4;
+                        rows          = linear_coeffs3.size();
                         break;
                     case 4:
                         linear_coeffs = &linear_coeffs4[0][0];
-                        rows          = 6;
+                        rows          = linear_coeffs4.size();
                         break;
                     case 5:
                         linear_coeffs = &linear_coeffs5[0][0];
-                        rows          = 10;
+                        rows          = linear_coeffs5.size();
                         break;
                     case 6:
                         linear_coeffs = &linear_coeffs6[0][0];
-                        rows          = 14;
+                        rows          = linear_coeffs6.size();
                         break;
                     case 7:
                     default:
                         linear_coeffs = &linear_coeffs7[0][0];
-                        rows          = 21;
+                        rows          = linear_coeffs7.size();
                         break;
                     }
 
@@ -826,7 +844,7 @@ public:
             // To do that, we will need to know how many codes we will need for
             // any given code length. Since there are only 8 valid code lengths,
             // we only need this simple array.
-            size_t sizecounts[8] = {0};
+            std::array<size_t, 8> sizecounts{0};
             // This set contains lots more information, and is used to associate
             // the nibble run with its optimal code. It is sorted by code size,
             // then by frequency of the nibble run, then by the nibble run.
@@ -1009,7 +1027,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     src.seekg(0);
 
     string sin   = src.str();
-    auto *bytes = reinterpret_cast<uint8_t*>(&sin[0]);
+    auto*  bytes = reinterpret_cast<uint8_t*>(&sin[0]);
     for (size_t i = sin.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
         bytes[i + 1] ^= bytes[i - 3];

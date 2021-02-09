@@ -1,0 +1,127 @@
+; ---------------------------------------------------------------------------
+; For format explanation see https://segaretro.org/Kosinski_compression
+; New faster version written by vladikcomper, with additional improvements
+; by MarkeyJester and Flamewing
+; ---------------------------------------------------------------------------
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+; ---------------------------------------------------------------------------
+; FUNCTION:
+; 	zKosDec
+;
+; DESCRIPTION
+; 	Kosinski Decompressor
+;
+; INPUT:
+; 	hl	source address
+; 	de	destination address
+; ---------------------------------------------------------------------------
+; Reads 2 bytes from input and sets number of bits remaining to 16
+_zKos_ReadDescriptor macro
+	ld	b, (hl)							; Get desc field hi-byte.
+	inc	hl
+	ld	c, (hl)							; Get desc field low-byte.
+	inc	hl
+	ld	a, 16							; Set repeat count to 16.
+	endm
+
+; Decrements bit count and reloads a new descriptor field if needed
+_zKos_RunBitStream macro
+	ex	af, af'							; Save flags, get bit count
+	dec	a								; Have all 16 bits been used up?
+	jr	nz, .skip						; Branch if not.
+	_zKos_ReadDescriptor
+.skip
+	ex	af, af'							; Save bit count, restore flags
+	endm
+
+; Reads a bit from bc into carry
+_zKos_ReadBit macro
+	rr	b								; Get a bit from b...
+	rr	c								; ... put it on c and get a bit from c
+	endm
+; ===========================================================================
+; KozDec_193A:
+zKosDec:
+	_zKos_ReadDescriptor
+	ex	af, af'							; Save bit count
+	jr	.FetchNewCode
+; ---------------------------------------------------------------------------
+.FetchCodeLoop:
+	; Code 1 (Uncompressed byte).
+	_zKos_RunBitStream
+	ldi
+	inc	bc								; Compensate for ldi
+
+.FetchNewCode:
+	_zKos_ReadBit
+	jr	c, .FetchCodeLoop				; If code = 1, branch.
+
+	; Codes 00 and 01.
+	_zKos_RunBitStream
+	_zKos_ReadBit
+	jr	c, .Code_01
+
+	; Code 00 (Dictionary ref. short).
+	xor	a
+	_zKos_RunBitStream
+	_zKos_ReadBit
+	rla
+	_zKos_RunBitStream
+	_zKos_ReadBit
+	rla
+	_zKos_RunBitStream
+	push	bc							; Save bitstream bits
+	ld	c, (hl)							; Get the displacement byte
+	inc	hl								; Move past the displacement byte
+	ld	b, -1							; bc = displacement
+
+.StreamCopy:
+	push	hl							; Save input position
+	ld	l, e
+	ld	h, d							; hl = pointer to output
+	add	hl, bc							; hl = pointer to source of data to copy from
+	ld	c, a
+	ld	b, 0							; bc = number of copies-2
+
+	ldir
+	ldi
+	ldi
+	pop	hl								; Restore input position
+	pop	bc								; Restore bitstream bits
+	jr	.FetchNewCode
+; ---------------------------------------------------------------------------
+.Code_01:
+	; Code 01 (Dictionary ref. long / special).
+	_zKos_RunBitStream
+	push	bc							; Save bitstream bits
+	ld	c, (hl)							; c = %LLLLLLLL.
+	inc	hl								; Move past the lower displacement byte
+	ld	a, (hl)							; a = %HHHHHCCC.
+	or	7								; a = %HHHHH111.
+	rra									; a = %1HHHHH11.
+	rra									; a = %11HHHHH1.
+	rra									; a = %111HHHHH.
+	ld	b, a							; bc = %111HHHHH LLLLLLLL.
+	ld	a, (hl)							; a = %HHHHHCCC.
+	inc	hl								; Move past the displacement byte
+	and	7								; a = %00000CCC = number of copies-2
+	jr	nz, .StreamCopy					; if CCC<>0, branch.
+
+	; special mode (extended counter)
+	ld	a, (hl)							; Read cnt
+	or	a
+	ret	z								; If cnt=0, quit decompression.
+	inc	hl								; Move past the displacement byte
+	dec	a
+	jr	z, .FetchNewCode				; If cnt=1, fetch a new code.
+	jr	.StreamCopy
+; ===========================================================================

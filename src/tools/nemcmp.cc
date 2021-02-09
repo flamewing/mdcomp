@@ -19,6 +19,7 @@
 #include <getopt.h>
 #include <mdcomp/nemesis.hh>
 
+#include <array>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -60,10 +61,10 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static option long_options[]
-            = {{"extract", optional_argument, nullptr, 'x'},
-               {"crunch", no_argument, nullptr, 'c'},
-               {nullptr, 0, nullptr, 0}};
+    static constexpr const std::array<option, 3> long_options{
+            option{"extract", optional_argument, nullptr, 'x'},
+            option{"crunch", no_argument, nullptr, 'c'},
+            option{nullptr, 0, nullptr, 0}};
 
     bool   extract  = false;
     bool   printend = false;
@@ -73,8 +74,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-                argc, argv, "x::ic", static_cast<option*>(long_options),
-                &option_index);
+                argc, argv, "x::ic", long_options.data(), &option_index);
         if (c == -1) {
             break;
         }

@@ -18,6 +18,7 @@
 #include <getopt.h>
 #include <mdcomp/kosinski.hh>
 
+#include <array>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -66,12 +67,12 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static option long_options[]
-            = {{"extract", optional_argument, nullptr, 'x'},
-               {"moduled", no_argument, nullptr, 'm'},
-               {"crunch", no_argument, nullptr, 'c'},
-               {"padding", required_argument, nullptr, 'p'},
-               {nullptr, 0, nullptr, 0}};
+    static constexpr const std::array<option, 5> long_options{
+            option{"extract", optional_argument, nullptr, 'x'},
+            option{"moduled", no_argument, nullptr, 'm'},
+            option{"crunch", no_argument, nullptr, 'c'},
+            option{"padding", required_argument, nullptr, 'p'},
+            option{nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
     bool   moduled = false;
@@ -82,8 +83,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-                argc, argv, "x::mcr:s:p:", static_cast<option*>(long_options),
-                &option_index);
+                argc, argv, "x::mcr:s:p:", long_options.data(), &option_index);
         if (c == -1) {
             break;
         }

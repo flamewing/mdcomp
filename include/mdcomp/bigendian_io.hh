@@ -21,6 +21,7 @@
 #include <boost/mpl/has_xxx.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <iterator>
@@ -246,9 +247,9 @@ namespace detail {
         template <typename Iter, typename T>
         static inline auto ReadBase(Iter& in, T& val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            std::copy_n(in, sizeof(T), buffer);
-            std::memcpy(&val, buffer, sizeof(T));
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            std::copy_n(in, sizeof(T), std::begin(buffer));
+            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
         }
 
         template <typename Iter, typename T>
@@ -276,9 +277,9 @@ namespace detail {
         template <typename Iter, typename T>
         static inline auto WriteBase(Iter& out, T val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            std::memcpy(buffer, &val, sizeof(T));
-            std::copy_n(buffer, sizeof(T), out);
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            std::memcpy(std::begin(buffer), &val, sizeof(T));
+            std::copy_n(std::cbegin(buffer), sizeof(T), out);
         }
 
         template <typename Ptr, typename T>
@@ -297,16 +298,16 @@ namespace detail {
     public:
         template <typename T>
         static inline void Read(std::istream& in, T& val) noexcept {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            in.read(buffer, sizeof(T));
-            std::memcpy(&val, buffer, sizeof(T));
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            in.read(std::begin(buffer), sizeof(T));
+            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
         }
 
         template <typename T>
         static inline void Read(std::streambuf& in, T& val) noexcept {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            in.sgetn(buffer, sizeof(T));
-            std::memcpy(&val, buffer, sizeof(T));
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            in.sgetn(std::begin(buffer), sizeof(T));
+            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
         }
 
         template <typename Iter, typename T>
@@ -319,16 +320,16 @@ namespace detail {
 
         template <typename T>
         static inline void Write(std::ostream& out, T val) noexcept {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            std::memcpy(buffer, &val, sizeof(T));
-            out.write(buffer, sizeof(T));
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            std::memcpy(std::begin(buffer), &val, sizeof(T));
+            out.write(std::cbegin(buffer), sizeof(T));
         }
 
         template <typename T>
         static inline void Write(std::streambuf& out, T val) noexcept {
-            alignas(alignof(T)) char buffer[sizeof(T)];
-            std::memcpy(buffer, &val, sizeof(T));
-            out.sputn(buffer, sizeof(T));
+            alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
+            std::memcpy(std::begin(buffer), &val, sizeof(T));
+            out.sputn(std::cbegin(buffer), sizeof(T));
         }
 
         template <typename Cont, typename T>
