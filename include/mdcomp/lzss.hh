@@ -99,7 +99,9 @@ public:
         return type == EdgeType::symbolwise ? 1 : match.length;
     }
     constexpr stream_t get_symbol() const noexcept {
-        return type == EdgeType::symbolwise ? symbol : stream_t(-1);
+        return type == EdgeType::symbolwise
+                       ? symbol
+                       : std::numeric_limits<stream_t>::max();
     }
     constexpr EdgeType get_type() const noexcept {
         return type;

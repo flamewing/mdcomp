@@ -22,6 +22,7 @@
 
 #include <climits>
 #include <iosfwd>
+#include <limits>
 
 namespace detail {
 #if !defined(__clang__)
@@ -146,7 +147,7 @@ public:
             check_buffer();
         }
         --readbits;
-        T bit = (bitbuffer >> readbits) & 1;
+        T bit = (bitbuffer >> readbits) & 1U;
         bitbuffer ^= (bit << readbits);
         if (EarlyRead) {
             check_buffer();
@@ -213,7 +214,7 @@ public:
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
     bool push(T const data) noexcept {
-        bitbuffer = (bitbuffer << 1) | (data & 1);
+        bitbuffer = (bitbuffer << 1U) | (data & 1U);
         if (++waitingbits >= sizeof(T) * CHAR_BIT) {
             write_bits(bitbuffer);
             waitingbits = 0;
@@ -231,8 +232,8 @@ public:
             waitingbits  = (waitingbits + size) % (sizeof(T) * CHAR_BIT);
             T bits       = (bitbuffer << delta) | (data >> waitingbits);
             write_bits(bits);
-            bitbuffer
-                    = (data & (T(~0) >> (sizeof(T) * CHAR_BIT - waitingbits)));
+            constexpr const T ones = std::numeric_limits<T>::max();
+            bitbuffer = (data & (ones >> (sizeof(T) * CHAR_BIT - waitingbits)));
             return true;
         }
         bitbuffer = (bitbuffer << size) | data;

@@ -164,8 +164,8 @@ public:
         for (auto const& edge : list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise: {
-                auto         value = edge.get_symbol();
-                size_t const high  = (value >> 8) & 0xFFU;
+                size_t const value = edge.get_symbol();
+                size_t const high  = (value >> 8U) & 0xFFU;
                 size_t const low   = (value & 0xFFU);
                 out.descbit(0);
                 out.putbyte(high);

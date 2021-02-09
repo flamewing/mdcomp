@@ -176,9 +176,9 @@ public:
                 size_t length = src.getbyte();
 
                 // The high 4 bits of length are actually part of the offset.
-                offset |= (length << 4) & 0xF00;
+                offset |= (length << 4U) & 0xF00U;
                 // Length is low 4 bits plus 3.
-                length = (length & 0xF) + 3;
+                length = (length & 0xFU) + 3;
                 // And there is an additional 0x12 bytes added to offset.
                 offset = (offset + 0x12) % SaxmanAdaptor::SearchBufSize;
                 // The offset is stored as being absolute within current
@@ -230,7 +230,7 @@ public:
                 size_t const base = (pos - dist - 0x12U) & 0xFFFU;
                 size_t const low  = base & 0xFFU;
                 size_t const high
-                        = ((len - 3U) & 0x0FU) | ((base >> 4) & 0xF0U);
+                        = ((len - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
                 out.descbit(0);
                 out.putbyte(low);
                 out.putbyte(high);

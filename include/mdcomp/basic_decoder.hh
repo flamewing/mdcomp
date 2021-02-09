@@ -44,7 +44,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
     Src.seekg(Start);
     std::vector<uint8_t> data;
     if (Pad == PadMode::PadEven) {
-        data.resize(FullSize + (FullSize & 1));
+        data.resize(FullSize + (FullSize % 2));
     } else {
         data.resize(FullSize);
     }
@@ -55,7 +55,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
     if (Format::encode(
                 Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
         // Pad to even size.
-        if ((Dst.tellp() & 1) != 0) {
+        if ((Dst.tellp() % 2) != 0) {
             Dst.put(0);
         }
         return true;
@@ -68,7 +68,7 @@ void BasicDecoder<Format, Pad, Args...>::extract(
         std::istream& Src, std::iostream& Dst) {
     Dst << Src.rdbuf();
     // Pad to even size.
-    if ((Dst.tellp() & 1) != 0) {
+    if ((Dst.tellp() % 2) != 0) {
         Dst.put(0);
     }
     Dst.seekg(0);

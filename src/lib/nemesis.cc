@@ -23,6 +23,7 @@
 #include <mdcomp/nemesis.hh>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <istream>
 #include <map>
@@ -290,7 +291,7 @@ struct Compare_node2 {
                 return (6 + 7) * node->get_weight();
             }
             size_t bitcnt = (it->second).len;
-            return (bitcnt & 0x7f) * node->get_weight() + 16;
+            return (bitcnt & 0x7fU) * node->get_weight() + 16;
         };
 
         size_t const lclen = get_len(lhs, lnib);
@@ -337,15 +338,15 @@ public:
         for (size_t in_val = Read1(Src); in_val != 0xFF; in_val = Read1(Src)) {
             // if most significant bit is set, store the last 4 bits and discard
             // the rest
-            if ((in_val & 0x80) != 0) {
-                out_val = in_val & 0xf;
+            if ((in_val & 0x80U) != 0) {
+                out_val = in_val & 0xfU;
                 in_val  = Read1(Src);
             }
 
-            nibble_run const run(out_val, ((in_val & 0x70) >> 4) + 1);
+            nibble_run const run(out_val, ((in_val & 0x70U) >> 4U) + 1);
 
             size_t const  code = Read1(Src);
-            uint8_t const len  = in_val & 0xf;
+            uint8_t const len  = in_val & 0xfU;
             // Read the run's code from stream.
             codemap[Code{code, len}] = run;
         }
@@ -365,7 +366,7 @@ public:
 
         // When to stop decoding: number of tiles * $20 bytes per tile * 8 bits
         // per byte.
-        size_t total_bits   = rtiles << 8;
+        size_t total_bits   = rtiles << 8U;
         size_t bits_written = 0;
         while (bits_written < total_bits) {
             if (code == 0x3f && len == 6) {
@@ -377,13 +378,13 @@ public:
                 bits_written += cnt * 4;
 
                 // Write single nibble if needed.
-                if ((cnt & 1) != 0) {
+                if ((cnt % 2) != 0) {
                     out.write(nibble, 4);
                 }
 
                 // Now write pairs of nibbles.
-                cnt >>= 1;
-                nibble |= (nibble << 4);
+                cnt >>= 1U;
+                nibble |= (nibble << 4U);
                 for (size_t i = 0; i < cnt; i++) {
                     out.write(nibble, 8);
                 }
@@ -407,13 +408,13 @@ public:
                     bits_written += cnt * 4;
 
                     // Write single nibble if needed.
-                    if ((cnt & 1) != 0) {
+                    if ((cnt % 2) != 0) {
                         out.write(nibble, 4);
                     }
 
                     // Now write pairs of nibbles.
-                    cnt >>= 1;
-                    nibble |= (nibble << 4);
+                    cnt >>= 1U;
+                    nibble |= (nibble << 4U);
                     for (size_t i = 0; i < cnt; i++) {
                         out.write(nibble, 8);
                     }
@@ -427,7 +428,7 @@ public:
                     len  = 1;
                 } else {
                     // Read next bit and append to current data.
-                    code = (code << 1) | bits.pop();
+                    code = (code << 1U) | bits.pop();
                     len++;
                 }
             }
@@ -443,12 +444,12 @@ public:
             dst.clear();
             uint32_t in = LittleEndian::Read4(dst);
             LittleEndian::Write4(Dst, in);
-            while (size_t(dst.tellg()) < rtiles << 5) {
+            while (size_t(dst.tellg()) < (rtiles << 5U)) {
                 in ^= LittleEndian::Read4(dst);
                 LittleEndian::Write4(Dst, in);
             }
         } else {
-            Dst.write(dst.str().c_str(), rtiles << 5);
+            Dst.write(dst.str().c_str(), rtiles << 5U);
         }
     }
 
@@ -512,9 +513,9 @@ public:
                         size_t  code = (it2->second).code;
                         uint8_t len  = (it2->second).len;
                         code         = (code << len) | code;
-                        len <<= 1;
+                        len <<= 1U;
                         tempsize_est += len * count.second;
-                        len |= 0x80;    // Flag this as a false code.
+                        len |= 0x80U;    // Flag this as a false code.
                         supcodemap[count.first] = Code{code, len};
                     }
                 } else {
@@ -665,7 +666,7 @@ public:
                         } else {
                             // By construction, best_size is at most 12.
                             // Flag it as a false code.
-                            uint8_t const mlen = best_size | 0x80;
+                            uint8_t const mlen = best_size | 0x80U;
                             // Add it to supplementary code map.
                             supcodemap[count.first] = Code{code, mlen};
                             tempsize_est += best_size * count.second;
@@ -680,7 +681,7 @@ public:
         tempcodemap.insert(supcodemap.begin(), supcodemap.end());
 
         // Round up to a full byte.
-        tempsize_est = (tempsize_est + 7) & ~7;
+        tempsize_est = (tempsize_est + 7) & ~7U;
 
         return tempsize_est;
     }
@@ -696,8 +697,8 @@ public:
         vector<uint8_t> unpack;
         for (size_t i = 0; i < sz; i++) {
             size_t const c = Read1(Src);
-            unpack.push_back((c & 0xf0) >> 4);
-            unpack.push_back((c & 0x0f));
+            unpack.push_back((c & 0xf0U) >> 4U);
+            unpack.push_back((c & 0x0fU));
         }
         unpack.push_back(0xff);
 
@@ -768,12 +769,12 @@ public:
             NodeVector solution;
             // This holds the packages from the last iteration.
             CoinQueue q(q0);
-            size_t    target = (q0.size() - 1) << 8;
+            size_t    target = (q0.size() - 1) << 8U;
             size_t    idx    = 0;
             while (target != 0) {
                 // Gets lowest bit set in its proper place:
                 size_t val = (target & -target);
-                size_t r   = 1 << idx;
+                size_t r   = 1U << idx;
                 // Is the current denomination equal to the least denomination?
                 if (r == val) {
                     // If yes, take the least valuable node and put it into the
@@ -852,7 +853,7 @@ public:
                 size_t       cnt  = sizecounts[i - 1] + carry;
                 size_t const mask = (size_t(1) << i) - 1;
                 size_t const mask2
-                        = (i > 6) ? (mask & ~((size_t(1) << (i - 6)) - 1)) : 0;
+                        = (i > 6) ? (mask & ~((size_t(1) << (i - 6U)) - 1)) : 0;
                 carry = 0;
                 for (size_t j = 0; j < cnt; j++) {
                     // Sequential binary numbers for codes.
@@ -869,7 +870,7 @@ public:
                     codes.emplace_back(code, i);
                 }
                 // This is the beginning bit pattern for the next bit length.
-                base = (base + cnt) << 1;
+                base = (base + cnt) << 1U;
             }
 
             // With the canonical table build, the codemap can finally be built.
@@ -914,7 +915,7 @@ public:
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
-        BigEndian::Write2(Dst, (mode << 15) | (sz >> 5));
+        BigEndian::Write2(Dst, (mode << 15U) | (sz >> 5U));
         uint8_t lastnibble = 0xff;
         for (auto& elem : codemap) {
             nibble_run const& run  = elem.first;
@@ -922,16 +923,16 @@ public:
             uint8_t           len  = (elem.second).len;
             // len with bit 7 set is a special device for further reducing file
             // size, and should NOT be on the table.
-            if ((len & 0x80) != 0) {
+            if ((len & 0x80U) != 0) {
                 continue;
             }
             if (run.get_nibble() != lastnibble) {
                 // 0x80 marks byte as setting a new nibble.
-                Write1(Dst, 0x80 | run.get_nibble());
+                Write1(Dst, 0x80U | run.get_nibble());
                 lastnibble = run.get_nibble();
             }
 
-            Write1(Dst, (run.get_count() << 4) | (len));
+            Write1(Dst, uint8_t(run.get_count() << 4U) | len);
             Write1(Dst, code);
         }
 
@@ -953,16 +954,15 @@ public:
                 // len with bit 7 set is a device to bypass the code table at
                 // the start of the file. We need to clear the bit here before
                 // writing the code to the file.
-                len &= 0x7f;
+                len &= 0x7fU;
                 // We can have codes in the 9-12 range due to the break up of
                 // large inlined runs into smaller non-inlined runs. Deal with
                 // those high bits first, if needed.
                 if (len > 8) {
-                    bits.write(
-                            static_cast<uint8_t>((code >> 8) & 0xff), len - 8);
+                    bits.write((code >> 8U) & 0xffU, len - 8);
                     len = 8;
                 }
-                bits.write(static_cast<uint8_t>(code & 0xff), len);
+                bits.write(static_cast<uint8_t>(code & 0xffU), len);
             } else {
                 bits.write(0x3f, 6);
                 bits.write(run.get_count(), 3);
@@ -979,8 +979,8 @@ bool nemesis::decode(istream& Src, ostream& Dst) {
     CodeNibbleMap codemap;
     size_t        rtiles = BigEndian::Read2(Src);
     // sets the output mode based on the value of the first bit
-    bool alt_out = (rtiles & 0x8000) != 0;
-    rtiles &= 0x7fff;
+    bool alt_out = (rtiles & 0x8000U) != 0;
+    rtiles &= 0x7fffU;
 
     if (rtiles > 0) {
         nemesis_internal::decode_header(Src, codemap);
@@ -997,9 +997,10 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     // Copy to buffer.
     src << Src.rdbuf();
 
-    // Pad source with zeroes until it is a multiple of 32 bits.
-    if ((src.tellp() & 0x1f) != 0) {
-        fill_n(ostreambuf_iterator<char>(src), 32 - (src.tellp() & 0x1f), 0);
+    // Pad source with zeroes until it is a multiple of 32 bytes.
+    size_t const pos = src.tellp();
+    if ((pos % 32) != 0) {
+        fill_n(ostreambuf_iterator<char>(src), 32 - (pos % 32), 0);
     }
     size_t const sz = src.tellp();
 
@@ -1007,30 +1008,28 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     src.clear();
     src.seekg(0);
 
-    string sin = src.str();
+    string sin   = src.str();
+    auto *bytes = reinterpret_cast<uint8_t*>(&sin[0]);
     for (size_t i = sin.size() - 4; i > 0; i -= 4) {
-        sin[i + 0] ^= sin[i - 4];
-        sin[i + 1] ^= sin[i - 3];
-        sin[i + 2] ^= sin[i - 2];
-        sin[i + 3] ^= sin[i - 1];
+        bytes[i + 0] ^= bytes[i - 4];
+        bytes[i + 1] ^= bytes[i - 3];
+        bytes[i + 2] ^= bytes[i - 2];
+        bytes[i + 3] ^= bytes[i - 1];
     }
     stringstream alt(sin, ios::in | ios::out | ios::binary);
 
-    stringstream buffers[4];
-    size_t       sizes[4];
-
+    std::array<stringstream, 4> buffers;
     // Four different attempts to encode, for improved file size.
-    sizes[0] = nemesis_internal::encode(src, buffers[0], 0, sz, Compare_node());
-    sizes[1]
-            = nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2());
-    sizes[2] = nemesis_internal::encode(alt, buffers[2], 1, sz, Compare_node());
-    sizes[3]
-            = nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2());
+    std::array<size_t, 4> sizes{
+            nemesis_internal::encode(src, buffers[0], 0, sz, Compare_node()),
+            nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2()),
+            nemesis_internal::encode(alt, buffers[2], 1, sz, Compare_node()),
+            nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2())};
 
     // Figure out what was the best encoding.
     size_t bestsz     = numeric_limits<size_t>::max();
     size_t beststream = 0;
-    for (size_t ii = 0; ii < sizeof(sizes) / sizeof(sizes[0]); ii++) {
+    for (size_t ii = 0; ii < sizes.size(); ii++) {
         if (sizes[ii] < bestsz) {
             bestsz     = sizes[ii];
             beststream = ii;

@@ -22,6 +22,7 @@
 #include <functional>
 #include <iostream>
 #include <istream>
+#include <limits>
 #include <map>
 #include <ostream>
 #include <set>
@@ -78,19 +79,18 @@ private:
 using flag_reader = base_flag_io<uint16_t(EniIBitstream&)>;
 using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
 
-template <size_t N, int I>
+template <size_t N, size_t I>
 struct read_bitfield_helper {
     uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
-        // NOLINTNEXTLINE(misc-redundant-expression)
-        if ((N & (1 << I)) != 0) {
-            flags |= bits.pop() << (I + 11);
+        if ((N & (1U << (I - 1))) != 0) {
+            flags |= uint16_t(bits.pop() << (I + 10U));
         }
         return read_bitfield_helper<N, I - 1>{}(bits, flags);
     }
 };
 
 template <size_t N>
-struct read_bitfield_helper<N, -1> {
+struct read_bitfield_helper<N, 0> {
     uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
         ignore_unused_variable_warning(bits, flags);
         return flags;
@@ -99,22 +99,21 @@ struct read_bitfield_helper<N, -1> {
 
 template <size_t N>
 uint16_t read_bitfield(EniIBitstream& bits) {
-    return read_bitfield_helper<N, 4>{}(bits, 0);
+    return read_bitfield_helper<N, 5>{}(bits, 0);
 }
 
-template <size_t N, int I>
+template <size_t N, size_t I>
 struct write_bitfield_helper {
     void operator()(EniOBitstream& bits, uint16_t const flags) const {
-        // NOLINTNEXTLINE(misc-redundant-expression)
-        if ((N & (1 << I)) != 0) {
-            bits.push(static_cast<uint16_t>((flags & (1U << (I + 11))) != 0));
+        if ((N & (1U << (I - 1))) != 0) {
+            bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
         }
         write_bitfield_helper<N, I - 1>{}(bits, flags);
     }
 };
 
 template <size_t N>
-struct write_bitfield_helper<N, -1> {
+struct write_bitfield_helper<N, 0> {
     void operator()(EniOBitstream& bits, uint16_t const flags) const {
         ignore_unused_variable_warning(bits, flags);
     }
@@ -122,7 +121,7 @@ struct write_bitfield_helper<N, -1> {
 
 template <size_t N>
 void write_bitfield(EniOBitstream& bits, uint16_t const flags) {
-    write_bitfield_helper<N, 4>{}(bits, flags);
+    write_bitfield_helper<N, 5>{}(bits, flags);
 }
 
 template <std::size_t... I>
@@ -145,7 +144,8 @@ const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
 // Blazing fast function that gives the index of the MSB.
 int slog2(unsigned val) {
 #ifdef __GNUG__
-    return static_cast<int>((sizeof(unsigned) * 8U - 1U) ^ __builtin_clz(val));
+    return static_cast<int>(
+            (sizeof(unsigned) * 8U - 1U) ^ unsigned(__builtin_clz(val)));
 #elif defined(_MSC_VER)
     unsigned long ret = 0;
     _BitScanReverse(&ret, val);
@@ -187,10 +187,10 @@ static inline void flush_buffer(
         return;
     }
 
-    bits.write(0x70 | ((buf.size() - 1) & 0xf), 7);
+    bits.write(0x70U | ((buf.size() - 1) & 0xfU), 7);
     for (const auto v : buf) {
         putMask(bits, v);
-        bits.write(v & 0x7ff, packet_length);
+        bits.write(v & 0x7ffU, packet_length);
     }
     buf.clear();
 }
@@ -286,8 +286,8 @@ public:
             unpack.push_back(v);
         }
 
-        auto           putMask       = flag_writer::get(maskval >> 11);
-        uint16_t const packet_length = slog2(maskval & 0x7ff) + 1;
+        auto           putMask       = flag_writer::get(maskval >> 11U);
+        uint16_t const packet_length = slog2(maskval & 0x7ffU) + 1;
 
         // Find the most common 2-byte value.
         Compare_count  cmp;
@@ -320,7 +320,7 @@ public:
 
         // Output header.
         Write1(Dst, packet_length);
-        Write1(Dst, maskval >> 11);
+        Write1(Dst, maskval >> 11U);
         BigEndian::Write2(Dst, incrementing_value);
         BigEndian::Write2(Dst, common_value);
 
@@ -341,7 +341,7 @@ public:
                     next++;
                     cnt++;
                 }
-                bits.write(0x00 | cnt, 6);
+                bits.write(0x00U | cnt, 6);
                 incrementing_value = next;
                 pos += cnt;
             } else if (v == common_value) {
@@ -354,13 +354,16 @@ public:
                     }
                     cnt++;
                 }
-                bits.write(0x10 | cnt, 6);
+                bits.write(0x10U | cnt, 6);
                 pos += cnt;
             } else {
                 uint16_t next  = unpack[pos + 1];
-                int      delta = int(next) - int(v);
+                uint16_t delta = next - v;
+
+                constexpr const uint16_t minus_one
+                        = std::numeric_limits<uint16_t>::max();
                 if (pos + 1 < unpack.size() && next != incrementing_value
-                    && (delta == -1 || delta == 0 || delta == 1)) {
+                    && (delta == minus_one || delta == 0 || delta == 1)) {
                     flush_buffer(buf, bits, putMask, packet_length);
                     size_t cnt = 1;
                     next += delta;
@@ -373,14 +376,14 @@ public:
                         cnt++;
                     }
 
-                    if (delta == -1) {
+                    if (delta == minus_one) {
                         delta = 2;
                     }
 
-                    delta = ((delta | 4) << 4);
+                    delta = ((delta | 4U) << 4U);
                     bits.write(delta | cnt, 7);
                     putMask(bits, v);
-                    bits.write(v & 0x7ff, packet_length);
+                    bits.write(v & 0x7ffU, packet_length);
                     pos += cnt;
                 } else {
                     if (buf.size() >= 0xf) {

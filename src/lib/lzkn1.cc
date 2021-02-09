@@ -188,12 +188,12 @@ public:
                         size_t High = Data;
                         size_t Low  = src.getbyte();
 
-                        distance = ((High << 3) & 0x300U) | Low;
+                        distance = ((High << 3U) & 0x300U) | Low;
                         Count    = (High & 0x1FU) + 3U;
                     } else {
                         // Short dictionary match.
                         distance = Data & 0xFU;
-                        Count    = (Data >> 4) - 6U;
+                        Count    = (Data >> 4U) - 6U;
                     }
 
                     for (size_t i = 0; i < Count; i++) {
@@ -249,7 +249,7 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
-                uint8_t const data     = ((Count + 6U) << 4) | distance;
+                uint8_t const data     = ((Count + 6U) << 4U) | distance;
                 out.putbyte(data);
                 break;
             }
@@ -257,7 +257,7 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
-                uint8_t const high = (Count - 3U) | ((distance & 0x300U) >> 3);
+                uint8_t const high = (Count - 3U) | ((distance & 0x300U) >> 3U);
                 uint8_t const low  = distance & 0xFFU;
                 out.putbyte(high);
                 out.putbyte(low);

@@ -55,7 +55,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
     in << Src.rdbuf();
 
     // Pad to even length, for safety.
-    if ((in.tellp() & 1) != 0) {
+    if ((in.tellp() % 2) != 0) {
         in.put(0);
     }
 
@@ -115,7 +115,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
 
     // Pad to even size.
     Dst << sout.rdbuf();
-    if ((Dst.tellp() & 1) != 0) {
+    if ((Dst.tellp() % 2) != 0) {
         Dst.put(0);
     }
     return true;

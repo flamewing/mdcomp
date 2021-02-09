@@ -189,13 +189,13 @@ public:
                         Count += 2;
                     }
 
-                    distance = 0x2000U - (((0xF8U & High) << 5) | Low);
+                    distance = 0x2000U - (((0xF8U & High) << 5U) | Low);
                 } else {
                     // Inline dictionary match.
                     size_t High = src.descbit();
                     size_t Low  = src.descbit();
 
-                    Count = ((High << 1) | Low) + 2;
+                    Count = ((High << 1U) | Low) + 2;
 
                     distance = 0x100U - src.getbyte();
                 }
@@ -231,8 +231,8 @@ public:
                 size_t const dist = 0x100U - edge.get_distance();
                 out.descbit(0);
                 out.descbit(0);
-                out.descbit((len >> 1) & 1);
-                out.descbit(len & 1);
+                out.descbit((len >> 1U) & 1U);
+                out.descbit(len & 1U);
                 out.putbyte(dist);
                 break;
             }
@@ -240,7 +240,7 @@ public:
             case EdgeType::dictionary_long: {
                 size_t const len  = edge.get_length();
                 size_t const dist = 0x2000U - edge.get_distance();
-                size_t const high = (dist >> 5) & 0xF8U;
+                size_t const high = (dist >> 5U) & 0xF8U;
                 size_t const low  = (dist & 0xFFU);
                 out.descbit(0);
                 out.descbit(1);

@@ -142,25 +142,25 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                diff_t const high   = src.getbyte();
-                diff_t const low    = src.getbyte();
-                diff_t       length = ((high & 0xFC) >> 2) + 1U;
-                diff_t       offset = ((high & 3) << 8) | low;
+                size_t const high   = src.getbyte();
+                size_t const low    = src.getbyte();
+                diff_t const base   = diff_t(Dst.tellp());
+                diff_t       length = ((high & 0xFCU) >> 2U) + 1U;
+                diff_t       offset = ((high & 3U) << 8U) | low;
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
                 // basedest + 0x3C0u.
                 constexpr auto const bias
                         = diff_t(RocketAdaptor::FirstMatchPosition);
-                diff_t const basedest = diff_t(Dst.tellp());
-                offset                = diff_t(
-                        ((offset - basedest - bias)
-                         % RocketAdaptor::SearchBufSize)
-                        + basedest - RocketAdaptor::SearchBufSize);
+
+                offset = diff_t(
+                        ((offset - base - bias) % RocketAdaptor::SearchBufSize)
+                        + base - RocketAdaptor::SearchBufSize);
 
                 if (offset < 0) {
-                    diff_t cnt = offset + length < 0
+                    diff_t cnt = (offset + length < 0)
                                          ? length
-                                         : length - (offset + length);
+                                         : (length - (offset + length));
                     fill_n(ostreambuf_iterator<char>(Dst), cnt, 0x20);
                     length -= cnt;
                     offset += cnt;
@@ -181,8 +181,8 @@ public:
         using RockOStream = LZSSOStream<RocketAdaptor>;
 
         // Compute optimal Rocket parsing of input file.
-        auto list = find_optimal_lzss_parse(Data, Size, RocketAdaptor{});
-        RockOStream        out(Dst);
+        auto        list = find_optimal_lzss_parse(Data, Size, RocketAdaptor{});
+        RockOStream out(Dst);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {
@@ -197,7 +197,7 @@ public:
                 size_t const pos  = (edge.get_pos() - dist)
                                    % RocketAdaptor::SearchBufSize;
                 out.descbit(0);
-                out.putbyte(((len - 1) << 2) | (pos >> 8));
+                out.putbyte(((len - 1) << 2U) | (pos >> 8U));
                 out.putbyte(pos);
                 break;
             }
