@@ -1,6 +1,5 @@
 Checks: "-*,
 bugprone-*,
-cert-dcl21-cpp,
 cert-dcl50-cpp,
 cert-env33-c,
 cert-err34-c,
