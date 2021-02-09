@@ -1,6 +1,3 @@
-## Process this file with automake to produce Makefile.in
-## Created by Anjuta
-
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 SUBDIRS = src
@@ -9,7 +6,17 @@ mdcompdocdir = ${prefix}/doc/mdcomp
 
 mdcompdoc_DATA = \
 	COPYING \
-	INSTALL
+	COPYING-asm \
+	INSTALL \
+	src/asm/Comper.asm \
+	src/asm/Enigma.asm \
+	src/asm/Kosinski.asm \
+	src/asm/Kosinski_internal.asm \
+	src/asm/KosinskiPlus.asm \
+	src/asm/KosM.asm \
+	src/asm/Rocket.asm \
+	src/asm/Saxman.asm \
+	src/asm/SNKRLE.asm
 
 EXTRA_DIST = $(mdcompdoc_DATA)
 
