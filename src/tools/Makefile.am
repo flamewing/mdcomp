@@ -36,5 +36,4 @@ saxcmp_LDADD = $(builddir)/../lib/libsaxman.la
 snkcmp_SOURCES = snkcmp.cc
 snkcmp_LDADD = $(builddir)/../lib/libsnkrle.la
 
-AM_CPPFLAGS = -I$(srcdir)/../../include
-
+AM_CPPFLAGS = -I$(abs_top_srcdir)/include

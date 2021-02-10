@@ -31,6 +31,6 @@ libstaticanalyzer_a_SOURCES = \
     lzss.cc \
     moduled_adaptor.cc
 
-AM_CPPFLAGS = -I$(srcdir)/../../include
+AM_CPPFLAGS = -I$(abs_top_srcdir)/include
 
 AM_LDFLAGS = -no-undefined
