@@ -34,15 +34,6 @@ DisableFormat: "false"
 FixNamespaceComments: "true"
 IncludeBlocks: Regroup
 IncludeCategories:
-  # config.h must come first.
-  - Regex: '["<]config.h+[>"]'
-    Priority: -1
-  # pent_include.h.
-  - Regex: '["<]pent_include.h+[>"]'
-    Priority: 1
-  # mmsystem.h must come after windows.h, which is at the normal headers with extension.
-  - Regex: '["<]mmsystem.h+[>"]'
-    Priority: 4
   # Headers in <> without extension.
   - Regex: '<([A-Za-z0-9\Q/-_\E])+>'
     Priority: 5
