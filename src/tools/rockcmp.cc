@@ -62,8 +62,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         int option_index = 0;
         int c            = getopt_long(
-                argc, argv, "x::c", long_options.data(),
-                &option_index);
+                argc, argv, "x::c", long_options.data(), &option_index);
         if (c == -1) {
             break;
         }

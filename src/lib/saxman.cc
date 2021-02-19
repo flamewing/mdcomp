@@ -212,8 +212,8 @@ public:
         using SaxOStream = LZSSOStream<SaxmanAdaptor>;
 
         // Compute optimal Saxman parsing of input file.
-        auto list = find_optimal_lzss_parse(Data, Size, SaxmanAdaptor{});
-        SaxOStream        out(Dst);
+        auto       list = find_optimal_lzss_parse(Data, Size, SaxmanAdaptor{});
+        SaxOStream out(Dst);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {

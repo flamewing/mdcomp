@@ -188,7 +188,7 @@ namespace detail {
 
 #ifdef __GNUG__
 #    define ATTR_CONST __attribute__((const))
-#    define CONSTEXPR constexpr
+#    define CONSTEXPR  constexpr
 #else
 #    define ATTR_CONST
 #    define CONSTEXPR

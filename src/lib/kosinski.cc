@@ -217,7 +217,7 @@ public:
 
         // Compute optimal Kosinski parsing of input file.
         auto list = find_optimal_lzss_parse(Data, Size, KosinskiAdaptor{});
-        KosOStream                 out(Dst);
+        KosOStream out(Dst);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {

@@ -221,10 +221,10 @@ public:
         BigEndian::Write2(Dst, Size);
 
         // Compute optimal lzkn1 parsing of input file.
-        auto list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
-        Lzkn1OStream                 out(Dst);
-        constexpr size_t const       eof_marker               = 0x1FU;
-        constexpr size_t const       packed_symbolwise_marker = 0xC0U;
+        auto         list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
+        Lzkn1OStream out(Dst);
+        constexpr size_t const eof_marker               = 0x1FU;
+        constexpr size_t const packed_symbolwise_marker = 0xC0U;
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {

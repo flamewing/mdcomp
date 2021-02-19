@@ -212,8 +212,8 @@ public:
         using KosOStream = LZSSOStream<KosPlusAdaptor>;
 
         // Compute optimal KosPlus parsing of input file.
-        auto list = find_optimal_lzss_parse(Data, Size, KosPlusAdaptor{});
-        KosOStream                 out(Dst);
+        auto       list = find_optimal_lzss_parse(Data, Size, KosPlusAdaptor{});
+        KosOStream out(Dst);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list) {
