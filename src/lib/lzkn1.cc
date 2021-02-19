@@ -97,8 +97,8 @@ class lzkn1_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t
-                edge_weight(EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(
+                EdgeType const type, size_t length) noexcept {
             switch (type) {
             case EdgeType::symbolwise:
                 // 8-bit value.

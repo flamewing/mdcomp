@@ -31,9 +31,9 @@ using moduled_saxman = ModuledAdaptor<saxman, 4096U, 1U>;
 class saxman : public basic_saxman, public moduled_saxman {
     friend basic_saxman;
     friend moduled_saxman;
-    static bool
-            encode(std::ostream& Dst, uint8_t const* data, size_t Size,
-                   bool WithSize = true);
+    static bool encode(
+            std::ostream& Dst, uint8_t const* data, size_t Size,
+            bool WithSize = true);
 
 public:
     using basic_saxman::encode;
