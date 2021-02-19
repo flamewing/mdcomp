@@ -12,15 +12,14 @@ clang-diagnostic-*,
 clang-analyzer-*,
 clang-analyzer-alpha*,
 cppcoreguidelines-*,
+-cppcoreguidelines-avoid-magic-numbers,
 -cppcoreguidelines-avoid-non-const-global-variables,
--cppcoreguidelines-pro-bounds-constant-array-index,
+-cppcoreguidelines-init-variables,
 -cppcoreguidelines-macro-usage,
+-cppcoreguidelines-pro-bounds-constant-array-index,
 -cppcoreguidelines-pro-type-reinterpret-cast,
 -cppcoreguidelines-pro-type-union-access,
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
-cppcoreguidelines-pro-type-vararg,
--cppcoreguidelines-avoid-magic-numbers,
--cppcoreguidelines-init-variables,
 google-build-using-namespace,
 google-explicit-constructor,
 google-global-names-in-headers,
@@ -34,13 +33,13 @@ modernize-*,
 -modernize-use-trailing-return-type,
 performance-*,
 readability-*,
--readability-named-parameter,
--readability-magic-numbers"
+-readability-magic-numbers,
+-readability-named-parameter"
 CheckOptions:
     - key: bugprone-argument-comment.StrictMode
       value: 1
-    - key: bugprone-exception-escape.FunctionsThatShouldNotThrow
-      value: WinMain,SDL_main
     - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
       value: 1
+    - key: bugprone-signed-char-misuse.CharTypdefsToIgnore
+      value: 'int8_t'
 FormatStyle: 'file'
