@@ -290,6 +290,10 @@ auto find_optimal_lzss_parse(
     using AdjList         = std::list<Node_t>;
     using MatchVector     = std::vector<Node_t>;
 
+    auto read_stream = [](uint8_t const*& ptr) {
+        return stream_endian_t::template ReadN<sizeof(stream_t)>(ptr);
+    };
+
     // Adjacency lists for all the nodes in the graph.
     stream_t const* const data{reinterpret_cast<stream_t const*>(dt)};
     size_t const          nlen{size / sizeof(stream_t)};
@@ -377,8 +381,7 @@ auto find_optimal_lzss_parse(
         {
             const auto* ptr = reinterpret_cast<const uint8_t*>(
                     data + ii + Adaptor::FirstMatchPosition);
-            stream_t val = stream_endian_t::template ReadN<
-                    decltype(ptr), sizeof(stream_t)>(ptr);
+            const stream_t val = read_stream(ptr);
             Relax(ii, basedesc,
                   Node_t(ii + Adaptor::FirstMatchPosition, val,
                          EdgeType::symbolwise));

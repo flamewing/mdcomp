@@ -113,7 +113,7 @@ private:
     size_t        readbits;
     T             bitbuffer;
     size_t        read() noexcept {
-        return Endian::template ReadN<std::istream&, sizeof(T)>(src);
+        return Endian::template ReadN<sizeof(T)>(src);
     }
     T read_bits() noexcept {
         T bits = read();

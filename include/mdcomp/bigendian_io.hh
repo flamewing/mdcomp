@@ -392,7 +392,7 @@ namespace detail {
             return val;
         }
 
-        template <typename Src, size_t Size>
+        template <size_t Size, typename Src>
         static inline auto ReadN(Src& in) noexcept
                 -> detail::select_unsigned_t<Size> {
             using uint_t = detail::select_unsigned_t<Size>;
