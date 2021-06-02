@@ -56,7 +56,7 @@ jobs:
           OVERRIDE_CC: ${{ matrix.cc }}
           OVERRIDE_CXX: ${{ matrix.cxx }}
         run: |
-          cmake -S . -B build -G ${{ matrix.cmake_generator }}
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
           cmake --build build -j2

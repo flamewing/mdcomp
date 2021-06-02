@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        generator: [msys, vs2019]
+        generator: [make, msys, vs2019]
         architecture: [i686, x86_64]
         include:
           - generator: make
@@ -43,7 +43,7 @@ jobs:
           - architecture: i686
             msystem: MINGW32
             arch: i686
-          - architecture: i686
+          - architecture: x86_64
             msystem: MINGW64
             arch: x86_64
     defaults:
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@master
       - name: Configure
         run: |
-          cmake -S . -B build -G ${{ matrix.cmake_generator }}
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
           cmake --build build -j2
