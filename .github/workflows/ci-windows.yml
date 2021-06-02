@@ -1,0 +1,68 @@
+name: ci-windows
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-windows.yml'
+  pull_request:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-windows.yml'
+
+jobs:
+  ci-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        generator: [msys, vs2019]
+        architecture: [i686, x86_64]
+        include:
+          - generator: make
+            cmake_generator: "Unix Makefiles"
+          - generator: msys
+            cmake_generator: "MSYS Makefiles"
+          - generator: vs2019
+            cmake_generator: "Visual Studio 16 2019"
+          - architecture: i686
+            msystem: MINGW32
+            arch: i686
+          - architecture: i686
+            msystem: MINGW64
+            arch: x86_64
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Install dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          install:
+            base-devel git
+            mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-binutils
+            mingw-w64-${{ matrix.arch }}-ntldd mingw-w64-${{ matrix.arch }}-boost
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Configure
+        run: |
+          cmake -S . -B build -G ${{ matrix.cmake_generator }}
+      - name: Build
+        run: |
+          cmake --build build -j2

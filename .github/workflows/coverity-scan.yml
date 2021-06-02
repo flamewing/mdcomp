@@ -1,0 +1,68 @@
+name: coverity-scan
+
+on:
+  schedule:
+    - cron: "0 00 * * *" # Daily at 00:00 UTC
+  workflow_dispatch:
+
+env:
+  TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+  EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+  SHA1: ${{ github.sha }}
+  FILE: mdcomp-ubuntu-gcc.tgz
+  PROJ: flamewing/mdcomp
+
+jobs:
+  coverity-linux:
+    if: ${{ github.repository_owner == 'flamewing' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Activity check
+        run: |
+          DATEUTC=$(curl -sL https://api.github.com/repos/flamewing/mdcomp/commits | jq -r '[.[]][0]' | jq -r '.commit.committer.date')
+          TIMESTAMP=$(date --utc -d "$DATEUTC" +%s)
+          DAYS=$(( ($(date --utc +%s) - $TIMESTAMP) / 86400 ))
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo REPO_ALIVE=true >> $GITHUB_ENV
+          else
+            if [ $DAYS -gt 0 ]; then
+              echo REPO_ALIVE=false >> $GITHUB_ENV
+            else
+              echo REPO_ALIVE=true >> $GITHUB_ENV
+            fi
+          fi
+      - name: Install dependencies
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        run: |
+          sudo apt-fast update
+          sudo apt-fast install -y libboost-all-dev
+      - name: Download Coverity Build Tool
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        run: |
+          wget -q https://scan.coverity.com/download/Linux --post-data "token=$TOKEN&project=$PROJ" -O /tmp/cov-analysis-linux64.tar.gz
+          mkdir /tmp/cov-analysis-linux64
+          tar xzf /tmp/cov-analysis-linux64.tar.gz --strip 1 -C /tmp/cov-analysis-linux64
+      - name: Checkout code
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        uses: actions/checkout@master
+      - name: Configure
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        run: |
+          cmake -S . -B build -G 'Unix Makefiles'
+      - name: Build with cov-build
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        run: |
+          export PATH=/tmp/cov-analysis-linux64/bin:$PATH
+          cov-build --dir cov-int cmake --build build -j2
+      - name: Submit the result to Coverity Scan
+        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        run: |
+          tar czvf $FILE cov-int
+          curl \
+            --form project=$PROJ \
+            --form token=$TOKEN \
+            --form email=$EMAIL \
+            --form file=@$FILE \
+            --form version=master \
+            --form description="$SHA1" \
+            https://scan.coverity.com/builds?project=$PROJ

@@ -1,4 +1,0 @@
-SUBDIRS = lib tools
-
-AM_CFLAGS =
-AM_CXXFLAGS =

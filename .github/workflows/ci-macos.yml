@@ -1,0 +1,53 @@
+name: ci-macos
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-macos.yml'
+  pull_request:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-macos.yml'
+
+jobs:
+  ci-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        generator: [make, ninja, xcode]
+        include:
+          - generator: make
+            cmake_generator: "Unix Makefiles"
+          - generator: ninja
+            cmake_generator: "Ninja"
+          - generator: xcode
+            cmake_generator: "Xcode"
+    steps:
+      - name: Install dependencies
+        run: |
+          brew install boost make ninja
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Configure
+        run: |
+          cmake -S . -B build -G ${{ matrix.cmake_generator }}
+      - name: Build
+        run: |
+          cmake --build build -j2

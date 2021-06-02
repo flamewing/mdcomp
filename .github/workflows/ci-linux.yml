@@ -1,0 +1,62 @@
+name: ci-linux
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-linux.yml'
+  pull_request:
+    paths:
+      - '**'
+      - '!COPYING'
+      - '!COPYING-asm'
+      - '!INSTALL'
+      - '!**.md'
+      - '!.clang*'
+      - '!.gitignore'
+      - '!.gitattributes'
+      - '!.github/workflows/*'
+      - '.github/workflows/ci-linux.yml'
+
+jobs:
+  ci-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        generator: [make, ninja]
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+          - generator: make
+            cmake_generator: "Unix Makefiles"
+          - generator: ninja
+            cmake_generator: "Ninja"
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-fast update
+          sudo apt-fast install -y libboost-all-dev ninja-build
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Configure
+        env:
+          OVERRIDE_CC: ${{ matrix.cc }}
+          OVERRIDE_CXX: ${{ matrix.cxx }}
+        run: |
+          cmake -S . -B build -G ${{ matrix.cmake_generator }}
+      - name: Build
+        run: |
+          cmake --build build -j2

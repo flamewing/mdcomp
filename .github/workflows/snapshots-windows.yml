@@ -1,0 +1,112 @@
+name: snapshots-windows
+
+on:
+  schedule:
+    - cron: "0 00 * * *" # Daily at 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  snapshots-windows:
+    if: ${{ github.repository_owner == 'flamewing' }}
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Activity check
+        shell: bash
+        run: |
+          DATEUTC=$(curl -sL https://api.github.com/repos/flamewing/mdcomp/commits | jq -r '[.[]][0]' | jq -r '.commit.committer.date')
+          TIMESTAMP=$(date --utc -d "$DATEUTC" +%s)
+          DAYS=$(( ($(date --utc +%s) - $TIMESTAMP) / 86400 ))
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo REPO_ALIVE=true >> $GITHUB_ENV
+          else
+            if [ $DAYS -gt 0 ]; then
+              echo REPO_ALIVE=false >> $GITHUB_ENV
+            else
+              echo REPO_ALIVE=true >> $GITHUB_ENV
+            fi
+          fi
+      - name: Install dependencies
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          install:
+            base-devel git p7zip
+            mingw-w64-i686-toolchain mingw-w64-i686-binutils mingw-w64-i686-ntldd mingw-w64-i686-boost
+      - name: Checkout code
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: actions/checkout@master
+        with:
+          path: exult-i686
+      - name: Configure
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles'
+      - name: Build
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        run: |
+          cmake --build build -j2
+      - name: Create package
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        run: |
+          for ff in $(${MSYSTEM_PREFIX}/bin/ntldd -R build/*.exe  | tr '\\' '/' | grep -io "$(cygpath -m ${MSYSTEM_PREFIX}).\+\.dll" | sort -u); do
+            cp $(cygpath -u "$ff") build/
+          done
+          echo "GITHUB_REF=v0.2.0.$(date --utc +'%Y%m%d')" >> $GITHUB_ENV
+          cd build
+          "/c/Program Files/7-Zip/7z.exe" -tzip a ../mdcomp-${GITHUB_REF}.zip -mx9 -mmt *.{exe,dll}
+      - name: VirusTotal Scan
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        id: scan_files
+        uses: crazy-max/ghaction-virustotal@v2
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          github_token: ${{ github.token }}
+          update_release_body: true
+          files: |
+            $GITHUB_WORKSPACE/build/mdcomp-${{ env.GITHUB_REF }}.zip
+      - name: Generate VirusTotal Body
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        run: |
+          echo "Snapshot ${{ env.GITHUB_REF }}" > $GITHUB_WORKSPACE/build/body.txt
+          echo "" >> $GITHUB_WORKSPACE/build/body.txt
+          echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> $GITHUB_WORKSPACE/build/body.txt
+          echo "" >> $GITHUB_WORKSPACE/build/body.txt
+          analysis="${{ steps.scan_files.outputs.analysis }}"
+          while read -d, -r pair; do
+            IFS='=' read -r filename analysisURL <<<"$pair"
+            echo "* [$(basename $filename)]($analysisURL)" >> $GITHUB_WORKSPACE/build/body.txt
+          done <<<"$analysis,"
+      - name: Create release
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: snapshot-${{ env.GITHUB_REF }}
+          release_name: Snapshot ${{ env.GITHUB_REF }}
+          body_path: $GITHUB_WORKSPACE/build/body.txt
+          draft: true
+          prerelease: false
+      # Theses pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
+      # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+      - name: Upload snapshot
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: $GITHUB_WORKSPACE/build/mdcomp-${{ env.GITHUB_REF }}.zip
+          asset_name: mdcomp-${{ env.GITHUB_REF }}.zip
+          asset_content_type: application/zip
+      - name: Finish release
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}

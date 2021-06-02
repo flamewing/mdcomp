@@ -104,3 +104,6 @@ test
 .cache
 
 .vscode
+
+#### cmake ####
+build
