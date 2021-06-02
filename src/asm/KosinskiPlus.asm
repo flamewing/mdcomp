@@ -53,12 +53,13 @@ KosPlusDec:
 
 	; Codes 00 and 01.
 	moveq	#-1,d5
+	lea	(a1),a5
 	_KosPlus_ReadBit
 	bcs.s	.Code_01
 
 	; Code 00 (Dictionary ref. short).
 	move.b	(a0)+,d5					; d5 = displacement.
-	lea	(a1,d5),a5
+	adda.w	d5,a5
 	; Always copy at least two bytes.
 	move.b	(a5)+,(a1)+
 	move.b	(a5)+,(a1)+
@@ -91,7 +92,7 @@ KosPlusDec:
 	move.b	(a0)+,d4					; Read cnt
 	beq.s	.Quit						; If cnt=0, quit decompression.
 
-	lea	(a1,d5),a5
+	adda.w	d5,a5
 	move.w	d4,d6
 	not.w	d6
 	and.w	d7,d6
@@ -100,7 +101,7 @@ KosPlusDec:
 	jmp	.largecopy(pc,d6.w)
 ; ---------------------------------------------------------------------------
 .StreamCopy:
-	lea	(a1,d5),a5
+	adda.w	d5,a5
 	move.b	(a5)+,(a1)+					; Do 1 extra copy (to compensate +1 to copy counter).
 	add.w	d4,d4
 	jmp	.mediumcopy-2(pc,d4.w)
