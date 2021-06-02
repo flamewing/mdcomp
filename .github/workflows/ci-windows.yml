@@ -58,6 +58,7 @@ jobs:
             base-devel git
             mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-binutils
             mingw-w64-${{ matrix.arch }}-ntldd mingw-w64-${{ matrix.arch }}-boost
+            mingw-w64-${{ matrix.arch }}-cmake
       - name: Checkout code
         uses: actions/checkout@master
       - name: Configure

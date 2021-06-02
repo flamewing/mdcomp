@@ -47,7 +47,11 @@ jobs:
         uses: actions/checkout@master
       - name: Configure
         run: |
+          export LDFLAGS="-L$(brew --prefix boost)/lib"
+          export CPPFLAGS="-I$(brew --prefix boost)/include"
           cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
+          export LDFLAGS="-L$(brew --prefix boost)/lib"
+          export CPPFLAGS="-I$(brew --prefix boost)/include"
           cmake --build build -j2

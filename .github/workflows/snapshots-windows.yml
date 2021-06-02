@@ -35,7 +35,7 @@ jobs:
           msystem: MINGW32
           install:
             base-devel git p7zip
-            mingw-w64-i686-toolchain mingw-w64-i686-binutils mingw-w64-i686-ntldd mingw-w64-i686-boost
+            mingw-w64-i686-toolchain mingw-w64-i686-binutils mingw-w64-i686-ntldd mingw-w64-i686-boost mingw-w64-i686-cmake
       - name: Checkout code
         if: ${{ env.REPO_ALIVE == 'true' }}
         uses: actions/checkout@master
