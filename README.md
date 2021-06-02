@@ -7,8 +7,6 @@
 [![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/flamewing/mdcomp?logo=LGTM)](https://lgtm.com/projects/g/flamewing/mdcomp/alerts/)
 [![LGTM Grade](https://img.shields.io/lgtm/grade/cpp/github/flamewing/mdcomp?logo=LGTM)](https://lgtm.com/projects/g/flamewing/mdcomp/context:cpp)
 
-[![Travis CI](https://img.shields.io/travis/com/flamewing/mdcomp?label=Travis%20CI%20Build&logo=Travis%20CI&logoColor=white)](https://www.travis-ci.com/flamewing/mdcomp)
-
 [![CI Mac OS Catalina 10.15](https://img.shields.io/github/workflow/status/flamewing/mdcomp/ci-macos?label=CI%20Mac%20OS%20X&logo=Apple&logoColor=white)](https://github.com/flamewing/mdcomp/actions?query=workflow%3Aci-macos)
 [![CI Ubuntu 20.04](https://img.shields.io/github/workflow/status/flamewing/mdcomp/ci-linux?label=CI%20Ubuntu&logo=Ubuntu&logoColor=white)](https://github.com/flamewing/mdcomp/actions?query=workflow%3Aci-linux)
 [![CI Windows Server 2019](https://img.shields.io/github/workflow/status/flamewing/mdcomp/ci-windows?label=CI%20Windows&logo=Windows&logoColor=white)](https://github.com/flamewing/mdcomp/actions?query=workflow%3Aci-windows)
