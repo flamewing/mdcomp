@@ -47,13 +47,13 @@ jobs:
         uses: actions/checkout@master
       - name: Configure
         run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib:$LDFLAGS"
-          export CFLAGS="-I$(brew --prefix boost)/include:$CFLAGS"
-          export CXXFLAGS="-I$(brew --prefix boost)/include:$CXXFLAGS"
+          export LDFLAGS="-L$(brew --prefix boost)/lib $LDFLAGS"
+          export CFLAGS="-I$(brew --prefix boost)/include $CFLAGS"
+          export CXXFLAGS="-I$(brew --prefix boost)/include $CXXFLAGS"
           cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib"
-          export CFLAGS="-I$(brew --prefix boost)/include:$CFLAGS"
-          export CXXFLAGS="-I$(brew --prefix boost)/include:$CXXFLAGS"
+          export LDFLAGS="-L$(brew --prefix boost)/lib $LDFLAGS"
+          export CFLAGS="-I$(brew --prefix boost)/include $CFLAGS"
+          export CXXFLAGS="-I$(brew --prefix boost)/include $CXXFLAGS"
           cmake --build build -j2
