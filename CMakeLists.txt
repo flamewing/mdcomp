@@ -308,7 +308,7 @@ install(
         DESTINATION bin
     PUBLIC_HEADER
         COMPONENT Development
-        DESTINATION include
+        DESTINATION include/mdcomp
 )
 
 export(
