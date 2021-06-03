@@ -15,6 +15,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_PREFIX "$ENV{MSYSTEM_PREFIX}" CACHE PATH "Default install prefix" FORCE)
     endif(DEFINED ENV{MSYSTEM_PREFIX})
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+include(GNUInstallDirs)
 
 find_package(Boost 1.54 REQUIRED)
 
@@ -184,6 +185,22 @@ elseif (MSVC)
     add_compile_options("/wd4800") # warning C4800: 'const SymbolDatabase *' : forcing value to bool 'true' or 'false' (performance warning)
 endif()
 
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    # If Microsoft SDK is installed create script run-msbuild.bat that
+    # calls SetEnv.cmd to set up build environment and runs msbuild.
+    # It is useful when building Visual Studio projects with the SDK
+    # toolchain rather than Visual Studio.
+    include(FindSetEnv)
+    if (WINSDK_SETENV)
+        set(MSBUILD_SETUP "call \"${WINSDK_SETENV}\"")
+    endif ()
+    # Set FrameworkPathOverride to get rid of MSB3644 warnings.
+    set(netfxpath "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
+    file(WRITE run-msbuild.bat "
+    ${MSBUILD_SETUP}
+    ${CMAKE_MAKE_PROGRAM} -p:FrameworkPathOverride=\"${netfxpath}\" %*")
+endif()
+
 set(COMMON_HEADERS
     "include/mdcomp/basic_decoder.hh"
     "include/mdcomp/bigendian_io.hh"
@@ -193,9 +210,31 @@ set(COMMON_HEADERS
     "include/mdcomp/moduled_adaptor.hh"
 )
 
+# Interface library for a few exported headers.
+set(BIGENDIANIO_HEADERS
+    "include/mdcomp/bigendian_io.hh"
+    "include/mdcomp/bitstream.hh"
+    "include/mdcomp/ignore_unused_variable_warning.hh"
+)
+add_library(bigendian_io INTERFACE "${BIGENDIANIO_HEADERS}")
+add_library(mdcomp::bigendian_io ALIAS bigendian_io)
+target_include_directories(bigendian_io
+    INTERFACE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+set_target_properties(bigendian_io
+    PROPERTIES
+        CXX_STANDARD 14
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+        POSITION_INDEPENDENT_CODE ON
+        PUBLIC_HEADER "${BIGENDIANIO_HEADERS}"
+)
+
 # Dummy library for generating compile_commands.json that
 # sets flags for headers without corresponding cc files.
-add_library(dummy
+add_library(dummy-mdcomp
     "src/lib/basic_decoder.cc"
     "src/lib/bigendian_io.cc"
     "src/lib/bitstream.cc"
@@ -204,8 +243,12 @@ add_library(dummy
     "src/lib/moduled_adaptor.cc"
     "${COMMON_HEADERS}"
 )
-target_include_directories(dummy PRIVATE include)
-set_target_properties(dummy
+target_include_directories(dummy-mdcomp
+    PRIVATE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+set_target_properties(dummy-mdcomp
     PROPERTIES
         CXX_STANDARD 14
         CXX_STANDARD_REQUIRED YES
@@ -216,12 +259,20 @@ set_target_properties(dummy
 function(define_lib TARGETNAME SRCFILE HDRFILE)
     add_library(${TARGETNAME}
         SHARED
-        "${SRCFILE}"
-        "${HDRFILE}"
-        "${COMMON_HEADERS}"
+            "${SRCFILE}"
+            "${HDRFILE}"
+            "${COMMON_HEADERS}"
     )
     add_library(mdcomp::${TARGETNAME} ALIAS ${TARGETNAME})
-    target_include_directories(${TARGETNAME} PUBLIC include)
+    target_include_directories(${TARGETNAME}
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_link_libraries(${TARGETNAME}
+        INTERFACE
+            bigendian_io
+    )
     set_target_properties(${TARGETNAME}
         PROPERTIES
             CXX_STANDARD 14
@@ -236,7 +287,11 @@ function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
     add_executable(${TARGETNAME}
         "${SRCFILE}"
     )
-    target_include_directories(${TARGETNAME} PUBLIC include)
+    target_include_directories(${TARGETNAME}
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
     target_link_libraries(${TARGETNAME} PUBLIC ${LIBNAME})
     set_target_properties(${TARGETNAME}
         PROPERTIES
@@ -278,6 +333,7 @@ write_basic_package_version_file(
 
 install(
     TARGETS
+        bigendian_io
         artc42
         comper
         enigma
@@ -313,6 +369,7 @@ install(
 
 export(
     TARGETS
+        bigendian_io
         artc42
         comper
         enigma
