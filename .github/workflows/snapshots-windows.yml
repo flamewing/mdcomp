@@ -52,7 +52,7 @@ jobs:
           for ff in $(${MSYSTEM_PREFIX}/bin/ntldd -R build/*.exe  | tr '\\' '/' | grep -io "$(cygpath -m ${MSYSTEM_PREFIX}).\+\.dll" | sort -u); do
             cp $(cygpath -u "$ff") build/
           done
-          SNAPSHOT_PATH=$(cygpath -m ${PWD})
+          SNAPSHOT_PATH=$(cygpath -m $(pwd -P))
           echo "SNAPSHOT_PATH=${SNAPSHOT_PATH}" >> $GITHUB_ENV
           export BUILDFILE="v0.2.0.$(date --utc +'%Y%m%d')"
           echo "BUILDFILE=${BUILDFILE}" >> $GITHUB_ENV
