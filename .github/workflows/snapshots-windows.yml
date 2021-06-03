@@ -57,7 +57,7 @@ jobs:
           export BUILDFILE="v0.2.0.$(date --utc +'%Y%m%d')"
           echo "BUILDFILE=${BUILDFILE}" >> $GITHUB_ENV
           cd build
-          "/c/Program Files/7-Zip/7z.exe" -tzip a ${{ env.SNAPSHOT_PATH }}/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
+          "/c/Program Files/7-Zip/7z.exe" -tzip a ${SNAPSHOT_PATH}/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
       - name: VirusTotal Scan
         if: ${{ env.REPO_ALIVE == 'true' }}
         id: scan_files
