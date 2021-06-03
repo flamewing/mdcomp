@@ -39,8 +39,6 @@ jobs:
       - name: Checkout code
         if: ${{ env.REPO_ALIVE == 'true' }}
         uses: actions/checkout@master
-        with:
-          path: exult-i686
       - name: Configure
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles'
