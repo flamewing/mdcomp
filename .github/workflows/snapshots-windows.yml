@@ -52,10 +52,12 @@ jobs:
           for ff in $(${MSYSTEM_PREFIX}/bin/ntldd -R build/*.exe  | tr '\\' '/' | grep -io "$(cygpath -m ${MSYSTEM_PREFIX}).\+\.dll" | sort -u); do
             cp $(cygpath -u "$ff") build/
           done
+          SNAPSHOT_PATH=$(cygpath -m ${PWD})
+          echo "SNAPSHOT_PATH=${SNAPSHOT_PATH}" >> $GITHUB_ENV
           export BUILDFILE="v0.2.0.$(date --utc +'%Y%m%d')"
           echo "BUILDFILE=${BUILDFILE}" >> $GITHUB_ENV
           cd build
-          "/c/Program Files/7-Zip/7z.exe" -tzip a $GITHUB_WORKSPACE/build/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
+          "/c/Program Files/7-Zip/7z.exe" -tzip a ${{ env.SNAPSHOT_PATH }}/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
       - name: VirusTotal Scan
         if: ${{ env.REPO_ALIVE == 'true' }}
         id: scan_files
@@ -65,18 +67,18 @@ jobs:
           github_token: ${{ github.token }}
           update_release_body: true
           files: |
-            $GITHUB_WORKSPACE/build/mdcomp-${{ env.BUILDFILE }}.zip
+            ${{ env.SNAPSHOT_PATH }}/mdcomp-${{ env.BUILDFILE }}.zip
       - name: Generate VirusTotal Body
         if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
-          echo "Snapshot ${{ env.BUILDFILE }}" > $GITHUB_WORKSPACE/build/body.txt
-          echo "" >> $GITHUB_WORKSPACE/build/body.txt
-          echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> $GITHUB_WORKSPACE/build/body.txt
-          echo "" >> $GITHUB_WORKSPACE/build/body.txt
+          echo "Snapshot ${{ env.BUILDFILE }}" > ${{ env.SNAPSHOT_PATH }}/body.txt
+          echo "" >> ${{ env.SNAPSHOT_PATH }}/body.txt
+          echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> ${{ env.SNAPSHOT_PATH }}/body.txt
+          echo "" >> ${{ env.SNAPSHOT_PATH }}/body.txt
           analysis="${{ steps.scan_files.outputs.analysis }}"
           while read -d, -r pair; do
             IFS='=' read -r filename analysisURL <<<"$pair"
-            echo "* [$(basename $filename)]($analysisURL)" >> $GITHUB_WORKSPACE/build/body.txt
+            echo "* [$(basename $filename)]($analysisURL)" >> ${{ env.SNAPSHOT_PATH }}/body.txt
           done <<<"$analysis,"
       - name: Create release
         if: ${{ env.REPO_ALIVE == 'true' }}
@@ -87,7 +89,7 @@ jobs:
         with:
           tag_name: snapshot-${{ env.BUILDFILE }}
           release_name: Snapshot ${{ env.BUILDFILE }}
-          body_path: $GITHUB_WORKSPACE/build/body.txt
+          body_path: ${{ env.SNAPSHOT_PATH }}/body.txt
           draft: true
           prerelease: false
       # Theses pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
@@ -99,7 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: $GITHUB_WORKSPACE/build/mdcomp-${{ env.BUILDFILE }}.zip
+          asset_path: ${{ env.SNAPSHOT_PATH }}/mdcomp-${{ env.BUILDFILE }}.zip
           asset_name: mdcomp-${{ env.BUILDFILE }}.zip
           asset_content_type: application/zip
       - name: Finish release
