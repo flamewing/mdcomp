@@ -54,7 +54,7 @@ jobs:
           done
           echo "GITHUB_REF=v0.2.0.$(date --utc +'%Y%m%d')" >> $GITHUB_ENV
           cd build
-          "/c/Program Files/7-Zip/7z.exe" -tzip a ../mdcomp-${GITHUB_REF}.zip -mx9 -mmt *.{exe,dll}
+          "/c/Program Files/7-Zip/7z.exe" -tzip a $GITHUB_WORKSPACE/build/mdcomp-${GITHUB_REF}.zip -mx9 -mmt *.{exe,dll}
       - name: VirusTotal Scan
         if: ${{ env.REPO_ALIVE == 'true' }}
         id: scan_files
