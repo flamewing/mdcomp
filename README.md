@@ -33,7 +33,7 @@ The remainder is licensed under the GNU Lesser General Public License v3 (LGPL-3
 
 ## Create and install the package
 
-You need a C++ development toolchain, including `cmake` at least 3.12 and [Boost](https://www.boost.org/) at least 1.54. With the dependencies installed, you run the following commands:
+You need a C++ development toolchain, including `cmake` at least 3.19 and [Boost](https://www.boost.org/) at least 1.54. With the dependencies installed, you run the following commands:
 
 ```bash
    cmake -S . -B build -G <generator>
