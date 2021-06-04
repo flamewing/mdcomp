@@ -305,6 +305,7 @@ endfunction()
 
 define_lib(artc42   "src/lib/artc42.cc"   "include/mdcomp/artc42.hh")
 define_lib(comper   "src/lib/comper.cc"   "include/mdcomp/comper.hh")
+define_lib(comperx  "src/lib/comperx.cc"  "include/mdcomp/comperx.hh")
 define_lib(enigma   "src/lib/enigma.cc"   "include/mdcomp/enigma.hh")
 define_lib(kosinski "src/lib/kosinski.cc" "include/mdcomp/kosinski.hh")
 define_lib(kosplus  "src/lib/kosplus.cc"  "include/mdcomp/kosplus.hh")
@@ -315,6 +316,7 @@ define_lib(saxman   "src/lib/saxman.cc"   "include/mdcomp/saxman.hh")
 define_lib(snkrle   "src/lib/snkrle.cc"   "include/mdcomp/snkrle.hh")
 
 define_exe(compercmp   "src/tools/compcmp.cc"  comper   compcmp)
+define_exe(comperxcmp  "src/tools/comperx.cc"  comperx  comperx)
 define_exe(enigmacmp   "src/tools/enicmp.cc"   enigma   enicmp)
 define_exe(kosinskicmp "src/tools/koscmp.cc"   kosinski koscmp)
 define_exe(kospluscmp  "src/tools/kosplus.cc"  kosplus  kosplus)
@@ -336,6 +338,7 @@ install(
         bigendian_io
         artc42
         comper
+        comperx
         enigma
         kosinski
         kosplus
@@ -345,6 +348,7 @@ install(
         saxman
         snkrle
         compercmp
+        comperxcmp
         enigmacmp
         kosinskicmp
         kospluscmp
@@ -372,6 +376,7 @@ export(
         bigendian_io
         artc42
         comper
+        comperx
         enigma
         kosinski
         kosplus
