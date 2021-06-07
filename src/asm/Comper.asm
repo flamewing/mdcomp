@@ -38,7 +38,9 @@ _Comp_ReadBit macro
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 CompDec:
-	moveq	#(1<<_Comp_LoopUnroll)-1,d7
+	if _Comp_LoopUnroll>0
+		moveq	#(1<<_Comp_LoopUnroll)-1,d7
+	endif
 
 .newblock:
 	move.w	(a0)+,d0		; fetch description field
@@ -58,12 +60,14 @@ CompDec:
 	move.b	(a0)+,d2		; load copy length
 	beq.s	.end			; if zero, branch
 	lea	(a1,d1.w),a2		; load start copy address
-	move.w	d2,d4
-	not.w	d4
-	and.w	d7,d4
-	add.w	d4,d4
-	lsr.w	#_Comp_LoopUnroll,d2
-	jmp	.loop(pc,d4.w)
+	if _Comp_LoopUnroll>0
+		move.w	d2,d4
+		not.w	d4
+		and.w	d7,d4
+		add.w	d4,d4
+		lsr.w	#_Comp_LoopUnroll,d2
+		jmp	.loop(pc,d4.w)
+	endif
 ; ---------------------------------------------------------------------------
 .loop:
 	rept (1<<_Comp_LoopUnroll)

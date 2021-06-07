@@ -57,7 +57,9 @@ RocketDec:
 		lea	RocketDec_ByteMap(pc),a2		; Load LUT pointer.
 	endif
 	moveq	#0,d2					; Flag as having no bits left.
-	moveq	#(1<<_Rocket_LoopUnroll)-1,d7
+	if _Rocket_LoopUnroll>0
+		moveq	#(1<<_Rocket_LoopUnroll)-1,d7
+	endif
 
 .loop:
 	cmpa.l	a3,a0					; Are we at the end of the compressed data?
@@ -80,12 +82,14 @@ RocketDec:
 	bmi.s	.loop					; Branch if not
 
 .just_copy:
-	move.w	d4,d6
-	not.w	d6
-	and.w	d7,d6
-	add.w	d6,d6
-	lsr.w	#_Rocket_LoopUnroll,d4
-	jmp	.copy(pc,d6.w)
+	if _Rocket_LoopUnroll>0
+		move.w	d4,d6
+		not.w	d6
+		and.w	d7,d6
+		add.w	d6,d6
+		lsr.w	#_Rocket_LoopUnroll,d4
+		jmp	.copy(pc,d6.w)
+	endif
 .copy:
 	rept (1<<_Rocket_LoopUnroll)
 		move.b	(a5)+,(a1)+
@@ -113,14 +117,18 @@ RocketDec:
 	bhs.s	.just_copy				; Branch if not
 	; Need to copy some spaces. -d5 is how many.
 	add.w	d5,d4					; d4 is number of copies-1 to do after
-	sub.w	d5,a5					; Seek source of copy by as many 0x20ś as we will write
+	sub.w	d5,a5					; Seek source of copy by as many 0x20's as we will write
 	not.w	d5						; d5 = -d5-1, a loop index
-	move.w	d5,d6
-	not.w	d6
-	and.w	d7,d6
-	add.w	d6,d6
-	lsr.w	#_Rocket_LoopUnroll,d5
-	jmp	.fill20(pc,d6.w)
+	if _Rocket_LoopUnroll>0
+		move.w	d5,d6
+		not.w	d6
+		and.w	d7,d6
+		add.w	d6,d6
+		lsr.w	#_Rocket_LoopUnroll,d5
+		jmp	.fill20(pc,d6.w)
+	else
+		bra.s	.fill20
+	endif
 ; ===========================================================================
 	if _Rocket_UseLUT==1
 RocketDec_ByteMap:

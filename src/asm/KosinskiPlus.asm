@@ -39,7 +39,9 @@ _KosPlus_ReadBit macro
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 KosPlusDec:
-	moveq	#(1<<_KosPlus_LoopUnroll)-1,d7
+	if _KosPlus_LoopUnroll>0
+		moveq	#(1<<_KosPlus_LoopUnroll)-1,d7
+	endif
 	moveq	#0,d2						; Flag as having no bits left.
 	bra.s	.FetchNewCode
 ; ---------------------------------------------------------------------------
@@ -82,23 +84,27 @@ KosPlusDec:
 	lsl.w	#5,d5						; d5 = %111HHHHH CCC00000.
 	move.b	(a0)+,d5					; d5 = %111HHHHH LLLLLLLL.
 	if _KosPlus_LoopUnroll==3
-		and.w	d7,d4						; d4 = %00000CCC.
+		and.w	d7,d4					; d4 = %00000CCC.
 	else
 		andi.w	#7,d4
 	endif
-	bne.s	.StreamCopy					; if CCC=0, branch.
+	if _KosPlus_LoopUnroll>0
+		bne.s	.StreamCopy				; if CCC=0, branch.
 
-	; special mode (extended counter)
-	move.b	(a0)+,d4					; Read cnt
-	beq.s	.Quit						; If cnt=0, quit decompression.
+		; special mode (extended counter)
+		move.b	(a0)+,d4				; Read cnt
+		beq.s	.Quit					; If cnt=0, quit decompression.
 
-	adda.w	d5,a5
-	move.w	d4,d6
-	not.w	d6
-	and.w	d7,d6
-	add.w	d6,d6
-	lsr.w	#_KosPlus_LoopUnroll,d4
-	jmp	.largecopy(pc,d6.w)
+		adda.w	d5,a5
+		move.w	d4,d6
+		not.w	d6
+		and.w	d7,d6
+		add.w	d6,d6
+		lsr.w	#_KosPlus_LoopUnroll,d4
+		jmp	.largecopy(pc,d6.w)
+	else
+		beq.s	.dolargecopy
+	endif
 ; ---------------------------------------------------------------------------
 .StreamCopy:
 	adda.w	d5,a5
@@ -106,6 +112,14 @@ KosPlusDec:
 	add.w	d4,d4
 	jmp	.mediumcopy-2(pc,d4.w)
 ; ---------------------------------------------------------------------------
+	if _KosPlus_LoopUnroll==0
+.dolargecopy:
+		; special mode (extended counter)
+		move.b	(a0)+,d4				; Read cnt
+		beq.s	.Quit					; If cnt=0, quit decompression.
+		adda.w	d5,a5
+	endif
+
 .largecopy:
 	rept (1<<_KosPlus_LoopUnroll)
 		move.b	(a5)+,(a1)+

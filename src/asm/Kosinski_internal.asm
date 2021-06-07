@@ -15,7 +15,9 @@
 ; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
-	moveq	#(1<<_Kos_LoopUnroll)-1,d7
+	if _Kos_LoopUnroll>0
+		moveq	#(1<<_Kos_LoopUnroll)-1,d7
+	endif
 	if _Kos_UseLUT==1
 		moveq	#0,d0
 		moveq	#0,d1
@@ -144,12 +146,14 @@
 
 	adda.w	d5,a5
 	move.b	(a5)+,(a1)+				; Do 1 extra copy (to compensate +1 to copy counter).
-	move.w	d4,d6
-	not.w	d6
-	and.w	d7,d6
-	add.w	d6,d6
-	lsr.w	#_Kos_LoopUnroll,d4
-	jmp	.largecopy(pc,d6.w)
+	if _Kos_LoopUnroll>0
+		move.w	d4,d6
+		not.w	d6
+		and.w	d7,d6
+		add.w	d6,d6
+		lsr.w	#_Kos_LoopUnroll,d4
+		jmp	.largecopy(pc,d6.w)
+	endif
 ; ---------------------------------------------------------------------------
 .largecopy:
 	rept (1<<_Kos_LoopUnroll)
