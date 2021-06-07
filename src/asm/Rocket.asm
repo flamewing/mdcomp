@@ -95,13 +95,13 @@ RocketDec:
 ; End of function RocketDec
 ; ---------------------------------------------------------------------------
 .read_compressed:
-	moveq	#0,d4
-	move.b	(a0)+,d4				; d4 = %ccccccdd
-	ror.b	#2,d4					; d4 = %ddcccccc
-	move.w	d4,d5					; d5 = %ddcccccc
-	andi.w	#$3F,d4					; d4 is now copy count-1
-	add.w	d5,d5					; d5 = %ddcccccc0
-	add.w	d5,d5					; d5 = %ddcccccc00
+	moveq	#0,d5
+	move.b	(a0)+,d5				; d5 = %00000000ccccccdd
+	ror.b	#2,d5					; d5 = %00000000ddcccccc
+	moveq	#$3F,d4					; d4 = %0000000000111111
+	and.w	d5,d4					; d4 is now copy count-1
+	add.w	d5,d5					; d5 = %0000000ddcccccc0
+	add.w	d5,d5					; d5 = %000000ddcccccc00
 	move.b	(a0)+,d5				; d5 is now base offset
 	; Rebase offset
 	sub.w	a6,d5
