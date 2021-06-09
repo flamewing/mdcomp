@@ -258,9 +258,6 @@ private:
  *    constexpr static size_t const SearchBufSize = 8192;
  *    // Size of the look-ahead buffer.
  *    constexpr static size_t const LookAheadBufSize = 256;
- *    // Total size of the sliding window.
- *    constexpr static size_t const SlidingWindowSize = SearchBufSize +
- *                                                      LookAheadBufSize;
  *    // Given an edge type, computes how many bits are used in the descriptor
  *    // field.
  *    constexpr static size_t desc_bits(EdgeType const type) noexcept;

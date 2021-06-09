@@ -73,9 +73,6 @@ struct rocket_internal {
         constexpr static size_t const SearchBufSize = 0x400;
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 0x40;
-        // Total size of the sliding window.
-        constexpr static size_t const SlidingWindowSize
-                = SearchBufSize + LookAheadBufSize;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {

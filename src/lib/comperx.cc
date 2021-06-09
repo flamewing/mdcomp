@@ -70,9 +70,6 @@ class comperx_internal {
         constexpr static size_t const SearchBufSize = 256;
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 255;
-        // Total size of the sliding window.
-        constexpr static size_t const SlidingWindowSize
-                = SearchBufSize + LookAheadBufSize;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
