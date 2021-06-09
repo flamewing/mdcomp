@@ -40,6 +40,7 @@ jobs:
         if: ${{ env.REPO_ALIVE == 'true' }}
         uses: actions/checkout@master
       - name: Configure
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles'
       - name: Build
