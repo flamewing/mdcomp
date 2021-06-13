@@ -46,81 +46,81 @@
 	moveq	#-1,d5
 	lea	(a1),a5
 	_Kos_RunBitStream
-  if _Kos_ExtremeUnrolling==1
-	_Kos_ReadBit
-	bcs.w	.Code_01
+	if _Kos_ExtremeUnrolling==1
+		_Kos_ReadBit
+		bcs.w	.Code_01
 
-	; Code 00 (Dictionary ref. short).
-	_Kos_RunBitStream
-	_Kos_ReadBit
-	bcs.s	.Copy45
-	_Kos_RunBitStream
-	_Kos_ReadBit
-	bcs.s	.Copy3
-	_Kos_RunBitStream
-	move.b	(a0)+,d5				; d5 = displacement.
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.s	.FetchNewCode
-; ---------------------------------------------------------------------------
+		; Code 00 (Dictionary ref. short).
+		_Kos_RunBitStream
+		_Kos_ReadBit
+		bcs.s	.Copy45
+		_Kos_RunBitStream
+		_Kos_ReadBit
+		bcs.s	.Copy3
+		_Kos_RunBitStream
+		move.b	(a0)+,d5				; d5 = displacement.
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		bra.s	.FetchNewCode
+	; ---------------------------------------------------------------------------
 .Copy3:
-	_Kos_RunBitStream
-	move.b	(a0)+,d5				; d5 = displacement.
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.w	.FetchNewCode
+		_Kos_RunBitStream
+		move.b	(a0)+,d5				; d5 = displacement.
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
 .Copy45:
-	_Kos_RunBitStream
-	_Kos_ReadBit
-	bcs.s	.Copy5
-	_Kos_RunBitStream
-	move.b	(a0)+,d5				; d5 = displacement.
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.w	.FetchNewCode
+		_Kos_RunBitStream
+		_Kos_ReadBit
+		bcs.s	.Copy5
+		_Kos_RunBitStream
+		move.b	(a0)+,d5				; d5 = displacement.
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
 .Copy5:
-	_Kos_RunBitStream
-	move.b	(a0)+,d5				; d5 = displacement.
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	move.b	(a5)+,(a1)+
-	bra.w	.FetchNewCode
+		_Kos_RunBitStream
+		move.b	(a0)+,d5				; d5 = displacement.
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		move.b	(a5)+,(a1)+
+		bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
-  else
-	moveq	#0,d4					; d4 will contain copy count.
-	_Kos_ReadBit
-	bcs.s	.Code_01
+	else
+		moveq	#0,d4					; d4 will contain copy count.
+		_Kos_ReadBit
+		bcs.s	.Code_01
 
-	; Code 00 (Dictionary ref. short).
-	_Kos_RunBitStream
-	_Kos_ReadBit
-	addx.w	d4,d4
-	_Kos_RunBitStream
-	_Kos_ReadBit
-	addx.w	d4,d4
-	_Kos_RunBitStream
-	move.b	(a0)+,d5				; d5 = displacement.
+		; Code 00 (Dictionary ref. short).
+		_Kos_RunBitStream
+		_Kos_ReadBit
+		addx.w	d4,d4
+		_Kos_RunBitStream
+		_Kos_ReadBit
+		addx.w	d4,d4
+		_Kos_RunBitStream
+		move.b	(a0)+,d5				; d5 = displacement.
 
 .StreamCopy:
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+				; Do 1 extra copy (to compensate +1 to copy counter).
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+				; Do 1 extra copy (to compensate +1 to copy counter).
 
 .copy:
-	move.b	(a5)+,(a1)+
-	dbra	d4,.copy
-	bra.w	.FetchNewCode
-  endif
+		move.b	(a5)+,(a1)+
+		dbra	d4,.copy
+		bra.w	.FetchNewCode
+	endif
 ; ---------------------------------------------------------------------------
 .Code_01:
 	moveq	#0,d4					; d4 will contain copy count.
@@ -162,24 +162,24 @@
 	dbra	d4,.largecopy
 	bra.w	.FetchNewCode
 ; ---------------------------------------------------------------------------
-  if _Kos_ExtremeUnrolling==1
+	if _Kos_ExtremeUnrolling==1
 .StreamCopy:
-	adda.w	d5,a5
-	move.b	(a5)+,(a1)+				; Do 1 extra copy (to compensate +1 to copy counter).
-	if _Kos_LoopUnroll==3
-		eor.w	d7,d4
-	else
-		eori.w	#7,d4
-	endif
-	add.w	d4,d4
-	jmp	.mediumcopy(pc,d4.w)
+		adda.w	d5,a5
+		move.b	(a5)+,(a1)+				; Do 1 extra copy (to compensate +1 to copy counter).
+		if _Kos_LoopUnroll==3
+			eor.w	d7,d4
+		else
+			eori.w	#7,d4
+		endif
+		add.w	d4,d4
+		jmp	.mediumcopy(pc,d4.w)
 ; ---------------------------------------------------------------------------
 .mediumcopy:
-	rept 8
-		move.b	(a5)+,(a1)+
-	endm
-	bra.w	.FetchNewCode
-  endif
+		rept 8
+			move.b	(a5)+,(a1)+
+		endm
+		bra.w	.FetchNewCode
+	endif
 ; ---------------------------------------------------------------------------
 .Quit:
 ; ===========================================================================
