@@ -32,30 +32,30 @@ jobs:
             fi
           fi
       - name: Install dependencies
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           sudo apt-fast update
           sudo apt-fast install -y libboost-all-dev
       - name: Download Coverity Build Tool
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           wget -q https://scan.coverity.com/download/Linux --post-data "token=$TOKEN&project=$PROJ" -O /tmp/cov-analysis-linux64.tar.gz
           mkdir /tmp/cov-analysis-linux64
           tar xzf /tmp/cov-analysis-linux64.tar.gz --strip 1 -C /tmp/cov-analysis-linux64
       - name: Checkout code
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         uses: actions/checkout@master
       - name: Configure
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           cmake -S . -B build -G 'Unix Makefiles'
       - name: Build with cov-build
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           export PATH=/tmp/cov-analysis-linux64/bin:$PATH
           cov-build --dir cov-int cmake --build build -j2
       - name: Submit the result to Coverity Scan
-        if: ${{ env.REPO_ALIVE == 'true' }} == 'true'
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           tar czvf $FILE cov-int
           curl \
