@@ -256,13 +256,23 @@ set_target_properties(dummy-mdcomp
         POSITION_INDEPENDENT_CODE ON
 )
 
-function(define_lib TARGETNAME SRCFILE HDRFILE)
-    add_library(${TARGETNAME}
-        SHARED
-            "${SRCFILE}"
-            "${HDRFILE}"
-            "${COMMON_HEADERS}"
-    )
+function(define_lib_internal TARGETNAME SRCFILE HDRFILE TYPE OUTPUT)
+    if(TYPE MATCHES "STATIC")
+        add_library(${TARGETNAME}
+            STATIC
+                "${SRCFILE}"
+                "${HDRFILE}"
+                "${COMMON_HEADERS}"
+        )
+        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME ${OUTPUT})
+    else()
+        add_library(${TARGETNAME}
+            SHARED
+                "${SRCFILE}"
+                "${HDRFILE}"
+                "${COMMON_HEADERS}"
+        )
+    endif()
     add_library(mdcomp::${TARGETNAME} ALIAS ${TARGETNAME})
     target_include_directories(${TARGETNAME}
         PUBLIC
@@ -280,6 +290,23 @@ function(define_lib TARGETNAME SRCFILE HDRFILE)
             CXX_EXTENSIONS NO
             POSITION_INDEPENDENT_CODE ON
             PUBLIC_HEADER "${HDRFILE};${COMMON_HEADERS}"
+    )
+endfunction()
+
+function(define_lib TARGETNAME SRCFILE HDRFILE)
+    define_lib_internal("${TARGETNAME}Static"
+        "${SRCFILE}"
+        "${HDRFILE}"
+        "${COMMON_HEADERS}"
+        "STATIC"
+        "${TARGETNAME}"
+    )
+    define_lib_internal("${TARGETNAME}"
+        "${SRCFILE}"
+        "${HDRFILE}"
+        "${COMMON_HEADERS}"
+        "SHARED"
+        ${TARGETNAME}
     )
 endfunction()
 
@@ -337,16 +364,27 @@ install(
     TARGETS
         bigendian_io
         artc42
+        artc42Static
         comper
+        comperStatic
         comperx
+        comperxStatic
         enigma
+        enigmaStatic
         kosinski
+        kosinskiStatic
         kosplus
+        kosplusStatic
         lzkn1
+        lzkn1Static
         nemesis
+        nemesisStatic
         rocket
+        rocketStatic
         saxman
+        saxmanStatic
         snkrle
+        snkrleStatic
         compercmp
         comperxcmp
         enigmacmp
@@ -375,16 +413,27 @@ export(
     TARGETS
         bigendian_io
         artc42
+        artc42Static
         comper
+        comperStatic
         comperx
+        comperxStatic
         enigma
+        enigmaStatic
         kosinski
+        kosinskiStatic
         kosplus
+        kosplusStatic
         lzkn1
+        lzkn1Static
         nemesis
+        nemesisStatic
         rocket
+        rocketStatic
         saxman
+        saxmanStatic
         snkrle
+        snkrleStatic
     NAMESPACE
         mdcomp::
     FILE
