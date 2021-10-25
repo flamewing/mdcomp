@@ -256,8 +256,8 @@ set_target_properties(dummy-mdcomp
         POSITION_INDEPENDENT_CODE ON
 )
 
-function(define_lib_internal TARGETNAME SRCFILE HDRFILE TYPE OUTPUT)
-    if(TYPE MATCHES "STATIC")
+function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
+    if("${TYPE}" STREQUAL "STATIC")
         add_library(${TARGETNAME}
             STATIC
                 "${SRCFILE}"
@@ -294,19 +294,21 @@ function(define_lib_internal TARGETNAME SRCFILE HDRFILE TYPE OUTPUT)
 endfunction()
 
 function(define_lib TARGETNAME SRCFILE HDRFILE)
-    define_lib_internal("${TARGETNAME}Static"
-        "${SRCFILE}"
-        "${HDRFILE}"
-        "${COMMON_HEADERS}"
+    define_lib_internal(
         "STATIC"
+        "${TARGETNAME}Static"
         "${TARGETNAME}"
-    )
-    define_lib_internal("${TARGETNAME}"
         "${SRCFILE}"
         "${HDRFILE}"
         "${COMMON_HEADERS}"
+    )
+    define_lib_internal(
         "SHARED"
-        ${TARGETNAME}
+        "${TARGETNAME}"
+        "${TARGETNAME}"
+        "${SRCFILE}"
+        "${HDRFILE}"
+        "${COMMON_HEADERS}"
     )
 endfunction()
 
