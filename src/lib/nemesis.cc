@@ -64,11 +64,6 @@ public:
     // Constructors.
     nibble_run() noexcept = default;
     nibble_run(uint8_t n, uint8_t c) noexcept : nibble(n), count(c) {}
-    nibble_run(nibble_run const& other) noexcept = default;
-    nibble_run(nibble_run&& other) noexcept      = default;
-    nibble_run& operator=(nibble_run const& other) noexcept = default;
-    nibble_run& operator=(nibble_run&& other) noexcept = default;
-    ~nibble_run() noexcept                             = default;
     // Sorting operator.
     bool operator<(nibble_run const& other) const noexcept {
         return (nibble < other.nibble)
@@ -107,11 +102,6 @@ struct SizeFreqNibble {
             size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
             : count(cnt), nibble(nib), codelen(len) {}
     SizeFreqNibble() noexcept                            = default;
-    SizeFreqNibble(SizeFreqNibble const& other) noexcept = default;
-    SizeFreqNibble(SizeFreqNibble&& other) noexcept      = default;
-    SizeFreqNibble& operator=(SizeFreqNibble const& other) noexcept = default;
-    SizeFreqNibble& operator=(SizeFreqNibble&& other) noexcept = default;
-    ~SizeFreqNibble() noexcept                                 = default;
 };
 
 struct Code {
@@ -122,11 +112,6 @@ struct Code {
     }
     Code(size_t const c, uint8_t const l) noexcept : code(c), len(l) {}
     Code() noexcept                  = default;
-    Code(Code const& other) noexcept = default;
-    Code(Code&& other) noexcept      = default;
-    Code& operator=(Code const& other) noexcept = default;
-    Code& operator=(Code&& other) noexcept = default;
-    ~Code() noexcept                       = default;
 };
 
 using CodeSizeMap   = map<nibble_run, uint8_t>;

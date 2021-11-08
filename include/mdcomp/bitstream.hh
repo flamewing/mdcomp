@@ -131,12 +131,6 @@ private:
 public:
     explicit ibitstream(std::istream& s) noexcept
             : src(s), readbits(sizeof(T) * CHAR_BIT), bitbuffer(read_bits()) {}
-    ibitstream(ibitstream const&)     = delete;
-    ibitstream(ibitstream&&) noexcept = delete;
-    ibitstream& operator=(ibitstream const&) = delete;
-    ibitstream& operator=(ibitstream&&) noexcept = delete;
-    // Destructor.
-    ~ibitstream() noexcept = default;
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
@@ -202,12 +196,6 @@ private:
 public:
     explicit obitstream(std::ostream& d) noexcept
             : dst(d), waitingbits(0), bitbuffer(0) {}
-    obitstream(obitstream const&)     = delete;
-    obitstream(obitstream&&) noexcept = delete;
-    obitstream& operator=(obitstream const&) = delete;
-    obitstream& operator=(obitstream&&) noexcept = delete;
-    // Destructor.
-    ~obitstream() noexcept = default;
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.

@@ -70,7 +70,6 @@ private:
 
 public:
     // Constructors.
-    ~AdjListNode() noexcept = default;
     constexpr AdjListNode() noexcept
             : type(EdgeType::invalid), symbol(stream_t(0)) {}
     constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
@@ -78,10 +77,6 @@ public:
     constexpr AdjListNode(
             size_t pos, size_t dist, size_t len, EdgeType ty) noexcept
             : currpos(pos), type(ty), match({dist, len}) {}
-    constexpr AdjListNode(AdjListNode const&) noexcept = default;
-    constexpr AdjListNode(AdjListNode&&) noexcept      = default;
-    constexpr AdjListNode& operator=(AdjListNode const&) noexcept = default;
-    constexpr AdjListNode& operator=(AdjListNode&&) noexcept = default;
     // Getters.
     constexpr size_t get_pos() const noexcept {
         return currpos;
@@ -125,12 +120,6 @@ public:
               ubound(std::min(labuflen + basenode, nlen)),
               lbound(basenode > srchbufsize ? basenode - srchbufsize : 0),
               type(ty) {}
-    SlidingWindow(SlidingWindow const&)     = default;
-    SlidingWindow(SlidingWindow&&) noexcept = default;
-    SlidingWindow& operator=(SlidingWindow const&) = default;
-    SlidingWindow& operator=(SlidingWindow&&) noexcept = default;
-    // Destructor.
-    ~SlidingWindow() noexcept = default;
 
     size_t getDataSize() const {
         return nlen;
