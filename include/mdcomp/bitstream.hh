@@ -130,9 +130,7 @@ private:
 
 public:
     explicit ibitstream(std::istream& s) noexcept
-            : src(s), readbits(sizeof(T) * CHAR_BIT) {
-        bitbuffer = read_bits();
-    }
+            : src(s), readbits(sizeof(T) * CHAR_BIT), bitbuffer(read_bits()) {}
     ibitstream(ibitstream const&)     = delete;
     ibitstream(ibitstream&&) noexcept = delete;
     ibitstream& operator=(ibitstream const&) = delete;

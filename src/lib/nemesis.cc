@@ -141,26 +141,15 @@ class node : public enable_shared_from_this<node> {
 private:
     shared_ptr<node> child0, child1;
     size_t           weight;
-    nibble_run       value;
+    nibble_run       value{0, 0};
 
 public:
     // Construct a new leaf node for character c.
     node(nibble_run const& val, size_t const wgt) noexcept
             : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
-    node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept {
-        value  = nibble_run{0, 0};
-        weight = c0->weight + c1->weight;
-        child0 = c0;
-        child1 = c1;
-    }
-    node(node const& other) noexcept = default;
-    node(node&& other) noexcept      = default;
-    node& operator=(node const& other) noexcept = default;
-    node& operator=(node&& other) noexcept = default;
-    ~node() noexcept {
-        child0.reset();
-        child1.reset();
+    node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept
+            : child0(c0), child1(c1), weight(c0->weight + c1->weight) {
     }
     // Free the memory used by the child nodes.
     void prune() noexcept {
@@ -282,8 +271,8 @@ struct Compare_node2 {
             }
             return lhs->get_value().get_count() > rhs->get_value().get_count();
         }
-        nibble_run const lnib = lhs->get_value();
-        nibble_run const rnib = rhs->get_value();
+        nibble_run const left_nibble  = lhs->get_value();
+        nibble_run const right_nibble = rhs->get_value();
 
         auto get_len = [&](shared_ptr<node> const& node, nibble_run nib) {
             auto const it = codemap.find(nib);
@@ -294,24 +283,26 @@ struct Compare_node2 {
             return (bitcnt & 0x7fU) * node->get_weight() + 16;
         };
 
-        size_t const lclen = get_len(lhs, lnib);
-        size_t const rclen = get_len(rhs, rnib);
-        if (lclen > rclen) {
+        size_t const left_code_length  = get_len(lhs, left_nibble);
+        size_t const right_code_length = get_len(rhs, right_nibble);
+        if (left_code_length > right_code_length) {
             return true;
         }
-        if (lclen < rclen) {
+        if (left_code_length < right_code_length) {
             return false;
         }
 
-        size_t const lblen = (lnib.get_count() + 1) * lhs->get_weight();
-        size_t const rblen = (rnib.get_count() + 1) * rhs->get_weight();
-        if (lblen < rblen) {
+        size_t const left_weighted_count
+                = (left_nibble.get_count() + 1) * lhs->get_weight();
+        size_t const right_weighted_count
+                = (right_nibble.get_count() + 1) * rhs->get_weight();
+        if (left_weighted_count < right_weighted_count) {
             return true;
         }
-        if (lblen > rblen) {
+        if (left_weighted_count > right_weighted_count) {
             return false;
         }
-        return lnib.get_count() < rnib.get_count();
+        return left_nibble.get_count() < right_nibble.get_count();
     }
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
@@ -352,9 +343,9 @@ public:
         }
     }
 
-    static void
-            decode(std::istream& Src, std::ostream& Dst, CodeNibbleMap& codemap,
-                   size_t const rtiles, bool const alt_out = false) {
+    static void decode(
+            std::istream& Src, std::ostream& Dst, CodeNibbleMap& codemap,
+            size_t const rtiles, bool const alt_out = false) {
         // This buffer is used for alternating mode decoding.
         stringstream dst(ios::in | ios::out | ios::binary);
 
@@ -530,22 +521,22 @@ public:
                     // constraints. If the number of repeats of the current
                     // nibble run is N, then we have N dimensions.
                     // Here are some hard-coded tables, obtained by brute-force:
-                    constexpr static Matrix<2, 2> const linear_coeffs2{
+                    constexpr static Matrix<2, 2> const linear_coefficients2{
                             Row<2>{3, 0}, Row<2>{1, 1}};
-                    constexpr static Matrix<4, 3> const linear_coeffs3{
+                    constexpr static Matrix<4, 3> const linear_coefficients3{
                             Row<3>{4, 0, 0}, Row<3>{2, 1, 0}, Row<3>{1, 0, 1},
                             Row<3>{0, 2, 0}};
-                    constexpr static Matrix<6, 4> const linear_coeffs4{
+                    constexpr static Matrix<6, 4> const linear_coefficients4{
                             Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0},
                             Row<4>{2, 0, 1, 0}, Row<4>{1, 2, 0, 0},
                             Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
-                    constexpr static Matrix<10, 5> const linear_coeffs5{
+                    constexpr static Matrix<10, 5> const linear_coefficients5{
                             Row<5>{6, 0, 0, 0, 0}, Row<5>{4, 1, 0, 0, 0},
                             Row<5>{3, 0, 1, 0, 0}, Row<5>{2, 2, 0, 0, 0},
                             Row<5>{2, 0, 0, 1, 0}, Row<5>{1, 1, 1, 0, 0},
                             Row<5>{1, 0, 0, 0, 1}, Row<5>{0, 3, 0, 0, 0},
                             Row<5>{0, 1, 0, 1, 0}, Row<5>{0, 0, 2, 0, 0}};
-                    constexpr static Matrix<14, 6> const linear_coeffs6{
+                    constexpr static Matrix<14, 6> const linear_coefficients6{
                             Row<6>{7, 0, 0, 0, 0, 0}, Row<6>{5, 1, 0, 0, 0, 0},
                             Row<6>{4, 0, 1, 0, 0, 0}, Row<6>{3, 2, 0, 0, 0, 0},
                             Row<6>{3, 0, 0, 1, 0, 0}, Row<6>{2, 1, 1, 0, 0, 0},
@@ -553,7 +544,7 @@ public:
                             Row<6>{1, 1, 0, 1, 0, 0}, Row<6>{1, 0, 2, 0, 0, 0},
                             Row<6>{1, 0, 0, 0, 0, 1}, Row<6>{0, 2, 1, 0, 0, 0},
                             Row<6>{0, 1, 0, 0, 1, 0}, Row<6>{0, 0, 1, 1, 0, 0}};
-                    constexpr static Matrix<21, 7> const linear_coeffs7{
+                    constexpr static Matrix<21, 7> const linear_coefficients7{
                             Row<7>{8, 0, 0, 0, 0, 0, 0},
                             Row<7>{6, 1, 0, 0, 0, 0, 0},
                             Row<7>{5, 0, 1, 0, 0, 0, 0},
@@ -578,34 +569,34 @@ public:
                     size_t const n = count.first.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
-                    size_t const* linear_coeffs;
+                    size_t const* linear_coefficients;
                     size_t        rows;
                     // Get correct coefficient table:
                     switch (n) {
                     case 2:
-                        linear_coeffs = &linear_coeffs2[0][0];
-                        rows          = linear_coeffs2.size();
+                        linear_coefficients = &linear_coefficients2[0][0];
+                        rows                = linear_coefficients2.size();
                         break;
                     case 3:
-                        linear_coeffs = &linear_coeffs3[0][0];
-                        rows          = linear_coeffs3.size();
+                        linear_coefficients = &linear_coefficients3[0][0];
+                        rows                = linear_coefficients3.size();
                         break;
                     case 4:
-                        linear_coeffs = &linear_coeffs4[0][0];
-                        rows          = linear_coeffs4.size();
+                        linear_coefficients = &linear_coefficients4[0][0];
+                        rows                = linear_coefficients4.size();
                         break;
                     case 5:
-                        linear_coeffs = &linear_coeffs5[0][0];
-                        rows          = linear_coeffs5.size();
+                        linear_coefficients = &linear_coefficients5[0][0];
+                        rows                = linear_coefficients5.size();
                         break;
                     case 6:
-                        linear_coeffs = &linear_coeffs6[0][0];
-                        rows          = linear_coeffs6.size();
+                        linear_coefficients = &linear_coefficients6[0][0];
+                        rows                = linear_coefficients6.size();
                         break;
                     case 7:
                     default:
-                        linear_coeffs = &linear_coeffs7[0][0];
-                        rows          = linear_coeffs7.size();
+                        linear_coefficients = &linear_coefficients7[0][0];
+                        rows                = linear_coefficients7.size();
                         break;
                     }
 
@@ -639,7 +630,7 @@ public:
                         // Tally up the code length for this coefficient line.
                         size_t len = 0;
                         for (size_t j = 0; j < n; j++) {
-                            size_t const c = linear_coeffs[base + j];
+                            size_t const c = linear_coefficients[base + j];
                             if (c == 0U) {
                                 continue;
                             }
@@ -660,7 +651,7 @@ public:
                         size_t code = 0;
                         size_t len  = 0;
                         for (size_t i = 0; i < n; i++) {
-                            size_t const c = linear_coeffs[best_line + i];
+                            size_t const c = linear_coefficients[best_line + i];
                             if (c == 0U) {
                                 continue;
                             }
@@ -705,9 +696,9 @@ public:
     }
 
     template <typename Compare>
-    static size_t
-            encode(istream& Src, ostream& Dst, size_t mode, size_t const sz,
-                   Compare const& comp) {
+    static size_t encode(
+            istream& Src, ostream& Dst, size_t mode, size_t const sz,
+            Compare const& comp) {
         // Seek to start and clear all errors.
         Src.clear();
         Src.seekg(0);
@@ -1045,11 +1036,11 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
             nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2())};
 
     // Figure out what was the best encoding.
-    size_t bestsz     = numeric_limits<size_t>::max();
+    size_t best_size  = numeric_limits<size_t>::max();
     size_t beststream = 0;
     for (size_t ii = 0; ii < sizes.size(); ii++) {
-        if (sizes[ii] < bestsz) {
-            bestsz     = sizes[ii];
+        if (sizes[ii] < best_size) {
+            best_size  = sizes[ii];
             beststream = ii;
         }
     }
