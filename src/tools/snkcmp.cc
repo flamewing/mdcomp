@@ -42,7 +42,7 @@ static void usage(char* prog) {
     cerr << "\t-c,--crunch \tAssume input file is SNK-RLE-compressed and "
             "recompress to output file."
          << endl
-         << "\t            \tIf --chunch is in effect, a missing "
+         << "\t            \tIf --crunch is in effect, a missing "
             "output_filename means recompress"
          << endl
          << "\t            \tto input_filename." << endl

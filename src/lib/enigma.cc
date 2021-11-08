@@ -296,7 +296,7 @@ public:
         // No longer needed.
         counts.clear();
 
-        // Find incrementing (not neccessarily contiguous) runs.
+        // Find incrementing (not necessarily contiguous) runs.
         // The original algorithm does this for all 65536 2-byte words, while
         // this version only checks the 2-byte words actually in the file.
         map<uint16_t, size_t> runs;
