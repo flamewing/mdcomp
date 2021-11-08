@@ -98,7 +98,6 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
 
     while (FullSize > ModuleSize) {
         // We want to manage internal padding for all modules but the last.
-        // NOLINTNEXTLINE(clang-diagnostic-undefined-var-template)
         PadMaskBits = 8 * ModulePadding - 1U;
         Format::encode(sout, &(*ptr), ModuleSize);
         FullSize -= ModuleSize;
