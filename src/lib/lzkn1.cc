@@ -180,7 +180,7 @@ public:
                     size_t Count    = 0U;
                     size_t distance = 0U;
 
-                    if (long_match == true) {
+                    if (long_match) {
                         // Long dictionary match.
                         size_t High = Data;
                         size_t Low  = src.getbyte();

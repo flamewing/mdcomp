@@ -139,8 +139,8 @@ public:
                     break;
                 }
 
-                size_t const distance = raw_dist ? (0x100 - raw_dist + 1) * 2 : 2;
-                size_t const length = (0x100 - ((raw_len & 0x7F) << 1)) + ((raw_len & 0x80) >> 7);
+                size_t const distance = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
+                size_t const length = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
 
                 for (size_t i = 0; i < length; i++) {
                     size_t const Pointer = Dst.tellp();
@@ -179,7 +179,7 @@ public:
 
                 out.descbit(1);
                 out.putbyte(-dist+1);
-                out.putbyte((0x7F - ((len - 2) >> 1)) | ((len & 1) << 7));
+                out.putbyte((0x7FU - ((len - 2U) >> 1U)) | ((len & 1U) << 7U));
                 break;
             }
             case EdgeType::invalid:
