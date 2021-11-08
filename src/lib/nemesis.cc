@@ -463,7 +463,7 @@ public:
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
-        size_t tempsize_est = 3 * 8;
+        size_t tempsize_est = size_t(3) * 8;
         size_t last         = 0xff;
         // Start with any nibble runs with their own code.
         for (auto& elem : tempcodemap) {
@@ -475,7 +475,7 @@ public:
                 last = elem.first.get_nibble();
             }
             // 2 bytes per nibble run in the table.
-            tempsize_est += 2 * 8;
+            tempsize_est += size_t(2 * 8);
             // How many bits this nibble run uses in the file.
             tempsize_est += counts[elem.first] * (elem.second).len;
         }

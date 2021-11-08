@@ -56,7 +56,7 @@ class comperx_internal {
         // marker sequence.
         constexpr static size_t const NumTermBits = 1;
         // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight = NumTermBits + 2 * 8;
+        constexpr static size_t const TerminatorWeight = NumTermBits + size_t(2) * 8;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
