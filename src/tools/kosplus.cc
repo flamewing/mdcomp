@@ -71,13 +71,13 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         int option_index = 0;
-        int c            = getopt_long(
-                argc, argv, "x::mc", long_options.data(), &option_index);
-        if (c == -1) {
+        int option_char  = getopt_long(
+                 argc, argv, "x::mc", long_options.data(), &option_index);
+        if (option_char == -1) {
             break;
         }
 
-        switch (c) {
+        switch (option_char) {
         case 'x':
             extract = true;
             if (optarg != nullptr) {

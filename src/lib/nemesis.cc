@@ -101,7 +101,7 @@ struct SizeFreqNibble {
     SizeFreqNibble(
             size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
             : count(cnt), nibble(nib), codelen(len) {}
-    SizeFreqNibble() noexcept                            = default;
+    SizeFreqNibble() noexcept = default;
 };
 
 struct Code {
@@ -111,7 +111,7 @@ struct Code {
         return code < rhs.code || (code == rhs.code && len < rhs.len);
     }
     Code(size_t const c, uint8_t const l) noexcept : code(c), len(l) {}
-    Code() noexcept                  = default;
+    Code() noexcept = default;
 };
 
 using CodeSizeMap   = map<nibble_run, uint8_t>;
@@ -134,8 +134,7 @@ public:
             : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
     node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept
-            : child0(c0), child1(c1), weight(c0->weight + c1->weight) {
-    }
+            : child0(c0), child1(c1), weight(c0->weight + c1->weight) {}
     // Free the memory used by the child nodes.
     void prune() noexcept {
         child0.reset();

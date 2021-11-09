@@ -62,7 +62,8 @@ class kosplus_internal {
         // marker sequence.
         constexpr static size_t const NumTermBits = 2;
         // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight = NumTermBits + size_t(3) * 8;
+        constexpr static size_t const TerminatorWeight
+                = NumTermBits + size_t(3) * 8;
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = false;

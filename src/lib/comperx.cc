@@ -56,7 +56,8 @@ class comperx_internal {
         // marker sequence.
         constexpr static size_t const NumTermBits = 1;
         // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight = NumTermBits + size_t(2) * 8;
+        constexpr static size_t const TerminatorWeight
+                = NumTermBits + size_t(2) * 8;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
@@ -133,14 +134,16 @@ public:
                 // Dictionary match.
                 // Distance and length of match.
                 uint8_t raw_dist = src.getbyte();
-                uint8_t raw_len = src.getbyte();
+                uint8_t raw_len  = src.getbyte();
 
-                if (raw_len == 0) {     /* Stop processing */
+                if (raw_len == 0) { /* Stop processing */
                     break;
                 }
 
-                size_t const distance = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
-                size_t const length = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
+                size_t const distance
+                        = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
+                size_t const length = (0x100 - ((raw_len & 0x7FU) << 1U))
+                                      + ((raw_len & 0x80U) >> 7U);
 
                 for (size_t i = 0; i < length; i++) {
                     size_t const Pointer = Dst.tellp();
@@ -158,7 +161,7 @@ public:
         using CompOStream = LZSSOStream<ComperXAdaptor>;
 
         // Compute optimal Comper parsing of input file.
-        auto        list = find_optimal_lzss_parse(Data, Size, ComperXAdaptor{});
+        auto list = find_optimal_lzss_parse(Data, Size, ComperXAdaptor{});
         CompOStream out(Dst);
 
         // Go through each edge in the optimal path.
@@ -178,7 +181,7 @@ public:
                 size_t const dist = edge.get_distance();
 
                 out.descbit(1);
-                out.putbyte(-dist+1);
+                out.putbyte(-dist + 1);
                 out.putbyte((0x7FU - ((len - 2U) >> 1U)) | ((len & 1U) << 7U));
                 break;
             }
