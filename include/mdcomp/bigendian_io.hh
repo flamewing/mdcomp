@@ -407,6 +407,34 @@ namespace detail {
             Base::Read(in, val);
         }
 
+        template <typename Src, typename T>
+        static inline auto Read(Src& in, T& val) noexcept
+                -> std::enable_if_t<std::is_signed<T>::value, void> {
+            using uint_t = std::make_unsigned_t<T>;
+            uint_t uval;
+            Base::Read(in, uval);
+            std::memcpy(&val, &uval, sizeof(T));
+        }
+
+        template <typename T, typename Src>
+        static inline auto Read(Src& in) noexcept
+                -> std::enable_if_t<std::is_unsigned<T>::value, T> {
+            T val;
+            Base::Read(in, val);
+            return val;
+        }
+
+        template <typename T, typename Src>
+        static inline auto Read(Src& in) noexcept
+                -> std::enable_if_t<std::is_signed<T>::value, T> {
+            using uint_t = std::make_unsigned_t<T>;
+            uint_t uval;
+            Base::Read(in, uval);
+            T val;
+            std::memcpy(&val, &uval, sizeof(T));
+            return val;
+        }
+
         template <typename Dst>
         static inline void Write1(Dst& out, uint8_t val) noexcept {
             Base::Write(out, val);
