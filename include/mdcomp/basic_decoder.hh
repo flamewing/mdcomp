@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
-#ifndef __LIB_BASIC_DECODER_H
-#define __LIB_BASIC_DECODER_H
+#ifndef LIB_BASIC_DECODER_H
+#define LIB_BASIC_DECODER_H
 
 #include <mdcomp/bigendian_io.hh>
 
@@ -74,4 +74,4 @@ void BasicDecoder<Format, Pad, Args...>::extract(
     Dst.seekg(0);
 }
 
-#endif    // __LIB_MODULED_ADAPTOR_H
+#endif    // LIB_MODULED_ADAPTOR_H
