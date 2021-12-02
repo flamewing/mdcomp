@@ -355,6 +355,22 @@ define_exe(rocketcmp   "src/tools/rockcmp.cc"  rocket   rockcmp)
 define_exe(saxmancmp   "src/tools/saxcmp.cc"   saxman   saxcmp)
 define_exe(snkrlecmp   "src/tools/snkcmp.cc"   snkrle   snkcmp)
 
+file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
+
+add_custom_target(
+    clang-format
+    COMMAND clang-format
+    -style=file
+    -i
+    ${ALL_SOURCE_FILES}
+)
+
+add_custom_target(
+    clang-tidy
+    COMMAND clang-tidy --use-color
+    ${ALL_SOURCE_FILES}
+)
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     mdcompConfigVersion.cmake
