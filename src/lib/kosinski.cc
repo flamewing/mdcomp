@@ -51,6 +51,7 @@ class kosinski_internal {
         using SlidingWindow_t     = SlidingWindow<KosinskiAdaptor>;
         enum class EdgeType : size_t {
             invalid,
+            terminator,
             symbolwise,
             dictionary_inline,
             dictionary_short,
@@ -58,12 +59,6 @@ class kosinski_internal {
         };
         // Number of bits on descriptor bitfield.
         constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-        // Number of bits used in descriptor bitfield to signal the end-of-file
-        // marker sequence.
-        constexpr static size_t const NumTermBits = 2;
-        // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight
-                = NumTermBits + size_t(3) * 8;
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = true;
@@ -101,6 +96,7 @@ class kosinski_internal {
                 return 2 + 2;
             case EdgeType::dictionary_short:
             case EdgeType::dictionary_long:
+            case EdgeType::terminator:
                 // 2-bit descriptor.
                 return 2;
             case EdgeType::invalid:
@@ -126,6 +122,9 @@ class kosinski_internal {
                 // 13-bit distance, 3-bit marker (zero),
                 // 8-bit length.
                 return desc_bits(type) + 13 + 8 + 3;
+            case EdgeType::terminator:
+                // 24-bit value.
+                return desc_bits(type) + 24;
             case EdgeType::invalid:
                 return numeric_limits<size_t>::max();
             }
@@ -252,6 +251,16 @@ public:
                 }
                 break;
             }
+            case EdgeType::terminator: {
+                // Push descriptor for end-of-file marker.
+                out.descbit(0);
+                out.descbit(1);
+                // Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
+                out.putbyte(0x00);
+                out.putbyte(0xF0);
+                out.putbyte(0x00);
+                break;
+            }
             case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
@@ -259,15 +268,6 @@ public:
                 __builtin_unreachable();
             }
         }
-
-        // Push descriptor for end-of-file marker.
-        out.descbit(0);
-        out.descbit(1);
-
-        // Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
-        out.putbyte(0x00);
-        out.putbyte(0xF0);
-        out.putbyte(0x00);
     }
 };
 

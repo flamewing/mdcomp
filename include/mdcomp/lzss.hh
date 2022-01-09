@@ -46,6 +46,8 @@
  * in the [u, v) range (half-open) -- that is, node v is not part of the match.
  * Each node is a character in the file, and is represented by its position.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
 template <typename Adaptor>
 class AdjListNode {
 public:
@@ -88,20 +90,38 @@ public:
         return Adaptor::edge_weight(type, get_length());
     }
     constexpr size_t get_distance() const noexcept {
-        return type == EdgeType::symbolwise ? 0 : match.distance;
+        switch (type) {
+        case EdgeType::invalid:
+        case EdgeType::terminator:
+        case EdgeType::symbolwise:
+            return 0;
+        default:
+            return match.distance;
+        }
     }
     constexpr size_t get_length() const noexcept {
-        return type == EdgeType::symbolwise ? 1 : match.length;
+        switch (type) {
+        case EdgeType::invalid:
+        case EdgeType::terminator:
+        case EdgeType::symbolwise:
+            return 1;
+        default:
+            return match.length;
+        }
     }
     constexpr stream_t get_symbol() const noexcept {
-        return type == EdgeType::symbolwise
-                       ? symbol
-                       : std::numeric_limits<stream_t>::max();
+        switch (type) {
+        case EdgeType::symbolwise:
+            return symbol;
+        default:
+            return std::numeric_limits<stream_t>::max();
+        }
     }
     constexpr EdgeType get_type() const noexcept {
         return type;
     }
 };
+#pragma GCC diagnostic pop
 
 template <typename Adaptor>
 class SlidingWindow {
@@ -227,14 +247,10 @@ private:
  *    using descriptor_endian_t = LittleEndian;
  *    enum class EdgeType : size_t {
  *        invalid,
+ *        terminator,
  *        // other cases
  *    };
  *    constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
- *    // Number of bits used in descriptor bitfield to signal the end-of-file
- *    // marker sequence.
- *    constexpr static size_t const NumTermBits = 2;
- *    // Number of bits for end-of-file marker.
- *    constexpr static size_t const TerminatorWeight = NumTermBits + 3 * 8;
  *    // Flag that tells the compressor that new descriptor fields are needed
  *    // as soon as the last bit in the previous one is used up.
  *    constexpr static bool const NeedEarlyDescriptor = true;
@@ -296,7 +312,7 @@ auto find_optimal_lzss_parse(
     };
     assume(nlen >= Adaptor::FirstMatchPosition);
     size_t numNodes = nlen - Adaptor::FirstMatchPosition;
-    assume(nlen < std::numeric_limits<size_t>::max() - 1);
+    assume(numNodes <= std::numeric_limits<size_t>::max() - 1);
     // Auxiliary data structures:
     // * The parent of a node is the node that reaches that node with the
     //   lowest cost from the start of the file.
@@ -318,23 +334,23 @@ auto find_optimal_lzss_parse(
 
     // Extracting distance relax logic from the loop so it can be used more
     // often.
-    auto Relax = [nlen, &costs, &desccosts, &parents,
+    auto Relax = [lastnode = nlen, &costs, &desccosts, &parents,
                   &pedges](size_t ii, size_t const basedesc, const auto& elem) {
         // Need destination ID and edge weight.
         size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
         size_t       wgt      = costs[ii] + elem.get_weight();
         // Compute descriptor bits from using this edge.
         size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());
-        if (nextnode == nlen) {
+        if (nextnode == lastnode) {
             // This is the ending node. Add the descriptor bits for the
             // end-of-file marker.
-            wgt += Adaptor::TerminatorWeight;
-            desccost += Adaptor::NumTermBits;
+            wgt += Adaptor::edge_weight(EdgeType::terminator, 0);
+            desccost += Adaptor::desc_bits(EdgeType::terminator);
             // If the descriptor bitfield had exactly 0 bits left after
             // this, we may need to emit a new descriptor bitfield (the
             // full Adaptor::NumDescBits bits). Otherwise, we need to
-            // pads the last descriptor bitfield to full size. This line
-            // accomplishes both.
+            // pads the last descriptor bitfield to full size.
+            // This accomplishes both.
             size_t const descmod = desccost % Adaptor::NumDescBits;
             if (descmod != 0 || Adaptor::NeedEarlyDescriptor) {
                 wgt += (Adaptor::NumDescBits - descmod);
@@ -365,12 +381,11 @@ auto find_optimal_lzss_parse(
         size_t const basedesc = desccosts[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
-            const auto* ptr = reinterpret_cast<const uint8_t*>(
-                    data + ii + Adaptor::FirstMatchPosition);
-            const stream_t val = read_stream(ptr);
-            Relax(ii, basedesc,
-                  Node_t(ii + Adaptor::FirstMatchPosition, val,
-                         EdgeType::symbolwise));
+            const size_t offset = ii + Adaptor::FirstMatchPosition;
+            const auto*  ptr = reinterpret_cast<const uint8_t*>(data + offset);
+            const stream_t val  = read_stream(ptr);
+            const EdgeType type = EdgeType::symbolwise;
+            Relax(ii, basedesc, Node_t(offset, val, type));
         }
         // Get the adjacency list for this node.
         for (auto& win : winSet) {
@@ -387,7 +402,7 @@ auto find_optimal_lzss_parse(
     }
 
     // This is what we will produce.
-    AdjList parselist;
+    AdjList parselist{Node_t{0, 0, EdgeType::terminator}};
     for (size_t ii = numNodes; ii != 0;) {
         // Insert the edge up front...
         parselist.push_front(pedges[ii]);

@@ -103,6 +103,7 @@ PointerAlignment: Left
 PPIndentWidth:   -1
 ReferenceAlignment: Pointer
 ReflowComments:  true
+CommentPragmas:  '^\\.+'
 ShortNamespaceLines: 1
 SortIncludes:    CaseSensitive
 SortUsingDeclarations: true
