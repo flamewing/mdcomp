@@ -51,6 +51,7 @@ class lzkn1_internal {
         using SlidingWindow_t     = SlidingWindow<Lzkn1Adaptor>;
         enum class EdgeType : size_t {
             invalid,
+            terminator,
             symbolwise,
             dictionary_short,
             dictionary_long,
@@ -58,11 +59,6 @@ class lzkn1_internal {
         };
         // Number of bits on descriptor bitfield.
         constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-        // Number of bits used in descriptor bitfield to signal the end-of-file
-        // marker sequence.
-        constexpr static size_t const NumTermBits = 1;
-        // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight = NumTermBits + 8;
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = false;
@@ -98,6 +94,7 @@ class lzkn1_internal {
                 EdgeType const type, size_t length) noexcept {
             switch (type) {
             case EdgeType::symbolwise:
+            case EdgeType::terminator:
                 // 8-bit value.
                 return desc_bits(type) + 8;
             case EdgeType::dictionary_short:
@@ -260,6 +257,13 @@ public:
                 out.putbyte(low);
                 break;
             }
+            case EdgeType::terminator: {
+                // Push descriptor for end-of-file marker.
+                out.descbit(1);
+                // Write end-of-file marker.
+                out.putbyte(eof_marker);
+                break;
+            }
             case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
@@ -267,12 +271,6 @@ public:
                 __builtin_unreachable();
             }
         }
-
-        // Push descriptor for end-of-file marker.
-        out.descbit(1);
-
-        // Write end-of-file marker.
-        out.putbyte(eof_marker);
     }
 };
 

@@ -52,14 +52,14 @@ struct rocket_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<RocketAdaptor>;
-        enum class EdgeType : size_t { invalid, symbolwise, dictionary };
+        enum class EdgeType : size_t {
+            invalid,
+            terminator,
+            symbolwise,
+            dictionary
+        };
         // Number of bits on descriptor bitfield.
         constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
-        // Number of bits used in descriptor bitfield to signal the end-of-file
-        // marker sequence.
-        constexpr static size_t const NumTermBits = 0;
-        // Number of bits for end-of-file marker.
-        constexpr static size_t const TerminatorWeight = 0;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
@@ -84,8 +84,7 @@ struct rocket_internal {
         // field.
         constexpr static size_t desc_bits(EdgeType const type) noexcept {
             // Rocket always uses a single bit descriptor.
-            ignore_unused_variable_warning(type);
-            return 1;
+            return type == EdgeType::terminator ? 0 : 1;
         }
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
@@ -94,6 +93,9 @@ struct rocket_internal {
                 EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
+            case EdgeType::terminator:
+                // Does not have a terminator.
+                return 0;
             case EdgeType::symbolwise:
                 // 8-bit value.
                 return desc_bits(type) + 8;
@@ -198,6 +200,8 @@ public:
                 out.putbyte(pos);
                 break;
             }
+            case EdgeType::terminator:
+                break;
             case EdgeType::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
