@@ -23,6 +23,8 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
+#include <concepts>
 #include <cstring>
 #include <iostream>
 #include <iterator>
@@ -138,20 +140,25 @@ namespace detail {
         using type = T;
     };
 
-    // base case: just fail
-    template <size_t Size, typename...>
-    struct select_unsigned;
+    template <size_t Size>
+    constexpr inline auto select_unsigned() {
+        static_assert(std::has_single_bit(Size), "Size must be a power of 2");
+        static_assert(
+                Size > 0 && Size <= sizeof(uint64_t),
+                "Size must be between 1 and sizeof(uint64_t)");
+        if constexpr (Size == sizeof(uint8_t)) {
+            return uint8_t{};
+        } else if constexpr (Size == sizeof(uint16_t)) {
+            return uint16_t{};
+        } else if constexpr (Size == sizeof(uint32_t)) {
+            return uint32_t{};
+        } else {
+            return uint64_t{};
+        }
+    }
 
-    // recursive case: check using numeric_limits
-    template <size_t Size, typename T, typename... Ts>
-    struct select_unsigned<Size, T, Ts...>
-            : std::conditional_t<
-                      Size == sizeof(T), tag<T>, select_unsigned<Size, Ts...>> {
-    };
-
-    template <uint64_t Size>
-    using select_unsigned_t = typename select_unsigned<
-            Size, uint8_t, uint16_t, uint32_t, uint64_t>::type;
+    template <size_t Size>
+    using select_unsigned_t = decltype(select_unsigned<Size>());
 
 #ifdef __GNUG__
 #    define ATTR_CONST __attribute__((const))
@@ -209,28 +216,28 @@ namespace detail {
         // I am splitting these cases because MSVC compiler does not understand
         // memmove (which is called my std::copy which is called by
         // std::copy_n).
-        template <typename Ptr, typename T>
+        template <typename Ptr, std::unsigned_integral T>
         static inline auto ReadBase(Ptr& in, T& val) noexcept
                 -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
             std::memcpy(&val, in, sizeof(T));
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline auto ReadBase(Iter& in, T& val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             std::copy_n(in, sizeof(T), std::begin(buffer));
-            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
+            val = std::bit_cast<T>(buffer);
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline void ReadInternal(
                 Iter& in, T& val, std::forward_iterator_tag) noexcept {
             ReadBase(in, val);
             std::advance(in, sizeof(T));
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline void ReadInternal(
                 Iter& in, T& val, std::input_iterator_tag) noexcept {
             ReadBase(in, val);
@@ -239,13 +246,13 @@ namespace detail {
         // Both WriteBase versions generate optimal code in GCC and clang.
         // I am splitting these cases because MSVC compiler does not understand
         // memmove.
-        template <typename Ptr, typename T>
+        template <typename Ptr, std::unsigned_integral T>
         static inline auto WriteBase(Ptr& out, T val) noexcept
                 -> std::enable_if_t<detail::is_byte_pointer<Ptr>::value, void> {
             std::memcpy(out, &val, sizeof(T));
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline auto WriteBase(Iter& out, T val) noexcept
                 -> std::enable_if_t<!std::is_pointer<Iter>::value, void> {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
@@ -253,35 +260,35 @@ namespace detail {
             std::copy_n(std::cbegin(buffer), sizeof(T), out);
         }
 
-        template <typename Ptr, typename T>
+        template <typename Ptr, std::unsigned_integral T>
         static inline void WriteInternal(
                 Ptr& out, T val, std::forward_iterator_tag) noexcept {
             WriteBase(out, val);
             std::advance(out, sizeof(T));
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline void WriteInternal(
                 Iter& out, T val, std::output_iterator_tag) noexcept {
             WriteBase(out, val);
         }
 
     public:
-        template <typename T>
+        template <std::unsigned_integral T>
         static inline void Read(std::istream& in, T& val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             in.read(std::begin(buffer), sizeof(T));
-            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
+            val = std::bit_cast<T>(buffer);
         }
 
-        template <typename T>
+        template <std::unsigned_integral T>
         static inline void Read(std::streambuf& in, T& val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             in.sgetn(std::begin(buffer), sizeof(T));
-            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
+            val = std::bit_cast<T>(buffer);
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline auto Read(Iter& in, T& val) noexcept -> std::enable_if_t<
                 detail::is_pointer_like<Iter>::value, void> {
             ReadInternal(
@@ -289,21 +296,21 @@ namespace detail {
                     typename std::iterator_traits<Iter>::iterator_category());
         }
 
-        template <typename T>
+        template <std::unsigned_integral T>
         static inline void Write(std::ostream& out, T val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             std::memcpy(std::begin(buffer), &val, sizeof(T));
             out.write(std::cbegin(buffer), sizeof(T));
         }
 
-        template <typename T>
+        template <std::unsigned_integral T>
         static inline void Write(std::streambuf& out, T val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             std::memcpy(std::begin(buffer), &val, sizeof(T));
             out.sputn(std::cbegin(buffer), sizeof(T));
         }
 
-        template <typename Cont, typename T>
+        template <typename Cont, std::unsigned_integral T>
         static inline auto Write(Cont& out, T val) noexcept -> std::enable_if_t<
                 detail::is_contiguous_container<Cont>::value, void> {
             auto sz = out.size();
@@ -311,7 +318,7 @@ namespace detail {
             std::memcpy(&out[sz], &val, sizeof(T));
         }
 
-        template <typename Iter, typename T>
+        template <typename Iter, std::unsigned_integral T>
         static inline auto Write(Iter& out, T val) noexcept -> std::enable_if_t<
                 detail::is_pointer_like<Iter>::value, void> {
             WriteInternal(
@@ -321,13 +328,13 @@ namespace detail {
     };
 
     struct ReverseEndian {
-        template <typename Src, typename T>
+        template <typename Src, std::unsigned_integral T>
         static inline void Read(Src& in, T& val) noexcept {
             SourceEndian::Read(in, val);
             val = detail::bswap(val);
         }
 
-        template <typename Dst, typename T>
+        template <typename Dst, std::unsigned_integral T>
         static inline void Write(Dst& out, T val) noexcept {
             SourceEndian::Write(out, detail::bswap(val));
         }
@@ -337,73 +344,47 @@ namespace detail {
     struct EndianBase {
         template <typename Src>
         static inline uint8_t Read1(Src& in) noexcept {
-            uint8_t val;
-            Base::Read(in, val);
-            return val;
+            return Read<uint8_t>(in);
         }
 
         template <typename Src>
         static inline uint16_t Read2(Src& in) noexcept {
-            uint16_t val;
-            Base::Read(in, val);
-            return val;
+            return Read<uint16_t>(in);
         }
 
         template <typename Src>
         static inline uint32_t Read4(Src& in) noexcept {
-            uint32_t val;
-            Base::Read(in, val);
-            return val;
+            return Read<uint32_t>(in);
         }
 
         template <typename Src>
         static inline uint64_t Read8(Src& in) noexcept {
-            uint64_t val;
-            Base::Read(in, val);
-            return val;
+            return Read<uint64_t>(in);
         }
 
         template <size_t Size, typename Src>
         static inline auto ReadN(Src& in) noexcept
                 -> detail::select_unsigned_t<Size> {
             using uint_t = detail::select_unsigned_t<Size>;
-            uint_t val;
-            Base::Read(in, val);
-            return val;
+            return Read<uint_t>(in);
         }
 
-        template <typename Src, typename T>
-        static inline auto Read(Src& in, T& val) noexcept
-                -> std::enable_if_t<std::is_unsigned<T>::value, void> {
-            Base::Read(in, val);
+        template <typename Src, std::integral T>
+        static inline auto Read(Src& in, T& val) noexcept {
+            val = Read<T>(in);
         }
 
-        template <typename Src, typename T>
-        static inline auto Read(Src& in, T& val) noexcept
-                -> std::enable_if_t<std::is_signed<T>::value, void> {
-            using uint_t = std::make_unsigned_t<T>;
-            uint_t uval;
-            Base::Read(in, uval);
-            std::memcpy(&val, &uval, sizeof(T));
-        }
-
-        template <typename T, typename Src>
-        static inline auto Read(Src& in) noexcept
-                -> std::enable_if_t<std::is_unsigned<T>::value, T> {
+        template <std::unsigned_integral T, typename Src>
+        static inline auto Read(Src& in) noexcept {
             T val;
             Base::Read(in, val);
             return val;
         }
 
-        template <typename T, typename Src>
-        static inline auto Read(Src& in) noexcept
-                -> std::enable_if_t<std::is_signed<T>::value, T> {
+        template <std::signed_integral T, typename Src>
+        static inline auto Read(Src& in) noexcept {
             using uint_t = std::make_unsigned_t<T>;
-            uint_t uval;
-            Base::Read(in, uval);
-            T val;
-            std::memcpy(&val, &uval, sizeof(T));
-            return val;
+            return std::bit_cast<T>(Read<uint_t>(in));
         }
 
         template <typename Dst>
@@ -433,10 +414,15 @@ namespace detail {
             Base::Write(out, val);
         }
 
-        template <typename Dst, typename T>
-        static inline auto Write(Dst& out, T val) noexcept
-                -> std::enable_if_t<std::is_unsigned<T>::value, void> {
+        template <typename Dst, std::unsigned_integral T>
+        static inline auto Write(Dst& out, T val) noexcept {
             Base::Write(out, val);
+        }
+
+        template <typename Dst, std::signed_integral T>
+        static inline auto Write(Dst& out, T val) noexcept {
+            using uint_t = std::make_unsigned_t<T>;
+            Base::Write(out, std::bit_cast<uint_t>(val));
         }
     };
 }    // namespace detail
