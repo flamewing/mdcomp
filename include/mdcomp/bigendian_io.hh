@@ -18,6 +18,7 @@
 #ifndef LIB_BIGENDIAN_IO_HH
 #define LIB_BIGENDIAN_IO_HH
 
+#include <boost/mp11.hpp>
 #include <boost/mpl/has_xxx.hpp>
 
 #include <algorithm>
@@ -38,63 +39,30 @@
 
 namespace detail {
     // Meta-programming stuff.
-    // Negation (ported from C++17).
-    template <typename B>
-    struct negation : std::integral_constant<bool, !bool(B::value)> {};
-
-    // Conjunction (ported from C++17).
-    template <typename...>
-    struct conjunction : std::true_type {};
-
-    template <typename B1>
-    struct conjunction<B1> : B1 {};
-
-    template <typename B1, typename... Bn>
-    struct conjunction<B1, Bn...>
-            : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
-
-    // Disjunction (ported from C++17).
-    template <typename...>
-    struct disjunction : std::false_type {};
-
-    template <typename B1>
-    struct disjunction<B1> : B1 {};
-
-    template <typename B1, typename... Bn>
-    struct disjunction<B1, Bn...>
-            : std::conditional_t<bool(B1::value), B1, disjunction<Bn...>> {};
-
-    template <typename Value, typename...>
-    struct is_any_of : std::false_type {};
-
-    template <typename Value, typename B1, typename... Bn>
-    struct is_any_of<Value, B1, Bn...>
-            : boost::mpl::bool_<
-                      std::is_same<Value, B1>::value
-                      || is_any_of<Value, Bn...>::value> {};
 
     template <typename Cont>
-    struct has_push_back : boost::mpl::bool_<std::is_same<
+    struct has_push_back : boost::mp11::mp_same<
                                    decltype(std::declval<Cont>().push_back(
                                            typename Cont::value_type{})),
-                                   void>::value> {};
+                                   void> {};
 
     template <typename Cont>
-    struct has_size : boost::mpl::bool_<std::is_same<
+    struct has_size : boost::mp11::mp_same<
                               decltype(std::declval<Cont>().size()),
-                              typename Cont::size_type>::value> {};
+                              typename Cont::size_type> {};
 
     template <typename Cont>
-    struct has_resize : boost::mpl::bool_<std::is_same<
+    struct has_resize : boost::mp11::mp_same<
                                 decltype(std::declval<Cont>().resize(
                                         typename Cont::size_type{})),
-                                void>::value> {};
+                                void> {};
 
     template <typename Cont>
-    struct has_data : boost::mpl::bool_<is_any_of<
-                              decltype(std::declval<Cont>().data()),
-                              typename Cont::pointer,
-                              typename Cont::const_pointer>::value> {};
+    struct has_data : boost::mp11::mp_contains<
+                              boost::mp11::mp_list<
+                                      typename Cont::pointer,
+                                      typename Cont::const_pointer>,
+                              decltype(std::declval<Cont>().data())> {};
 
 #ifdef __GNUG__
 #    pragma GCC diagnostic push
@@ -127,41 +95,40 @@ namespace detail {
 
     template <typename Cont, typename Tag>
     struct has_iterator_tag
-            : boost::mpl::bool_<
-                      std::is_same<get_iterator_tag_t<Cont>, Tag>::value> {};
+            : boost::mp11::mp_same<get_iterator_tag_t<Cont>, Tag> {};
 
     template <typename Ptr>
     struct is_byte_pointer
-            : boost::mpl::bool_<conjunction<
+            : boost::mp11::mp_and<
                       std::is_pointer<Ptr>,
-                      is_any_of<
-                              typename std::iterator_traits<Ptr>::value_type,
-                              char, unsigned char, signed char>>::value> {};
-
-    template <typename T>
-    struct is_void_pointer
-            : boost::mpl::bool_<conjunction<
-                      std::is_pointer<T>,
-                      std::is_same<
-                              std::remove_cv_t<typename std::pointer_traits<
-                                      T>::element_type>,
-                              void>>::value> {};
-
-    template <typename T>
-    struct is_pointer_like
-            : boost::mpl::bool_<conjunction<
-                      negation<is_void_pointer<T>>,
-                      has_iterator_category<get_iterator_traits_t<T>>>::value> {
+                      boost::mp11::mp_contains<
+                              boost::mp11::mp_list<
+                                      char, unsigned char, signed char>,
+                              typename std::iterator_traits<Ptr>::value_type>> {
     };
 
     template <typename T>
+    struct is_void_pointer
+            : boost::mp11::mp_and<
+                      std::is_pointer<T>,
+                      boost::mp11::mp_same<
+                              std::remove_cv_t<typename std::pointer_traits<
+                                      T>::element_type>,
+                              void>> {};
+
+    template <typename T>
+    struct is_pointer_like
+            : boost::mp11::mp_and<
+                      std::negation<is_void_pointer<T>>,
+                      has_iterator_category<get_iterator_traits_t<T>>> {};
+
+    template <typename T>
     struct is_contiguous_container
-            : boost::mpl::bool_<conjunction<
+            : boost::mp11::mp_and<
                       std::is_class<T>, has_value_type<T>, has_iterator<T>,
                       has_size_type<T>, has_reference<T>, has_push_back<T>,
                       has_size<T>, has_resize<T>, has_data<T>,
-                      has_iterator_tag<T, std::random_access_iterator_tag>>::
-                                        value> {};
+                      has_iterator_tag<T, std::random_access_iterator_tag>> {};
 
     template <typename T>
     struct is_contiguous_container<T&> : is_contiguous_container<T> {};
