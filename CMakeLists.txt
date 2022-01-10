@@ -243,7 +243,7 @@ target_include_directories(bigendian_io
 )
 set_target_properties(bigendian_io
     PROPERTIES
-        CXX_STANDARD 14
+        CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
         POSITION_INDEPENDENT_CODE ON
@@ -268,7 +268,7 @@ target_include_directories(dummy-mdcomp
 )
 set_target_properties(dummy-mdcomp
     PROPERTIES
-        CXX_STANDARD 14
+        CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
         POSITION_INDEPENDENT_CODE ON
@@ -303,7 +303,7 @@ function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
     )
     set_target_properties(${TARGETNAME}
         PROPERTIES
-            CXX_STANDARD 14
+            CXX_STANDARD 20
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
             POSITION_INDEPENDENT_CODE ON
@@ -342,7 +342,7 @@ function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
     target_link_libraries(${TARGETNAME} PUBLIC ${LIBNAME})
     set_target_properties(${TARGETNAME}
         PROPERTIES
-            CXX_STANDARD 14
+            CXX_STANDARD 20
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
             POSITION_INDEPENDENT_CODE ON

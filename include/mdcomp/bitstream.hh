@@ -172,7 +172,7 @@ public:
         }
         return bits;
     }
-    size_t have_waiting_bits() const noexcept {
+    [[nodiscard]] size_t have_waiting_bits() const noexcept {
         return readbits;
     }
 };
@@ -237,7 +237,7 @@ public:
         }
         return false;
     }
-    size_t have_waiting_bits() const noexcept {
+    [[nodiscard]] size_t have_waiting_bits() const noexcept {
         return waitingbits;
     }
 };

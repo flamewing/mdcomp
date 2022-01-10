@@ -193,11 +193,13 @@ namespace detail {
 #    define ATTR_CONST
 #    define CONSTEXPR
 #endif
-    CONSTEXPR ATTR_CONST inline uint8_t bswap(uint8_t val) noexcept {
+    [[nodiscard]] CONSTEXPR ATTR_CONST inline uint8_t bswap(
+            uint8_t val) noexcept {
         return val;
     }
 
-    CONSTEXPR ATTR_CONST inline uint16_t bswap(uint16_t val) noexcept {
+    [[nodiscard]] CONSTEXPR ATTR_CONST inline uint16_t bswap(
+            uint16_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap16(val);
 #elif defined(_MSC_VER)
@@ -207,7 +209,8 @@ namespace detail {
 #endif
     }
 
-    CONSTEXPR ATTR_CONST inline uint32_t bswap(uint32_t val) noexcept {
+    [[nodiscard]] CONSTEXPR ATTR_CONST inline uint32_t bswap(
+            uint32_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap32(val);
 #elif defined(_MSC_VER)
@@ -218,7 +221,8 @@ namespace detail {
 #endif
     }
 
-    CONSTEXPR ATTR_CONST inline uint64_t bswap(uint64_t val) noexcept {
+    [[nodiscard]] CONSTEXPR ATTR_CONST inline uint64_t bswap(
+            uint64_t val) noexcept {
 #ifdef __GNUG__
         return __builtin_bswap64(val);
 #elif defined(_MSC_VER)
@@ -471,14 +475,14 @@ namespace detail {
 }    // namespace detail
 
 template <typename Src>
-inline size_t Read1(Src& in) noexcept {
+inline uint8_t Read1(Src& in) noexcept {
     uint8_t val;
     detail::SourceEndian::Read(in, val);
     return val;
 }
 
 template <typename Dst>
-inline void Write1(Dst& out, size_t const val) noexcept {
+inline void Write1(Dst& out, uint8_t const val) noexcept {
     detail::SourceEndian::Write(out, uint8_t(val));
 }
 

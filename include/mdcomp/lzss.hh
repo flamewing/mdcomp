@@ -80,16 +80,16 @@ public:
             size_t pos, size_t dist, size_t len, EdgeType ty) noexcept
             : currpos(pos), type(ty), match({dist, len}) {}
     // Getters.
-    constexpr size_t get_pos() const noexcept {
+    [[nodiscard]] constexpr size_t get_pos() const noexcept {
         return currpos;
     }
-    constexpr size_t get_dest() const noexcept {
+    [[nodiscard]] constexpr size_t get_dest() const noexcept {
         return currpos + get_length();
     }
-    constexpr size_t get_weight() const noexcept {
+    [[nodiscard]] constexpr size_t get_weight() const noexcept {
         return Adaptor::edge_weight(type, get_length());
     }
-    constexpr size_t get_distance() const noexcept {
+    [[nodiscard]] constexpr size_t get_distance() const noexcept {
         switch (type) {
         case EdgeType::invalid:
         case EdgeType::terminator:
@@ -99,7 +99,7 @@ public:
             return match.distance;
         }
     }
-    constexpr size_t get_length() const noexcept {
+    [[nodiscard]] constexpr size_t get_length() const noexcept {
         switch (type) {
         case EdgeType::invalid:
         case EdgeType::terminator:
@@ -141,19 +141,19 @@ public:
               lbound(basenode > srchbufsize ? basenode - srchbufsize : 0),
               type(ty) {}
 
-    size_t getDataSize() const {
+    [[nodiscard]] size_t getDataSize() const {
         return nlen;
     }
 
-    size_t getSearchBufSize() const {
+    [[nodiscard]] size_t getSearchBufSize() const {
         return basenode - lbound;
     }
 
-    size_t getLookAheadBufSize() const {
+    [[nodiscard]] size_t getLookAheadBufSize() const {
         return ubound - basenode;
     }
 
-    size_t getWindowSize() const {
+    [[nodiscard]] size_t getWindowSize() const {
         return ubound - lbound;
     }
 
