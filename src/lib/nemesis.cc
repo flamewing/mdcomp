@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <istream>
 #include <map>
@@ -57,13 +58,13 @@ using std::vector;
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
-    uint8_t nibble{0};    // Nibble we are interested in.
-    uint8_t count{0};     // How many times the nibble is repeated.
+    std::byte nibble{0};    // Nibble we are interested in.
+    uint8_t   count{0};     // How many times the nibble is repeated.
 
 public:
     // Constructors.
     nibble_run() noexcept = default;
-    nibble_run(uint8_t n, uint8_t c) noexcept : nibble(n), count(c) {}
+    nibble_run(std::byte n, uint8_t c) noexcept : nibble(n), count(c) {}
     // Sorting operator.
     bool operator<(nibble_run const& other) const noexcept {
         return (nibble < other.nibble)
@@ -80,13 +81,13 @@ public:
         return !(*this == other);
     }
     // Getters/setters for all properties.
-    uint8_t get_nibble() const noexcept {
+    [[nodiscard]] std::byte get_nibble() const noexcept {
         return nibble;
     }
-    uint8_t get_count() const noexcept {
+    [[nodiscard]] uint8_t get_count() const noexcept {
         return count;
     }
-    void set_nibble(uint8_t const tf) noexcept {
+    void set_nibble(std::byte const tf) noexcept {
         nibble = tf;
     }
     void set_count(uint8_t const tf) noexcept {
@@ -126,7 +127,7 @@ class node : public enable_shared_from_this<node> {
 private:
     shared_ptr<node> child0, child1;
     size_t           weight;
-    nibble_run       value{0, 0};
+    nibble_run       value{std::byte{0}, 0};
 
 public:
     // Construct a new leaf node for character c.
@@ -307,14 +308,14 @@ class nemesis_internal {
 public:
     static void decode_header(std::istream& Src, CodeNibbleMap& codemap) {
         // storage for output value to decompression buffer
-        size_t out_val = 0;
+        std::byte out_val{0};
 
         // main loop. Header is terminated by the value of 0xFF
         for (size_t in_val = Read1(Src); in_val != 0xFF; in_val = Read1(Src)) {
             // if most significant bit is set, store the last 4 bits and discard
             // the rest
             if ((in_val & 0x80U) != 0) {
-                out_val = in_val & 0xfU;
+                out_val = std::byte(in_val & 0xfU);
                 in_val  = Read1(Src);
             }
 
@@ -377,21 +378,22 @@ public:
                 if (it != codemap.end()) {
                     // If it is, then it is time to output the encoded nibble
                     // run.
-                    nibble_run const& run    = it->second;
-                    size_t            nibble = run.get_nibble();
-                    size_t            cnt    = run.get_count();
+                    nibble_run const& run = it->second;
+
+                    std::byte nibble = run.get_nibble();
+                    size_t    cnt    = run.get_count();
                     bits_written += cnt * 4;
 
                     // Write single nibble if needed.
                     if ((cnt % 2) != 0) {
-                        out.write(nibble, 4);
+                        out.write(uint8_t(nibble), 4);
                     }
 
                     // Now write pairs of nibbles.
                     cnt >>= 1U;
                     nibble |= (nibble << 4U);
                     for (size_t i = 0; i < cnt; i++) {
-                        out.write(nibble, 8);
+                        out.write(uint8_t(nibble), 8);
                     }
 
                     if (bits_written >= total_bits) {
@@ -438,8 +440,8 @@ public:
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
-        size_t tempsize_est = size_t(3) * 8;
-        size_t last         = 0xff;
+        size_t    tempsize_est = size_t(3) * 8;
+        std::byte last{0xff};
         // Start with any nibble runs with their own code.
         for (auto& elem : tempcodemap) {
             // Each new nibble needs an extra byte.
@@ -584,7 +586,7 @@ public:
                         break;
                     }
 
-                    uint8_t const nibble = count.first.get_nibble();
+                    std::byte const nibble = count.first.get_nibble();
                     // Vector containing the code length of each nibble run, or
                     // 13 if the nibble run is not in the codemap.
                     vector<size_t> runlen;
@@ -687,13 +689,14 @@ public:
         Src.clear();
         Src.seekg(0);
         // Unpack source so we don't have to deal with nibble IO after.
-        vector<uint8_t> unpack;
+        constexpr const std::byte low_nibble{0xfU};
+        vector<std::byte>         unpack;
         for (size_t i = 0; i < sz; i++) {
-            size_t const c = Read1(Src);
-            unpack.push_back((c & 0xf0U) >> 4U);
-            unpack.push_back((c & 0x0fU));
+            std::byte const c{Read1(Src)};
+            unpack.emplace_back((c >> 4U) & low_nibble);
+            unpack.emplace_back(c & low_nibble);
         }
-        unpack.push_back(0xff);
+        unpack.emplace_back(std::byte{0xff});
 
         // Build RLE nibble runs, RLE-encoding the nibble runs as we go along.
         // Maximum run length is 8, meaning 7 repetitions.
@@ -909,7 +912,7 @@ public:
         // runs with their code. Now we write the file.
         // Write header.
         BigEndian::Write2(Dst, (mode << 15U) | (sz >> 5U));
-        uint8_t lastnibble = 0xff;
+        std::byte lastnibble{0xff};
         for (auto& elem : codemap) {
             nibble_run const& run  = elem.first;
             size_t const      code = (elem.second).code;
@@ -921,7 +924,7 @@ public:
             }
             if (run.get_nibble() != lastnibble) {
                 // 0x80 marks byte as setting a new nibble.
-                Write1(Dst, 0x80U | run.get_nibble());
+                Write1(Dst, 0x80U | uint8_t(run.get_nibble()));
                 lastnibble = run.get_nibble();
             }
 
@@ -959,7 +962,7 @@ public:
             } else {
                 bits.write(0x3f, 6);
                 bits.write(run.get_count(), 3);
-                bits.write(run.get_nibble(), 4);
+                bits.write(uint8_t(run.get_nibble()), 4);
             }
         }
         // Fill remainder of last byte with zeroes and write if needed.
