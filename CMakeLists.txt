@@ -376,16 +376,16 @@ define_exe(snkrlecmp   "src/tools/snkcmp.cc"   snkrle   snkcmp)
 file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
 
 add_custom_target(
-    clang-format
-    COMMAND clang-format
+    mdcomp-format
+    COMMAND mdcomp-format
     -style=file
     -i
     ${ALL_SOURCE_FILES}
 )
 
 add_custom_target(
-    clang-tidy
-    COMMAND clang-tidy --use-color
+    mdcomp-tidy
+    COMMAND mdcomp-tidy --use-color
     ${ALL_SOURCE_FILES}
 )
 
