@@ -281,6 +281,14 @@ private:
  *    //constexpr.
  *    static size_t get_padding(size_t const totallen) noexcept;
  */
+
+template <typename AdjList>
+struct lzss_parse_result {
+    AdjList parse_list;
+    size_t  desc_size;
+    size_t  file_size;
+};
+
 template <typename Adaptor>
 auto find_optimal_lzss_parse(
         uint8_t const* dt, size_t const size, Adaptor adaptor) noexcept {
@@ -402,7 +410,11 @@ auto find_optimal_lzss_parse(
     }
 
     // This is what we will produce.
-    AdjList parselist{Node_t{0, 0, EdgeType::terminator}};
+    lzss_parse_result<AdjList> result{
+            {Node_t{0, 0, EdgeType::terminator}},
+            desccosts.back(),
+            costs.back()};
+    AdjList& parselist = result.parse_list;
     for (size_t ii = numNodes; ii != 0;) {
         // Insert the edge up front...
         parselist.push_front(pedges[ii]);
@@ -412,7 +424,7 @@ auto find_optimal_lzss_parse(
 
     // We are done: this is the optimal parsing of the input file, giving
     // us *the* best possible compressed file size.
-    return parselist;
+    return result;
 }
 
 /*
@@ -435,7 +447,8 @@ private:
             bits;
     // Internal parameter buffer.
     std::string buffer;
-    void        flushbuffer() noexcept {
+
+    void flushbuffer() noexcept {
         out.write(buffer.c_str(), buffer.size());
         buffer.clear();
     }

@@ -212,7 +212,7 @@ public:
         SaxOStream out(Dst);
 
         // Go through each edge in the optimal path.
-        for (auto const& edge : list) {
+        for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
                 out.descbit(1);
