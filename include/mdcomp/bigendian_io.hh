@@ -439,8 +439,14 @@ inline void Write1(Dst& out, uint8_t const val) noexcept {
     detail::SourceEndian::Write(out, uint8_t(val));
 }
 
-// TODO: Swap these around in big-endian architectures.
-using BigEndian    = detail::EndianBase<detail::ReverseEndian>;
-using LittleEndian = detail::EndianBase<detail::SourceEndian>;
+using SourceEndian  = detail::EndianBase<detail::SourceEndian>;
+using ReverseEndian = detail::EndianBase<detail::ReverseEndian>;
+using BigEndian     = detail::EndianBase<std::conditional_t<
+        std::endian::native == std::endian::little, ReverseEndian,
+        SourceEndian>>;
+using LittleEndian  = detail::EndianBase<std::conditional_t<
+        std::endian::native == std::endian::little, SourceEndian,
+        ReverseEndian>>;
+
 
 #endif    // LIB_BIGENDIAN_IO_HH
