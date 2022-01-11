@@ -89,7 +89,7 @@ namespace detail {
 #else
         constexpr size_t sz   = CHAR_BIT;    // bit size; must be power of 2
         constexpr T      mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
-        val                   = bswap(val);
+        val                   = byteswap(val);
         return reverseByteBits<T, sz>{}(val, mask);
 #endif
     }
