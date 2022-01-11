@@ -22,7 +22,7 @@
 
 #include <mdcomp/bigendian_io.hh>
 
-#include <iosfwd>
+#include <iostream>
 #include <limits>
 #include <vector>
 

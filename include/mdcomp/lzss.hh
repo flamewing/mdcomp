@@ -26,7 +26,7 @@
 
 #include <algorithm>
 #include <array>
-#include <iosfwd>
+#include <iostream>
 #include <limits>
 #include <list>
 #include <string>
