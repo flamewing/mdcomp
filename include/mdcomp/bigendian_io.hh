@@ -184,12 +184,11 @@ namespace detail {
                 }
 #ifdef __GNUG__
                 if constexpr (sizeof(T) == 16) {
-#    if __has_builtin(__builtin_bswap128)
-                    return __builtin_bswap128(val);
-#    else
+                    if constexpr (__has_builtin(__builtin_bswap128)) {
+                        return __builtin_bswap128(val);
+                    }
                     return (__builtin_bswap64(val >> 64U)
                             | (static_cast<T>(__builtin_bswap64(val)) << 64U));
-#    endif
                 }
 #endif
             }
@@ -199,33 +198,18 @@ namespace detail {
         // Fallback implementation that handles even __int24 etc.
         size_t diff  = CHAR_BIT * (sizeof(T) - 1);
         uint_t mask1 = static_cast<unsigned char>(~0U);
-        uint_t mask2 = mask1 << diff;
+        auto   mask2 = static_cast<uint_t>(mask1 << diff);
         uint_t value = val;
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
             uint_t byte1 = value & mask1;
             uint_t byte2 = value & mask2;
-            value = (value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
-            mask1 <<= CHAR_BIT;
-            mask2 >>= CHAR_BIT;
+            value        = static_cast<uint_t>(
+                    value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
+            mask1 = static_cast<uint_t>(mask1 << CHAR_BIT);
+            mask2 = static_cast<uint_t>(mask2 >> CHAR_BIT);
             diff -= 2ULL * CHAR_BIT;
         }
         return value;
-    }
-
-    template <typename To, typename From>
-        requires(
-                (sizeof(To) == sizeof(From))
-                && (std::is_trivially_copyable_v<To>)&&(
-                        std::is_trivially_copyable_v<From>))
-    [[nodiscard, gnu::const, gnu::always_inline]] INLINE constexpr To bit_cast(
-            const From& from) noexcept {
-#if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
-        return std::bit_cast<To>(from);
-#elif __has_builtin(__builtin_bit_cast)
-        return __builtin_bit_cast(To, from);
-#else
-#    error "Compiler supports neither std::bit_cast nor __builtin_bit_cast"
-#endif
     }
 
     template <std::endian endian>
@@ -456,7 +440,7 @@ namespace detail {
         }
 
         template <
-                typename Dst, size_t Size,
+                size_t Size, typename Dst,
                 typename Uint_t = detail::select_unsigned_t<Size>>
         [[gnu::always_inline]] INLINE static void WriteN(
                 Dst&& out, Uint_t val) noexcept {

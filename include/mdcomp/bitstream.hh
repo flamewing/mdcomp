@@ -24,98 +24,105 @@
 #include <iosfwd>
 #include <limits>
 
-namespace detail {
-#if !defined(__clang__)
-#    if defined(_MSC_VER) && _MSC_VER < 1910
-// MSVC compiler is not c++14 compliant before 19.10.
-#        define CONSTEXPR
-#    else
-#        define CONSTEXPR constexpr
-#    endif
-    template <typename T, size_t sz>
-    constexpr inline T nextMask(T mask) noexcept {
-        return mask ^ (mask << sz);
-    }
-
-    template <typename T, size_t sz>
-    struct reverseByteBits {
-        CONSTEXPR inline T operator()(T val, T mask) const noexcept {
-            constexpr const size_t nsz = sz >> 1;
-            mask                       = nextMask<T, nsz>(mask);
-            T                 val1     = (val & mask);
-            T                 val2     = val ^ val1;
-            constexpr const T factor   = T(1) << nsz;
-            val                        = factor * val1 + val2 / factor;
-            return reverseByteBits<T, nsz>{}(val, mask);
-        }
-    };
-
-    template <typename T>
-    struct reverseByteBits<T, 1> {
-        constexpr inline T operator()(T val, T /*mask*/) const noexcept {
-            return val;
-        }
-    };
-
-    template <typename T, size_t sz>
-    struct getMask {
-        constexpr inline T operator()(T mask) const noexcept {
-            return getMask<T, (sz >> 1)>{}(nextMask<T, (sz >> 1)>(mask));
-        }
-    };
-
-    template <typename T>
-    struct getMask<T, CHAR_BIT> {
-        constexpr inline T operator()(T mask) const noexcept {
-            return mask;
-        }
-    };
+#if defined(_MSC_VER)
+#    define INLINE __forceinline
+#else
+#    define INLINE inline
 #endif
 
-    template <typename T>
-    auto reverseBits(T val) noexcept
-            -> std::enable_if_t<std::is_unsigned<T>::value, T> {
-#ifdef __clang__
-        if (sizeof(T) == 1) {
-            val = __builtin_bitreverse8(val);
-        } else if (sizeof(T) == 2) {
-            val = __builtin_bitreverse16(val);
-        } else if (sizeof(T) == 4) {
-            val = __builtin_bitreverse32(val);
-        } else if (sizeof(T) == 8) {
-            val = __builtin_bitreverse64(val);
+namespace detail {
+    template <std::unsigned_integral T>
+    [[nodiscard, gnu::const, gnu::always_inline]] constexpr INLINE T
+            nextMask(T mask, size_t size) noexcept {
+        return mask ^ static_cast<T>(mask << size);
+    }
+
+    template <std::unsigned_integral T>
+    [[nodiscard, gnu::const, gnu::always_inline]] consteval INLINE T
+            getMask() noexcept {
+        T mask = std::numeric_limits<T>::max();
+        for (size_t size = sizeof(T); size > 1; size >>= 1U) {
+            mask = nextMask(mask, size * CHAR_BIT / 2);
+        }
+        return mask;
+    }
+
+    template <size_t size, auto mask, std::unsigned_integral T>
+    [[nodiscard, gnu::const, gnu::always_inline]] constexpr INLINE T
+            reverseByteBits(T val) noexcept {
+        constexpr const size_t new_size = size >> 1U;
+        constexpr const auto   factor   = T(1) << new_size;
+        constexpr const auto   new_mask = nextMask<T>(mask, new_size);
+        if constexpr (size > 1) {
+            const T val1    = val & new_mask;
+            const T val2    = val ^ val1;
+            const T new_val = factor * val1 + val2 / factor;
+            return reverseByteBits<new_size, new_mask>(new_val);
         }
         return val;
-#else
-        constexpr size_t sz   = CHAR_BIT;    // bit size; must be power of 2
-        constexpr T      mask = getMask<T, sizeof(T) * CHAR_BIT>{}(~T(0));
-        val                   = byteswap(val);
-        return reverseByteBits<T, sz>{}(val, mask);
-#endif
     }
 
-    template <typename T>
-    auto reverseBits(T val) noexcept
-            -> std::enable_if_t<std::is_signed<T>::value, T> {
-        return reverseBits(std::make_unsigned_t<T>(val));
+    template <std::unsigned_integral T>
+    [[nodiscard, gnu::const, gnu::always_inline]] constexpr auto reverseBits(
+            T val) noexcept {
+#ifdef __clang__
+        if constexpr (CHAR_BIT == 8) {
+            if (!std::is_constant_evaluated()) {
+                if constexpr (sizeof(T) == 1) {
+                    return val = __builtin_bitreverse8(val);
+                }
+                if constexpr (sizeof(T) == 2) {
+                    return val = __builtin_bitreverse16(val);
+                }
+                if constexpr (sizeof(T) == 4) {
+                    return val = __builtin_bitreverse32(val);
+                }
+                if constexpr (sizeof(T) == 8) {
+                    return val = __builtin_bitreverse64(val);
+                }
+                if constexpr (sizeof(T) == 16) {
+                    if constexpr (__has_builtin(__builtin_bitreverse128)) {
+                        return __builtin_bitreverse128(val);
+                    }
+                    return (__builtin_bitreverse64(val >> 64U)
+                            | (static_cast<T>(__builtin_bitreverse64(val))
+                               << 64U));
+                }
+            }
+        }
+#endif
+        constexpr const T mask = getMask<T>();
+        return reverseByteBits<CHAR_BIT, mask>(byteswap(val));
     }
+
+    template <std::signed_integral T>
+    [[nodiscard, gnu::const, gnu::always_inline]] constexpr auto reverseBits(
+            T val) noexcept {
+        return bit_cast<T>(reverseBits(std::make_unsigned_t<T>(val)));
+    }
+
+    static_assert(reverseBits<uint8_t>(0x35U) == 0xacU);
+    static_assert(reverseBits<uint16_t>(0x1357U) == 0xeac8U);
+    static_assert(reverseBits(0x01234567U) == 0xE6A2C480U);
+    static_assert(reverseBits(0x0123456789abcdefULL) == 0xf7b3d591E6A2C480ULL);
 }    // namespace detail
 
 // This class allows reading bits from a stream.
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
-        typename T, bool EarlyRead, bool LittleEndianBits = false,
+        std::unsigned_integral T, bool EarlyRead, bool LittleEndianBits = false,
         typename Endian = BigEndian>
 class ibitstream {
 private:
     std::istream& src;
     size_t        readbits;
     T             bitbuffer;
-    size_t        read() noexcept {
-        return Endian::template ReadN<sizeof(T)>(src);
+
+    [[nodiscard]] size_t read() noexcept {
+        return Endian::template Read<T>(src);
     }
-    T read_bits() noexcept {
+    [[nodiscard]] T read_bits() noexcept {
         T bits = read();
         return LittleEndianBits ? detail::reverseBits(bits) : bits;
     }
@@ -134,7 +141,7 @@ public:
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
-    T pop() noexcept {
+    [[nodiscard]] T pop() noexcept {
         if (!EarlyRead) {
             check_buffer();
         }
@@ -149,7 +156,7 @@ public:
     // Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
-    T read(uint8_t const cnt) noexcept {
+    [[nodiscard]] T read(uint8_t const cnt) noexcept {
         if (!EarlyRead) {
             check_buffer();
         }
@@ -179,7 +186,8 @@ public:
 
 // This class allows outputting bits into a stream.
 template <
-        typename T, bool LittleEndianBits = false, typename Endian = BigEndian>
+        std::unsigned_integral T, bool LittleEndianBits = false,
+        typename Endian = BigEndian>
 class obitstream {
 private:
     std::ostream& dst;
@@ -187,7 +195,7 @@ private:
     T             bitbuffer;
 
     void write(T const c) noexcept {
-        Endian::template WriteN<std::ostream&, sizeof(T)>(dst, c);
+        Endian::Write(dst, c);
     }
     void write_bits(T const bits) noexcept {
         write(LittleEndianBits ? detail::reverseBits(bits) : bits);
@@ -241,5 +249,7 @@ public:
         return waitingbits;
     }
 };
+
+#undef INLINE
 
 #endif    // LIB_BITSTREAM_HH
