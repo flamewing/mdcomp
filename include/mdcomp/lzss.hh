@@ -238,41 +238,41 @@ private:
 
 template <typename T>
 concept LZSSAdaptor = requires() {
-    requires(std::unsigned_integral<typename T::stream_t>)
-            && !(std::same_as<typename T::stream_t, bool>);
-    requires std::is_class_v<typename T::stream_endian_t>;
-    requires(std::unsigned_integral<typename T::descriptor_t>)
-            && !(std::same_as<typename T::descriptor_t, bool>);
-    requires std::is_class_v<typename T::descriptor_endian_t>;
-    requires std::is_enum_v<typename T::EdgeType>;
+    std::unsigned_integral<typename T::stream_t>;
+    !std::same_as<typename T::stream_t, bool>;
+    std::is_class_v<typename T::stream_endian_t>;
+    std::unsigned_integral<typename T::descriptor_t>;
+    !std::same_as<typename T::descriptor_t, bool>;
+    std::is_class_v<typename T::descriptor_endian_t>;
+    std::is_enum_v<typename T::EdgeType>;
     { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
     { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
     { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
-    requires std::same_as<decltype(T::NumDescBits), const size_t>;
-    requires std::same_as<decltype(T::NeedEarlyDescriptor), const bool>;
-    requires std::same_as<decltype(T::DescriptorLittleEndianBits), const bool>;
-    requires std::same_as<decltype(T::FirstMatchPosition), const size_t>;
-    requires std::same_as<decltype(T::SearchBufSize), const size_t>;
-    requires std::same_as<decltype(T::LookAheadBufSize), const size_t>;
+    std::same_as<decltype(T::NumDescBits), const size_t>;
+    std::same_as<decltype(T::NeedEarlyDescriptor), const bool>;
+    std::same_as<decltype(T::DescriptorLittleEndianBits), const bool>;
+    std::same_as<decltype(T::FirstMatchPosition), const size_t>;
+    std::same_as<decltype(T::SearchBufSize), const size_t>;
+    std::same_as<decltype(T::LookAheadBufSize), const size_t>;
     requires requires(
             uint8_t const*& rptr, uint8_t*& wptr, std::istream& in,
             std::ostream& out, typename T::stream_t vs,
             typename T::stream_endian_t se, typename T::descriptor_t vd,
             typename T::descriptor_endian_t de) {
         {
-            decltype(se)::template Read<typename T::stream_t>(rptr)
-            } -> std::same_as<typename T::stream_t>;
+            decltype(se)::template Read<decltype(vs)>(rptr)
+            } -> std::same_as<decltype(vs)>;
         {
-            decltype(se)::template Read<typename T::stream_t>(in)
-            } -> std::same_as<typename T::stream_t>;
+            decltype(se)::template Read<decltype(vs)>(in)
+            } -> std::same_as<decltype(vs)>;
         { decltype(se)::Write(wptr, vs) } -> std::same_as<void>;
         { decltype(se)::Write(out, vs) } -> std::same_as<void>;
         {
-            decltype(de)::template Read<typename T::descriptor_t>(rptr)
-            } -> std::same_as<typename T::descriptor_t>;
+            decltype(de)::template Read<decltype(vd)>(rptr)
+            } -> std::same_as<decltype(vd)>;
         {
-            decltype(de)::template Read<typename T::descriptor_t>(in)
-            } -> std::same_as<typename T::descriptor_t>;
+            decltype(de)::template Read<decltype(vd)>(in)
+            } -> std::same_as<decltype(vd)>;
         { decltype(de)::Write(wptr, vd) } -> std::same_as<void>;
         { decltype(de)::Write(out, vd) } -> std::same_as<void>;
     };
@@ -283,10 +283,10 @@ concept LZSSAdaptor = requires() {
         { T::edge_weight(t, l) } -> std::same_as<size_t>;
         { T::extra_matches(d, l, l, l, m) } -> std::same_as<bool>;
         { T::get_padding(l) } -> std::same_as<size_t>;
-        requires noexcept(T::desc_bits(t));
-        requires noexcept(T::edge_weight(t, l));
-        requires noexcept(T::get_padding(l));
-        requires noexcept(T::extra_matches(d, l, l, l, m));
+        noexcept(T::desc_bits(t));
+        noexcept(T::edge_weight(t, l));
+        noexcept(T::get_padding(l));
+        noexcept(T::extra_matches(d, l, l, l, m));
     };
 };
 

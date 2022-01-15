@@ -54,10 +54,9 @@ namespace detail {
 
     template <typename Iter>
     concept byte_input_iterator = requires() {
-        requires std::input_iterator<Iter>;
-        requires(
-                (std::is_same_v<std::iter_value_t<Iter>, char>)
-                || (std::is_same_v<std::iter_value_t<Iter>, uint8_t>));
+        std::input_iterator<Iter>;
+        (std::is_same_v<std::iter_value_t<Iter>, char>)
+                || (std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
     };
 
     template <typename Iter>
@@ -66,20 +65,20 @@ namespace detail {
 
     template <typename T>
     concept container = requires(T a, const T b) {
-        requires std::regular<T>;
-        requires std::swappable<T>;
-        requires std::destructible<typename T::value_type>;
-        requires std::same_as<typename T::reference, typename T::value_type&>;
-        requires std::same_as<
+        std::regular<T>;
+        std::swappable<T>;
+        std::destructible<typename T::value_type>;
+        std::same_as<typename T::reference, typename T::value_type&>;
+        std::same_as<
                 typename T::const_reference, const typename T::value_type&>;
-        requires std::forward_iterator<typename T::iterator>;
-        requires std::forward_iterator<typename T::const_iterator>;
-        requires std::signed_integral<typename T::difference_type>;
-        requires std::same_as<
+        std::forward_iterator<typename T::iterator>;
+        std::forward_iterator<typename T::const_iterator>;
+        std::signed_integral<typename T::difference_type>;
+        std::same_as<
                 typename T::difference_type,
                 typename std::iterator_traits<
                         typename T::iterator>::difference_type>;
-        requires std::same_as<
+        std::same_as<
                 typename T::difference_type,
                 typename std::iterator_traits<
                         typename T::const_iterator>::difference_type>;
@@ -97,8 +96,8 @@ namespace detail {
     template <typename T>
     concept contiguous_container = container<T> && requires(
             T a, typename T::size_type n, typename T::value_type v) {
-        requires std::contiguous_iterator<typename T::iterator>;
-        requires std::contiguous_iterator<typename T::const_iterator>;
+        std::contiguous_iterator<typename T::iterator>;
+        std::contiguous_iterator<typename T::const_iterator>;
         { a.resize(n) } -> std::same_as<void>;
         {*a.data() = v};
     };
@@ -144,8 +143,8 @@ namespace detail {
 
     template <typename T>
     concept contiguous_reverse_iterator = requires() {
-        requires is_reverse_iterator_v<T>;
-        requires std::contiguous_iterator<typename T::iterator_type>;
+        is_reverse_iterator_v<T>;
+        std::contiguous_iterator<typename T::iterator_type>;
     };
 
     // Mashed together implementation based on libstdc++/libc++/MS STL.
@@ -212,10 +211,11 @@ namespace detail {
     }
 
     template <typename To, typename From>
-        requires(
-                (sizeof(To) == sizeof(From))
-                && (std::is_trivially_copyable_v<To>)&&(
-                        std::is_trivially_copyable_v<From>))
+        requires requires() {
+            sizeof(To) == sizeof(From);
+            std::is_trivially_copyable_v<To>;
+            std::is_trivially_copyable_v<From>;
+        }
     [[nodiscard, gnu::const, gnu::always_inline]] INLINE constexpr To bit_cast(
             const From& from) noexcept {
 #if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
