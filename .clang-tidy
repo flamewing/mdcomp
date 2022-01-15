@@ -10,6 +10,10 @@ Checks: >
   cert-msc50-cpp,
   cert-msc51-cpp,
   clang-diagnostic-*,
+  -clang-diagnostic-pre-c++*-compat
+  -clang-diagnostic-pre-c++*-compat-pedantic
+  -clang-diagnostic-c++*-compat
+  -clang-diagnostic-c++*-compat-pedantic
   clang-analyzer-*,
   clang-analyzer-alpha*,
   cppcoreguidelines-*,
