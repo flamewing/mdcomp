@@ -33,11 +33,9 @@ using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
-         << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}"
-         << endl;
+         << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
     cerr << endl;
-    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl
-         << endl;
+    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -50,8 +48,8 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         int option_index = 0;
-        int option_char  = getopt_long(
-                 argc, argv, "x::", long_options.data(), &option_index);
+        int option_char
+                = getopt_long(argc, argv, "x::", long_options.data(), &option_index);
         if (option_char == -1) {
             break;
         }
@@ -71,16 +69,14 @@ int main(int argc, char* argv[]) {
 
     ifstream fin(argv[optind], ios::in | ios::binary);
     if (!fin.good()) {
-        cerr << "Input file '" << argv[optind] << "' could not be opened."
-             << endl
+        cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
     }
 
     ofstream fout(argv[optind + 1], ios::out | ios::binary);
     if (!fout.good()) {
-        cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-             << endl
+        cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl
              << endl;
         return 3;
     }

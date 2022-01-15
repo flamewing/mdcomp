@@ -136,16 +136,14 @@ constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
 
 template <typename Callback>
 const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
-    constexpr static const auto Array
-            = createMaskArray(tag{}, make_index_sequence<32>());
+    constexpr static const auto Array = createMaskArray(tag{}, make_index_sequence<32>());
     return Array[n];
 }
 
 // Blazing fast function that gives the index of the MSB.
 int slog2(unsigned val) {
 #ifdef __GNUG__
-    return static_cast<int>(
-            (sizeof(unsigned) * 8U - 1U) ^ unsigned(__builtin_clz(val)));
+    return static_cast<int>((sizeof(unsigned) * 8U - 1U) ^ unsigned(__builtin_clz(val)));
 #elif defined(_MSC_VER)
     unsigned long ret = 0;
     _BitScanReverse(&ret, val);
@@ -173,8 +171,7 @@ int slog2(unsigned val) {
 // Comparison functor, see below.
 struct Compare_count {
     bool operator()(
-            pair<uint16_t const, size_t>& it1,
-            pair<uint16_t const, size_t>& it2) {
+            pair<uint16_t const, size_t>& it1, pair<uint16_t const, size_t>& it2) {
         return (it1.second < it2.second);
     }
 };
@@ -291,7 +288,7 @@ public:
 
         // Find the most common 2-byte value.
         Compare_count  cmp;
-        auto           high = max_element(counts.begin(), counts.end(), cmp);
+        auto           high         = max_element(counts.begin(), counts.end(), cmp);
         uint16_t const common_value = high->first;
         // No longer needed.
         counts.clear();
@@ -313,7 +310,7 @@ public:
         elems.clear();
 
         // Find the starting 2-byte value with the longest incrementing run.
-        auto     incr = max_element(runs.begin(), runs.end(), cmp);
+        auto     incr               = max_element(runs.begin(), runs.end(), cmp);
         uint16_t incrementing_value = incr->first;
         // No longer needed.
         runs.clear();
@@ -360,15 +357,13 @@ public:
                 uint16_t next  = unpack[pos + 1];
                 uint16_t delta = next - v;
 
-                constexpr const uint16_t minus_one
-                        = std::numeric_limits<uint16_t>::max();
+                constexpr const uint16_t minus_one = std::numeric_limits<uint16_t>::max();
                 if (pos + 1 < unpack.size() && next != incrementing_value
                     && (delta == minus_one || delta == 0 || delta == 1)) {
                     flush_buffer(buf, bits, putMask, packet_length);
                     size_t cnt = 1;
                     next += delta;
-                    for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf;
-                         i++) {
+                    for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++) {
                         if (next != unpack[i] || next == incrementing_value) {
                             break;
                         }

@@ -39,8 +39,7 @@ namespace detail {
     }
 
     template <std::unsigned_integral T>
-    [[nodiscard, gnu::const, gnu::always_inline]] consteval INLINE T
-            getMask() noexcept {
+    [[nodiscard, gnu::const, gnu::always_inline]] consteval INLINE T getMask() noexcept {
         T mask = std::numeric_limits<T>::max();
         for (size_t size = sizeof(T); size > 1; size >>= 1U) {
             mask = nextMask(mask, size * CHAR_BIT / 2);
@@ -86,8 +85,7 @@ namespace detail {
                         return __builtin_bitreverse128(val);
                     }
                     return (__builtin_bitreverse64(val >> 64U)
-                            | (static_cast<T>(__builtin_bitreverse64(val))
-                               << 64U));
+                            | (static_cast<T>(__builtin_bitreverse64(val)) << 64U));
                 }
             }
         }
@@ -113,12 +111,18 @@ namespace detail {
     };
 }    // namespace detail
 
+enum class bit_endian
+{
+    little,
+    big
+};
+
 // This class allows reading bits from a buffer.
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
         std::unsigned_integral T, detail::bit_callback<T> Reader, bool EarlyRead,
-        bool LittleEndianBits>
+        bit_endian bit_order>
 class ibitbuffer {
 private:
     Reader reader;
@@ -127,7 +131,7 @@ private:
 
     [[nodiscard]] T read_bits() noexcept {
         T bits = reader();
-        if constexpr (LittleEndianBits) {
+        if constexpr (bit_order == bit_endian::little) {
             return detail::reverseBits(bits);
         } else {
             return bits;
@@ -144,8 +148,7 @@ private:
 
 public:
     explicit ibitbuffer(const Reader& r) noexcept
-            : reader(r), readbits(sizeof(T) * CHAR_BIT),
-              bitbuffer(read_bits()) {}
+            : reader(r), readbits(sizeof(T) * CHAR_BIT), bitbuffer(read_bits()) {}
     explicit ibitbuffer(Reader&& r) noexcept
             : reader(std::move(r)), readbits(sizeof(T) * CHAR_BIT),
               bitbuffer(read_bits()) {}
@@ -196,7 +199,9 @@ public:
 };
 
 // This class allows outputting bits into a buffer.
-template <std::unsigned_integral T, detail::bit_callback<void, T> Writer, bool LittleEndianBits>
+template <
+        std::unsigned_integral T, detail::bit_callback<void, T> Writer,
+        bit_endian bit_order>
 class obitbuffer {
 private:
     Writer writer;
@@ -204,7 +209,7 @@ private:
     T      bitbuffer;
 
     void write_bits(T const bits) noexcept {
-        if constexpr (LittleEndianBits) {
+        if constexpr (bit_order == bit_endian::little) {
             writer(detail::reverseBits(bits));
         } else {
             writer(bits);
@@ -266,26 +271,25 @@ public:
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
-        std::unsigned_integral T, bool EarlyRead, bool LittleEndianBits = false,
+        std::unsigned_integral T, bool EarlyRead, bit_endian bit_order = bit_endian::big,
         typename Endian = BigEndian>
 class ibitstream {
 private:
     struct BitReader {
         std::istream& src;
-        T operator()() noexcept(noexcept(Endian::template Read<T>(src))) {
+        T             operator()() noexcept(noexcept(Endian::template Read<T>(src))) {
             return Endian::template Read<T>(src);
         }
     };
 
     using Callback    = tl::function_ref<T(void)>;
-    using bitbuffer_t = ibitbuffer<T, Callback, EarlyRead, LittleEndianBits>;
+    using bitbuffer_t = ibitbuffer<T, Callback, EarlyRead, bit_order>;
     std::istream& src;
     BitReader     reader;
     bitbuffer_t   buffer;
 
 public:
-    explicit ibitstream(std::istream& s) noexcept
-            : src(s), reader(s), buffer(reader) {}
+    explicit ibitstream(std::istream& s) noexcept : src(s), reader(s), buffer(reader) {}
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
@@ -305,26 +309,25 @@ public:
 
 // This class allows outputting bits into a stream.
 template <
-        std::unsigned_integral T, bool LittleEndianBits = false,
+        std::unsigned_integral T, bit_endian bit_order = bit_endian::big,
         typename Endian = BigEndian>
 class obitstream {
 private:
     struct BitWriter {
         std::ostream& dst;
-        auto operator()(T c) noexcept(noexcept(Endian::Write(dst, c))) {
+        auto          operator()(T c) noexcept(noexcept(Endian::Write(dst, c))) {
             return Endian::Write(dst, c);
         }
     };
 
     using Callback    = tl::function_ref<void(T)>;
-    using bitbuffer_t = obitbuffer<T, Callback, LittleEndianBits>;
+    using bitbuffer_t = obitbuffer<T, Callback, bit_order>;
     std::ostream& dst;
     BitWriter     writer;
     bitbuffer_t   buffer;
 
 public:
-    explicit obitstream(std::ostream& d) noexcept
-            : dst(d), writer(d), buffer(writer) {}
+    explicit obitstream(std::ostream& d) noexcept : dst(d), writer(d), buffer(writer) {}
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.

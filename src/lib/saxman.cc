@@ -51,7 +51,8 @@ class saxman_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<SaxmanAdaptor>;
-        enum class EdgeType : size_t {
+        enum class EdgeType : size_t
+        {
             invalid,
             terminator,
             symbolwise,
@@ -64,9 +65,9 @@ class saxman_internal {
         // when a new bit is needed and all bits in the previous one have been
         // used up.
         constexpr static bool const NeedEarlyDescriptor = false;
-        // Flag that marks the descriptor bits as being in little-endian bit
-        // order (that is, lowest bits come out first).
-        constexpr static bool const DescriptorLittleEndianBits = true;
+        // Ordering of bits on descriptor field. Big bit endian order means high
+        // order bits come out first.
+        constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
         // How many characters to skip looking for matchs for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
@@ -77,8 +78,7 @@ class saxman_internal {
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 3, LookAheadBufSize,
-                    EdgeType::dictionary}};
+                    dt, size, SearchBufSize, 3, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -90,8 +90,7 @@ class saxman_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(
-                EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::terminator:
@@ -112,8 +111,8 @@ class saxman_internal {
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
         static bool extra_matches(
-                stream_t const* data, size_t const basenode,
-                size_t const ubound, size_t const lbound,
+                stream_t const* data, size_t const basenode, size_t const ubound,
+                size_t const                             lbound,
                 std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
@@ -182,8 +181,8 @@ public:
                 // of the previous 0x1000-byte block. We just rebase it around
                 // basedest.
                 size_t const basedest = Dst.tellp();
-                offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize)
-                         + basedest - SaxmanAdaptor::SearchBufSize;
+                offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize) + basedest
+                         - SaxmanAdaptor::SearchBufSize;
 
                 if (offset < basedest) {
                     // If the offset is before the current output position, we
@@ -225,8 +224,7 @@ public:
                 size_t const pos  = edge.get_pos();
                 size_t const base = (pos - dist - 0x12U) & 0xFFFU;
                 size_t const low  = base & 0xFFU;
-                size_t const high
-                        = ((len - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
+                size_t const high = ((len - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
                 out.descbit(0);
                 out.putbyte(low);
                 out.putbyte(high);
@@ -259,8 +257,7 @@ bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
 }
 
 bool saxman::encode(
-        ostream& Dst, uint8_t const* data, size_t const Size,
-        bool const WithSize) {
+        ostream& Dst, uint8_t const* data, size_t const Size, bool const WithSize) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
     size_t       Start = outbuff.tellg();
     saxman_internal::encode(outbuff, data, Size);

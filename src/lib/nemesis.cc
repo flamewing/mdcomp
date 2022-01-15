@@ -67,8 +67,7 @@ public:
     nibble_run(std::byte n, uint8_t c) noexcept : nibble(n), count(c) {}
     // Sorting operator.
     bool operator<(nibble_run const& other) const noexcept {
-        return (nibble < other.nibble)
-               || (nibble == other.nibble && count < other.count);
+        return (nibble < other.nibble) || (nibble == other.nibble && count < other.count);
     }
     // Sorting operator.
     bool operator>(nibble_run const& other) const noexcept {
@@ -99,8 +98,7 @@ struct SizeFreqNibble {
     size_t     count{0};
     nibble_run nibble;
     uint8_t    codelen{0};
-    SizeFreqNibble(
-            size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
+    SizeFreqNibble(size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
             : count(cnt), nibble(nib), codelen(len) {}
     SizeFreqNibble() noexcept = default;
 };
@@ -131,8 +129,7 @@ private:
 
 public:
     // Construct a new leaf node for character c.
-    node(nibble_run const& val, size_t const wgt) noexcept
-            : weight(wgt), value(val) {}
+    node(nibble_run const& val, size_t const wgt) noexcept : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
     node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept
             : child0(c0), child1(c1), weight(c0->weight + c1->weight) {}
@@ -196,8 +193,7 @@ public:
 using NodeVector = vector<shared_ptr<node>>;
 
 struct Compare_size {
-    bool operator()(SizeFreqNibble const& lhs, SizeFreqNibble const& rhs)
-            const noexcept {
+    bool operator()(SizeFreqNibble const& lhs, SizeFreqNibble const& rhs) const noexcept {
         if (lhs.codelen < rhs.codelen) {
             return true;
         }
@@ -221,8 +217,8 @@ struct Compare_size {
 };
 
 struct Compare_node {
-    bool operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs)
-            const noexcept {
+    bool operator()(
+            shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
 #if 1
         if (*lhs > *rhs) {
             return true;
@@ -245,8 +241,8 @@ struct Compare_node {
 
 struct Compare_node2 {
     static NibbleCodeMap codemap;
-    bool operator()(shared_ptr<node> const& lhs, shared_ptr<node> const& rhs)
-            const noexcept {
+    bool                 operator()(
+            shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
         if (codemap.empty()) {
             if (*lhs < *rhs) {
                 return true;
@@ -435,8 +431,7 @@ public:
     template <size_t M, size_t N>
     using Matrix = std::array<Row<N>, M>;
 
-    static size_t estimate_file_size(
-            NibbleCodeMap& tempcodemap, RunCountMap& counts) {
+    static size_t estimate_file_size(NibbleCodeMap& tempcodemap, RunCountMap& counts) {
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
@@ -513,9 +508,8 @@ public:
                             Row<3>{4, 0, 0}, Row<3>{2, 1, 0}, Row<3>{1, 0, 1},
                             Row<3>{0, 2, 0}};
                     constexpr static Matrix<6, 4> const linear_coefficients4{
-                            Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0},
-                            Row<4>{2, 0, 1, 0}, Row<4>{1, 2, 0, 0},
-                            Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
+                            Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0}, Row<4>{2, 0, 1, 0},
+                            Row<4>{1, 2, 0, 0}, Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
                     constexpr static Matrix<10, 5> const linear_coefficients5{
                             Row<5>{6, 0, 0, 0, 0}, Row<5>{4, 1, 0, 0, 0},
                             Row<5>{3, 0, 1, 0, 0}, Row<5>{2, 2, 0, 0, 0},
@@ -531,26 +525,16 @@ public:
                             Row<6>{1, 0, 0, 0, 0, 1}, Row<6>{0, 2, 1, 0, 0, 0},
                             Row<6>{0, 1, 0, 0, 1, 0}, Row<6>{0, 0, 1, 1, 0, 0}};
                     constexpr static Matrix<21, 7> const linear_coefficients7{
-                            Row<7>{8, 0, 0, 0, 0, 0, 0},
-                            Row<7>{6, 1, 0, 0, 0, 0, 0},
-                            Row<7>{5, 0, 1, 0, 0, 0, 0},
-                            Row<7>{4, 2, 0, 0, 0, 0, 0},
-                            Row<7>{4, 0, 0, 1, 0, 0, 0},
-                            Row<7>{3, 1, 1, 0, 0, 0, 0},
-                            Row<7>{3, 0, 0, 0, 1, 0, 0},
-                            Row<7>{2, 3, 0, 0, 0, 0, 0},
-                            Row<7>{2, 1, 0, 1, 0, 0, 0},
-                            Row<7>{2, 0, 2, 0, 0, 0, 0},
-                            Row<7>{2, 0, 0, 0, 0, 1, 0},
-                            Row<7>{1, 2, 1, 0, 0, 0, 0},
-                            Row<7>{1, 1, 0, 0, 1, 0, 0},
-                            Row<7>{1, 0, 1, 1, 0, 0, 0},
-                            Row<7>{1, 0, 0, 0, 0, 0, 1},
-                            Row<7>{0, 4, 0, 0, 0, 0, 0},
-                            Row<7>{0, 2, 0, 1, 0, 0, 0},
-                            Row<7>{0, 1, 2, 0, 0, 0, 0},
-                            Row<7>{0, 1, 0, 0, 0, 1, 0},
-                            Row<7>{0, 0, 1, 0, 1, 0, 0},
+                            Row<7>{8, 0, 0, 0, 0, 0, 0}, Row<7>{6, 1, 0, 0, 0, 0, 0},
+                            Row<7>{5, 0, 1, 0, 0, 0, 0}, Row<7>{4, 2, 0, 0, 0, 0, 0},
+                            Row<7>{4, 0, 0, 1, 0, 0, 0}, Row<7>{3, 1, 1, 0, 0, 0, 0},
+                            Row<7>{3, 0, 0, 0, 1, 0, 0}, Row<7>{2, 3, 0, 0, 0, 0, 0},
+                            Row<7>{2, 1, 0, 1, 0, 0, 0}, Row<7>{2, 0, 2, 0, 0, 0, 0},
+                            Row<7>{2, 0, 0, 0, 0, 1, 0}, Row<7>{1, 2, 1, 0, 0, 0, 0},
+                            Row<7>{1, 1, 0, 0, 1, 0, 0}, Row<7>{1, 0, 1, 1, 0, 0, 0},
+                            Row<7>{1, 0, 0, 0, 0, 0, 1}, Row<7>{0, 4, 0, 0, 0, 0, 0},
+                            Row<7>{0, 2, 0, 1, 0, 0, 0}, Row<7>{0, 1, 2, 0, 0, 0, 0},
+                            Row<7>{0, 1, 0, 0, 0, 1, 0}, Row<7>{0, 0, 1, 0, 1, 0, 0},
                             Row<7>{0, 0, 0, 2, 0, 0, 0}};
                     size_t const n = count.first.get_count();
                     // Pointer to table of linear coefficients. This table has N
@@ -705,8 +689,7 @@ public:
         nibble_run         curr{unpack[0], 0};
         for (size_t i = 1; i < unpack.size(); i++) {
             nibble_run next{unpack[i], 0};
-            if (next.get_nibble() != curr.get_nibble()
-                || curr.get_count() >= 7) {
+            if (next.get_nibble() != curr.get_nibble() || curr.get_count() >= 7) {
                 rleSrc.push_back(curr);
                 counts[curr] += 1;
                 curr = next;
@@ -756,8 +739,7 @@ public:
         // find *the* lowest file size.
         while (qt.size() > 1) {
             // Make a copy of the basic coin collection.
-            using CoinQueue = priority_queue<
-                    shared_ptr<node>, NodeVector, Compare_node>;
+            using CoinQueue = priority_queue<shared_ptr<node>, NodeVector, Compare_node>;
             CoinQueue q0(qt.begin(), qt.end());
 
             // We now solve the Coin collector's problem using the Package-merge
@@ -872,8 +854,8 @@ public:
             // With the canonical table build, the codemap can finally be built.
             NibbleCodeMap tempcodemap;
             size_t        pos = 0;
-            for (auto it = sizemap.begin();
-                 it != sizemap.end() && pos < codes.size(); ++it, pos++) {
+            for (auto it = sizemap.begin(); it != sizemap.end() && pos < codes.size();
+                 ++it, pos++) {
                 tempcodemap[it->nibble] = codes[pos];
             }
 
@@ -896,7 +878,7 @@ public:
             NibbleCodeMap    tempcodemap;
             shared_ptr<node> child          = qt.front();
             tempcodemap[child->get_value()] = Code{0U, 1};
-            size_t const tempsize_est = estimate_file_size(tempcodemap, counts);
+            size_t const tempsize_est       = estimate_file_size(tempcodemap, counts);
 
             // Is this iteration better than the best?
             if (tempsize_est < size_est) {
@@ -1037,8 +1019,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     return true;
 }
 
-bool nemesis::encode(
-        std::ostream& Dst, uint8_t const* data, size_t const Size) {
+bool nemesis::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
     Src.write(reinterpret_cast<char const*>(data), Size);
     Src.seekg(0);

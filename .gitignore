@@ -99,7 +99,7 @@ config.sub
 /ltmain.sh
 
 #### clangd ####
-.clangd
+.clangd/*
 test
 .cache
 

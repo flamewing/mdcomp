@@ -26,11 +26,11 @@
 #include <sstream>
 #include <vector>
 
-template <
-        typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class ModuledAdaptor {
 public:
-    enum {
+    enum
+    {
         ModuleSize    = DefaultModuleSize,
         ModulePadding = DefaultModulePadding
     };
@@ -44,12 +44,9 @@ public:
             size_t ModulePadding = DefaultModulePadding);
 };
 
-template <
-        typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
-        moduled_decode(
-                std::istream& Src, std::iostream& Dst,
-                size_t const ModulePadding) {
+template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
+        std::istream& Src, std::iostream& Dst, size_t const ModulePadding) {
     int64_t const     FullSize = BigEndian::Read2(Src);
     std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
     in << Src.rdbuf();
@@ -76,12 +73,9 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
     return true;
 }
 
-template <
-        typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::
-        moduled_encode(
-                std::istream& Src, std::ostream& Dst,
-                size_t const ModulePadding) {
+template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
+        std::istream& Src, std::ostream& Dst, size_t const ModulePadding) {
     size_t Location = Src.tellg();
     Src.ignore(std::numeric_limits<std::streamsize>::max());
     size_t FullSize = Src.gcount();

@@ -60,8 +60,8 @@ namespace detail {
     };
 
     template <typename Iter>
-    concept byte_output_iterator = (std::output_iterator<Iter, uint8_t>)
-                                   || (std::output_iterator<Iter, char>);
+    concept byte_output_iterator
+            = (std::output_iterator<Iter, uint8_t>) || (std::output_iterator<Iter, char>);
 
     template <typename T>
     concept container = requires(T a, const T b) {
@@ -69,15 +69,13 @@ namespace detail {
         std::swappable<T>;
         std::destructible<typename T::value_type>;
         std::same_as<typename T::reference, typename T::value_type&>;
-        std::same_as<
-                typename T::const_reference, const typename T::value_type&>;
+        std::same_as<typename T::const_reference, const typename T::value_type&>;
         std::forward_iterator<typename T::iterator>;
         std::forward_iterator<typename T::const_iterator>;
         std::signed_integral<typename T::difference_type>;
         std::same_as<
                 typename T::difference_type,
-                typename std::iterator_traits<
-                        typename T::iterator>::difference_type>;
+                typename std::iterator_traits<typename T::iterator>::difference_type>;
         std::same_as<
                 typename T::difference_type,
                 typename std::iterator_traits<
@@ -138,8 +136,7 @@ namespace detail {
     struct is_reverse_iterator<T&> : is_reverse_iterator<T> {};
 
     template <typename T>
-    constexpr const inline bool is_reverse_iterator_v
-            = is_reverse_iterator<T>::value;
+    constexpr const inline bool is_reverse_iterator_v = is_reverse_iterator<T>::value;
 
     template <typename T>
     concept contiguous_reverse_iterator = requires() {
@@ -377,8 +374,7 @@ namespace detail {
 
     public:
         template <typename Src>
-        [[nodiscard, gnu::always_inline]] INLINE static uint8_t Read1(
-                Src&& in) noexcept {
+        [[nodiscard, gnu::always_inline]] INLINE static uint8_t Read1(Src&& in) noexcept {
             return ReadImpl<uint8_t>(std::forward<Src>(in));
         }
 
@@ -401,21 +397,18 @@ namespace detail {
         }
 
         template <size_t Size, typename Src>
-        [[nodiscard, gnu::always_inline]] INLINE static auto ReadN(
-                Src&& in) noexcept -> detail::select_unsigned_t<Size> {
+        [[nodiscard, gnu::always_inline]] INLINE static auto ReadN(Src&& in) noexcept {
             using uint_t = detail::select_unsigned_t<Size>;
             return ReadImpl<uint_t>(std::forward<Src>(in));
         }
 
         template <typename Src, std::integral To>
-        [[gnu::always_inline]] INLINE static auto Read(
-                Src&& in, To& val) noexcept {
+        [[gnu::always_inline]] INLINE static auto Read(Src&& in, To& val) noexcept {
             val = ReadImpl<To>(std::forward<Src>(in));
         }
 
         template <std::unsigned_integral To, typename Src>
-        [[nodiscard, gnu::always_inline]] INLINE static auto Read(
-                Src&& in) noexcept {
+        [[nodiscard, gnu::always_inline]] INLINE static auto Read(Src&& in) noexcept {
             static_assert(
                     !std::same_as<std::remove_cvref_t<To>, bool>,
                     "Cannot portably use bool because sizeof(bool) is "
@@ -424,8 +417,7 @@ namespace detail {
         }
 
         template <std::signed_integral To, typename Src>
-        [[nodiscard, gnu::always_inline]] INLINE static auto Read(
-                Src&& in) noexcept {
+        [[nodiscard, gnu::always_inline]] INLINE static auto Read(Src&& in) noexcept {
             using uint_t = std::make_unsigned_t<To>;
             return bit_cast<To>(ReadImpl<uint_t>(std::forward<Src>(in)));
         }
@@ -457,14 +449,12 @@ namespace detail {
         template <
                 size_t Size, typename Dst,
                 typename Uint_t = detail::select_unsigned_t<Size>>
-        [[gnu::always_inline]] INLINE static void WriteN(
-                Dst&& out, Uint_t val) noexcept {
+        [[gnu::always_inline]] INLINE static void WriteN(Dst&& out, Uint_t val) noexcept {
             WriteImpl(std::forward<Dst>(out), val);
         }
 
         template <typename Dst, std::unsigned_integral From>
-        [[gnu::always_inline]] INLINE static auto Write(
-                Dst&& out, From val) noexcept {
+        [[gnu::always_inline]] INLINE static auto Write(Dst&& out, From val) noexcept {
             static_assert(
                     !std::same_as<std::remove_cvref_t<From>, bool>,
                     "Cannot portably use bool because sizeof(bool) is "
@@ -473,15 +463,13 @@ namespace detail {
         }
 
         template <typename Dst, std::signed_integral From>
-        [[gnu::always_inline]] INLINE static auto Write(
-                Dst&& out, From val) noexcept {
+        [[gnu::always_inline]] INLINE static auto Write(Dst&& out, From val) noexcept {
             using uint_t = std::make_unsigned_t<From>;
             WriteImpl(std::forward<Dst>(out), bit_cast<uint_t>(val));
         }
     };
 
-    [[gnu::const, gnu::always_inline]] INLINE constexpr auto reverse(
-            std::endian endian) {
+    [[gnu::const, gnu::always_inline]] INLINE constexpr auto reverse(std::endian endian) {
         if (endian == std::endian::big) {
             return std::endian::little;
         }
@@ -495,8 +483,7 @@ template <typename Src>
 }
 
 template <typename Dst>
-[[gnu::always_inline]] INLINE void Write1(
-        Dst& out, uint8_t const val) noexcept {
+[[gnu::always_inline]] INLINE void Write1(Dst& out, uint8_t const val) noexcept {
     detail::EndianBase<std::endian::native>::Write(out, val);
 }
 
