@@ -430,10 +430,12 @@ class LZSSOStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
+    using bitbuffer_t
+            = obitstream<descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t>;
     // Where we will output to.
     std::ostream& out;
     // Internal bitstream output buffer.
-    obitstream<descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t> bits;
+    bitbuffer_t bits;
     // Internal parameter buffer.
     std::string buffer;
 
@@ -462,9 +464,7 @@ public:
         if constexpr (Adaptor::NeedEarlyDescriptor) {
             if (needdummydesc) {
                 // We need to add a dummy descriptor field; so add it.
-                for (size_t ii = 0; ii < sizeof(descriptor_t); ii++) {
-                    out.put(0x00);
-                }
+                descriptor_endian_t::Write(out, descriptor_t{0});
             }
         }
         // Now write the terminating sequence if it wasn't written already.
@@ -501,13 +501,13 @@ class LZSSIStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
+    using bitbuffer_t         = ibitstream<
+            descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t,
+            Adaptor::NeedEarlyDescriptor>;
     // Where we will input to.
     std::istream& in;
     // Internal bitstream input buffer.
-    ibitstream<
-            descriptor_t, Adaptor::NeedEarlyDescriptor, Adaptor::DescriptorBitOrder,
-            descriptor_endian_t>
-            bits;
+    bitbuffer_t bits;
 
 public:
     // Constructor.

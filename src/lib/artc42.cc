@@ -29,9 +29,6 @@
 using std::istream;
 using std::ostream;
 
-using EniIBitstream = ibitstream<uint16_t, true>;
-using EniOBitstream = obitstream<uint16_t>;
-
 class artc42_internal {
 public:
     static void decode(istream& Src, ostream& Dst) {

@@ -56,8 +56,8 @@ using std::streamsize;
 using std::stringstream;
 using std::vector;
 
-using EniIBitstream = ibitstream<uint16_t, true>;
-using EniOBitstream = obitstream<uint16_t>;
+using EniIBitstream = ibitstream<uint16_t, bit_endian::big, BigEndian, true>;
+using EniOBitstream = obitstream<uint16_t, bit_endian::big, BigEndian>;
 
 template <typename Callback>
 class base_flag_io {
@@ -204,7 +204,8 @@ public:
         size_t       incrementing_value = BigEndian::Read2(in);
         size_t const common_value       = BigEndian::Read2(in);
 
-        ibitstream<uint16_t, true>                bits(in);
+        EniIBitstream bits(in);
+
         constexpr static std::array<int, 3> const modeDeltaLUT = {0, 1, -1};
 
         // Lets put in a safe termination condition here.

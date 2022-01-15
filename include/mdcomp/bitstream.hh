@@ -270,26 +270,23 @@ public:
 // This class allows reading bits from a stream.
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
-template <
-        std::unsigned_integral T, bool EarlyRead, bit_endian bit_order = bit_endian::big,
-        typename Endian = BigEndian>
+template <std::unsigned_integral T, bit_endian bit_order, typename Endian, bool EarlyRead>
 class ibitstream {
 private:
     struct BitReader {
-        std::istream& src;
-        T             operator()() noexcept(noexcept(Endian::template Read<T>(src))) {
-            return Endian::template Read<T>(src);
+        auto operator()() noexcept(noexcept(Endian::template Read<T>(source))) {
+            return Endian::template Read<T>(source);
         }
+        std::istream& source;
     };
 
     using Callback    = tl::function_ref<T(void)>;
     using bitbuffer_t = ibitbuffer<T, Callback, EarlyRead, bit_order>;
-    std::istream& src;
-    BitReader     reader;
-    bitbuffer_t   buffer;
+    BitReader   reader;
+    bitbuffer_t buffer;
 
 public:
-    explicit ibitstream(std::istream& s) noexcept : src(s), reader(s), buffer(reader) {}
+    explicit ibitstream(std::istream& source) noexcept : reader(source), buffer(reader) {}
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
@@ -308,26 +305,23 @@ public:
 };
 
 // This class allows outputting bits into a stream.
-template <
-        std::unsigned_integral T, bit_endian bit_order = bit_endian::big,
-        typename Endian = BigEndian>
+template <std::unsigned_integral T, bit_endian bit_order, typename Endian>
 class obitstream {
 private:
     struct BitWriter {
-        std::ostream& dst;
-        auto          operator()(T c) noexcept(noexcept(Endian::Write(dst, c))) {
-            return Endian::Write(dst, c);
+        auto operator()(T c) noexcept(noexcept(Endian::Write(dest, c))) {
+            return Endian::Write(dest, c);
         }
+        std::ostream& dest;
     };
 
     using Callback    = tl::function_ref<void(T)>;
     using bitbuffer_t = obitbuffer<T, Callback, bit_order>;
-    std::ostream& dst;
-    BitWriter     writer;
-    bitbuffer_t   buffer;
+    BitWriter   writer;
+    bitbuffer_t buffer;
 
 public:
-    explicit obitstream(std::ostream& d) noexcept : dst(d), writer(d), buffer(writer) {}
+    explicit obitstream(std::ostream& dest) noexcept : writer(dest), buffer(writer) {}
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
