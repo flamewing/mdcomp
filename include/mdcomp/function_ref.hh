@@ -67,8 +67,7 @@ namespace tl {
         // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
 
         /// Makes `*this` refer to the same callable as `rhs`.
-        constexpr function_ref& operator      =(
-                const function_ref&) noexcept = default;
+        constexpr function_ref& operator=(const function_ref&) noexcept = default;
 
         /// Makes `*this` refer to the same callable as `rhs`.
         constexpr function_ref& operator=(function_ref&&) noexcept = default;
@@ -80,14 +79,13 @@ namespace tl {
         ///
         /// \brief template <typename F> constexpr function_ref &operator=(F &&f) noexcept;
         template <
-                typename F, std::enable_if_t<std::is_invocable_r<
-                                    R, F&&, Args...>::value>* = nullptr>
+                typename F,
+                std::enable_if_t<std::is_invocable_r<R, F&&, Args...>::value>* = nullptr>
         constexpr function_ref& operator=(F&& f) noexcept {
             obj_      = reinterpret_cast<void*>(std::addressof(f));
             callback_ = [](void* obj, Args... args) {
                 return std::invoke(
-                        *reinterpret_cast<typename std::add_pointer<F>::type>(
-                                obj),
+                        *reinterpret_cast<typename std::add_pointer<F>::type>(obj),
                         std::forward<Args>(args)...);
             };
 
@@ -113,8 +111,7 @@ namespace tl {
     /// Swaps the referred callables of `lhs` and `rhs`.
     template <typename R, typename... Args>
     constexpr void swap(
-            function_ref<R(Args...)>& lhs,
-            function_ref<R(Args...)>& rhs) noexcept {
+            function_ref<R(Args...)>& lhs, function_ref<R(Args...)>& rhs) noexcept {
         lhs.swap(rhs);
     }
 

@@ -52,7 +52,8 @@ struct rocket_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<RocketAdaptor>;
-        enum class EdgeType : size_t {
+        enum class EdgeType : size_t
+        {
             invalid,
             terminator,
             symbolwise,
@@ -64,9 +65,9 @@ struct rocket_internal {
         // when a new bit is needed and all bits in the previous one have been
         // used up.
         constexpr static bool const NeedEarlyDescriptor = false;
-        // Flag that marks the descriptor bits as being in big-endian bit
-        // order (that is, highest bits come out first).
-        constexpr static bool const DescriptorLittleEndianBits = true;
+        // Ordering of bits on descriptor field. Big bit endian order means high
+        // order bits come out first.
+        constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
         // How many characters to skip looking for matchs for at the start.
         constexpr static size_t const FirstMatchPosition = 0x3C0;
         // Size of the search buffer.
@@ -77,8 +78,7 @@ struct rocket_internal {
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 2, LookAheadBufSize,
-                    EdgeType::dictionary}};
+                    dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -89,8 +89,7 @@ struct rocket_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(
-                EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::terminator:
@@ -109,11 +108,10 @@ struct rocket_internal {
         }
         // Rocket finds no additional matches over normal LZSS.
         static bool extra_matches(
-                stream_t const* data, size_t const basenode,
-                size_t const ubound, size_t const lbound,
+                stream_t const* data, size_t const basenode, size_t const ubound,
+                size_t const                             lbound,
                 std::vector<AdjListNode<RocketAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(
-                    data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
@@ -149,17 +147,15 @@ public:
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
                 // basedest + 0x3C0u.
-                constexpr auto const bias
-                        = diff_t(RocketAdaptor::FirstMatchPosition);
+                constexpr auto const bias = diff_t(RocketAdaptor::FirstMatchPosition);
 
                 offset = diff_t(
-                        ((offset - base - bias) % RocketAdaptor::SearchBufSize)
-                        + base - RocketAdaptor::SearchBufSize);
+                        ((offset - base - bias) % RocketAdaptor::SearchBufSize) + base
+                        - RocketAdaptor::SearchBufSize);
 
                 if (offset < 0) {
-                    diff_t cnt = (offset + length < 0)
-                                         ? length
-                                         : (length - (offset + length));
+                    diff_t cnt = (offset + length < 0) ? length
+                                                       : (length - (offset + length));
                     fill_n(ostreambuf_iterator<char>(Dst), cnt, 0x20);
                     length -= cnt;
                     offset += cnt;
@@ -193,8 +189,7 @@ public:
             case EdgeType::dictionary: {
                 size_t const len  = edge.get_length();
                 size_t const dist = edge.get_distance();
-                size_t const pos  = (edge.get_pos() - dist)
-                                   % RocketAdaptor::SearchBufSize;
+                size_t const pos = (edge.get_pos() - dist) % RocketAdaptor::SearchBufSize;
                 out.descbit(0);
                 out.putbyte(((len - 1) << 2U) | (pos >> 8U));
                 out.putbyte(pos);
@@ -240,8 +235,7 @@ bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
 
     // Fill in header
     // Size of decompressed file
-    BigEndian::Write2(
-            Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
+    BigEndian::Write2(Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
     // Size of compressed file
     BigEndian::Write2(Dst, outbuff.tellp());
 

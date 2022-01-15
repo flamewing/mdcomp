@@ -49,7 +49,8 @@ class kosinski_internal {
         using descriptor_t        = uint16_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<KosinskiAdaptor>;
-        enum class EdgeType : size_t {
+        enum class EdgeType : size_t
+        {
             invalid,
             terminator,
             symbolwise,
@@ -62,9 +63,9 @@ class kosinski_internal {
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = true;
-        // Flag that marks the descriptor bits as being in little-endian bit
-        // order (that is, lowest bits come out first).
-        constexpr static bool const DescriptorLittleEndianBits = true;
+        // Ordering of bits on descriptor field. Big bit endian order means high
+        // order bits come out first.
+        constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
         // How many characters to skip looking for matchs for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
@@ -75,11 +76,9 @@ class kosinski_internal {
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 3>{
+                    SlidingWindow_t{dt, size, 256, 2, 5, EdgeType::dictionary_inline},
                     SlidingWindow_t{
-                            dt, size, 256, 2, 5, EdgeType::dictionary_inline},
-                    SlidingWindow_t{
-                            dt, size, SearchBufSize, 3, 9,
-                            EdgeType::dictionary_short},
+                            dt, size, SearchBufSize, 3, 9, EdgeType::dictionary_short},
                     SlidingWindow_t{
                             dt, size, SearchBufSize, 10, LookAheadBufSize,
                             EdgeType::dictionary_long}};
@@ -107,8 +106,7 @@ class kosinski_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(
-                EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
@@ -132,11 +130,10 @@ class kosinski_internal {
         }
         // Kosinski finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                stream_t const* data, size_t const basenode,
-                size_t const ubound, size_t const lbound,
+                stream_t const* data, size_t const basenode, size_t const ubound,
+                size_t const                               lbound,
                 std::vector<AdjListNode<KosinskiAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(
-                    data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
@@ -213,7 +210,7 @@ public:
         using KosOStream = LZSSOStream<KosinskiAdaptor>;
 
         // Compute optimal Kosinski parsing of input file.
-        auto list = find_optimal_lzss_parse(Data, Size, KosinskiAdaptor{});
+        auto       list = find_optimal_lzss_parse(Data, Size, KosinskiAdaptor{});
         KosOStream out(Dst);
 
         // Go through each edge in the optimal path.

@@ -378,7 +378,7 @@ file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
 
 add_custom_target(
     mdcomp-format
-    COMMAND mdcomp-format
+    COMMAND clang-format
     -style=file
     -i
     ${ALL_SOURCE_FILES}
@@ -386,7 +386,7 @@ add_custom_target(
 
 add_custom_target(
     mdcomp-tidy
-    COMMAND mdcomp-tidy --use-color
+    COMMAND clang-tidy --use-color
     ${ALL_SOURCE_FILES}
 )
 

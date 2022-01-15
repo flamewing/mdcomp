@@ -49,7 +49,8 @@ class comper_internal {
         using descriptor_t        = uint16_t;
         using descriptor_endian_t = BigEndian;
         using SlidingWindow_t     = SlidingWindow<ComperAdaptor>;
-        enum class EdgeType : size_t {
+        enum class EdgeType : size_t
+        {
             invalid,
             terminator,
             symbolwise,
@@ -61,9 +62,9 @@ class comper_internal {
         // when a new bit is needed and all bits in the previous one have been
         // used up.
         constexpr static bool const NeedEarlyDescriptor = false;
-        // Flag that marks the descriptor bits as being in big-endian bit
-        // order (that is, highest bits come out first).
-        constexpr static bool const DescriptorLittleEndianBits = false;
+        // Ordering of bits on descriptor field. Big bit endian order means high
+        // order bits come out first.
+        constexpr static bit_endian const DescriptorBitOrder = bit_endian::big;
         // How many characters to skip looking for matchs for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
@@ -74,8 +75,7 @@ class comper_internal {
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 2, LookAheadBufSize,
-                    EdgeType::dictionary}};
+                    dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -87,8 +87,7 @@ class comper_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(
-                EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
             case EdgeType::symbolwise:
@@ -105,11 +104,10 @@ class comper_internal {
         }
         // Comper finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                stream_t const* data, size_t const basenode,
-                size_t const ubound, size_t const lbound,
+                stream_t const* data, size_t const basenode, size_t const ubound,
+                size_t const                             lbound,
                 std::vector<AdjListNode<ComperAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(
-                    data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }

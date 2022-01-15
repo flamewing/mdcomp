@@ -49,7 +49,8 @@ class lzkn1_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = BigEndian;
         using SlidingWindow_t     = SlidingWindow<Lzkn1Adaptor>;
-        enum class EdgeType : size_t {
+        enum class EdgeType : size_t
+        {
             invalid,
             terminator,
             symbolwise,
@@ -62,9 +63,9 @@ class lzkn1_internal {
         // Flag that tells the compressor that new descriptor fields are needed
         // as soon as the last bit in the previous one is used up.
         constexpr static bool const NeedEarlyDescriptor = false;
-        // Flag that marks the descriptor bits as being in little-endian bit
-        // order (that is, lowest bits come out first).
-        constexpr static bool const DescriptorLittleEndianBits = true;
+        // Ordering of bits on descriptor field. Big bit endian order means high
+        // order bits come out first.
+        constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
         // How many characters to skip looking for matchs for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
@@ -75,8 +76,7 @@ class lzkn1_internal {
         static auto create_sliding_window(
                 stream_t const* dt, size_t const size) noexcept {
             return array<SlidingWindow_t, 2>{
-                    SlidingWindow_t{
-                            dt, size, 15, 2, 5, EdgeType::dictionary_short},
+                    SlidingWindow_t{dt, size, 15, 2, 5, EdgeType::dictionary_short},
                     SlidingWindow_t{
                             dt, size, SearchBufSize, 3, LookAheadBufSize,
                             EdgeType::dictionary_long}};
@@ -90,8 +90,7 @@ class lzkn1_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(
-                EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
             switch (type) {
             case EdgeType::symbolwise:
             case EdgeType::terminator:
@@ -116,8 +115,8 @@ class lzkn1_internal {
         }
         // lzkn1 finds no additional matches over normal LZSS.
         static bool extra_matches(
-                stream_t const* data, size_t const basenode,
-                size_t const ubound, size_t const lbound,
+                stream_t const* data, size_t const basenode, size_t const ubound,
+                size_t const                            lbound,
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
@@ -162,8 +161,7 @@ public:
                     // Terminator.
                     break;
                 }
-                if ((Data & packed_symbolwise_marker)
-                    == packed_symbolwise_marker) {
+                if ((Data & packed_symbolwise_marker) == packed_symbolwise_marker) {
                     // Packed symbolwise.
                     size_t const Count = Data - packed_symbolwise_marker + 8U;
                     for (size_t i = 0; i < Count; i++) {
@@ -203,8 +201,7 @@ public:
         }
         if (BytesWritten != UncompressedSize) {
             std::cerr << "Something went wrong; expected " << UncompressedSize
-                      << " bytes, got " << BytesWritten << " bytes instead."
-                      << std::endl;
+                      << " bytes, got " << BytesWritten << " bytes instead." << std::endl;
         }
     }
 
@@ -215,8 +212,8 @@ public:
         BigEndian::Write2(Dst, Size);
 
         // Compute optimal lzkn1 parsing of input file.
-        auto         list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
-        Lzkn1OStream out(Dst);
+        auto                   list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
+        Lzkn1OStream           out(Dst);
         constexpr size_t const eof_marker               = 0x1FU;
         constexpr size_t const packed_symbolwise_marker = 0xC0U;
 
@@ -233,8 +230,7 @@ public:
                 size_t const  position = edge.get_pos();
                 uint8_t const data     = Count + packed_symbolwise_marker - 8;
                 out.putbyte(data);
-                for (size_t currpos = position; currpos < position + Count;
-                     currpos++) {
+                for (size_t currpos = position; currpos < position + Count; currpos++) {
                     out.putbyte(Data[currpos]);
                 }
                 break;
@@ -251,8 +247,8 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
-                uint8_t const high = (Count - 3U) | ((distance & 0x300U) >> 3U);
-                uint8_t const low  = distance & 0xFFU;
+                uint8_t const high     = (Count - 3U) | ((distance & 0x300U) >> 3U);
+                uint8_t const low      = distance & 0xFFU;
                 out.putbyte(high);
                 out.putbyte(low);
                 break;

@@ -54,8 +54,7 @@ int main(int argc, char* argv[]) {
     static constexpr const std::array<option, 4> long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{"moduled", no_argument, nullptr, 'm'},
-            option{"crunch", no_argument, nullptr, 'c'},
-            option{nullptr, 0, nullptr, 0}};
+            option{"crunch", no_argument, nullptr, 'c'}, option{nullptr, 0, nullptr, 0}};
 
     bool   extract = false;
     bool   moduled = false;
@@ -64,8 +63,8 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         int option_index = 0;
-        int option_char  = getopt_long(
-                 argc, argv, "x::mc", long_options.data(), &option_index);
+        int option_char
+                = getopt_long(argc, argv, "x::mc", long_options.data(), &option_index);
         if (option_char == -1) {
             break;
         }
@@ -94,19 +93,16 @@ int main(int argc, char* argv[]) {
     }
 
     if (extract && crunch) {
-        cerr << "Error: --extract and --crunch can't be used at the same time."
-             << endl
+        cerr << "Error: --extract and --crunch can't be used at the same time." << endl
              << endl;
         return 4;
     }
 
-    const char* outfile
-            = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
+    const char* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);
     if (!fin.good()) {
-        cerr << "Input file '" << argv[optind] << "' could not be opened."
-             << endl
+        cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
     }
@@ -120,8 +116,8 @@ int main(int argc, char* argv[]) {
 
         fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
         if (!fout.good()) {
-            cerr << "Output file '" << argv[optind + 1]
-                 << "' could not be opened." << endl
+            cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+                 << endl
                  << endl;
             return 3;
         }
@@ -133,8 +129,8 @@ int main(int argc, char* argv[]) {
     } else {
         fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
         if (!fout.good()) {
-            cerr << "Output file '" << argv[optind + 1]
-                 << "' could not be opened." << endl
+            cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+                 << endl
                  << endl;
             return 3;
         }
