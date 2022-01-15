@@ -28,6 +28,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -79,49 +80,35 @@ private:
 using flag_reader = base_flag_io<uint16_t(EniIBitstream&)>;
 using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
 
-template <size_t N, size_t I>
-struct read_bitfield_helper {
-    uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
-        if ((N & (1U << (I - 1))) != 0) {
-            flags |= uint16_t(bits.pop() << (I + 10U));
-        }
-        return read_bitfield_helper<N, I - 1>{}(bits, flags);
-    }
-};
-
-template <size_t N>
-struct read_bitfield_helper<N, 0> {
-    uint16_t operator()(EniIBitstream& bits, uint16_t flags) const {
-        ignore_unused_variable_warning(bits, flags);
-        return flags;
-    }
-};
-
 template <size_t N>
 uint16_t read_bitfield(EniIBitstream& bits) {
-    return read_bitfield_helper<N, 5>{}(bits, 0);
-}
-
-template <size_t N, size_t I>
-struct write_bitfield_helper {
-    void operator()(EniOBitstream& bits, uint16_t const flags) const {
-        if ((N & (1U << (I - 1))) != 0) {
-            bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
+    const auto read_bit_flag
+            = [&]<size_t I>(std::integral_constant<size_t, I>) -> uint32_t {
+        if constexpr ((N & (1U << (I - 1))) != 0) {
+            return uint32_t(bits.pop() << (I + 10U));
+        } else {
+            return 0U;
         }
-        write_bitfield_helper<N, I - 1>{}(bits, flags);
-    }
-};
-
-template <size_t N>
-struct write_bitfield_helper<N, 0> {
-    void operator()(EniOBitstream& bits, uint16_t const flags) const {
-        ignore_unused_variable_warning(bits, flags);
-    }
-};
+    };
+    const auto read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+        constexpr const size_t count = sizeof...(Is);
+        return uint16_t(((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
+    };
+    return read_bit_flags(make_index_sequence<5>());
+}
 
 template <size_t N>
 void write_bitfield(EniOBitstream& bits, uint16_t const flags) {
-    write_bitfield_helper<N, 5>{}(bits, flags);
+    const auto write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
+        if constexpr ((N & (1U << (I - 1))) != 0) {
+            bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
+        }
+    };
+    const auto write_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+        constexpr const size_t count = sizeof...(Is);
+        ((write_bit_flag(std::integral_constant<size_t, count - Is>{})), ...);
+    };
+    write_bit_flags(make_index_sequence<5>());
 }
 
 template <std::size_t... I>
@@ -138,34 +125,6 @@ template <typename Callback>
 const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
     constexpr static const auto Array = createMaskArray(tag{}, make_index_sequence<32>());
     return Array[n];
-}
-
-// Blazing fast function that gives the index of the MSB.
-int slog2(unsigned val) {
-#ifdef __GNUG__
-    return static_cast<int>((sizeof(unsigned) * 8U - 1U) ^ unsigned(__builtin_clz(val)));
-#elif defined(_MSC_VER)
-    unsigned long ret = 0;
-    _BitScanReverse(&ret, val);
-    return ret;
-#else
-    unsigned ret   = 0;
-    unsigned shift = 0;
-
-    ret = (val > 0xFFFF) << 4;
-    val >>= ret;
-    shift = (val > 0xFFu) << 3;
-    val >>= shift;
-    ret |= shift;
-    shift = (val > 0xFu) << 2;
-    val >>= shift;
-    ret |= shift;
-    shift = (val > 0x3u) << 1;
-    val >>= shift;
-    ret |= shift;
-    ret |= (val >> 1);
-    return ret;
-#endif
 }
 
 // Comparison functor, see below.
@@ -285,7 +244,7 @@ public:
         }
 
         auto           putMask       = flag_writer::get(maskval >> 11U);
-        uint16_t const packet_length = slog2(maskval & 0x7ffU) + 1;
+        uint16_t const packet_length = std::bit_width(maskval & 0x7ffU);
 
         // Find the most common 2-byte value.
         Compare_count  cmp;
