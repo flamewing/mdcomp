@@ -30,6 +30,7 @@
 #include <limits>
 #include <list>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #ifdef _MSC_VER
@@ -235,51 +236,62 @@ private:
     EdgeType const        type;
 };
 
+template <typename T>
+concept LZSSAdaptor = requires() {
+    requires(std::unsigned_integral<typename T::stream_t>)
+            && !(std::same_as<typename T::stream_t, bool>);
+    requires std::is_class_v<typename T::stream_endian_t>;
+    requires(std::unsigned_integral<typename T::descriptor_t>)
+            && !(std::same_as<typename T::descriptor_t, bool>);
+    requires std::is_class_v<typename T::descriptor_endian_t>;
+    requires std::is_enum_v<typename T::EdgeType>;
+    { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
+    { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
+    { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
+    requires std::same_as<decltype(T::NumDescBits), const size_t>;
+    requires std::same_as<decltype(T::NeedEarlyDescriptor), const bool>;
+    requires std::same_as<decltype(T::DescriptorLittleEndianBits), const bool>;
+    requires std::same_as<decltype(T::FirstMatchPosition), const size_t>;
+    requires std::same_as<decltype(T::SearchBufSize), const size_t>;
+    requires std::same_as<decltype(T::LookAheadBufSize), const size_t>;
+    requires requires(
+            uint8_t const*& rptr, uint8_t*& wptr, std::istream& in,
+            std::ostream& out, typename T::stream_t vs,
+            typename T::stream_endian_t se, typename T::descriptor_t vd,
+            typename T::descriptor_endian_t de) {
+        {
+            decltype(se)::template Read<typename T::stream_t>(rptr)
+            } -> std::same_as<typename T::stream_t>;
+        {
+            decltype(se)::template Read<typename T::stream_t>(in)
+            } -> std::same_as<typename T::stream_t>;
+        { decltype(se)::Write(wptr, vs) } -> std::same_as<void>;
+        { decltype(se)::Write(out, vs) } -> std::same_as<void>;
+        {
+            decltype(de)::template Read<typename T::descriptor_t>(rptr)
+            } -> std::same_as<typename T::descriptor_t>;
+        {
+            decltype(de)::template Read<typename T::descriptor_t>(in)
+            } -> std::same_as<typename T::descriptor_t>;
+        { decltype(de)::Write(wptr, vd) } -> std::same_as<void>;
+        { decltype(de)::Write(out, vd) } -> std::same_as<void>;
+    };
+    requires requires(
+            typename T::EdgeType t, size_t l, typename T::stream_t * d,
+            size_t lbound, std::vector<AdjListNode<T>> m) {
+        { T::desc_bits(t) } -> std::same_as<size_t>;
+        { T::edge_weight(t, l) } -> std::same_as<size_t>;
+        { T::extra_matches(d, l, l, l, m) } -> std::same_as<bool>;
+        { T::get_padding(l) } -> std::same_as<size_t>;
+        requires noexcept(T::desc_bits(t));
+        requires noexcept(T::edge_weight(t, l));
+        requires noexcept(T::get_padding(l));
+        requires noexcept(T::extra_matches(d, l, l, l, m));
+    };
+};
+
 /*
  * Function which creates a LZSS structure and finds the optimal parse.
- *
- * The template parameter is an adaptor class/structure with the following
- * members:
- *  struct LZSSAdaptor {
- *    using stream_t     = uint8_t;
- *    using stream_endian_t = BigEndian;
- *    using descriptor_t = uint16_t;
- *    using descriptor_endian_t = LittleEndian;
- *    enum class EdgeType : size_t {
- *        invalid,
- *        terminator,
- *        // other cases
- *    };
- *    constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
- *    // Flag that tells the compressor that new descriptor fields are needed
- *    // as soon as the last bit in the previous one is used up.
- *    constexpr static bool const NeedEarlyDescriptor = true;
- *    // Flag that marks the descriptor bits as being in little-endian bit
- *    // order (that is, lowest bits come out first).
- *    constexpr static bool const DescriptorLittleEndianBits = true;
- *    // How many characters to skip looking for matchs for at the start.
- *    constexpr static size_t const FirstMatchPosition = 0;
- *    // Size of the search buffer.
- *    constexpr static size_t const SearchBufSize = 8192;
- *    // Size of the look-ahead buffer.
- *    constexpr static size_t const LookAheadBufSize = 256;
- *    // Given an edge type, computes how many bits are used in the descriptor
- *    // field.
- *    constexpr static size_t desc_bits(EdgeType const type) noexcept;
- *    // Given an edge type, computes how many bits are used in total by this
- *    // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
- *    // or "no edge".
- *    constexpr static size_t edge_weight(EdgeType const type,
- *                                        size_t length) noexcept;
- *    // Function that finds extra matches in the data that are specific to
- *    // the given encoder and not general LZSS dictionary matches. May be
- *    // constexpr.
- *    static bool extra_matches(stream_t const *data, size_t const basenode,
- *                      size_t const ubound, size_t const lbound,
- *                      std::vector<AdjListNode<Adaptor>> &matches) noexcept;
- *    // Function that computes padding between modules, if any. May be
- *    //constexpr.
- *    static size_t get_padding(size_t const totallen) noexcept;
  */
 
 template <typename AdjList>
@@ -289,7 +301,7 @@ struct lzss_parse_result {
     size_t  file_size;
 };
 
-template <typename Adaptor>
+template <LZSSAdaptor Adaptor>
 auto find_optimal_lzss_parse(
         uint8_t const* dt, size_t const size, Adaptor adaptor) noexcept {
     ignore_unused_variable_warning(adaptor);
@@ -433,7 +445,7 @@ auto find_optimal_lzss_parse(
  * by buffering the bytes until a descriptor field is full, at which point it
  * writes the descriptor field and flushes the output buffer.
  */
-template <typename Adaptor>
+template <LZSSAdaptor Adaptor>
 class LZSSOStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
@@ -505,7 +517,7 @@ public:
  * by reading a descriptor field when one is required (as defined by the adaptor
  * class), so that bytes can be read when needed from the input stream.
  */
-template <typename Adaptor>
+template <LZSSAdaptor Adaptor>
 class LZSSIStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
