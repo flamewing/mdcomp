@@ -300,6 +300,9 @@ NibbleCodeMap Compare_node2::codemap;
 template <>
 size_t moduled_nemesis::PadMaskBits = 1U;
 
+using NemIBitstream = ibitstream<uint8_t, bit_endian::big, BigEndian, true>;
+using NemOBitstream = obitstream<uint8_t, bit_endian::big, BigEndian>;
+
 class nemesis_internal {
 public:
     static void decode_header(std::istream& Src, CodeNibbleMap& codemap) {
@@ -331,10 +334,11 @@ public:
         stringstream dst(ios::in | ios::out | ios::binary);
 
         // Set bit I/O streams.
-        ibitstream<uint8_t, true> bits(Src);
-        obitstream<uint8_t>       out(dst);
-        size_t                    code = bits.pop();
-        uint8_t                   len  = 1;
+        NemIBitstream bits(Src);
+        NemOBitstream out(dst);
+
+        size_t  code = bits.pop();
+        uint8_t len  = 1;
 
         // When to stop decoding: number of tiles * $20 bytes per tile * 8 bits
         // per byte.
@@ -918,7 +922,7 @@ public:
         Write1(Dst, 0xff);
 
         // Time to write the encoded bitstream.
-        obitstream<uint8_t> bits(Dst);
+        NemOBitstream bits(Dst);
 
         // The RLE-encoded source makes for a far faster encode as we simply
         // use the nibble runs as an index into the map, meaning a quick binary
