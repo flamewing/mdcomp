@@ -121,16 +121,18 @@ enum class bit_endian
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
-        std::unsigned_integral T, detail::bit_callback<T> Reader, bool EarlyRead,
-        bit_endian bit_order>
+        std::unsigned_integral uint_t, detail::bit_callback<uint_t> Reader,
+        bit_endian bit_order, bool EarlyRead>
 class ibitbuffer {
 private:
     Reader reader;
     size_t readbits;
-    T      bitbuffer;
+    uint_t bitbuffer;
 
-    [[nodiscard]] T read_bits() noexcept {
-        T bits = reader();
+    static constexpr const size_t bitcount = sizeof(uint_t) * CHAR_BIT;
+
+    [[nodiscard]] uint_t read_bits() noexcept {
+        uint_t bits = reader();
         if constexpr (bit_order == bit_endian::little) {
             return detail::reverseBits(bits);
         } else {
@@ -143,24 +145,23 @@ private:
         }
 
         bitbuffer = read_bits();
-        readbits  = sizeof(T) * CHAR_BIT;
+        readbits  = bitcount;
     }
 
 public:
     explicit ibitbuffer(const Reader& r) noexcept
-            : reader(r), readbits(sizeof(T) * CHAR_BIT), bitbuffer(read_bits()) {}
+            : reader(r), readbits(bitcount), bitbuffer(read_bits()) {}
     explicit ibitbuffer(Reader&& r) noexcept
-            : reader(std::move(r)), readbits(sizeof(T) * CHAR_BIT),
-              bitbuffer(read_bits()) {}
+            : reader(std::move(r)), readbits(bitcount), bitbuffer(read_bits()) {}
     // Gets a single bit from the buffer. Remembers previously read bits, and
     // gets a new T from the actual buffer once all bits in the current T has
     // been used up.
-    [[nodiscard]] T pop() noexcept {
+    [[nodiscard]] uint_t pop() noexcept {
         if constexpr (!EarlyRead) {
             check_buffer();
         }
         --readbits;
-        T bit = (bitbuffer >> readbits) & 1U;
+        uint_t bit = (bitbuffer >> readbits) & 1U;
         bitbuffer ^= (bit << readbits);
         if constexpr (EarlyRead) {
             check_buffer();
@@ -170,17 +171,17 @@ public:
     // Reads up to sizeof(T) * CHAR_BIT bits from the buffer. This remembers
     // previously read bits, and gets another T from the actual buffer once all
     // bits in the current T have been read.
-    [[nodiscard]] T read(uint8_t const cnt) noexcept {
+    [[nodiscard]] uint_t read(uint8_t const cnt) noexcept {
         if constexpr (!EarlyRead) {
             check_buffer();
         }
-        T bits;
+        uint_t bits;
         if (readbits < cnt) {
-            size_t delta = (cnt - readbits);
-            bits         = bitbuffer << delta;
-            bitbuffer    = read_bits();
-            readbits     = (sizeof(T) * CHAR_BIT) - delta;
-            T newbits    = (bitbuffer >> readbits);
+            size_t delta   = cnt - readbits;
+            bits           = bitbuffer << delta;
+            bitbuffer      = read_bits();
+            readbits       = bitcount - delta;
+            uint_t newbits = bitbuffer >> readbits;
             bitbuffer ^= (newbits << readbits);
             bits |= newbits;
         } else {
@@ -200,15 +201,18 @@ public:
 
 // This class allows outputting bits into a buffer.
 template <
-        std::unsigned_integral T, detail::bit_callback<void, T> Writer,
+        std::unsigned_integral uint_t, detail::bit_callback<void, uint_t> Writer,
         bit_endian bit_order>
 class obitbuffer {
 private:
     Writer writer;
     size_t waitingbits;
-    T      bitbuffer;
+    uint_t bitbuffer;
 
-    void write_bits(T const bits) noexcept {
+    static constexpr const size_t bitcount = sizeof(uint_t) * CHAR_BIT;
+    static constexpr const uint_t all_ones = std::numeric_limits<uint_t>::max();
+
+    void write_bits(uint_t const bits) noexcept {
         if constexpr (bit_order == bit_endian::little) {
             writer(detail::reverseBits(bits));
         } else {
@@ -224,9 +228,9 @@ public:
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
-    bool push(T const data) noexcept {
+    bool push(uint_t const data) noexcept {
         bitbuffer = (bitbuffer << 1U) | (data & 1U);
-        if (++waitingbits >= sizeof(T) * CHAR_BIT) {
+        if (++waitingbits >= bitcount) {
             write_bits(bitbuffer);
             waitingbits = 0;
             bitbuffer   = 0;
@@ -237,14 +241,13 @@ public:
     // Writes up to sizeof(T) * CHAR_BIT bits to the buffer. This remembers
     // previously written bits, and outputs a T to the actual buffer once there
     // are at least sizeof(T) * CHAR_BIT bits stored in the buffer.
-    bool write(T const data, uint8_t const size) noexcept {
-        if (waitingbits + size >= sizeof(T) * CHAR_BIT) {
-            size_t delta = (sizeof(T) * CHAR_BIT - waitingbits);
-            waitingbits  = (waitingbits + size) % (sizeof(T) * CHAR_BIT);
-            T bits       = (bitbuffer << delta) | (data >> waitingbits);
+    bool write(uint_t const data, uint8_t const size) noexcept {
+        if (waitingbits + size >= bitcount) {
+            size_t delta = bitcount - waitingbits;
+            waitingbits  = waitingbits + size % (bitcount);
+            uint_t bits  = (bitbuffer << delta) | (data >> waitingbits);
             write_bits(bits);
-            constexpr const T ones = std::numeric_limits<T>::max();
-            bitbuffer = (data & (ones >> (sizeof(T) * CHAR_BIT - waitingbits)));
+            bitbuffer = data & (all_ones >> (bitcount - waitingbits));
             return true;
         }
         bitbuffer = (bitbuffer << size) | data;
@@ -255,7 +258,7 @@ public:
     // padding with zeroes.
     bool flush() noexcept {
         if (waitingbits != 0U) {
-            bitbuffer <<= ((sizeof(T) * CHAR_BIT) - waitingbits);
+            bitbuffer <<= ((bitcount)-waitingbits);
             write_bits(bitbuffer);
             waitingbits = 0;
             return true;
@@ -270,33 +273,35 @@ public:
 // This class allows reading bits from a stream.
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
-template <std::unsigned_integral T, bit_endian bit_order, typename Endian, bool EarlyRead>
+template <
+        std::unsigned_integral uint_t, bit_endian bit_order, typename Endian,
+        bool EarlyRead>
 class ibitstream {
 private:
     struct BitReader {
-        auto operator()() noexcept(noexcept(Endian::template Read<T>(source))) {
-            return Endian::template Read<T>(source);
+        auto operator()() noexcept(noexcept(Endian::template Read<uint_t>(source))) {
+            return Endian::template Read<uint_t>(source);
         }
         std::istream& source;
     };
 
-    using Callback    = tl::function_ref<T(void)>;
-    using bitbuffer_t = ibitbuffer<T, Callback, EarlyRead, bit_order>;
-    BitReader   reader;
-    bitbuffer_t buffer;
+    using Callback  = tl::function_ref<uint_t(void)>;
+    using bitbuffer = ibitbuffer<uint_t, Callback, bit_order, EarlyRead>;
+    BitReader reader;
+    bitbuffer buffer;
 
 public:
     explicit ibitstream(std::istream& source) noexcept : reader(source), buffer(reader) {}
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
-    [[nodiscard]] T pop() noexcept {
+    [[nodiscard]] uint_t pop() noexcept {
         return buffer.pop();
     }
     // Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
-    [[nodiscard]] T read(uint8_t const cnt) noexcept {
+    [[nodiscard]] uint_t read(uint8_t const cnt) noexcept {
         return buffer.read(cnt);
     }
     [[nodiscard]] size_t have_waiting_bits() const noexcept {
@@ -305,33 +310,33 @@ public:
 };
 
 // This class allows outputting bits into a stream.
-template <std::unsigned_integral T, bit_endian bit_order, typename Endian>
+template <std::unsigned_integral uint_t, bit_endian bit_order, typename Endian>
 class obitstream {
 private:
     struct BitWriter {
-        auto operator()(T c) noexcept(noexcept(Endian::Write(dest, c))) {
+        auto operator()(uint_t c) noexcept(noexcept(Endian::Write(dest, c))) {
             return Endian::Write(dest, c);
         }
         std::ostream& dest;
     };
 
-    using Callback    = tl::function_ref<void(T)>;
-    using bitbuffer_t = obitbuffer<T, Callback, bit_order>;
-    BitWriter   writer;
-    bitbuffer_t buffer;
+    using Callback  = tl::function_ref<void(uint_t)>;
+    using bitbuffer = obitbuffer<uint_t, Callback, bit_order>;
+    BitWriter writer;
+    bitbuffer buffer;
 
 public:
     explicit obitstream(std::ostream& dest) noexcept : writer(dest), buffer(writer) {}
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
-    bool push(T const data) noexcept {
+    bool push(uint_t const data) noexcept {
         return buffer.push(data);
     }
     // Writes up to sizeof(T) * CHAR_BIT bits to the stream. This remembers
     // previously written bits, and outputs a T to the actual stream once there
     // are at least sizeof(T) * CHAR_BIT bits stored in the buffer.
-    bool write(T const data, uint8_t const size) noexcept {
+    bool write(uint_t const data, uint8_t const size) noexcept {
         return buffer.write(data, size);
     }
     // Flushes remaining bits (if any) to the buffer, completing the byte by
