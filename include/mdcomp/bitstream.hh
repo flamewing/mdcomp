@@ -293,7 +293,7 @@ private:
         std::istream& source;
     };
 
-    using Callback  = tl::function_ref<uint_t(void) noexcept(is_noexcept)>;
+    using Callback  = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
     using bitbuffer = ibitbuffer<uint_t, Callback, bit_order, EarlyRead>;
     BitReader reader;
     bitbuffer buffer;
@@ -333,7 +333,7 @@ private:
         std::ostream& dest;
     };
 
-    using Callback  = tl::function_ref<void(uint_t) noexcept(is_noexcept)>;
+    using Callback  = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
     using bitbuffer = obitbuffer<uint_t, Callback, bit_order>;
     BitWriter writer;
     bitbuffer buffer;

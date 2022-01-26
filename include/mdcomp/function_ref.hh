@@ -1,550 +1,277 @@
-///
-// function_ref - A low-overhead non-owning function
-// Written in 2017 by Simon Brand (@TartanLlama)
-//
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to the
-// public domain worldwide. This software is distributed without any warranty.
-//
-// You should have received a copy of the CC0 Public Domain Dedication
-// along with this software. If not, see
-// <http://creativecommons.org/publicdomain/zero/1.0/>.
-///
-
-#ifndef TL_FUNCTION_REF_HPP
-#define TL_FUNCTION_REF_HPP
-
-#define TL_FUNCTION_REF_VERSION_MAJOR 1
-#define TL_FUNCTION_REF_VERSION_MINOR 0
-#define TL_FUNCTION_REF_VERSION_PATCH 0
+#pragma once
 
 #include <functional>
 #include <utility>
 
-namespace tl {
-    template <typename T, T>
-    struct internal_function_traits;
+namespace std23 {
 
-    template <typename R, typename... Args, R (*f)(Args...)>
-    struct internal_function_traits<R (*)(Args...), f> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        static R prepend_void_pointer(void*, Args... args) {
-            return f(std::forward<Args>(args)...);
+    template <auto V>
+    struct nontype_t {
+        explicit nontype_t() = default;
+    };
+
+    template <auto V>
+    inline constexpr nontype_t<V> nontype{};
+
+    template <class R, class F, class... Args>
+        requires std::is_invocable_r_v<R, F, Args...>
+    constexpr R invoke_r(F&& f, Args&&... args) noexcept(
+            std::is_nothrow_invocable_r_v<R, F, Args...>) {
+        if constexpr (std::is_void_v<R>) {
+            std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+        } else {
+            return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+        }
+    }
+
+    template <class Sig>
+    struct _qual_fn_sig;
+
+    template <class R, class... Args>
+    struct _qual_fn_sig<R(Args...)> {
+        using function = R(Args...);
+        template <class T>
+        using cv = T;
+
+        static constexpr bool is_noexcept = false;
+
+        template <class... T>
+        static constexpr bool is_invocable_using
+                = std::is_invocable_r_v<R, T..., Args...>;
+    };
+
+    template <class R, class... Args>
+    struct _qual_fn_sig<R(Args...) noexcept> {
+        using function = R(Args...);
+        template <class T>
+        using cv = T;
+
+        static constexpr bool is_noexcept = true;
+
+        template <class... T>
+        static constexpr bool is_invocable_using
+                = std::is_nothrow_invocable_r_v<R, T..., Args...>;
+    };
+
+    template <class R, class... Args>
+    struct _qual_fn_sig<R(Args...) const> : _qual_fn_sig<R(Args...)> {
+        template <class T>
+        using cv = T const;
+    };
+
+    template <class R, class... Args>
+    struct _qual_fn_sig<R(Args...) const noexcept> : _qual_fn_sig<R(Args...) noexcept> {
+        template <class T>
+        using cv = T const;
+    };
+
+    // See also: https://www.agner.org/optimize/calling_conventions.pdf
+    template <class T>
+    inline constexpr auto _select_param_type = [] {
+        if constexpr (std::is_trivially_copyable_v<T>) {
+            return std::type_identity<T>();
+        } else {
+            return std::add_rvalue_reference<T>();
         }
     };
 
-    template <typename R, typename... Args, R (*f)(Args...) noexcept>
-    struct internal_function_traits<R (*)(Args...) noexcept, f> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        static R prepend_void_pointer(void*, Args... args) noexcept {
-            return f(std::forward<Args>(args)...);
+    template <class T>
+    using _param_t = typename std::invoke_result_t<decltype(_select_param_type<T>)>::type;
+
+    template <class T, class Self>
+    inline constexpr bool _is_not_self = not std::is_same_v<std::remove_cvref_t<T>, Self>;
+
+    template <class T>
+    struct _unwrap_reference {
+        using type = T;
+    };
+
+    template <class U>
+    struct _unwrap_reference<std::reference_wrapper<U>> {
+        using type = U;
+    };
+
+    template <class U>
+    struct _unwrap_reference<std::reference_wrapper<U> const> {
+        using type = U;
+    };
+
+    template <class U>
+    struct _unwrap_reference<std::reference_wrapper<U> volatile> {
+        using type = U;
+    };
+
+    template <class U>
+    struct _unwrap_reference<std::reference_wrapper<U> const volatile> {
+        using type = U;
+    };
+
+    template <class T>
+    using _remove_and_unwrap_reference_t =
+            typename _unwrap_reference<std::remove_reference_t<T>>::type;
+
+    struct _function_ref_base {
+        union storage {
+            void*       p_ = nullptr;
+            void const* cp_;
+            void (*fp_)();
+
+            constexpr storage() noexcept = default;
+
+            template <class T>
+                requires std::is_object_v<T>
+            constexpr explicit storage(T* p) noexcept : p_(p) {}
+
+            template <class T>
+                requires std::is_object_v<T>
+            constexpr explicit storage(T const* p) noexcept : cp_(p) {}
+
+            template <class T>
+                requires std::is_function_v<T>
+            constexpr explicit storage(T* p) noexcept
+                    : fp_(reinterpret_cast<decltype(fp_)>(p)) {}
+        };
+
+        template <class T>
+        constexpr static auto get(storage obj) {
+            if constexpr (std::is_const_v<T>) {
+                return static_cast<T*>(obj.cp_);
+            } else if constexpr (std::is_object_v<T>) {
+                return static_cast<T*>(obj.p_);
+            } else {
+                return reinterpret_cast<T*>(obj.fp_);
+            }
         }
     };
 
-    template <auto FP>
-    using function_traits = internal_function_traits<decltype(FP), FP>;
+    template <class Sig, class = typename _qual_fn_sig<Sig>::function>
+    struct function_ref;
 
-    template <typename T, T>
-    struct internal_member_function_traits;
+    template <class Sig, class R, class... Args>
+    struct function_ref<Sig, R(Args...)> : _function_ref_base {
+        storage obj_;
+        using fwd_t  = R(storage, _param_t<Args>...);
+        fwd_t* fptr_ = nullptr;
 
-    template <typename T, typename R, typename... Args, R (T::*mf)(Args...)>
-    struct internal_member_function_traits<R (T::*)(Args...), mf> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        // using function_pointer = R (*)(Args...);
-        // using member_function_pointer = R (T::*)(Args...);
-        using this_as_ref_function_signature     = R(T&, Args...);
-        using this_as_pointer_function_signature = R(T*, Args...);
-        using this_as_value_function_signature   = R(T, Args...);
-        static R type_erase_this(void* obj, Args... args) {
-            return (static_cast<T*>(obj)->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_ref(void*, T& first, Args... args) {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_pointer(void*, T* first, Args... args) {
-            return (first->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_value(void*, T first, Args... args) {
-            return (first.*mf)(std::forward<Args>(args)...);
+        using signature = _qual_fn_sig<Sig>;
+        template <class T>
+        using cv = typename signature::template cv<T>;
+
+        template <class T>
+        using cvref = cv<T>&;
+
+        template <class... T>
+        static constexpr bool is_invocable_using
+                = signature::template is_invocable_using<T...>;
+
+        template <class F, class... T>
+        static constexpr bool is_memfn_invocable_using
+                = (is_invocable_using<F, T...>)&&(std::is_member_pointer_v<F>);
+
+    public:
+        // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
+        template <class F>
+            requires std::is_function_v<F> && is_invocable_using<F>
+        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+        constexpr function_ref(F* f) noexcept
+                : obj_(f), fptr_([](storage fn_, _param_t<Args>... args) {
+                      return std23::invoke_r<R>(get<F>(fn_), std::forward<Args>(args)...);
+                  }) {}
+
+        template <class F, class T = _remove_and_unwrap_reference_t<F>>
+            requires _is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
+        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
+        constexpr function_ref(F&& f) noexcept
+                : obj_(std::addressof(static_cast<T&>(f))),
+                  fptr_([](storage fn_, _param_t<Args>... args) {
+                      cvref<T> obj = *get<T>(fn_);
+                      return std23::invoke_r<R>(obj, std::forward<Args>(args)...);
+                  }) {}
+
+        template <auto F>
+            requires is_invocable_using<decltype(F)>
+        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+        constexpr function_ref(nontype_t<F>) noexcept
+                : fptr_([](storage, _param_t<Args>... args) {
+                      return std23::invoke_r<R>(F, std::forward<Args>(args)...);
+                  }) {}
+        // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
+
+        template <
+                auto F, class U, class Ty = std::unwrap_reference_t<U>,
+                class T = std::remove_reference_t<Ty>>
+            requires std::is_lvalue_reference_v<Ty> && is_invocable_using<
+                    decltype(F), cvref<T>>
+        constexpr function_ref(nontype_t<F>, U&& obj) noexcept
+                : obj_(std::addressof(static_cast<Ty>(obj))),
+                  fptr_([](storage this_, _param_t<Args>... args) {
+                      cvref<T> real_obj = *get<T>(this_);
+                      return std23::invoke_r<R>(F, real_obj, std::forward<Args>(args)...);
+                  }) {}
+
+        template <auto F, class T>
+        constexpr function_ref(nontype_t<F>, cv<T>* obj) noexcept requires
+                is_memfn_invocable_using<decltype(F), decltype(obj)>
+                : obj_(obj), fptr_([](storage this_, _param_t<Args>... args) {
+                    return std23::invoke_r<R>(
+                            F, get<cv<T>>(this_), std::forward<Args>(args)...);
+                }) {}
+
+        constexpr R operator()(Args... args) const noexcept(signature::is_noexcept) {
+            return fptr_(obj_, std::forward<Args>(args)...);
         }
     };
 
-    template <typename T, typename R, typename... Args, R (T::*mf)(Args...) const>
-    struct internal_member_function_traits<R (T::*)(Args...) const, mf> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        // using function_pointer = R (*)(Args...);
-        // using member_function_pointer = R (T::*)(Args...) const;
-        using this_as_ref_function_signature     = R(const T&, Args...);
-        using this_as_pointer_function_signature = R(const T*, Args...);
-        using this_as_value_function_signature   = R(const T, Args...);
-        static R type_erase_this(void* obj, Args... args) {
-            return (static_cast<const T*>(obj)->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_ref(void*, const T& first, Args... args) {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_pointer(void*, const T* first, Args... args) {
-            return (first->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_value(void*, const T first, Args... args) {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-    };
+    template <class T>
+    struct _adapt_signature;
 
-    template <typename T, typename R, typename... Args, R (T::*mf)(Args...) noexcept>
-    struct internal_member_function_traits<R (T::*)(Args...) noexcept, mf> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        // using function_pointer = R (*)(Args...) noexcept;
-        // using member_function_pointer = R (T::*)(Args...) noexcept;
-        using this_as_ref_function_signature     = R(T&, Args...) noexcept;
-        using this_as_pointer_function_signature = R(T*, Args...) noexcept;
-        using this_as_value_function_signature   = R(T, Args...) noexcept;
-        static R type_erase_this(void* obj, Args... args) noexcept {
-            return (static_cast<T*>(obj)->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_ref(void*, T& first, Args... args) noexcept {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_pointer(void*, T* first, Args... args) noexcept {
-            return (first->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_value(void*, T first, Args... args) noexcept {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename T, typename R, typename... Args, R (T::*mf)(Args...) const noexcept>
-    struct internal_member_function_traits<R (T::*)(Args...) const noexcept, mf> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        // using function_pointer = R (*)(Args...) noexcept;
-        // using member_function_pointer = R (T::*)(Args...) const noexcept;
-        using this_as_ref_function_signature     = R(const T&, Args...) noexcept;
-        using this_as_pointer_function_signature = R(const T*, Args...) noexcept;
-        using this_as_value_function_signature   = R(const T, Args...) noexcept;
-        static R type_erase_this(void* obj, Args... args) noexcept {
-            return (static_cast<const T*>(obj)->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_ref(void*, const T& first, Args... args) noexcept {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_pointer(void*, const T* first, Args... args) noexcept {
-            return (first->*mf)(std::forward<Args>(args)...);
-        }
-        static R this_as_value(void*, const T first, Args... args) noexcept {
-            return (first.*mf)(std::forward<Args>(args)...);
-        }
-    };
-
-    template <auto MFP>
-    using member_function_traits = internal_member_function_traits<decltype(MFP), MFP>;
-
-    template <typename T, T>
-    struct internal_type_erase_first;
-
-    template <typename R, typename FirstArg, typename... Args, R (*f)(FirstArg&, Args...)>
-    struct internal_type_erase_first<R (*)(FirstArg& fa, Args...), f> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        using function_pointer        = R (*)(Args...);
-        static R type_erased_function(void* obj, Args... args) {
-            return f(*static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(const FirstArg&, Args...)>
-    struct internal_type_erase_first<R (*)(const FirstArg& fa, Args...), f> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        using function_pointer        = R (*)(Args...);
-        static R type_erased_function(void* obj, Args... args) {
-            return f(*static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <typename R, typename FirstArg, typename... Args, R (*f)(FirstArg*, Args...)>
-    struct internal_type_erase_first<R (*)(FirstArg* fa, Args...), f> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        using function_pointer        = R (*)(Args...);
-        static R type_erased_function(void* obj, Args... args) {
-            return f(static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(const FirstArg*, Args...)>
-    struct internal_type_erase_first<R (*)(const FirstArg* fa, Args...), f> {
-        static const bool is_noexcept = false;
-        using function_signature      = R(Args...);
-        using function_pointer        = R (*)(Args...);
-        static R type_erased_function(void* obj, Args... args) {
-            return f(static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(FirstArg&, Args...) noexcept>
-    struct internal_type_erase_first<R (*)(FirstArg& fa, Args...) noexcept, f> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        using function_pointer        = R (*)(Args...) noexcept;
-        static R type_erased_function(void* obj, Args... args) noexcept {
-            return f(*static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(const FirstArg&, Args...) noexcept>
-    struct internal_type_erase_first<R (*)(const FirstArg& fa, Args...) noexcept, f> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        using function_pointer        = R (*)(Args...) noexcept;
-        static R type_erased_function(void* obj, Args... args) noexcept {
-            return f(*static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(FirstArg*, Args...) noexcept>
-    struct internal_type_erase_first<R (*)(FirstArg* fa, Args...) noexcept, f> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        using function_pointer        = R (*)(Args...) noexcept;
-        static R type_erased_function(void* obj, Args... args) noexcept {
-            return f(static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <
-            typename R, typename FirstArg, typename... Args,
-            R (*f)(const FirstArg*, Args...) noexcept>
-    struct internal_type_erase_first<R (*)(const FirstArg* fa, Args...) noexcept, f> {
-        static const bool is_noexcept = true;
-        using function_signature      = R(Args...) noexcept;
-        using function_pointer        = R (*)(Args...) noexcept;
-        static R type_erased_function(void* obj, Args... args) noexcept {
-            return f(static_cast<FirstArg*>(obj), std::forward<Args>(args)...);
-        }
-    };
-
-    template <auto FP>
-    using type_erase_first = internal_type_erase_first<decltype(FP), FP>;
-
-    /// A lightweight non-owning reference to a callable.
-    ///
-    /// Example usage:
-    ///
-    /// ```cpp
-    /// void foo (function_ref<int(int)> func) {
-    ///     std::cout << "Result is " << func(21); //42
-    /// }
-    ///
-    /// foo([](int i) { return i*2; });
     template <class F>
-    class function_ref;
-
-    /// Specialization for function types.
-    template <class R, class... Args>
-    class function_ref<R(Args...)> {
-    public:
-        constexpr function_ref() noexcept = delete;
-
-        /// Creates a `function_ref` which refers to the same callable as `rhs`.
-        constexpr function_ref(const function_ref&) noexcept = default;
-
-        /// Creates a `function_ref` which refers to the same callable as `rhs`.
-        constexpr function_ref(function_ref&&) noexcept = default;
-
-        /// Constructs a `function_ref` referring to `f`.
-        ///
-        /// \brief template <typename F> constexpr function_ref(F &&f) noexcept
-        template <typename F>
-            requires requires() {
-                !std::is_same_v<std::decay_t<F>, function_ref>;
-                std::is_invocable_r_v<R, F&&, Args...>;
-            }
-        // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-        constexpr function_ref(F&& f) noexcept
-                : obj_(reinterpret_cast<void*>(std::addressof(f))),
-                  callback_([](void* obj, Args... args) -> R {
-                      return std::invoke(
-                              *reinterpret_cast<std::add_pointer_t<F>>(obj),
-                              std::forward<Args>(args)...);
-                  }) {}
-        // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-
-        /// Makes `*this` refer to the same callable as `rhs`.
-        constexpr function_ref& operator=(const function_ref&) noexcept = default;
-
-        /// Makes `*this` refer to the same callable as `rhs`.
-        constexpr function_ref& operator=(function_ref&&) noexcept = default;
-
-        /// Destructor.
-        constexpr ~function_ref() noexcept = default;
-
-        /// Makes `*this` refer to `f`.
-        ///
-        /// \brief template <typename F> constexpr function_ref &operator=(F &&f) noexcept;
-        template <typename F>
-            requires std::is_invocable_r_v<R, F&&, Args...>
-        constexpr function_ref& operator=(F&& f) noexcept {
-            obj_      = reinterpret_cast<void*>(std::addressof(f));
-            callback_ = [](void* obj, Args... args) {
-                return std::invoke(
-                        *reinterpret_cast<std::add_pointer_t<F>>(obj),
-                        std::forward<Args>(args)...);
-            };
-
-            return *this;
-        }
-
-        /// Swaps the referred callables of `*this` and `rhs`.
-        constexpr void swap(function_ref& rhs) noexcept {
-            std::swap(obj_, rhs.obj_);
-            std::swap(callback_, rhs.callback_);
-        }
-
-        /// Call the stored callable with the given arguments.
-        R operator()(Args... args) const {
-            return callback_(obj_, std::forward<Args>(args)...);
-        }
-
-        // TODO move to private section, public currently used deliberately in proposal
-        // examples
-        function_ref(void* obj, R (*callback)(void*, Args...) noexcept) noexcept
-                : obj_{obj}, callback_{callback} {}
-
-        static function_ref construct_from_type_erased(
-                void* obj_, R (*callback_)(void*, Args...) noexcept) {
-            return {obj_, callback_};
-        }
-
-    private:
-        void* obj_                     = nullptr;
-        R (*callback_)(void*, Args...) = nullptr;
+        requires std::is_function_v<F>
+    struct _adapt_signature<F*> {
+        using type = F;
     };
 
-    template <class R, class... Args>
-    class function_ref<R(Args...) noexcept> {
-    public:
-        constexpr function_ref() noexcept = delete;
+    template <class Fp>
+    using _adapt_signature_t = typename _adapt_signature<Fp>::type;
 
-        /// Creates a `function_ref` which refers to the same callable as `rhs`.
-        constexpr function_ref(const function_ref&) noexcept = default;
+    template <class T>
+    struct _drop_first_arg_to_invoke;
 
-        /// Creates a `function_ref` which refers to the same callable as `rhs`.
-        constexpr function_ref(function_ref&&) noexcept = default;
-
-        /// Constructs a `function_ref` referring to `f`.
-        ///
-        /// \brief template <typename F> constexpr function_ref(F &&f) noexcept
-        template <typename F>
-            requires requires() {
-                !std::is_same_v<std::decay_t<F>, function_ref>;
-                std::is_invocable_r_v<R, F&&, Args...>;
-            }
-        // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-        constexpr function_ref(F&& f) noexcept
-                : obj_(reinterpret_cast<void*>(std::addressof(f))),
-                  callback_([](void* obj, Args... args) noexcept -> R {
-                      return std::invoke(
-                              *reinterpret_cast<std::add_pointer_t<F>>(obj),
-                              std::forward<Args>(args)...);
-                  }) {}
-        // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-
-        /// Makes `*this` refer to the same callable as `rhs`.
-        constexpr function_ref& operator=(const function_ref&) noexcept = default;
-
-        /// Makes `*this` refer to the same callable as `rhs`.
-        constexpr function_ref& operator=(function_ref&&) noexcept = default;
-
-        /// Destructor.
-        constexpr ~function_ref() noexcept = default;
-
-        /// Makes `*this` refer to `f`.
-        ///
-        /// \brief template <typename F> constexpr function_ref &operator=(F &&f) noexcept;
-        template <typename F>
-            requires std::is_invocable_r_v<R, F&&, Args...>
-        constexpr function_ref& operator=(F&& f) noexcept {
-            obj_      = reinterpret_cast<void*>(std::addressof(f));
-            callback_ = [](void* obj, Args... args) {
-                return std::invoke(
-                        *reinterpret_cast<std::add_pointer_t<F>>(obj),
-                        std::forward<Args>(args)...);
-            };
-
-            return *this;
-        }
-
-        /// Swaps the referred callables of `*this` and `rhs`.
-        constexpr void swap(function_ref& rhs) noexcept {
-            std::swap(obj_, rhs.obj_);
-            std::swap(callback_, rhs.callback_);
-        }
-
-        /// Call the stored callable with the given arguments.
-        R operator()(Args... args) const noexcept {
-            return callback_(obj_, std::forward<Args>(args)...);
-        }
-
-        // TODO move to private section, public currently used deliberately in proposal
-        // examples
-        function_ref(void* obj, R (*callback)(void*, Args...) noexcept) noexcept
-                : obj_{obj}, callback_{callback} {}
-
-        static function_ref construct_from_type_erased(
-                void* obj_, R (*callback_)(void*, Args...) noexcept) {
-            return {obj_, callback_};
-        }
-
-    private:
-        void* obj_                              = nullptr;
-        R (*callback_)(void*, Args...) noexcept = nullptr;
+    template <class R, class T, class... Args>
+    struct _drop_first_arg_to_invoke<R (*)(T, Args...)> {
+        using type = R(Args...);
     };
 
-    /// Swaps the referred callables of `lhs` and `rhs`.
-    template <typename R, typename... Args>
-    constexpr void swap(
-            function_ref<R(Args...)>& lhs, function_ref<R(Args...)>& rhs) noexcept {
-        lhs.swap(rhs);
-    }
-
-    template <typename R, typename... Args>
-    constexpr void swap(
-            function_ref<R(Args...) noexcept>& lhs,
-            function_ref<R(Args...) noexcept>& rhs) noexcept {
-        lhs.swap(rhs);
-    }
-
-    template <typename R, typename... Args>
-    function_ref(R (*)(Args...)) -> function_ref<R(Args...)>;
-
-    // TODO, will require some kind of callable traits
-    // template <typename F>
-    // function_ref(F) -> function_ref</* deduced if possible */>;
-
-    // member function with type erasure
-    template <auto mf, typename T>
-        requires std::is_member_function_pointer_v<decltype(mf)>
-    auto make_function_ref(T& obj) {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::function_signature>::
-                construct_from_type_erased(
-                        std::addressof(obj), tl::internal_member_function_traits<
-                                                     decltype(mf), mf>::type_erase_this);
-    }
-
-    template <auto mf, typename T>
-        requires std::is_member_function_pointer_v<decltype(mf)>
-    auto make_function_ref(const T& obj) {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::function_signature>::
-                construct_from_type_erased(
-                        std::addressof(obj), tl::internal_member_function_traits<
-                                                     decltype(mf), mf>::type_erase_this);
-    }
-    // member function without type erasure
-    template <auto mf>
-        requires std::is_member_function_pointer_v<decltype(mf)>
-    auto make_function_ref() {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::this_as_ref_function_signature>::
-                construct_from_type_erased(
-                        nullptr, tl::internal_member_function_traits<
-                                         decltype(mf), mf>::this_as_ref);
-    }
-
-    /*
-    class ref {};
-    class pointer {};
-    class value {};
-
-    template <auto mf, typename T>
-        requires std::is_member_function_pointer_v<decltype(mf)> && std::is_same_v<T, ref>
-    auto make_function_ref() {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::this_as_ref_function_signature>{
-                nullptr,
-                tl::internal_member_function_traits<decltype(mf), mf>::this_as_ref};
-    }
-
-    template <auto mf, typename T>
-        requires std::is_member_function_pointer_v<decltype(mf)> && std::is_same_v<
-                T, pointer>
-    auto make_function_ref() {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::this_as_pointer_function_signature>{
-                nullptr,
-                tl::internal_member_function_traits<decltype(mf), mf>::this_as_pointer};
-    }
-
-    template <auto mf, typename T>
-        requires std::is_member_function_pointer_v<decltype(mf)> && std::is_same_v<
-                T, value>
-    auto make_function_ref() {
-        return tl::function_ref<typename tl::internal_member_function_traits<
-                decltype(mf), mf>::this_as_value_function_signature>{
-                nullptr,
-                tl::internal_member_function_traits<decltype(mf), mf>::this_as_value};
-    }
-    */
-    template <typename testType>
-    struct is_function_pointer {
-        static const bool value
-                = std::is_pointer_v<testType>
-                          ? std::is_function_v<std::remove_pointer_t<testType>>
-                          : false;
+    template <class R, class T, class... Args>
+    struct _drop_first_arg_to_invoke<R (*)(T, Args...) noexcept> {
+        using type = R(Args...);
     };
 
-    template <typename testType>
-    constexpr inline auto is_function_pointer_v = is_function_pointer<testType>::value;
+    template <class T, class Cls>
+        requires std::is_object_v<T>
+    struct _drop_first_arg_to_invoke<T Cls::*> {
+        using type = T();
+    };
 
-    // function with type erasure
-    template <auto f, typename T>
-        requires is_function_pointer_v<decltype(f)>
-    auto make_function_ref(T& obj) {
-        using erased_t    = tl::internal_type_erase_first<decltype(f), f>;
-        using signature_t = typename erased_t::function_signature;
-        return tl::function_ref<signature_t>::construct_from_type_erased(
-                std::addressof(obj), erased_t::type_erased_function);
-    }
+    template <class T, class Cls>
+        requires std::is_function_v<T>
+    struct _drop_first_arg_to_invoke<T Cls::*> {
+        using type = T;
+    };
 
-    template <auto f, typename T>
-        requires is_function_pointer_v<decltype(f)>
-    auto make_function_ref(const T& obj) {
-        using erased_t    = tl::internal_type_erase_first<decltype(f), f>;
-        using signature_t = typename erased_t::function_signature;
-        return tl::function_ref<signature_t>::construct_from_type_erased(
-                std::addressof(obj), erased_t::type_erased_function);
-    }
+    template <class Fp>
+    using _drop_first_arg_to_invoke_t = typename _drop_first_arg_to_invoke<Fp>::type;
 
-    // function without type erasure
-    template <auto f>
-        requires is_function_pointer_v<decltype(f)>
-    auto make_function_ref() {
-        using erased_t    = tl::internal_function_traits<decltype(f), f>;
-        using signature_t = typename erased_t::function_signature;
-        return tl::function_ref<signature_t>::construct_from_type_erased(
-                nullptr, erased_t::prepend_void_pointer);
-    }
+    // clang-format off
+    template <class F>
+        requires std::is_function_v<F>
+    function_ref(F*) -> function_ref<F>;
 
-}    // namespace tl
+    template <auto V>
+    function_ref(nontype_t<V>) -> function_ref<_adapt_signature_t<decltype(V)>>;
 
-#endif
+    template <auto V>
+    function_ref(nontype_t<V>, auto) -> function_ref<_drop_first_arg_to_invoke_t<decltype(V)>>;
+    // clang-format on
+
+}    // namespace std23
