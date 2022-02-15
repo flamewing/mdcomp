@@ -259,11 +259,11 @@ public:
         // this version only checks the 2-byte words actually in the file.
         map<uint16_t, size_t> runs;
         for (auto next : elems) {
-            auto val = runs.emplace(next, 0).first;
+            auto [value, inserted] = runs.emplace(next, 0);
             for (auto& elem : unpack) {
                 if (elem == next) {
                     next++;
-                    val->second += 1;
+                    value->second += 1;
                 }
             }
         }
