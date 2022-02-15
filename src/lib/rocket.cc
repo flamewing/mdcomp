@@ -127,10 +127,10 @@ public:
         using diff_t      = make_signed_t<size_t>;
 
         in.ignore(2);
-        size_t const Size = BigEndian::Read2(in) + 4;
-        RockIStream  src(in);
+        auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(in) + 4);
+        RockIStream src(in);
 
-        while (in.good() && size_t(in.tellg()) < Size) {
+        while (in.good() && in.tellg() < Size) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
                 uint8_t const Byte = Read1(in);
@@ -140,15 +140,16 @@ public:
                 // Distance and length of match.
                 size_t const high   = src.getbyte();
                 size_t const low    = src.getbyte();
-                diff_t const base   = diff_t(Dst.tellp());
-                diff_t       length = ((high & 0xFCU) >> 2U) + 1U;
-                diff_t       offset = ((high & 3U) << 8U) | low;
+                diff_t const base   = Dst.tellp();
+                auto         length = static_cast<diff_t>(((high & 0xFCU) >> 2U) + 1U);
+                auto         offset = static_cast<diff_t>(((high & 3U) << 8U) | low);
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
                 // basedest + 0x3C0u.
-                constexpr auto const bias = diff_t(RocketAdaptor::FirstMatchPosition);
+                constexpr auto const bias
+                        = static_cast<diff_t>(RocketAdaptor::FirstMatchPosition);
 
-                offset = diff_t(
+                offset = static_cast<diff_t>(
                         ((offset - base - bias) % RocketAdaptor::SearchBufSize) + base
                         - RocketAdaptor::SearchBufSize);
 
@@ -160,7 +161,7 @@ public:
                     offset += cnt;
                 }
                 for (diff_t csrc = offset; csrc < offset + length; csrc++) {
-                    diff_t const Pointer = diff_t(Dst.tellp());
+                    diff_t const Pointer = Dst.tellp();
                     Dst.seekg(csrc);
                     uint8_t const Byte = Read1(Dst);
                     Dst.seekp(Pointer);
