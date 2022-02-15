@@ -116,8 +116,7 @@ namespace detail {
     };
 }    // namespace detail
 
-enum class bit_endian
-{
+enum class bit_endian {
     little,
     big
 };

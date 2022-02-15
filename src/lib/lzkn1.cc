@@ -49,8 +49,7 @@ class lzkn1_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = BigEndian;
         using SlidingWindow_t     = SlidingWindow<Lzkn1Adaptor>;
-        enum class EdgeType : size_t
-        {
+        enum class EdgeType : size_t {
             invalid,
             terminator,
             symbolwise,
