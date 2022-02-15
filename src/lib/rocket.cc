@@ -207,7 +207,7 @@ public:
 };
 
 bool rocket::decode(istream& Src, iostream& Dst) {
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 

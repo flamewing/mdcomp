@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(pointer);
+        fin.seekg(static_cast<std::streamsize>(pointer));
         nemesis::decode(fin, buffer);
         fin.close();
         buffer.seekg(0);
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(pointer);
+            fin.seekg(static_cast<std::streamsize>(pointer));
             nemesis::decode(fin, fout);
             if (printend) {
                 boost::io::ios_all_saver flags(cout);

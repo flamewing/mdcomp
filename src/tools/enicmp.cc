@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (extract) {
-        fin.seekg(pointer);
+        fin.seekg(static_cast<std::streamsize>(pointer));
         enigma::decode(fin, fout);
     } else {
         enigma::encode(fin, fout);

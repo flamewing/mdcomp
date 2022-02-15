@@ -41,9 +41,9 @@ public:
 template <typename Format, PadMode Pad, typename... Args>
 bool BasicDecoder<Format, Pad, Args...>::encode(
         std::istream& Src, std::ostream& Dst, Args... args) {
-    size_t Start = Src.tellg();
+    auto Start = Src.tellg();
     Src.ignore(std::numeric_limits<std::streamsize>::max());
-    size_t FullSize = Src.gcount();
+    auto FullSize = static_cast<size_t>(Src.gcount());
     Src.seekg(Start);
     std::vector<uint8_t> data;
     if (Pad == PadMode::PadEven) {
@@ -51,7 +51,7 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
     } else {
         data.resize(FullSize);
     }
-    Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
+    Src.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
     if (Pad == PadMode::PadEven && data.size() > FullSize) {
         data.back() = 0;
     }

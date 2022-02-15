@@ -69,7 +69,7 @@ public:
     }
 
     static void encode(istream& Src, ostream& Dst) {
-        size_t pos = Src.tellg();
+        auto pos = Src.tellg();
         Src.ignore(numeric_limits<streamsize>::max());
         size_t Size = Src.gcount();
         Src.seekg(pos);
@@ -98,7 +98,7 @@ public:
 };
 
 bool snkrle::decode(istream& Src, ostream& Dst) {
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 
@@ -109,7 +109,7 @@ bool snkrle::decode(istream& Src, ostream& Dst) {
 
 bool snkrle::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
-    Src.write(reinterpret_cast<char const*>(data), Size);
+    Src.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
     Src.seekg(0);
     snkrle_internal::encode(Src, Dst);
     return true;

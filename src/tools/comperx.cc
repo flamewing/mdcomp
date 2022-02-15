@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(pointer);
+        fin.seekg(static_cast<std::streamsize>(pointer));
         comperx::decode(fin, buffer);
         fin.close();
         buffer.seekg(0);
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(pointer);
+            fin.seekg(static_cast<std::streamsize>(pointer));
             if (moduled) {
                 comperx::moduled_decode(fin, fout);
             } else {

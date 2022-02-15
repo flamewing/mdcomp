@@ -119,7 +119,7 @@ class lzkn1_internal {
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
-            size_t const end = std::min(ubound - basenode, size_t(72));
+            size_t const end = std::min(ubound - basenode, size_t{72});
             for (size_t ii = 8; ii < end; ii++) {
                 matches.emplace_back(
                         basenode, numeric_limits<size_t>::max(), ii,
@@ -270,7 +270,7 @@ public:
 };
 
 bool lzkn1::decode(istream& Src, iostream& Dst) {
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 

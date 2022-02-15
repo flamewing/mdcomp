@@ -130,7 +130,7 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                size_t const distance = (size_t(0x100) - src.getbyte()) * 2;
+                size_t const distance = (size_t{0x100} - src.getbyte()) * 2;
                 size_t const length   = src.getbyte();
                 if (length == 0) {
                     break;
@@ -193,7 +193,7 @@ public:
 };
 
 bool comper::decode(istream& Src, iostream& Dst) {
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 
