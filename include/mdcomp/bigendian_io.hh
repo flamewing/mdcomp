@@ -227,9 +227,9 @@ namespace detail {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             in.read(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
-                return detail::byteswap(bit_cast<To>(buffer));
+                return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
-                return bit_cast<To>(buffer);
+                return std::bit_cast<To>(buffer);
             }
         }
 
@@ -242,9 +242,9 @@ namespace detail {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             in.sgetn(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
-                return detail::byteswap(bit_cast<To>(buffer));
+                return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
-                return bit_cast<To>(buffer);
+                return std::bit_cast<To>(buffer);
             }
         }
 
@@ -269,15 +269,15 @@ namespace detail {
             const To val = [&]() {
                 if constexpr (contiguous_reverse_iterator<Iter>) {
                     if constexpr (endian == std::endian::native) {
-                        return detail::byteswap(bit_cast<To>(buffer));
+                        return detail::byteswap(std::bit_cast<To>(buffer));
                     } else {
-                        return bit_cast<To>(buffer);
+                        return std::bit_cast<To>(buffer);
                     }
                 } else {
                     if constexpr (endian != std::endian::native) {
-                        return detail::byteswap(bit_cast<To>(buffer));
+                        return detail::byteswap(std::bit_cast<To>(buffer));
                     } else {
-                        return bit_cast<To>(buffer);
+                        return std::bit_cast<To>(buffer);
                     }
                 }
             }();
@@ -408,9 +408,9 @@ namespace detail {
 
         template <std::signed_integral To, typename Src>
         [[nodiscard]] INLINE constexpr static auto Read(Src&& in) noexcept(
-                noexcept(bit_cast<To>(
+                noexcept(std::bit_cast<To>(
                         ReadImpl<std::make_unsigned_t<To>>(std::forward<Src>(in))))) {
-            return bit_cast<To>(
+            return std::bit_cast<To>(
                     ReadImpl<std::make_unsigned_t<To>>(std::forward<Src>(in)));
         }
 
@@ -460,8 +460,10 @@ namespace detail {
         INLINE constexpr static auto Write(Dst&& out, From val) noexcept(
                 noexcept(WriteImpl(
                         std::forward<Dst>(out),
-                        bit_cast<std::make_unsigned_t<From>>(val)))) {
-            WriteImpl(std::forward<Dst>(out), bit_cast<std::make_unsigned_t<From>>(val));
+                        std::bit_cast<std::make_unsigned_t<From>>(val)))) {
+            WriteImpl(
+                    std::forward<Dst>(out),
+                    std::bit_cast<std::make_unsigned_t<From>>(val));
         }
     };
 
