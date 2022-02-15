@@ -26,8 +26,7 @@
 #include <limits>
 #include <vector>
 
-enum class PadMode
-{
+enum class PadMode {
     DontPad,
     PadEven
 };

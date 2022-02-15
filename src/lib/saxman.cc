@@ -51,8 +51,7 @@ class saxman_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<SaxmanAdaptor>;
-        enum class EdgeType : size_t
-        {
+        enum class EdgeType : size_t {
             invalid,
             terminator,
             symbolwise,

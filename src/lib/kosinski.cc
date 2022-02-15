@@ -49,8 +49,7 @@ class kosinski_internal {
         using descriptor_t        = uint16_t;
         using descriptor_endian_t = LittleEndian;
         using SlidingWindow_t     = SlidingWindow<KosinskiAdaptor>;
-        enum class EdgeType : size_t
-        {
+        enum class EdgeType : size_t {
             invalid,
             terminator,
             symbolwise,

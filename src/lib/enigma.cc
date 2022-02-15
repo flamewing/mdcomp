@@ -92,7 +92,8 @@ uint16_t read_bitfield(EniIBitstream& bits) {
     };
     const auto read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
         constexpr const size_t count = sizeof...(Is);
-        return uint16_t(((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
+        return uint16_t(
+                ((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
     };
     return read_bit_flags(make_index_sequence<5>());
 }
