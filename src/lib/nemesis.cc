@@ -29,6 +29,7 @@
 #include <istream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <queue>
 #include <set>
@@ -59,37 +60,26 @@ using std::vector;
 class nibble_run {
 private:
     std::byte nibble{0};    // Nibble we are interested in.
-    uint8_t   count{0};     // How many times the nibble is repeated.
+    size_t    count{0};     // How many times the nibble is repeated.
 
 public:
     // Constructors.
     nibble_run() noexcept = default;
-    nibble_run(std::byte n, uint8_t c) noexcept : nibble(n), count(c) {}
+    nibble_run(std::byte n, size_t c) noexcept : nibble(n), count(c) {}
     // Sorting operator.
-    bool operator<(nibble_run const& other) const noexcept {
-        return (nibble < other.nibble) || (nibble == other.nibble && count < other.count);
-    }
-    // Sorting operator.
-    bool operator>(nibble_run const& other) const noexcept {
-        return other < *this;
-    }
-    bool operator==(nibble_run const& other) const noexcept {
-        return !(*this < other) && !(other < *this);
-    }
-    bool operator!=(nibble_run const& other) const noexcept {
-        return !(*this == other);
-    }
+    [[nodiscard]] std::strong_ordering operator<=>(
+            nibble_run const& other) const noexcept = default;
     // Getters/setters for all properties.
     [[nodiscard]] std::byte get_nibble() const noexcept {
         return nibble;
     }
-    [[nodiscard]] uint8_t get_count() const noexcept {
+    [[nodiscard]] size_t get_count() const noexcept {
         return count;
     }
     void set_nibble(std::byte const tf) noexcept {
         nibble = tf;
     }
-    void set_count(uint8_t const tf) noexcept {
+    void set_count(size_t const tf) noexcept {
         count = tf;
     }
 };
@@ -97,23 +87,20 @@ public:
 struct SizeFreqNibble {
     size_t     count{0};
     nibble_run nibble;
-    uint8_t    codelen{0};
-    SizeFreqNibble(size_t cnt, nibble_run const& nib, uint8_t const len) noexcept
-            : count(cnt), nibble(nib), codelen(len) {}
+    size_t     codelen{0};
+    SizeFreqNibble(size_t cnt, nibble_run const& nib, size_t const length) noexcept
+            : count(cnt), nibble(nib), codelen(length) {}
     SizeFreqNibble() noexcept = default;
 };
 
 struct Code {
-    size_t  code;
-    uint8_t len;
-    bool    operator<(Code const& rhs) const noexcept {
-        return code < rhs.code || (code == rhs.code && len < rhs.len);
-    }
-    Code(size_t const c, uint8_t const l) noexcept : code(c), len(l) {}
-    Code() noexcept = default;
+    size_t code;
+    size_t length;
+
+    [[nodiscard]] std::strong_ordering operator<=>(Code const&) const noexcept = default;
 };
 
-using CodeSizeMap   = map<nibble_run, uint8_t>;
+using CodeSizeMap   = map<nibble_run, size_t>;
 using RunCountMap   = map<nibble_run, size_t>;
 using NibbleCodeMap = map<nibble_run, Code>;
 using CodeNibbleMap = map<Code, nibble_run>;
@@ -139,11 +126,8 @@ public:
         child1.reset();
     }
     // Comparison operators.
-    bool operator<(node const& other) const noexcept {
-        return weight < other.weight;
-    }
-    bool operator>(node const& other) const noexcept {
-        return other < *this;
+    [[nodiscard]] std::weak_ordering operator<=>(node const& other) const noexcept {
+        return weight <=> other.weight;
     }
     // This tells if the node is a leaf or a branch.
     bool is_leaf() const noexcept {
@@ -260,7 +244,7 @@ struct Compare_node2 {
             if (it == codemap.end()) {
                 return (6 + 7) * node->get_weight();
             }
-            size_t bitcnt = (it->second).len;
+            size_t bitcnt = (it->second).length;
             return (bitcnt & 0x7fU) * node->get_weight() + 16;
         };
 
@@ -314,16 +298,16 @@ public:
             // if most significant bit is set, store the last 4 bits and discard
             // the rest
             if ((in_val & 0x80U) != 0) {
-                out_val = std::byte(in_val & 0xfU);
+                out_val = static_cast<std::byte>(in_val & 0xfU);
                 in_val  = Read1(Src);
             }
 
             nibble_run const run(out_val, ((in_val & 0x70U) >> 4U) + 1);
 
-            size_t const  code = Read1(Src);
-            uint8_t const len  = in_val & 0xfU;
+            size_t const code   = Read1(Src);
+            size_t const length = in_val & 0xfU;
             // Read the run's code from stream.
-            codemap[Code{code, len}] = run;
+            codemap[Code{code, length}] = run;
         }
     }
 
@@ -337,15 +321,15 @@ public:
         NemIBitstream bits(Src);
         NemOBitstream out(dst);
 
-        size_t  code = bits.pop();
-        uint8_t len  = 1;
+        size_t code   = bits.pop();
+        size_t length = 1;
 
         // When to stop decoding: number of tiles * $20 bytes per tile * 8 bits
         // per byte.
         size_t total_bits   = rtiles << 8U;
         size_t bits_written = 0;
         while (bits_written < total_bits) {
-            if (code == 0x3f && len == 6) {
+            if (code == 0x3f && length == 6) {
                 // Bit pattern %111111; inline RLE.
                 // First 3 bits are repetition count, followed by the inlined
                 // nibble.
@@ -370,11 +354,11 @@ public:
                 }
 
                 // Read next bit, replacing previous data.
-                code = bits.pop();
-                len  = 1;
+                code   = bits.pop();
+                length = 1;
             } else {
                 // Find out if the data so far is a nibble code.
-                auto const it = codemap.find(Code{code, len});
+                auto const it = codemap.find(Code{code, length});
                 if (it != codemap.end()) {
                     // If it is, then it is time to output the encoded nibble
                     // run.
@@ -386,14 +370,14 @@ public:
 
                     // Write single nibble if needed.
                     if ((cnt % 2) != 0) {
-                        out.write(uint8_t(nibble), 4);
+                        out.write(static_cast<uint8_t>(nibble), 4);
                     }
 
                     // Now write pairs of nibbles.
                     cnt >>= 1U;
                     nibble |= (nibble << 4U);
                     for (size_t i = 0; i < cnt; i++) {
-                        out.write(uint8_t(nibble), 8);
+                        out.write(static_cast<uint8_t>(nibble), 8);
                     }
 
                     if (bits_written >= total_bits) {
@@ -401,12 +385,12 @@ public:
                     }
 
                     // Read next bit, replacing previous data.
-                    code = bits.pop();
-                    len  = 1;
+                    code   = bits.pop();
+                    length = 1;
                 } else {
                     // Read next bit and append to current data.
                     code = (code << 1U) | bits.pop();
-                    len++;
+                    length++;
                 }
             }
         }
@@ -414,6 +398,7 @@ public:
         // Write out any remaining bits, padding with zeroes.
         out.flush();
 
+        auto const final_size = static_cast<std::streamsize>(rtiles << 5U);
         if (alt_out) {
             // For alternating decoding, we must now incrementally XOR and
             // output the lines.
@@ -421,12 +406,12 @@ public:
             dst.clear();
             uint32_t in = LittleEndian::Read4(dst);
             LittleEndian::Write4(Dst, in);
-            while (size_t(dst.tellg()) < (rtiles << 5U)) {
+            while (dst.tellg() < final_size) {
                 in ^= LittleEndian::Read4(dst);
                 LittleEndian::Write4(Dst, in);
             }
         } else {
-            Dst.write(dst.str().c_str(), rtiles << 5U);
+            Dst.write(dst.str().c_str(), final_size);
         }
     }
 
@@ -439,65 +424,65 @@ public:
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
-        size_t    tempsize_est = size_t(3) * 8;
+        size_t    tempsize_est = size_t{3} * 8;
         std::byte last{0xff};
         // Start with any nibble runs with their own code.
-        for (auto& elem : tempcodemap) {
+        for (const auto& [run, code] : tempcodemap) {
             // Each new nibble needs an extra byte.
-            if (last != elem.first.get_nibble()) {
+            if (last != run.get_nibble()) {
                 tempsize_est += 8;
                 // Be sure to SET the last nibble to the current nibble... this
                 // fixes a bug that caused file sizes to increase in some cases.
-                last = elem.first.get_nibble();
+                last = run.get_nibble();
             }
             // 2 bytes per nibble run in the table.
-            tempsize_est += size_t(2 * 8);
+            tempsize_est += size_t{2U} * 8U;
             // How many bits this nibble run uses in the file.
-            tempsize_est += counts[elem.first] * (elem.second).len;
+            tempsize_est += counts[run] * code.length;
         }
 
         // Supplementary code map for the nibble runs that can be broken up into
         // shorter nibble runs with a smaller bit length than inlining.
         NibbleCodeMap supcodemap;
         // Now we will compute the size requirements for inline nibble runs.
-        for (auto& count : counts) {
+        for (const auto& [run, frequency] : counts) {
             // Find out if this nibble run has a code for it.
-            auto it2 = tempcodemap.find(count.first);
+            auto it2 = tempcodemap.find(run);
             if (it2 == tempcodemap.end()) {
                 // Nibble run does not have its own code. We need to find out if
                 // we can break it up into smaller nibble runs with total code
                 // size less than 13 bits or if we need to inline it (13 bits).
-                if (count.first.get_count() == 0) {
+                if (run.get_count() == 0) {
                     // If this is a nibble run with zero repeats, we can't break
                     // it up into smaller runs, so we inline it.
-                    tempsize_est += (6 + 7) * count.second;
-                } else if (count.first.get_count() == 1) {
+                    tempsize_est += (6 + 7) * frequency;
+                } else if (run.get_count() == 1) {
                     // We stand a chance of breaking the nibble run.
 
                     // This case is rather trivial, so we hard-code it.
                     // We can break this up only as 2 consecutive runs of a
                     // nibble run with count == 0.
-                    nibble_run trg{count.first.get_nibble(), 0};
+                    nibble_run trg{run.get_nibble(), 0};
                     it2 = tempcodemap.find(trg);
-                    if (it2 == tempcodemap.end() || (it2->second).len > 6) {
+                    if (it2 == tempcodemap.end() || (it2->second).length > 6) {
                         // The smaller nibble run either does not have its own
                         // code or it results in a longer bit code when doubled
                         // up than would result from inlining the run. In either
                         // case, we inline the nibble run.
-                        tempsize_est += (6 + 7) * count.second;
+                        tempsize_est += (6 + 7) * frequency;
                     } else {
                         // The smaller nibble run has a small enough code that
                         // it is more efficient to use it twice than to inline
                         // our nibble run. So we do exactly that, by adding a
                         // (temporary) entry in the supplementary codemap, which
                         // will later be merged into the main codemap.
-                        size_t  code = (it2->second).code;
-                        uint8_t len  = (it2->second).len;
-                        code         = (code << len) | code;
-                        len <<= 1U;
-                        tempsize_est += len * count.second;
-                        len |= 0x80U;    // Flag this as a false code.
-                        supcodemap[count.first] = Code{code, len};
+                        size_t code   = (it2->second).code;
+                        size_t length = (it2->second).length;
+                        code          = (code << length) | code;
+                        length <<= 1U;
+                        tempsize_est += length * frequency;
+                        length |= 0x80U;    // Flag this as a false code.
+                        supcodemap[run] = Code{code, length};
                     }
                 } else {
                     // We stand a chance of breaking it the nibble run.
@@ -540,7 +525,7 @@ public:
                             Row<7>{0, 2, 0, 1, 0, 0, 0}, Row<7>{0, 1, 2, 0, 0, 0, 0},
                             Row<7>{0, 1, 0, 0, 0, 1, 0}, Row<7>{0, 0, 1, 0, 1, 0, 0},
                             Row<7>{0, 0, 0, 2, 0, 0, 0}};
-                    size_t const n = count.first.get_count();
+                    size_t const n = run.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
                     size_t const* linear_coefficients;
@@ -574,7 +559,7 @@ public:
                         break;
                     }
 
-                    std::byte const nibble = count.first.get_nibble();
+                    std::byte const nibble = run.get_nibble();
                     // Vector containing the code length of each nibble run, or
                     // 13 if the nibble run is not in the codemap.
                     vector<size_t> runlen;
@@ -590,7 +575,7 @@ public:
                         } else {
                             // It is.
                             // Put code length in the vector.
-                            runlen.push_back((it3->second).len);
+                            runlen.push_back((it3->second).length);
                         }
                     }
 
@@ -598,34 +583,36 @@ public:
                     // the total code size, looking for the best case.
                     // The best size is initialized to be the inlined case.
                     size_t best_size = 6 + 7;
-                    int    best_line = -1;
                     size_t base      = 0;
+
+                    std::optional<size_t> best_line;
+
                     for (size_t i = 0; i < rows; i++, base += n) {
                         // Tally up the code length for this coefficient line.
-                        size_t len = 0;
+                        size_t length = 0;
                         for (size_t j = 0; j < n; j++) {
                             size_t const c = linear_coefficients[base + j];
                             if (c == 0U) {
                                 continue;
                             }
 
-                            len += c * runlen[j];
+                            length += c * runlen[j];
                         }
                         // Is the length better than the best yet?
-                        if (len < best_size) {
+                        if (length < best_size) {
                             // If yes, store it as the best.
-                            best_size = len;
+                            best_size = length;
                             best_line = base;
                         }
                     }
                     // Have we found a better code than inlining?
-                    if (best_line >= 0) {
+                    if (best_line) {
                         // We have; use it. To do so, we have to build the code
                         // and add it to the supplementary code table.
-                        size_t code = 0;
-                        size_t len  = 0;
+                        size_t code   = 0;
+                        size_t length = 0;
                         for (size_t i = 0; i < n; i++) {
-                            size_t const c = linear_coefficients[best_line + i];
+                            size_t const c = linear_coefficients[*best_line + i];
                             if (c == 0U) {
                                 continue;
                             }
@@ -636,27 +623,27 @@ public:
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
                                 for (size_t j = 0; j < c; j++) {
-                                    len += (it3->second).len;
-                                    code <<= (it3->second).len;
+                                    length += (it3->second).length;
+                                    code <<= (it3->second).length;
                                     code |= (it3->second).code;
                                 }
                             }
                         }
-                        if (len != best_size) {
+                        if (length != best_size) {
                             // ERROR! DANGER! THIS IS IMPOSSIBLE!
                             // But just in case...
-                            tempsize_est += (6 + 7) * count.second;
+                            tempsize_est += (6 + 7) * frequency;
                         } else {
                             // By construction, best_size is at most 12.
                             // Flag it as a false code.
-                            uint8_t const mlen = best_size | 0x80U;
+                            size_t const mlen = best_size | 0x80U;
                             // Add it to supplementary code map.
-                            supcodemap[count.first] = Code{code, mlen};
-                            tempsize_est += best_size * count.second;
+                            supcodemap[run] = Code{code, mlen};
+                            tempsize_est += best_size * frequency;
                         }
                     } else {
                         // No, we will have to inline it.
-                        tempsize_est += (6 + 7) * count.second;
+                        tempsize_est += (6 + 7) * frequency;
                     }
                 }
             }
@@ -712,11 +699,11 @@ public:
         // basic coin collection.
         NodeVector qt;
         qt.reserve(counts.size());
-        for (auto& count : counts) {
+        for (const auto& [run, frequency] : counts) {
             // No point in including anything with weight less than 2, as they
             // would actually increase compressed file size if used.
-            if (count.second > 1) {
-                qt.push_back(make_shared<node>(count.first, count.second));
+            if (frequency > 1) {
+                qt.push_back(make_shared<node>(run, frequency));
             }
         }
         // This may seem useless, but my tests all indicate that this reduces
@@ -814,11 +801,10 @@ public:
             // then by frequency of the nibble run, then by the nibble run.
             using SizeSet = multiset<SizeFreqNibble, Compare_size>;
             SizeSet sizemap;
-            for (auto& elem : basesizemap) {
-                uint8_t size  = elem.second;
-                size_t  count = counts[elem.first];
+            for (const auto& [run, size] : basesizemap) {
+                const size_t count = counts[run];
                 sizecounts[size - 1]++;
-                sizemap.emplace(count, elem.first, size);
+                sizemap.emplace(count, run, size);
             }
 
             // We now build the canonical Huffman code table.
@@ -830,14 +816,14 @@ public:
             size_t carry = 0;
             // This vector contains the codes sorted by size.
             vector<Code> codes;
-            for (uint8_t i = 1; i <= 8; i++) {
+            for (size_t i = 1; i <= 8; i++) {
                 // How many nibble runs have the desired bit length.
-                size_t       cnt  = sizecounts[i - 1] + carry;
-                size_t const mask = (size_t(1) << i) - 1;
+                size_t       count = sizecounts[i - 1] + carry;
+                size_t const mask  = (size_t{1} << i) - 1;
                 size_t const mask2
-                        = (i > 6) ? (mask & ~((size_t(1) << (i - 6U)) - 1)) : 0;
+                        = (i > 6) ? (mask & ~((size_t{1} << (i - 6U)) - 1)) : 0;
                 carry = 0;
-                for (size_t j = 0; j < cnt; j++) {
+                for (size_t j = 0; j < count; j++) {
                     // Sequential binary numbers for codes.
                     size_t code = base + j;
                     // We do not want any codes composed solely of 1's or which
@@ -845,14 +831,14 @@ public:
                     if ((i <= 6 && code == mask) || (i > 6 && code == mask2)) {
                         // We must demote this many nibble runs to a longer
                         // code.
-                        carry = cnt - j;
-                        cnt   = j;
+                        carry = count - j;
+                        count = j;
                         break;
                     }
                     codes.emplace_back(code, i);
                 }
                 // This is the beginning bit pattern for the next bit length.
-                base = (base + cnt) << 1U;
+                base = (base + count) << 1U;
             }
 
             // With the canonical table build, the codemap can finally be built.
@@ -899,22 +885,20 @@ public:
         // Write header.
         BigEndian::Write2(Dst, (mode << 15U) | (sz >> 5U));
         std::byte lastnibble{0xff};
-        for (auto& elem : codemap) {
-            nibble_run const& run  = elem.first;
-            size_t const      code = (elem.second).code;
-            uint8_t           len  = (elem.second).len;
-            // len with bit 7 set is a special device for further reducing file
+        for (const auto& [run, bitcode] : codemap) {
+            const auto [code, length] = bitcode;
+            // length with bit 7 set is a special device for further reducing file
             // size, and should NOT be on the table.
-            if ((len & 0x80U) != 0) {
+            if ((length & 0x80U) != 0) {
                 continue;
             }
             if (run.get_nibble() != lastnibble) {
                 // 0x80 marks byte as setting a new nibble.
-                Write1(Dst, 0x80U | uint8_t(run.get_nibble()));
+                Write1(Dst, 0x80U | static_cast<uint8_t>(run.get_nibble()));
                 lastnibble = run.get_nibble();
             }
 
-            Write1(Dst, uint8_t(run.get_count() << 4U) | len);
+            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U) | length);
             Write1(Dst, code);
         }
 
@@ -931,24 +915,24 @@ public:
         for (auto& run : rleSrc) {
             auto val = codemap.find(run);
             if (val != codemap.end()) {
-                size_t const code = (val->second).code;
-                uint8_t      len  = (val->second).len;
-                // len with bit 7 set is a device to bypass the code table at
+                size_t const code   = (val->second).code;
+                size_t       length = (val->second).length;
+                // length with bit 7 set is a device to bypass the code table at
                 // the start of the file. We need to clear the bit here before
                 // writing the code to the file.
-                len &= 0x7fU;
+                length &= 0x7fU;
                 // We can have codes in the 9-12 range due to the break up of
                 // large inlined runs into smaller non-inlined runs. Deal with
                 // those high bits first, if needed.
-                if (len > 8) {
-                    bits.write((code >> 8U) & 0xffU, len - 8);
-                    len = 8;
+                if (length > 8) {
+                    bits.write((code >> 8U) & 0xffU, length - 8);
+                    length = 8;
                 }
-                bits.write(static_cast<uint8_t>(code & 0xffU), len);
+                bits.write(static_cast<uint8_t>(code & 0xffU), length);
             } else {
                 bits.write(0x3f, 6);
                 bits.write(run.get_count(), 3);
-                bits.write(uint8_t(run.get_nibble()), 4);
+                bits.write(static_cast<uint8_t>(run.get_nibble()), 4);
             }
         }
         // Fill remainder of last byte with zeroes and write if needed.
@@ -991,7 +975,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     src.seekg(0);
 
     string sin   = src.str();
-    auto*  bytes = reinterpret_cast<uint8_t*>(&sin[0]);
+    auto*  bytes = reinterpret_cast<uint8_t*>(sin.data());
     for (size_t i = sin.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
         bytes[i + 1] ^= bytes[i - 3];
@@ -1025,7 +1009,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
 
 bool nemesis::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
-    Src.write(reinterpret_cast<char const*>(data), Size);
+    Src.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
     Src.seekg(0);
     return encode(Src, Dst);
 }
