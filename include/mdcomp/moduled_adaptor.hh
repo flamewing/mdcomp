@@ -83,7 +83,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
     std::vector<uint8_t> data;
     data.resize(FullSize);
     auto ptr = data.cbegin();
-    Src.read(reinterpret_cast<char*>(&(data.front())), data.size());
+    Src.read(reinterpret_cast<char*>(data.data()), FullSize);
 
     size_t const PadMask = ModulePadding - 1;
 
@@ -93,7 +93,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
     while (FullSize > ModuleSize) {
         // We want to manage internal padding for all modules but the last.
         PadMaskBits = 8 * ModulePadding - 1U;
-        Format::encode(sout, &(*ptr), ModuleSize);
+        Format::encode(sout, std::to_address(ptr), ModuleSize);
         FullSize -= ModuleSize;
         ptr += ModuleSize;
 
@@ -104,7 +104,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
     }
 
     PadMaskBits = 7U;
-    Format::encode(sout, &(*ptr), FullSize);
+    Format::encode(sout, std::to_address(ptr), FullSize);
 
     // Pad to even size.
     Dst << sout.rdbuf();
