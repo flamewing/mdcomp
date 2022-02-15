@@ -150,10 +150,11 @@ public:
         using SaxIStream = LZSSIStream<SaxmanAdaptor>;
 
         SaxIStream src(in);
+        auto const size = static_cast<std::make_signed_t<size_t>>(Size);
 
         // Loop while the file is good and we haven't gone over the declared
         // length.
-        while (in.good() && size_t(in.tellg()) < Size) {
+        while (in.good() && in.tellg() < size) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
                 if (in.peek() == EOF) {
@@ -246,7 +247,7 @@ bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
         Size = LittleEndian::Read2(Src);
     }
 
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 
@@ -258,7 +259,7 @@ bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
 bool saxman::encode(
         ostream& Dst, uint8_t const* data, size_t const Size, bool const WithSize) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
-    size_t       Start = outbuff.tellg();
+    auto const   Start = outbuff.tellg();
     saxman_internal::encode(outbuff, data, Size);
     if (WithSize) {
         outbuff.seekg(Start);

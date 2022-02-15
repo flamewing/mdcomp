@@ -58,7 +58,7 @@ namespace detail {
     template <size_t size, auto mask, std::unsigned_integral uint_t>
     [[nodiscard]] CONST_INLINE constexpr uint_t reverseByteBits(uint_t val) noexcept {
         constexpr const size_t new_size = size >> 1U;
-        constexpr const auto   factor   = uint_t(1) << new_size;
+        constexpr const auto   factor   = uint_t{1} << new_size;
         constexpr const auto   new_mask = nextMask<uint_t>(mask, new_size);
         if constexpr (size > 1) {
             const uint_t val1    = val & new_mask;

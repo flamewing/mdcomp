@@ -85,7 +85,7 @@ uint16_t read_bitfield(EniIBitstream& bits) {
     const auto read_bit_flag
             = [&]<size_t I>(std::integral_constant<size_t, I>) -> uint32_t {
         if constexpr ((N & (1U << (I - 1))) != 0) {
-            return uint32_t(bits.pop() << (I + 10U));
+            return static_cast<uint32_t>(bits.pop() << (I + 10U));
         } else {
             return 0U;
         }
@@ -361,7 +361,7 @@ public:
 };
 
 bool enigma::decode(istream& Src, ostream& Dst) {
-    size_t const Location = Src.tellg();
+    auto const   Location = Src.tellg();
     stringstream in(ios::in | ios::out | ios::binary);
     extract(Src, in);
 
@@ -377,7 +377,7 @@ bool enigma::encode(istream& Src, ostream& Dst) {
 
 bool enigma::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
     stringstream Src(ios::in | ios::out | ios::binary);
-    Src.write(reinterpret_cast<char const*>(data), Size);
+    Src.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
     Src.seekg(0);
     return encode(Src, Dst);
 }
