@@ -194,9 +194,9 @@ public:
                 }
 
                 for (size_t i = 0; i < Count; i++) {
-                    size_t Pointer = Dst.tellp();
+                    size_t const Pointer = Dst.tellp();
                     Dst.seekg(Pointer - distance);
-                    uint8_t Byte = Read1(Dst);
+                    uint8_t const Byte = Read1(Dst);
                     Dst.seekp(Pointer);
                     Write1(Dst, Byte);
                 }
