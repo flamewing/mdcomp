@@ -102,7 +102,7 @@ namespace detail {
 
     template <std::signed_integral int_t>
     [[nodiscard]] CONST_INLINE constexpr auto reverseBits(int_t val) noexcept {
-        return bit_cast<int_t>(reverseBits(std::make_unsigned_t<int_t>(val)));
+        return detail::bit_cast<int_t>(reverseBits(std::make_unsigned_t<int_t>(val)));
     }
 
     static_assert(reverseBits<uint8_t>(0x35U) == 0xacU);
