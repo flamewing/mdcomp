@@ -113,6 +113,7 @@ class saxman_internal {
                 stream_t const* data, size_t const basenode, size_t const ubound,
                 size_t const                             lbound,
                 std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
+            using Match_t = AdjListNode<SaxmanAdaptor>::MatchInfo;
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
             if (basenode >= SearchBufSize - 1) {
@@ -132,7 +133,7 @@ class saxman_internal {
                 // Got them, so add them to the list.
                 for (size_t len = 3; len <= jj; len++) {
                     matches.emplace_back(
-                            basenode, numeric_limits<size_t>::max(), len,
+                            basenode, Match_t{numeric_limits<size_t>::max(), len},
                             EdgeType::zerofill);
                 }
             }

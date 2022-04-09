@@ -139,7 +139,7 @@ struct Compare_count {
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(
         vector<uint16_t>& buf, EniOBitstream& bits, flag_writer& putMask,
-        uint16_t const packet_length) {
+        size_t const packet_length) {
     if (buf.empty()) {
         return;
     }
@@ -159,10 +159,10 @@ class enigma_internal {
 public:
     static void decode(std::istream& in, std::ostream& Dst) {
         // Read header.
-        size_t const packet_length      = Read1(in);
-        auto         getMask            = flag_reader::get(Read1(in));
-        size_t       incrementing_value = BigEndian::Read2(in);
-        size_t const common_value       = BigEndian::Read2(in);
+        size_t const   packet_length      = Read1(in);
+        auto           getMask            = flag_reader::get(Read1(in));
+        uint16_t       incrementing_value = BigEndian::Read2(in);
+        uint16_t const common_value       = BigEndian::Read2(in);
 
         EniIBitstream bits(in);
 
@@ -244,8 +244,8 @@ public:
             unpack.push_back(v);
         }
 
-        auto           putMask       = flag_writer::get(maskval >> 11U);
-        uint16_t const packet_length = std::bit_width(maskval & 0x7ffU);
+        auto         putMask       = flag_writer::get(maskval >> 11U);
+        size_t const packet_length = std::bit_width(maskval & 0x7ffU);
 
         // Find the most common 2-byte value.
         Compare_count  cmp;
@@ -277,7 +277,7 @@ public:
         runs.clear();
 
         // Output header.
-        Write1(Dst, packet_length);
+        Write1(Dst, packet_length & std::numeric_limits<uint8_t>::max());
         Write1(Dst, maskval >> 11U);
         BigEndian::Write2(Dst, incrementing_value);
         BigEndian::Write2(Dst, common_value);
@@ -299,7 +299,7 @@ public:
                     next++;
                     cnt++;
                 }
-                bits.write(0x00U | cnt, 6);
+                bits.write(0b00'0000U | (cnt & 0xffU), 6);
                 incrementing_value = next;
                 pos += cnt;
             } else if (v == common_value) {
@@ -312,7 +312,7 @@ public:
                     }
                     cnt++;
                 }
-                bits.write(0x10U | cnt, 6);
+                bits.write(0b01'0000U | (cnt & 0xffU), 6);
                 pos += cnt;
             } else {
                 uint16_t next  = unpack[pos + 1];
@@ -336,8 +336,8 @@ public:
                         delta = 2;
                     }
 
-                    delta = ((delta | 4U) << 4U);
-                    bits.write(delta | cnt, 7);
+                    delta = (((delta | 4U)) << 4U) & 0xffffU;
+                    bits.write((delta | cnt) & 0xffU, 7);
                     putMask(bits, v);
                     bits.write(v & 0x7ffU, packet_length);
                     pos += cnt;

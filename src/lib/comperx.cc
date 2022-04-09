@@ -137,12 +137,13 @@ public:
                     break;
                 }
 
-                size_t const distance = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
+                std::streamoff const distance
+                        = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
                 size_t const length
                         = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
 
                 for (size_t i = 0; i < length; i++) {
-                    size_t const Pointer = Dst.tellp();
+                    std::streamsize const Pointer = Dst.tellp();
                     Dst.seekg(Pointer - distance);
                     uint16_t const Word = BigEndian::Read2(Dst);
                     Dst.seekp(Pointer);
@@ -184,7 +185,7 @@ public:
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
                 out.descbit(1);
-                out.putbyte(-1);
+                out.putbyte(0xffU);
                 out.putbyte(0);
                 break;
             }

@@ -74,8 +74,8 @@ public:
     constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
     constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
             : currpos(pos), type(ty), symbol(sym) {}
-    constexpr AdjListNode(size_t pos, size_t dist, size_t len, EdgeType ty) noexcept
-            : currpos(pos), type(ty), match({dist, len}) {}
+    constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType ty) noexcept
+            : currpos(pos), type(ty), match(match_) {}
     // Getters.
     [[nodiscard]] constexpr size_t get_pos() const noexcept {
         return currpos;
@@ -126,6 +126,7 @@ public:
     using EdgeType    = typename Adaptor::EdgeType;
     using stream_t    = typename Adaptor::stream_t;
     using Node_t      = AdjListNode<Adaptor>;
+    using Match_t     = typename Node_t::MatchInfo;
     using MatchVector = std::vector<Node_t>;
 
     SlidingWindow(
@@ -201,7 +202,7 @@ public:
             // Add it, and all prefixes, to the list, as long as it is a better
             // match.
             for (size_t jj = minmatchlen; jj <= best_len; ++jj) {
-                matches.emplace_back(basenode, basenode - best_pos, jj, type);
+                matches.emplace_back(basenode, Match_t{basenode - best_pos, jj}, type);
             }
         }
     }
