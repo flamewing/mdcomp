@@ -19,7 +19,6 @@
 #include <mdcomp/saxman.hh>
 
 #include <array>
-#include <cassert>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -87,8 +86,9 @@ int main(int argc, char* argv[]) {
             crunch = true;
             break;
         case 's':
-            assert(optarg != nullptr);
-            BSize = strtoul(optarg, nullptr, 0);
+            if (optarg != nullptr) {
+                BSize = strtoul(optarg, nullptr, 0);
+            }
             if (BSize == 0) {
                 cerr << "Error: specified size must be a positive number." << endl
                      << endl;
