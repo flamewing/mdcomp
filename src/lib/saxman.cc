@@ -150,9 +150,13 @@ class saxman_internal {
 public:
     static void decode(istream& input, iostream& Dst, size_t const Size) {
         using SaxIStream = LZSSIStream<SaxmanAdaptor>;
+        using diff_t     = std::make_signed_t<size_t>;
 
         SaxIStream src(input);
         auto const size = static_cast<std::make_signed_t<size_t>>(Size);
+
+        constexpr const auto buffer_size
+                = static_cast<diff_t>(SaxmanAdaptor::SearchBufSize);
 
         // Loop while the file is good and we haven't gone over the declared
         // length.
@@ -167,30 +171,30 @@ public:
                 if (input.peek() == EOF) {
                     break;
                 }
+
                 // Dictionary match.
                 // Offset and length of match.
-                size_t offset = src.getbyte();
-                size_t length = src.getbyte();
+                size_t const high = src.getbyte();
+                size_t const low  = src.getbyte();
 
-                // The high 4 bits of length are actually part of the offset.
-                offset |= (length << 4U) & 0xF00U;
-                // Length is low 4 bits plus 3.
-                length = (length & 0xFU) + 3;
-                // And there is an additional 0x12 bytes added to offset.
-                offset = (offset + 0x12) % SaxmanAdaptor::SearchBufSize;
+                auto const baseoffset
+                        = static_cast<diff_t>((high | ((low & 0xF0U) << 4U)) + 18)
+                          % buffer_size;
+                auto const length = static_cast<diff_t>((low & 0xFU) + 3);
+
                 // The offset is stored as being absolute within current
                 // 0x1000-byte block, with part of it being remapped to the end
                 // of the previous 0x1000-byte block. We just rebase it around
                 // basedest.
-                size_t const basedest = Dst.tellp();
-                offset = ((offset - basedest) % SaxmanAdaptor::SearchBufSize) + basedest
-                         - SaxmanAdaptor::SearchBufSize;
+                auto const base = Dst.tellp();
+                auto const offset
+                        = ((baseoffset - base) % buffer_size) + base - buffer_size;
 
-                if (offset < basedest) {
+                if (offset < base) {
                     // If the offset is before the current output position, we
                     // copy bytes from the given location.
-                    for (size_t csrc = offset; csrc < offset + length; csrc++) {
-                        size_t const Pointer = Dst.tellp();
+                    for (auto csrc = offset; csrc < offset + length; csrc++) {
+                        auto const Pointer = Dst.tellp();
                         Dst.seekg(csrc);
                         uint8_t const Byte = Read1(Dst);
                         Dst.seekp(Pointer);
@@ -266,8 +270,8 @@ bool saxman::encode(
     if (WithSize) {
         outbuff.seekg(Start);
         outbuff.ignore(numeric_limits<streamsize>::max());
-        size_t FullSize = outbuff.gcount();
-        LittleEndian::Write2(Dst, FullSize);
+        auto FullSize = outbuff.gcount();
+        LittleEndian::Write2(Dst, static_cast<uint16_t>(FullSize));
     }
     outbuff.seekg(Start);
     Dst << outbuff.rdbuf();
