@@ -43,7 +43,6 @@
 #include <mdcomp/ignore_unused_variable_warning.hh>
 
 using std::array;
-using std::forward;
 using std::ios;
 using std::iostream;
 using std::istream;
@@ -70,7 +69,7 @@ public:
             : callback(callback_) {}
     template <typename... Ts>
     auto operator()(Ts&&... args) const {
-        return this->callback(forward<Ts>(args)...);
+        return this->callback(std::forward<Ts>(args)...);
     }
 
 private:
