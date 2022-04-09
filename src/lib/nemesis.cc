@@ -227,8 +227,9 @@ struct Compare_node {
 };
 
 struct Compare_node2 {
-    static NibbleCodeMap codemap;
-    bool                 operator()(
+    NibbleCodeMap codemap;
+
+    bool operator()(
             shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
         if (codemap.empty()) {
             if (*lhs < *rhs) {
@@ -273,15 +274,13 @@ struct Compare_node2 {
     }
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
-    void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
+    void update(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
         codemap = codes;
         make_heap(nodes.begin(), nodes.end(), *this);
         pop_heap(nodes.begin(), nodes.end(), *this);
         nodes.pop_back();
     }
 };
-
-NibbleCodeMap Compare_node2::codemap;
 
 template <>
 size_t moduled_nemesis::PadMaskBits = 1U;
@@ -661,7 +660,7 @@ public:
     template <typename Compare>
     static size_t encode(
             istream& Src, ostream& Dst, size_t mode, size_t const length,
-            Compare const& comp) {
+            Compare&& comp) {
         // Seek to start and clear all errors.
         Src.clear();
         Src.seekg(0);
@@ -692,8 +691,6 @@ public:
         }
         // No longer needed.
         unpack.clear();
-
-        Compare_node2::codemap.clear();
 
         // We will use the Package-merge algorithm to build the optimal
         // length-limited Huffman code for the current file. To do this, we must
