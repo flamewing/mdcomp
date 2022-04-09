@@ -73,13 +73,13 @@ class kosplus_internal {
         constexpr static size_t const LookAheadBufSize = 264;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
-                stream_t const* dt, size_t const size) noexcept {
+                stream_t const* data, size_t const size) noexcept {
             return array<SlidingWindow_t, 3>{
-                    SlidingWindow_t{dt, size, 256, 2, 5, EdgeType::dictionary_inline},
+                    SlidingWindow_t{data, size, 256, 2, 5, EdgeType::dictionary_inline},
                     SlidingWindow_t{
-                            dt, size, SearchBufSize, 3, 9, EdgeType::dictionary_short},
+                            data, size, SearchBufSize, 3, 9, EdgeType::dictionary_short},
                     SlidingWindow_t{
-                            dt, size, SearchBufSize, 10, LookAheadBufSize,
+                            data, size, SearchBufSize, 10, LookAheadBufSize,
                             EdgeType::dictionary_long}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
@@ -144,12 +144,12 @@ class kosplus_internal {
     };
 
 public:
-    static void decode(istream& in, iostream& Dst) {
+    static void decode(istream& input, iostream& Dst) {
         using KosIStream = LZSSIStream<KosPlusAdaptor>;
 
-        KosIStream src(in);
+        KosIStream src(input);
 
-        while (in.good()) {
+        while (input.good()) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
                 Write1(Dst, src.getbyte());
@@ -265,11 +265,11 @@ public:
 
 bool kosplus::decode(istream& Src, iostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    kosplus_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    kosplus_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 

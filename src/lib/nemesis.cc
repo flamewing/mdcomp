@@ -65,7 +65,8 @@ private:
 public:
     // Constructors.
     nibble_run() noexcept = default;
-    nibble_run(std::byte n, size_t c) noexcept : nibble(n), count(c) {}
+    nibble_run(std::byte nibble_, size_t count_) noexcept
+            : nibble(nibble_), count(count_) {}
     // Sorting operator.
     [[nodiscard]] std::strong_ordering operator<=>(
             nibble_run const& other) const noexcept = default;
@@ -76,11 +77,11 @@ public:
     [[nodiscard]] size_t get_count() const noexcept {
         return count;
     }
-    void set_nibble(std::byte const tf) noexcept {
-        nibble = tf;
+    void set_nibble(std::byte const value) noexcept {
+        nibble = value;
     }
-    void set_count(size_t const tf) noexcept {
-        count = tf;
+    void set_count(size_t const value) noexcept {
+        count = value;
     }
 };
 
@@ -110,7 +111,7 @@ using CodeNibbleMap = map<Code, nibble_run>;
 // This represents a node (leaf or branch) in the Huffman encoding tree.
 class node : public enable_shared_from_this<node> {
 private:
-    shared_ptr<node> child0, child1;
+    shared_ptr<node> left_child, right_child;
     size_t           weight;
     nibble_run       value{std::byte{0}, 0};
 
@@ -118,12 +119,14 @@ public:
     // Construct a new leaf node for character c.
     node(nibble_run const& val, size_t const wgt) noexcept : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
-    node(const shared_ptr<node>& c0, const shared_ptr<node>& c1) noexcept
-            : child0(c0), child1(c1), weight(c0->weight + c1->weight) {}
+    node(const shared_ptr<node>& left_child_,
+         const shared_ptr<node>& right_child_) noexcept
+            : left_child(left_child_), right_child(right_child_),
+              weight(left_child_->weight + right_child_->weight) {}
     // Free the memory used by the child nodes.
     void prune() noexcept {
-        child0.reset();
-        child1.reset();
+        left_child.reset();
+        right_child.reset();
     }
     // Comparison operators.
     [[nodiscard]] std::weak_ordering operator<=>(node const& other) const noexcept {
@@ -131,14 +134,14 @@ public:
     }
     // This tells if the node is a leaf or a branch.
     bool is_leaf() const noexcept {
-        return child0 == nullptr && child1 == nullptr;
+        return left_child == nullptr && right_child == nullptr;
     }
     // Getters/setters for all properties.
     shared_ptr<node const> get_child0() const noexcept {
-        return child0;
+        return left_child;
     }
     shared_ptr<node const> get_child1() const noexcept {
-        return child1;
+        return right_child;
     }
     size_t get_weight() const noexcept {
         return weight;
@@ -146,17 +149,17 @@ public:
     nibble_run const& get_value() const noexcept {
         return value;
     }
-    void set_child0(shared_ptr<node> c0) noexcept {
-        child0 = std::move(c0);
+    void set_left_child(shared_ptr<node> left_child_) noexcept {
+        left_child = std::move(left_child_);
     }
-    void set_child1(shared_ptr<node> c1) noexcept {
-        child1 = std::move(c1);
+    void set_right_child(shared_ptr<node> right_child_) noexcept {
+        right_child = std::move(right_child_);
     }
-    void set_weight(size_t w) noexcept {
-        weight = w;
+    void set_weight(size_t weight_) noexcept {
+        weight = weight_;
     }
-    void set_value(nibble_run const& v) noexcept {
-        value = v;
+    void set_value(nibble_run const& value_) noexcept {
+        value = value_;
     }
     // This goes through the tree, starting with the current node, generating
     // a map associating a nibble run with its code length.
@@ -164,11 +167,11 @@ public:
         if (is_leaf()) {
             sizemap[value] += 1;
         } else {
-            if (child0) {
-                child0->traverse(sizemap);
+            if (left_child) {
+                left_child->traverse(sizemap);
             }
-            if (child1) {
-                child1->traverse(sizemap);
+            if (right_child) {
+                right_child->traverse(sizemap);
             }
         }
     }
@@ -216,10 +219,10 @@ struct Compare_node {
 #endif
     }
     // Just discard the lowest weighted item.
-    void update(NodeVector& qt, NibbleCodeMap& codes) const noexcept {
+    void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
         ignore_unused_variable_warning(codes);
-        pop_heap(qt.begin(), qt.end(), *this);
-        qt.pop_back();
+        pop_heap(nodes.begin(), nodes.end(), *this);
+        nodes.pop_back();
     }
 };
 
@@ -240,12 +243,11 @@ struct Compare_node2 {
         nibble_run const right_nibble = rhs->get_value();
 
         auto get_len = [&](shared_ptr<node> const& node, nibble_run nib) {
-            auto const it = codemap.find(nib);
-            if (it == codemap.end()) {
-                return (6 + 7) * node->get_weight();
+            if (auto const iter = codemap.find(nib); iter != codemap.end()) {
+                size_t bitcnt = (iter->second).length;
+                return (bitcnt & 0x7fU) * node->get_weight() + 16;
             }
-            size_t bitcnt = (it->second).length;
-            return (bitcnt & 0x7fU) * node->get_weight() + 16;
+            return (6 + 7) * node->get_weight();
         };
 
         size_t const left_code_length  = get_len(lhs, left_nibble);
@@ -271,11 +273,11 @@ struct Compare_node2 {
     }
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
-    void update(NodeVector& qt, NibbleCodeMap& codes) const noexcept {
+    void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
         codemap = codes;
-        make_heap(qt.begin(), qt.end(), *this);
-        pop_heap(qt.begin(), qt.end(), *this);
-        qt.pop_back();
+        make_heap(nodes.begin(), nodes.end(), *this);
+        pop_heap(nodes.begin(), nodes.end(), *this);
+        nodes.pop_back();
     }
 };
 
@@ -358,11 +360,11 @@ public:
                 length = 1;
             } else {
                 // Find out if the data so far is a nibble code.
-                auto const it = codemap.find(Code{code, length});
-                if (it != codemap.end()) {
+                if (auto const iter = codemap.find(Code{code, length});
+                    iter != codemap.end()) {
                     // If it is, then it is time to output the encoded nibble
                     // run.
-                    nibble_run const& run = it->second;
+                    nibble_run const& run = iter->second;
 
                     std::byte nibble = run.get_nibble();
                     size_t    cnt    = run.get_count();
@@ -404,11 +406,11 @@ public:
             // output the lines.
             dst.seekg(0);
             dst.clear();
-            uint32_t in = LittleEndian::Read4(dst);
-            LittleEndian::Write4(Dst, in);
+            uint32_t value = LittleEndian::Read4(dst);
+            LittleEndian::Write4(Dst, value);
             while (dst.tellg() < final_size) {
-                in ^= LittleEndian::Read4(dst);
-                LittleEndian::Write4(Dst, in);
+                value ^= LittleEndian::Read4(dst);
+                LittleEndian::Write4(Dst, value);
             }
         } else {
             Dst.write(dst.str().c_str(), final_size);
@@ -525,36 +527,36 @@ public:
                             Row<7>{0, 2, 0, 1, 0, 0, 0}, Row<7>{0, 1, 2, 0, 0, 0, 0},
                             Row<7>{0, 1, 0, 0, 0, 1, 0}, Row<7>{0, 0, 1, 0, 1, 0, 0},
                             Row<7>{0, 0, 0, 2, 0, 0, 0}};
-                    size_t const n = run.get_count();
+                    size_t const count = run.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
                     size_t const* linear_coefficients;
                     size_t        rows;
                     // Get correct coefficient table:
-                    switch (n) {
+                    switch (count) {
                     case 2:
-                        linear_coefficients = &linear_coefficients2[0][0];
+                        linear_coefficients = linear_coefficients2[0].data();
                         rows                = linear_coefficients2.size();
                         break;
                     case 3:
-                        linear_coefficients = &linear_coefficients3[0][0];
+                        linear_coefficients = linear_coefficients3[0].data();
                         rows                = linear_coefficients3.size();
                         break;
                     case 4:
-                        linear_coefficients = &linear_coefficients4[0][0];
+                        linear_coefficients = linear_coefficients4[0].data();
                         rows                = linear_coefficients4.size();
                         break;
                     case 5:
-                        linear_coefficients = &linear_coefficients5[0][0];
+                        linear_coefficients = linear_coefficients5[0].data();
                         rows                = linear_coefficients5.size();
                         break;
                     case 6:
-                        linear_coefficients = &linear_coefficients6[0][0];
+                        linear_coefficients = linear_coefficients6[0].data();
                         rows                = linear_coefficients6.size();
                         break;
                     case 7:
                     default:
-                        linear_coefficients = &linear_coefficients7[0][0];
+                        linear_coefficients = linear_coefficients7[0].data();
                         rows                = linear_coefficients7.size();
                         break;
                     }
@@ -564,7 +566,7 @@ public:
                     // 13 if the nibble run is not in the codemap.
                     vector<size_t> runlen;
                     // Init vector.
-                    for (size_t i = 0; i < n; i++) {
+                    for (size_t i = 0; i < count; i++) {
                         // Is this run in the codemap?
                         nibble_run trg(nibble, i);
                         auto       it3 = tempcodemap.find(trg);
@@ -587,16 +589,16 @@ public:
 
                     std::optional<size_t> best_line;
 
-                    for (size_t i = 0; i < rows; i++, base += n) {
+                    for (size_t i = 0; i < rows; i++, base += count) {
                         // Tally up the code length for this coefficient line.
                         size_t length = 0;
-                        for (size_t j = 0; j < n; j++) {
-                            size_t const c = linear_coefficients[base + j];
-                            if (c == 0U) {
+                        for (size_t j = 0; j < count; j++) {
+                            size_t const coeff = linear_coefficients[base + j];
+                            if (coeff == 0U) {
                                 continue;
                             }
 
-                            length += c * runlen[j];
+                            length += coeff * runlen[j];
                         }
                         // Is the length better than the best yet?
                         if (length < best_size) {
@@ -611,9 +613,9 @@ public:
                         // and add it to the supplementary code table.
                         size_t code   = 0;
                         size_t length = 0;
-                        for (size_t i = 0; i < n; i++) {
-                            size_t const c = linear_coefficients[*best_line + i];
-                            if (c == 0U) {
+                        for (size_t i = 0; i < count; i++) {
+                            size_t const coeff = linear_coefficients[*best_line + i];
+                            if (coeff == 0U) {
                                 continue;
                             }
                             // Is this run in the codemap?
@@ -622,7 +624,7 @@ public:
                             if (it3 != tempcodemap.end()) {
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
-                                for (size_t j = 0; j < c; j++) {
+                                for (size_t j = 0; j < coeff; j++) {
                                     length += (it3->second).length;
                                     code <<= (it3->second).length;
                                     code |= (it3->second).code;
@@ -658,7 +660,7 @@ public:
 
     template <typename Compare>
     static size_t encode(
-            istream& Src, ostream& Dst, size_t mode, size_t const sz,
+            istream& Src, ostream& Dst, size_t mode, size_t const length,
             Compare const& comp) {
         // Seek to start and clear all errors.
         Src.clear();
@@ -666,10 +668,10 @@ public:
         // Unpack source so we don't have to deal with nibble IO after.
         constexpr const std::byte low_nibble{0xfU};
         vector<std::byte>         unpack;
-        for (size_t i = 0; i < sz; i++) {
-            std::byte const c{Read1(Src)};
-            unpack.emplace_back((c >> 4U) & low_nibble);
-            unpack.emplace_back(c & low_nibble);
+        for (size_t i = 0; i < length; i++) {
+            std::byte const value{Read1(Src)};
+            unpack.emplace_back((value >> 4U) & low_nibble);
+            unpack.emplace_back(value & low_nibble);
         }
         unpack.emplace_back(std::byte{0xff});
 
@@ -697,18 +699,18 @@ public:
         // length-limited Huffman code for the current file. To do this, we must
         // map the current problem onto the Coin Collector's problem. Build the
         // basic coin collection.
-        NodeVector qt;
-        qt.reserve(counts.size());
+        NodeVector nodes;
+        nodes.reserve(counts.size());
         for (const auto& [run, frequency] : counts) {
             // No point in including anything with weight less than 2, as they
             // would actually increase compressed file size if used.
             if (frequency > 1) {
-                qt.push_back(make_shared<node>(run, frequency));
+                nodes.push_back(make_shared<node>(run, frequency));
             }
         }
         // This may seem useless, but my tests all indicate that this reduces
         // the average file size. I haven't the foggiest idea why.
-        make_heap(qt.begin(), qt.end(), comp);
+        make_heap(nodes.begin(), nodes.end(), comp);
 
         // The base coin collection for the length-limited Huffman coding has
         // one coin list per character in length of the limitation. Each coin
@@ -728,49 +730,49 @@ public:
         // We will solve the Coin Collector's problem several times, each time
         // ignoring more of the least frequent nibble runs. This allows us to
         // find *the* lowest file size.
-        while (qt.size() > 1) {
+        while (nodes.size() > 1) {
             // Make a copy of the basic coin collection.
             using CoinQueue = priority_queue<shared_ptr<node>, NodeVector, Compare_node>;
-            CoinQueue q0(qt.begin(), qt.end());
+            CoinQueue base_coins(nodes.begin(), nodes.end());
 
             // We now solve the Coin collector's problem using the Package-merge
             // algorithm. The solution goes here.
             NodeVector solution;
             // This holds the packages from the last iteration.
-            CoinQueue q(q0);
-            size_t    target = (q0.size() - 1) << 8U;
-            size_t    idx    = 0;
+            CoinQueue current_coins(base_coins);
+            size_t    target = (base_coins.size() - 1) << 8U;
+            size_t    index  = 0;
             while (target != 0) {
                 // Gets lowest bit set in its proper place:
-                size_t val = (target & -target);
-                size_t r   = 1U << idx;
+                size_t value = (target & -target);
+                size_t cost  = 1U << index;
                 // Is the current denomination equal to the least denomination?
-                if (r == val) {
+                if (cost == value) {
                     // If yes, take the least valuable node and put it into the
                     // solution.
-                    solution.push_back(q.top());
-                    q.pop();
-                    target -= r;
+                    solution.push_back(current_coins.top());
+                    current_coins.pop();
+                    target -= cost;
                 }
 
                 // The coin collection has coins of values 1 to 8; copy from the
                 // original in those cases for the next step.
-                CoinQueue q1;
-                if (idx < 7) {
-                    q1 = q0;
+                CoinQueue next_coins;
+                if (index < 7) {
+                    next_coins = base_coins;
                 }
 
                 // Split the current list into pairs and insert the packages
                 // into the next list.
-                while (q.size() > 1) {
-                    shared_ptr<node> child1 = q.top();
-                    q.pop();
-                    shared_ptr<node> child0 = q.top();
-                    q.pop();
-                    q1.push(make_shared<node>(child0, child1));
+                while (current_coins.size() > 1) {
+                    shared_ptr<node> child1 = current_coins.top();
+                    current_coins.pop();
+                    shared_ptr<node> child0 = current_coins.top();
+                    current_coins.pop();
+                    next_coins.push(make_shared<node>(child0, child1));
                 }
-                idx++;
-                q = q1;
+                index++;
+                current_coins = next_coins;
             }
 
             // The Coin Collector's problem has been solved. Now it is time to
@@ -854,7 +856,7 @@ public:
 
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
-            comp.update(qt, tempcodemap);
+            comp.update(nodes, tempcodemap);
 
             // Is this iteration better than the best?
             if (tempsize_est < size_est) {
@@ -864,9 +866,9 @@ public:
             }
         }
         // Special case.
-        if (qt.size() == 1) {
+        if (nodes.size() == 1) {
             NibbleCodeMap    tempcodemap;
-            shared_ptr<node> child          = qt.front();
+            shared_ptr<node> child          = nodes.front();
             tempcodemap[child->get_value()] = Code{0U, 1};
             size_t const tempsize_est       = estimate_file_size(tempcodemap, counts);
 
@@ -883,13 +885,13 @@ public:
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
-        BigEndian::Write2(Dst, (mode << 15U) | (sz >> 5U));
+        BigEndian::Write2(Dst, (mode << 15U) | (length >> 5U));
         std::byte lastnibble{0xff};
         for (const auto& [run, bitcode] : codemap) {
-            const auto [code, length] = bitcode;
+            const auto [code, size] = bitcode;
             // length with bit 7 set is a special device for further reducing file
             // size, and should NOT be on the table.
-            if ((length & 0x80U) != 0) {
+            if ((size & 0x80U) != 0) {
                 continue;
             }
             if (run.get_nibble() != lastnibble) {
@@ -898,7 +900,7 @@ public:
                 lastnibble = run.get_nibble();
             }
 
-            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U) | length);
+            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U) | size);
             Write1(Dst, code);
         }
 
@@ -915,20 +917,20 @@ public:
         for (auto& run : rleSrc) {
             auto val = codemap.find(run);
             if (val != codemap.end()) {
-                size_t const code   = (val->second).code;
-                size_t       length = (val->second).length;
+                size_t const code  = (val->second).code;
+                size_t       count = (val->second).length;
                 // length with bit 7 set is a device to bypass the code table at
                 // the start of the file. We need to clear the bit here before
                 // writing the code to the file.
-                length &= 0x7fU;
+                count &= 0x7fU;
                 // We can have codes in the 9-12 range due to the break up of
                 // large inlined runs into smaller non-inlined runs. Deal with
                 // those high bits first, if needed.
-                if (length > 8) {
-                    bits.write((code >> 8U) & 0xffU, length - 8);
-                    length = 8;
+                if (count > 8) {
+                    bits.write((code >> 8U) & 0xffU, count - 8);
+                    count = 8;
                 }
-                bits.write(static_cast<uint8_t>(code & 0xffU), length);
+                bits.write(static_cast<uint8_t>(code & 0xffU), count);
             } else {
                 bits.write(0x3f, 6);
                 bits.write(run.get_count(), 3);
@@ -968,7 +970,7 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     if ((pos % 32) != 0) {
         fill_n(ostreambuf_iterator<char>(src), 32 - (pos % 32), 0);
     }
-    size_t const sz = src.tellp();
+    size_t const size = src.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
     src.clear();
@@ -987,10 +989,10 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     std::array<stringstream, 4> buffers;
     // Four different attempts to encode, for improved file size.
     std::array<size_t, 4> sizes{
-            nemesis_internal::encode(src, buffers[0], 0, sz, Compare_node()),
-            nemesis_internal::encode(src, buffers[1], 0, sz, Compare_node2()),
-            nemesis_internal::encode(alt, buffers[2], 1, sz, Compare_node()),
-            nemesis_internal::encode(alt, buffers[3], 1, sz, Compare_node2())};
+            nemesis_internal::encode(src, buffers[0], 0, size, Compare_node()),
+            nemesis_internal::encode(src, buffers[1], 0, size, Compare_node2()),
+            nemesis_internal::encode(alt, buffers[2], 1, size, Compare_node()),
+            nemesis_internal::encode(alt, buffers[3], 1, size, Compare_node2())};
 
     // Figure out what was the best encoding.
     size_t best_size  = numeric_limits<size_t>::max();

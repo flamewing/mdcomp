@@ -43,27 +43,27 @@ public:
         if (Size == 0) {
             return;
         }
-        uint8_t cc = Read1(Src);
-        Write1(Dst, cc);
+        uint8_t curr = Read1(Src);
+        Write1(Dst, curr);
         Size--;
         while (Size > 0) {
-            uint8_t nc = Read1(Src);
-            Write1(Dst, nc);
+            uint8_t next = Read1(Src);
+            Write1(Dst, next);
             Size--;
-            if (cc == nc) {
+            if (curr == next) {
                 // RLE marker. Get repeat count.
                 size_t Count = Read1(Src);
                 for (size_t ii = 0; ii < Count; ii++) {
-                    Write1(Dst, nc);
+                    Write1(Dst, next);
                 }
                 Size -= Count;
                 if (Count == 255 && Size > 0) {
-                    cc = Read1(Src);
-                    Write1(Dst, nc);
+                    curr = Read1(Src);
+                    Write1(Dst, next);
                     Size--;
                 }
             } else {
-                cc = nc;
+                curr = next;
             }
         }
     }
@@ -74,24 +74,24 @@ public:
         std::streampos Size = Src.gcount();
         Src.seekg(pos);
         BigEndian::Write2(Dst, static_cast<uint16_t>(Size));
-        uint8_t cc = Read1(Src);
+        uint8_t curr = Read1(Src);
         while (Src.good()) {
-            Write1(Dst, cc);
-            uint8_t nc = Read1(Src);
+            Write1(Dst, curr);
+            uint8_t next = Read1(Src);
             if (!Src.good()) {
                 break;
             }
-            if (nc == cc) {
-                Write1(Dst, nc);
+            if (next == curr) {
+                Write1(Dst, next);
                 size_t Count = 0;
-                cc           = Read1(Src);
-                while (Src.good() && nc == cc && Count < 255) {
+                curr           = Read1(Src);
+                while (Src.good() && next == curr && Count < 255) {
                     Count++;
-                    cc = Read1(Src);
+                    curr = Read1(Src);
                 }
                 Write1(Dst, Count & std::numeric_limits<uint8_t>::max());
             } else {
-                cc = nc;
+                curr = next;
             }
         }
     }
@@ -99,11 +99,11 @@ public:
 
 bool snkrle::decode(istream& Src, ostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    snkrle_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    snkrle_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 

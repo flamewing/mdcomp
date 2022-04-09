@@ -75,9 +75,10 @@ class saxman_internal {
         constexpr static size_t const LookAheadBufSize = 18;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
-                stream_t const* dt, size_t const size) noexcept {
+                stream_t const* data, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 3, LookAheadBufSize, EdgeType::dictionary}};
+                    data, size, SearchBufSize, 3, LookAheadBufSize,
+                    EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -121,17 +122,17 @@ class saxman_internal {
                 return false;
             }
             // Try matching zeroes.
-            size_t       jj  = 0;
-            size_t const end = ubound - basenode;
-            while (data[basenode + jj] == 0) {
-                if (++jj >= end) {
+            size_t       offset = 0;
+            size_t const end    = ubound - basenode;
+            while (data[basenode + offset] == 0) {
+                if (++offset >= end) {
                     break;
                 }
             }
             // Need at least 3 zeroes in sequence.
-            if (jj >= 3) {
+            if (offset >= 3) {
                 // Got them, so add them to the list.
-                for (size_t len = 3; len <= jj; len++) {
+                for (size_t len = 3; len <= offset; len++) {
                     matches.emplace_back(
                             basenode, Match_t{numeric_limits<size_t>::max(), len},
                             EdgeType::zerofill);
@@ -147,23 +148,23 @@ class saxman_internal {
     };
 
 public:
-    static void decode(istream& in, iostream& Dst, size_t const Size) {
+    static void decode(istream& input, iostream& Dst, size_t const Size) {
         using SaxIStream = LZSSIStream<SaxmanAdaptor>;
 
-        SaxIStream src(in);
+        SaxIStream src(input);
         auto const size = static_cast<std::make_signed_t<size_t>>(Size);
 
         // Loop while the file is good and we haven't gone over the declared
         // length.
-        while (in.good() && in.tellg() < size) {
+        while (input.good() && input.tellg() < size) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
-                if (in.peek() == EOF) {
+                if (input.peek() == EOF) {
                     break;
                 }
                 Write1(Dst, src.getbyte());
             } else {
-                if (in.peek() == EOF) {
+                if (input.peek() == EOF) {
                     break;
                 }
                 // Dictionary match.
@@ -249,11 +250,11 @@ bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
     }
 
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    saxman_internal::decode(in, Dst, Size);
-    Src.seekg(Location + in.tellg());
+    saxman_internal::decode(input, Dst, Size);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 
