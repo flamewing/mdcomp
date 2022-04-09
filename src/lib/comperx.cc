@@ -72,9 +72,9 @@ class comperx_internal {
         constexpr static size_t const LookAheadBufSize = 255;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
-                stream_t const* dt, size_t const size) noexcept {
+                stream_t const* data, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
+                    data, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -118,15 +118,15 @@ class comperx_internal {
     };
 
 public:
-    static void decode(istream& in, iostream& Dst) {
+    static void decode(istream& input, iostream& Dst) {
         using CompIStream = LZSSIStream<ComperXAdaptor>;
 
-        CompIStream src(in);
+        CompIStream src(input);
 
-        while (in.good()) {
+        while (input.good()) {
             if (src.descbit() == 0U) {
                 // Symbolwise match.
-                BigEndian::Write2(Dst, BigEndian::Read2(in));
+                BigEndian::Write2(Dst, BigEndian::Read2(input));
             } else {
                 // Dictionary match.
                 // Distance and length of match.
@@ -201,11 +201,11 @@ public:
 
 bool comperx::decode(istream& Src, iostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    comperx_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    comperx_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 

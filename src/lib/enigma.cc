@@ -145,9 +145,9 @@ static inline void flush_buffer(
     }
 
     bits.write(0x70U | ((buf.size() - 1) & 0xfU), 7);
-    for (const auto v : buf) {
-        putMask(bits, v);
-        bits.write(v & 0x7ffU, packet_length);
+    for (const auto value : buf) {
+        putMask(bits, value);
+        bits.write(value & 0x7ffU, packet_length);
     }
     buf.clear();
 }
@@ -157,19 +157,19 @@ size_t moduled_enigma::PadMaskBits = 1U;
 
 class enigma_internal {
 public:
-    static void decode(std::istream& in, std::ostream& Dst) {
+    static void decode(std::istream& input, std::ostream& Dst) {
         // Read header.
-        size_t const   packet_length      = Read1(in);
-        auto           getMask            = flag_reader::get(Read1(in));
-        uint16_t       incrementing_value = BigEndian::Read2(in);
-        uint16_t const common_value       = BigEndian::Read2(in);
+        size_t const   packet_length      = Read1(input);
+        auto           getMask            = flag_reader::get(Read1(input));
+        uint16_t       incrementing_value = BigEndian::Read2(input);
+        uint16_t const common_value       = BigEndian::Read2(input);
 
-        EniIBitstream bits(in);
+        EniIBitstream bits(input);
 
         constexpr static std::array<int, 3> const modeDeltaLUT = {0, 1, -1};
 
         // Lets put in a safe termination condition here.
-        while (in.good()) {
+        while (input.good()) {
             if (bits.pop() != 0U) {
                 size_t const mode = bits.read(2);
                 switch (mode) {
@@ -234,14 +234,14 @@ public:
         Src.clear();
         Src.seekg(0);
         while (true) {
-            uint16_t v = BigEndian::Read2(Src);
+            uint16_t value = BigEndian::Read2(Src);
             if (!Src.good()) {
                 break;
             }
-            maskval |= v;
-            counts[v] += 1;
-            elems.insert(v);
-            unpack.push_back(v);
+            maskval |= value;
+            counts[value] += 1;
+            elems.insert(value);
+            unpack.push_back(value);
         }
 
         auto         putMask       = flag_writer::get(maskval >> 11U);
@@ -287,10 +287,10 @@ public:
         vector<uint16_t> buf;
         size_t           pos = 0;
         while (pos < unpack.size()) {
-            uint16_t const v = unpack[pos];
-            if (v == incrementing_value) {
+            uint16_t const value = unpack[pos];
+            if (value == incrementing_value) {
                 flush_buffer(buf, bits, putMask, packet_length);
-                uint16_t next = v + 1;
+                uint16_t next = value + 1;
                 size_t   cnt  = 0;
                 for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
                     if (next != unpack[i]) {
@@ -302,9 +302,9 @@ public:
                 bits.write(0b00'0000U | (cnt & 0xffU), 6);
                 incrementing_value = next;
                 pos += cnt;
-            } else if (v == common_value) {
+            } else if (value == common_value) {
                 flush_buffer(buf, bits, putMask, packet_length);
-                uint16_t next = v;
+                uint16_t next = value;
                 size_t   cnt  = 0;
                 for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
                     if (next != unpack[i]) {
@@ -316,7 +316,7 @@ public:
                 pos += cnt;
             } else {
                 uint16_t next  = unpack[pos + 1];
-                uint16_t delta = next - v;
+                uint16_t delta = next - value;
 
                 constexpr const uint16_t minus_one = std::numeric_limits<uint16_t>::max();
                 if (pos + 1 < unpack.size() && next != incrementing_value
@@ -338,15 +338,15 @@ public:
 
                     delta = (((delta | 4U)) << 4U) & 0xffffU;
                     bits.write((delta | cnt) & 0xffU, 7);
-                    putMask(bits, v);
-                    bits.write(v & 0x7ffU, packet_length);
+                    putMask(bits, value);
+                    bits.write(value & 0x7ffU, packet_length);
                     pos += cnt;
                 } else {
                     if (buf.size() >= 0xf) {
                         flush_buffer(buf, bits, putMask, packet_length);
                     }
 
-                    buf.push_back(v);
+                    buf.push_back(value);
                 }
             }
             pos++;
@@ -362,11 +362,11 @@ public:
 
 bool enigma::decode(istream& Src, ostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    enigma_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    enigma_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 

@@ -111,8 +111,8 @@ namespace detail {
     static_assert(reverseBits(0x0123456789abcdefULL) == 0xf7b3d591E6A2C480ULL);
 
     template <typename F, typename R, typename... Args>
-    concept bit_callback = requires(F mf, Args... as) {
-        { mf(as...) } -> std::same_as<R>;
+    concept bit_callback = requires(F callable, Args... arguments) {
+        { callable(arguments...) } -> std::same_as<R>;
     };
 }    // namespace detail
 
@@ -153,10 +153,10 @@ private:
     }
 
 public:
-    explicit ibitbuffer(const Reader& r) noexcept(noexcept(read_bits()))
-            : reader(r), readbits(bitcount), bitbuffer(read_bits()) {}
-    explicit ibitbuffer(Reader&& r) noexcept(noexcept(read_bits()))
-            : reader(std::move(r)), readbits(bitcount), bitbuffer(read_bits()) {}
+    explicit ibitbuffer(const Reader& reader_) noexcept(noexcept(read_bits()))
+            : reader(reader_), readbits(bitcount), bitbuffer(read_bits()) {}
+    explicit ibitbuffer(Reader&& reader_) noexcept(noexcept(read_bits()))
+            : reader(std::move(reader_)), readbits(bitcount), bitbuffer(read_bits()) {}
     // Gets a single bit from the buffer. Remembers previously read bits, and
     // gets a new T from the actual buffer once all bits in the current T has
     // been used up.
@@ -225,10 +225,10 @@ private:
     }
 
 public:
-    explicit obitbuffer(const Writer& w) noexcept
-            : writer(w), waitingbits(0), bitbuffer(0) {}
-    explicit obitbuffer(Writer&& w) noexcept
-            : writer(std::move(w)), waitingbits(0), bitbuffer(0) {}
+    explicit obitbuffer(const Writer& writer_) noexcept
+            : writer(writer_), waitingbits(0), bitbuffer(0) {}
+    explicit obitbuffer(Writer&& writer_) noexcept
+            : writer(std::move(writer_)), waitingbits(0), bitbuffer(0) {}
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
@@ -326,8 +326,8 @@ private:
     static inline constexpr const bool is_noexcept = noexcept(
             Endian::Write(std::declval<std::ostream&>(), std::declval<uint_t>()));
     struct BitWriter {
-        auto operator()(uint_t c) noexcept(is_noexcept) {
-            return Endian::Write(dest, c);
+        auto operator()(uint_t count) noexcept(is_noexcept) {
+            return Endian::Write(dest, count);
         }
         std::ostream& dest;
     };

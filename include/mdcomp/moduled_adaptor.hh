@@ -30,12 +30,12 @@
 
 namespace detail {
     template <typename T1, typename T2>
-        requires requires(T1 t1, T2 t2) {
-            t1 + t2;
-            t1 - t2;
-            t1* t2;
-            t1 / t2;
-            t1 % t2;
+        requires requires(T1 value1, T2 value2) {
+            value1 + value2;
+            value1 - value2;
+            value1* value2;
+            value1 / value2;
+            value1 % value2;
         }
     inline constexpr auto round_up(const T1 value, const T2 factor) noexcept {
         constexpr const decltype(factor) one{1};
@@ -64,26 +64,26 @@ template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding
 bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
         std::istream& Src, std::iostream& Dst, size_t const ModulePadding) {
     int64_t const     FullSize = BigEndian::Read2(Src);
-    std::stringstream in(std::ios::in | std::ios::out | std::ios::binary);
-    in << Src.rdbuf();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
+    input << Src.rdbuf();
 
     // Pad to even length, for safety.
-    if ((in.tellp() % 2) != 0) {
-        in.put(0);
+    if ((input.tellp() % 2) != 0) {
+        input.put(0);
     }
 
-    in.seekg(0);
+    input.seekg(0);
 
     auto const padding = static_cast<std::streamsize>(ModulePadding);
 
     while (true) {
-        Format::decode(in, Dst);
+        Format::decode(input, Dst);
         if (Dst.tellp() >= FullSize) {
             break;
         }
 
         // Skip padding between modules
-        in.seekg(detail::round_up(in.tellg(), padding));
+        input.seekg(detail::round_up(input.tellg(), padding));
     }
 
     return true;

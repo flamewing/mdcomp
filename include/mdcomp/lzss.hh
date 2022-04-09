@@ -72,10 +72,10 @@ private:
 public:
     // Constructors.
     constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
-    constexpr AdjListNode(size_t pos, stream_t sym, EdgeType ty) noexcept
-            : currpos(pos), type(ty), symbol(sym) {}
-    constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType ty) noexcept
-            : currpos(pos), type(ty), match(match_) {}
+    constexpr AdjListNode(size_t pos, stream_t sym, EdgeType type_) noexcept
+            : currpos(pos), type(type_), symbol(sym) {}
+    constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType type_) noexcept
+            : currpos(pos), type(type_), match(match_) {}
     // Getters.
     [[nodiscard]] constexpr size_t get_pos() const noexcept {
         return currpos;
@@ -130,12 +130,12 @@ public:
     using MatchVector = std::vector<Node_t>;
 
     SlidingWindow(
-            stream_t const* dt, size_t const size, size_t const bufsize,
-            size_t const minmatch, size_t const labuflen, EdgeType const ty) noexcept
-            : data(dt), nlen(size), srchbufsize(bufsize), minmatchlen(minmatch),
+            stream_t const* data_, size_t const size, size_t const bufsize,
+            size_t const minmatch, size_t const labuflen, EdgeType const type_) noexcept
+            : data(data_), nlen(size), srchbufsize(bufsize), minmatchlen(minmatch),
               basenode(Adaptor::FirstMatchPosition),
               ubound(std::min(labuflen + basenode, nlen)),
-              lbound(basenode > srchbufsize ? basenode - srchbufsize : 0), type(ty) {}
+              lbound(basenode > srchbufsize ? basenode - srchbufsize : 0), type(type_) {}
 
     [[nodiscard]] size_t getDataSize() const {
         return nlen;
@@ -177,23 +177,23 @@ public:
         if (getSearchBufSize() == 0) {
             return;
         }
-        size_t ii       = basenode - 1;
+        size_t base     = basenode - 1;
         size_t best_pos = 0;
         size_t best_len = 0;
         do {
             // Keep looking for dictionary matches.
-            size_t jj = 0;
-            while (jj < end && data[ii + jj] == data[basenode + jj]) {
-                ++jj;
+            size_t offset = 0;
+            while (offset < end && data[base + offset] == data[basenode + offset]) {
+                ++offset;
             }
-            if (best_len < jj) {
-                best_pos = ii;
-                best_len = jj;
+            if (best_len < offset) {
+                best_pos = base;
+                best_len = offset;
             }
-            if (jj == end) {
+            if (offset == end) {
                 break;
             }
-        } while (ii-- > lbound);
+        } while (base-- > lbound);
 
         if (best_len >= minmatchlen) {
             // We have found a match that links (basenode) with
@@ -249,29 +249,43 @@ concept LZSSAdaptor = requires() {
     std::same_as<decltype(T::SearchBufSize), const size_t>;
     std::same_as<decltype(T::LookAheadBufSize), const size_t>;
     requires requires(
-            uint8_t const*& rptr, uint8_t*& wptr, std::istream& in, std::ostream& out,
-            typename T::stream_t vs, typename T::stream_endian_t se,
-            typename T::descriptor_t vd, typename T::descriptor_endian_t de) {
-        { decltype(se)::template Read<decltype(vs)>(rptr) } -> std::same_as<decltype(vs)>;
-        { decltype(se)::template Read<decltype(vs)>(in) } -> std::same_as<decltype(vs)>;
-        { decltype(se)::Write(wptr, vs) } -> std::same_as<void>;
-        { decltype(se)::Write(out, vs) } -> std::same_as<void>;
-        { decltype(de)::template Read<decltype(vd)>(rptr) } -> std::same_as<decltype(vd)>;
-        { decltype(de)::template Read<decltype(vd)>(in) } -> std::same_as<decltype(vd)>;
-        { decltype(de)::Write(wptr, vd) } -> std::same_as<void>;
-        { decltype(de)::Write(out, vd) } -> std::same_as<void>;
+            uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
+            std::ostream& output, typename T::stream_t stream_val,
+            typename T::stream_endian_t     stream_endian,
+            typename T::descriptor_t        descriptor_val,
+            typename T::descriptor_endian_t descriptor_endian) {
+        {
+            decltype(stream_endian)::template Read<decltype(stream_val)>(rptr)
+            } -> std::same_as<decltype(stream_val)>;
+        {
+            decltype(stream_endian)::template Read<decltype(stream_val)>(input)
+            } -> std::same_as<decltype(stream_val)>;
+        { decltype(stream_endian)::Write(wptr, stream_val) } -> std::same_as<void>;
+        { decltype(stream_endian)::Write(output, stream_val) } -> std::same_as<void>;
+        {
+            decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(rptr)
+            } -> std::same_as<decltype(descriptor_val)>;
+        {
+            decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(input)
+            } -> std::same_as<decltype(descriptor_val)>;
+        {
+            decltype(descriptor_endian)::Write(wptr, descriptor_val)
+            } -> std::same_as<void>;
+        {
+            decltype(descriptor_endian)::Write(output, descriptor_val)
+            } -> std::same_as<void>;
     };
     requires requires(
-            typename T::EdgeType t, size_t l, typename T::stream_t * d, size_t lbound,
-            std::vector<AdjListNode<T>> m) {
-        { T::desc_bits(t) } -> std::same_as<size_t>;
-        { T::edge_weight(t, l) } -> std::same_as<size_t>;
-        { T::extra_matches(d, l, l, l, m) } -> std::same_as<bool>;
-        { T::get_padding(l) } -> std::same_as<size_t>;
-        noexcept(T::desc_bits(t));
-        noexcept(T::edge_weight(t, l));
-        noexcept(T::get_padding(l));
-        noexcept(T::extra_matches(d, l, l, l, m));
+            typename T::EdgeType type, size_t value, typename T::stream_t * data,
+            size_t lbound, std::vector<AdjListNode<T>> nodes) {
+        { T::desc_bits(type) } -> std::same_as<size_t>;
+        { T::edge_weight(type, value) } -> std::same_as<size_t>;
+        { T::extra_matches(data, value, value, value, nodes) } -> std::same_as<bool>;
+        { T::get_padding(value) } -> std::same_as<size_t>;
+        noexcept(T::desc_bits(type));
+        noexcept(T::edge_weight(type, value));
+        noexcept(T::get_padding(value));
+        noexcept(T::extra_matches(data, value, value, value, nodes));
     };
 };
 
@@ -288,7 +302,7 @@ struct lzss_parse_result {
 
 template <LZSSAdaptor Adaptor>
 auto find_optimal_lzss_parse(
-        uint8_t const* dt, size_t const size, Adaptor adaptor) noexcept {
+        uint8_t const* data_, size_t const size, Adaptor adaptor) noexcept {
     ignore_unused_variable_warning(adaptor);
     using EdgeType        = typename Adaptor::EdgeType;
     using stream_t        = typename Adaptor::stream_t;
@@ -302,7 +316,7 @@ auto find_optimal_lzss_parse(
     };
 
     // Adjacency lists for all the nodes in the graph.
-    stream_t const* const data{reinterpret_cast<stream_t const*>(dt)};
+    stream_t const* const data{reinterpret_cast<stream_t const*>(data_)};
     size_t const          nlen{size / sizeof(stream_t)};
     static_assert(
             noexcept(Adaptor::desc_bits(EdgeType())),
@@ -338,10 +352,10 @@ auto find_optimal_lzss_parse(
     // Extracting distance relax logic from the loop so it can be used more
     // often.
     auto Relax = [lastnode = nlen, &costs, &desccosts, &parents,
-                  &pedges](size_t ii, size_t const basedesc, const auto& elem) {
+                  &pedges](size_t index, size_t const basedesc, const auto& elem) {
         // Need destination ID and edge weight.
         size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
-        size_t       wgt      = costs[ii] + elem.get_weight();
+        size_t       wgt      = costs[index] + elem.get_weight();
         // Compute descriptor bits from using this edge.
         size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());
         if (nextnode == lastnode) {
@@ -367,7 +381,7 @@ auto find_optimal_lzss_parse(
         if (costs[nextnode] > wgt) {
             // If so, update the data structures with new best edge.
             costs[nextnode]     = wgt;
-            parents[nextnode]   = ii;
+            parents[nextnode]   = index;
             pedges[nextnode]    = elem;
             desccosts[nextnode] = desccost;
         }
@@ -448,9 +462,9 @@ private:
 public:
     // Constructor.
     explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
-    LZSSOStream(LZSSOStream const&)     = delete;
-    LZSSOStream(LZSSOStream&&) noexcept = delete;
-    LZSSOStream& operator=(LZSSOStream const&) = delete;
+    LZSSOStream(LZSSOStream const&)                = delete;
+    LZSSOStream(LZSSOStream&&) noexcept            = delete;
+    LZSSOStream& operator=(LZSSOStream const&)     = delete;
     LZSSOStream& operator=(LZSSOStream&&) noexcept = delete;
     // Destructor: writes anything that hasn't been written.
     ~LZSSOStream() noexcept {
@@ -486,8 +500,8 @@ public:
         }
     }
     // Puts a byte in the output buffer.
-    void putbyte(size_t const c) noexcept {
-        Write1(buffer, c);
+    void putbyte(size_t const value) noexcept {
+        Write1(buffer, value);
     }
 };
 

@@ -15,12 +15,12 @@ namespace std23 {
 
     template <class R, class F, class... Args>
         requires std::is_invocable_r_v<R, F, Args...>
-    constexpr R invoke_r(F&& f, Args&&... args) noexcept(
+    constexpr R invoke_r(F&& callable, Args&&... args) noexcept(
             std::is_nothrow_invocable_r_v<R, F, Args...>) {
         if constexpr (std::is_void_v<R>) {
-            std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+            std::invoke(std::forward<F>(callable), std::forward<Args>(args)...);
         } else {
-            return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+            return std::invoke(std::forward<F>(callable), std::forward<Args>(args)...);
         }
     }
 
@@ -120,16 +120,16 @@ namespace std23 {
 
             template <class T>
                 requires std::is_object_v<T>
-            constexpr explicit storage(T* p) noexcept : p_(p) {}
+            constexpr explicit storage(T* pointer) noexcept : p_(pointer) {}
 
             template <class T>
                 requires std::is_object_v<T>
-            constexpr explicit storage(T const* p) noexcept : cp_(p) {}
+            constexpr explicit storage(T const* pointer) noexcept : cp_(pointer) {}
 
             template <class T>
                 requires std::is_function_v<T>
-            constexpr explicit storage(T* p) noexcept
-                    : fp_(reinterpret_cast<decltype(fp_)>(p)) {}
+            constexpr explicit storage(T* pointer) noexcept
+                    : fp_(reinterpret_cast<decltype(fp_)>(pointer)) {}
         };
 
         template <class T>
@@ -173,16 +173,16 @@ namespace std23 {
         template <class F>
             requires std::is_function_v<F> && is_invocable_using<F>
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
-        constexpr function_ref(F* f) noexcept
-                : obj_(f), fptr_([](storage fn_, _param_t<Args>... args) {
+        constexpr function_ref(F* callable) noexcept
+                : obj_(callable), fptr_([](storage fn_, _param_t<Args>... args) {
                       return std23::invoke_r<R>(get<F>(fn_), std::forward<Args>(args)...);
                   }) {}
 
         template <class F, class T = _remove_and_unwrap_reference_t<F>>
             requires _is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
-        constexpr function_ref(F&& f) noexcept
-                : obj_(std::addressof(static_cast<T&>(f))),
+        constexpr function_ref(F&& callable) noexcept
+                : obj_(std::addressof(static_cast<T&>(callable))),
                   fptr_([](storage fn_, _param_t<Args>... args) {
                       cvref<T> obj = *get<T>(fn_);
                       return std23::invoke_r<R>(obj, std::forward<Args>(args)...);

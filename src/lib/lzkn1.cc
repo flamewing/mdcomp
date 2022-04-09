@@ -74,11 +74,11 @@ class lzkn1_internal {
         constexpr static size_t const LookAheadBufSize = 33;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
-                stream_t const* dt, size_t const size) noexcept {
+                stream_t const* data, size_t const size) noexcept {
             return array<SlidingWindow_t, 2>{
-                    SlidingWindow_t{dt, size, 15, 2, 5, EdgeType::dictionary_short},
+                    SlidingWindow_t{data, size, 15, 2, 5, EdgeType::dictionary_short},
                     SlidingWindow_t{
-                            dt, size, SearchBufSize, 3, LookAheadBufSize,
+                            data, size, SearchBufSize, 3, LookAheadBufSize,
                             EdgeType::dictionary_long}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
@@ -138,19 +138,19 @@ class lzkn1_internal {
     };
 
 public:
-    static void decode(istream& in, iostream& Dst) {
+    static void decode(istream& input, iostream& Dst) {
         using Lzkn1IStream = LZSSIStream<Lzkn1Adaptor>;
 
-        size_t const UncompressedSize = BigEndian::Read2(in);
+        size_t const UncompressedSize = BigEndian::Read2(input);
 
-        Lzkn1IStream            src(in);
+        Lzkn1IStream            src(input);
         constexpr uint8_t const eof_marker               = 0x1FU;
         constexpr uint8_t const packed_symbolwise_marker = 0xC0U;
         constexpr uint8_t const short_match_marker       = 0x80U;
 
         size_t BytesWritten = 0U;
 
-        while (in.good()) {
+        while (input.good()) {
             if (src.descbit() == 0U) {
                 // Symbolwise match.
                 Write1(Dst, src.getbyte());
@@ -276,11 +276,11 @@ public:
 
 bool lzkn1::decode(istream& Src, iostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    lzkn1_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    lzkn1_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 

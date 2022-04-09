@@ -75,9 +75,10 @@ struct rocket_internal {
         constexpr static size_t const LookAheadBufSize = 0x40;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(
-                stream_t const* dt, size_t const size) noexcept {
+                stream_t const* data, size_t const size) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    dt, size, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
+                    data, size, SearchBufSize, 2, LookAheadBufSize,
+                    EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -122,18 +123,18 @@ struct rocket_internal {
     };
 
 public:
-    static void decode(istream& in, iostream& Dst) {
+    static void decode(istream& input, iostream& Dst) {
         using RockIStream = LZSSIStream<RocketAdaptor>;
         using diff_t      = make_signed_t<size_t>;
 
-        in.ignore(2);
-        auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(in) + 4);
-        RockIStream src(in);
+        input.ignore(2);
+        auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(input) + 4);
+        RockIStream src(input);
 
-        while (in.good() && in.tellg() < Size) {
+        while (input.good() && input.tellg() < Size) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
-                uint8_t const Byte = Read1(in);
+                uint8_t const Byte = Read1(input);
                 Write1(Dst, Byte);
             } else {
                 // Dictionary match.
@@ -209,23 +210,23 @@ public:
 
 bool rocket::decode(istream& Src, iostream& Dst) {
     auto const   Location = Src.tellg();
-    stringstream in(ios::in | ios::out | ios::binary);
-    extract(Src, in);
+    stringstream input(ios::in | ios::out | ios::binary);
+    extract(Src, input);
 
-    rocket_internal::decode(in, Dst);
-    Src.seekg(Location + in.tellg());
+    rocket_internal::decode(input, Dst);
+    Src.seekg(Location + input.tellg());
     return true;
 }
 
 bool rocket::encode(istream& Src, ostream& Dst) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
-    stringstream in(ios::in | ios::out | ios::binary);
-    fill_n(ostreambuf_iterator<char>(in),
+    stringstream input(ios::in | ios::out | ios::binary);
+    fill_n(ostreambuf_iterator<char>(input),
            rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
     // Copy to buffer.
-    in << Src.rdbuf();
-    in.seekg(0);
-    return basic_rocket::encode(in, Dst);
+    input << Src.rdbuf();
+    input.seekg(0);
+    return basic_rocket::encode(input, Dst);
 }
 
 bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
