@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <iostream>
 #include <istream>
+#include <limits>
 #include <ostream>
 #include <sstream>
 
@@ -117,12 +118,13 @@ class lzkn1_internal {
                 stream_t const* data, size_t const basenode, size_t const ubound,
                 size_t const                            lbound,
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
+            using Match_t = AdjListNode<Lzkn1Adaptor>::MatchInfo;
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
             size_t const end = std::min(ubound - basenode, size_t{72});
             for (size_t ii = 8; ii < end; ii++) {
                 matches.emplace_back(
-                        basenode, numeric_limits<size_t>::max(), ii,
+                        basenode, Match_t{numeric_limits<size_t>::max(), ii},
                         EdgeType::packed_symbolwise);
             }
             // Do normal matches.
@@ -141,10 +143,10 @@ public:
 
         size_t const UncompressedSize = BigEndian::Read2(in);
 
-        Lzkn1IStream           src(in);
-        constexpr size_t const eof_marker               = 0x1FU;
-        constexpr size_t const packed_symbolwise_marker = 0xC0U;
-        constexpr size_t const short_match_marker       = 0x80U;
+        Lzkn1IStream            src(in);
+        constexpr uint8_t const eof_marker               = 0x1FU;
+        constexpr uint8_t const packed_symbolwise_marker = 0xC0U;
+        constexpr uint8_t const short_match_marker       = 0x80U;
 
         size_t BytesWritten = 0U;
 
@@ -155,7 +157,7 @@ public:
                 BytesWritten++;
             } else {
                 // Dictionary matches or packed symbolwise match.
-                size_t const Data = src.getbyte();
+                uint8_t const Data = src.getbyte();
                 if (Data == eof_marker) {
                     // Terminator.
                     break;
@@ -171,15 +173,15 @@ public:
                     // Dictionary matches.
                     bool const long_match
                             = (Data & short_match_marker) != short_match_marker;
-                    size_t Count    = 0U;
-                    size_t distance = 0U;
+                    size_t         Count    = 0U;
+                    std::streamoff distance = 0U;
 
                     if (long_match) {
                         // Long dictionary match.
-                        size_t High = Data;
-                        size_t Low  = src.getbyte();
+                        uint8_t High = Data;
+                        uint8_t Low  = src.getbyte();
 
-                        distance = ((High << 3U) & 0x300U) | Low;
+                        distance = static_cast<std::streamoff>(((High * 8U) & 0x300U) | Low);
                         Count    = (High & 0x1FU) + 3U;
                     } else {
                         // Short dictionary match.
@@ -188,7 +190,7 @@ public:
                     }
 
                     for (size_t i = 0; i < Count; i++) {
-                        size_t const Pointer = Dst.tellp();
+                        std::streamsize const Pointer = Dst.tellp();
                         Dst.seekg(Pointer - distance);
                         uint8_t const Byte = Read1(Dst);
                         Dst.seekp(Pointer);
@@ -208,13 +210,13 @@ public:
         using EdgeType     = typename Lzkn1Adaptor::EdgeType;
         using Lzkn1OStream = LZSSOStream<Lzkn1Adaptor>;
 
-        BigEndian::Write2(Dst, Size);
+        BigEndian::Write2(Dst, Size & std::numeric_limits<uint16_t>::max());
 
         // Compute optimal lzkn1 parsing of input file.
-        auto                   list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
-        Lzkn1OStream           out(Dst);
-        constexpr size_t const eof_marker               = 0x1FU;
-        constexpr size_t const packed_symbolwise_marker = 0xC0U;
+        auto         list = find_optimal_lzss_parse(Data, Size, Lzkn1Adaptor{});
+        Lzkn1OStream out(Dst);
+        constexpr uint8_t const eof_marker               = 0x1FU;
+        constexpr uint8_t const packed_symbolwise_marker = 0xC0U;
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
@@ -227,7 +229,8 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  position = edge.get_pos();
-                uint8_t const data     = Count + packed_symbolwise_marker - 8;
+                uint8_t const data     = (Count + packed_symbolwise_marker - 8U)
+                                     & std::numeric_limits<uint8_t>::max();
                 out.putbyte(data);
                 for (size_t currpos = position; currpos < position + Count; currpos++) {
                     out.putbyte(Data[currpos]);
@@ -238,7 +241,8 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
-                uint8_t const data     = ((Count + 6U) << 4U) | distance;
+                uint8_t const data     = (((Count + 6U) << 4U) | distance)
+                                     & std::numeric_limits<uint8_t>::max();
                 out.putbyte(data);
                 break;
             }
@@ -246,8 +250,9 @@ public:
                 out.descbit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
-                uint8_t const high     = (Count - 3U) | ((distance & 0x300U) >> 3U);
-                uint8_t const low      = distance & 0xFFU;
+                uint8_t const high     = ((Count - 3U) | ((distance & 0x300U) >> 3U))
+                                     & std::numeric_limits<uint8_t>::max();
+                uint8_t const low = distance & 0xFFU;
                 out.putbyte(high);
                 out.putbyte(low);
                 break;

@@ -71,9 +71,9 @@ public:
     static void encode(istream& Src, ostream& Dst) {
         auto pos = Src.tellg();
         Src.ignore(numeric_limits<streamsize>::max());
-        size_t Size = Src.gcount();
+        std::streampos Size = Src.gcount();
         Src.seekg(pos);
-        BigEndian::Write2(Dst, Size);
+        BigEndian::Write2(Dst, static_cast<uint16_t>(Size));
         uint8_t cc = Read1(Src);
         while (Src.good()) {
             Write1(Dst, cc);
@@ -89,7 +89,7 @@ public:
                     Count++;
                     cc = Read1(Src);
                 }
-                Write1(Dst, Count);
+                Write1(Dst, Count & std::numeric_limits<uint8_t>::max());
             } else {
                 cc = nc;
             }

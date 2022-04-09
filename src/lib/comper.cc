@@ -130,14 +130,14 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                size_t const distance = (size_t{0x100} - src.getbyte()) * 2;
+                auto const   distance = (std::streamoff{0x100} - src.getbyte()) * 2;
                 size_t const length   = src.getbyte();
                 if (length == 0) {
                     break;
                 }
 
                 for (size_t i = 0; i <= length; i++) {
-                    size_t const Pointer = Dst.tellp();
+                    std::streamsize const Pointer = Dst.tellp();
                     Dst.seekg(Pointer - distance);
                     uint16_t const Word = BigEndian::Read2(Dst);
                     Dst.seekp(Pointer);

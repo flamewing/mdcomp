@@ -157,13 +157,13 @@ public:
             } else {
                 // Dictionary matches.
                 // Count and distance
-                size_t Count    = 0U;
-                size_t distance = 0U;
+                size_t         Count    = 0U;
+                std::streamoff distance = 0;
 
                 if (src.descbit() != 0U) {
                     // Separate dictionary match.
-                    size_t Low  = src.getbyte();
-                    size_t High = src.getbyte();
+                    uint8_t Low  = src.getbyte();
+                    uint8_t High = src.getbyte();
 
                     Count = High & 0x07U;
 
@@ -182,7 +182,7 @@ public:
                         Count += 2;
                     }
 
-                    distance = 0x2000U - (((0xF8U & High) << 5U) | Low);
+                    distance = std::streamoff{0x2000} - (((0xF8U & High) << 5U) | Low);
                 } else {
                     // Inline dictionary match.
                     size_t High = src.descbit();
@@ -190,11 +190,11 @@ public:
 
                     Count = ((High << 1U) | Low) + 2;
 
-                    distance = 0x100U - src.getbyte();
+                    distance = std::streamoff{0x100} - src.getbyte();
                 }
 
                 for (size_t i = 0; i < Count; i++) {
-                    size_t const Pointer = Dst.tellp();
+                    std::streamsize const Pointer = Dst.tellp();
                     Dst.seekg(Pointer - distance);
                     uint8_t const Byte = Read1(Dst);
                     Dst.seekp(Pointer);
