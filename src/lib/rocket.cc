@@ -34,7 +34,6 @@ using std::fill_n;
 using std::ios;
 using std::iostream;
 using std::istream;
-using std::make_signed_t;
 using std::numeric_limits;
 using std::ostream;
 using std::ostreambuf_iterator;
@@ -125,7 +124,7 @@ struct rocket_internal {
 public:
     static void decode(istream& input, iostream& Dst) {
         using RockIStream = LZSSIStream<RocketAdaptor>;
-        using diff_t      = make_signed_t<size_t>;
+        using diff_t      = std::make_signed_t<size_t>;
 
         input.ignore(2);
         auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(input) + 4);
@@ -149,10 +148,10 @@ public:
                 // basedest + 0x3C0u.
                 constexpr auto const bias
                         = static_cast<diff_t>(RocketAdaptor::FirstMatchPosition);
+                constexpr const auto buffer_size
+                        = static_cast<diff_t>(RocketAdaptor::SearchBufSize);
 
-                offset = static_cast<diff_t>(
-                        ((offset - base - bias) % RocketAdaptor::SearchBufSize) + base
-                        - RocketAdaptor::SearchBufSize);
+                offset = ((offset - base - bias) % buffer_size) + base - buffer_size;
 
                 if (offset < 0) {
                     diff_t cnt = (offset + length < 0) ? length
@@ -236,9 +235,11 @@ bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
 
     // Fill in header
     // Size of decompressed file
-    BigEndian::Write2(Dst, Size - rocket_internal::RocketAdaptor::FirstMatchPosition);
+    BigEndian::Write2(
+            Dst, static_cast<uint16_t>(
+                         Size - rocket_internal::RocketAdaptor::FirstMatchPosition));
     // Size of compressed file
-    BigEndian::Write2(Dst, outbuff.tellp());
+    BigEndian::Write2(Dst, static_cast<uint16_t>(outbuff.tellp()));
 
     outbuff.seekg(0);
     Dst << outbuff.rdbuf();

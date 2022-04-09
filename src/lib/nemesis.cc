@@ -56,17 +56,27 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
+template <typename Enum>
+concept Enumerator = requires() {
+    requires(std::is_enum_v<Enum>);
+};
+
+template <Enumerator Enum>
+constexpr std::underlying_type_t<Enum> to_underlying(Enum val) {
+    return static_cast<std::underlying_type_t<Enum>>(val);
+};
+
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
 private:
     std::byte nibble{0};    // Nibble we are interested in.
-    size_t    count{0};     // How many times the nibble is repeated.
+    uint8_t   count{0};     // How many times the nibble is repeated.
 
 public:
     // Constructors.
     nibble_run() noexcept = default;
     nibble_run(std::byte nibble_, size_t count_) noexcept
-            : nibble(nibble_), count(count_) {}
+            : nibble(nibble_), count(static_cast<uint8_t>(count_)) {}
     // Sorting operator.
     [[nodiscard]] std::strong_ordering operator<=>(
             nibble_run const& other) const noexcept = default;
@@ -81,7 +91,7 @@ public:
         nibble = value;
     }
     void set_count(size_t const value) noexcept {
-        count = value;
+        count = static_cast<uint8_t>(value);
     }
 };
 
@@ -334,19 +344,19 @@ public:
                 // Bit pattern %111111; inline RLE.
                 // First 3 bits are repetition count, followed by the inlined
                 // nibble.
-                size_t cnt    = bits.read(3) + 1;
-                size_t nibble = bits.read(4);
-                bits_written += cnt * 4;
+                size_t  count  = bits.read(3) + 1;
+                uint8_t nibble = bits.read(4);
+                bits_written += count * 4;
 
                 // Write single nibble if needed.
-                if ((cnt % 2) != 0) {
+                if ((count % 2) != 0) {
                     out.write(nibble, 4);
                 }
 
                 // Now write pairs of nibbles.
-                cnt >>= 1U;
-                nibble |= (nibble << 4U);
-                for (size_t i = 0; i < cnt; i++) {
+                count >>= 1U;
+                nibble |= static_cast<uint8_t>(nibble << 4U);
+                for (size_t i = 0; i < count; i++) {
                     out.write(nibble, 8);
                 }
 
@@ -657,9 +667,17 @@ public:
         return tempsize_est;
     }
 
+    enum class NemesisMode : uint16_t {
+        Normal         = 0U,
+        ProgressiveXor = 1U << 15U,
+    };
+    friend uint16_t operator|(NemesisMode mode, std::streamoff length) {
+        return static_cast<uint16_t>(to_underlying(mode) | static_cast<uint16_t>(length));
+    }
+
     template <typename Compare>
-    static size_t encode(
-            istream& Src, ostream& Dst, size_t mode, size_t const length,
+    static std::streamoff encode(
+            istream& Src, ostream& Dst, NemesisMode mode, std::streamoff const length,
             Compare&& comp) {
         // Seek to start and clear all errors.
         Src.clear();
@@ -667,7 +685,7 @@ public:
         // Unpack source so we don't have to deal with nibble IO after.
         constexpr const std::byte low_nibble{0xfU};
         vector<std::byte>         unpack;
-        for (size_t i = 0; i < length; i++) {
+        for (std::streamoff i = 0; i < length; i++) {
             std::byte const value{Read1(Src)};
             unpack.emplace_back((value >> 4U) & low_nibble);
             unpack.emplace_back(value & low_nibble);
@@ -882,7 +900,7 @@ public:
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
-        BigEndian::Write2(Dst, (mode << 15U) | (length >> 5U));
+        BigEndian::Write2(Dst, mode | (length / 32));
         std::byte lastnibble{0xff};
         for (const auto& [run, bitcode] : codemap) {
             const auto [code, size] = bitcode;
@@ -897,8 +915,8 @@ public:
                 lastnibble = run.get_nibble();
             }
 
-            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U) | size);
-            Write1(Dst, code);
+            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U | size));
+            Write1(Dst, static_cast<uint8_t>(code));
         }
 
         // Mark end of header.
@@ -930,7 +948,7 @@ public:
                 bits.write(static_cast<uint8_t>(code & 0xffU), count);
             } else {
                 bits.write(0x3f, 6);
-                bits.write(run.get_count(), 3);
+                bits.write(static_cast<uint8_t>(run.get_count()), 3);
                 bits.write(static_cast<uint8_t>(run.get_nibble()), 4);
             }
         }
@@ -963,11 +981,11 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     src << Src.rdbuf();
 
     // Pad source with zeroes until it is a multiple of 32 bytes.
-    size_t const pos = src.tellp();
+    auto const pos = src.tellp();
     if ((pos % 32) != 0) {
         fill_n(ostreambuf_iterator<char>(src), 32 - (pos % 32), 0);
     }
-    size_t const size = src.tellp();
+    auto const size = src.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
     src.clear();
@@ -984,16 +1002,21 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     stringstream alt(sin, ios::in | ios::out | ios::binary);
 
     std::array<stringstream, 4> buffers;
+    using NemesisMode = nemesis_internal::NemesisMode;
     // Four different attempts to encode, for improved file size.
-    std::array<size_t, 4> sizes{
-            nemesis_internal::encode(src, buffers[0], 0, size, Compare_node()),
-            nemesis_internal::encode(src, buffers[1], 0, size, Compare_node2()),
-            nemesis_internal::encode(alt, buffers[2], 1, size, Compare_node()),
-            nemesis_internal::encode(alt, buffers[3], 1, size, Compare_node2())};
+    std::array sizes{
+            nemesis_internal::encode(
+                    src, buffers[0], NemesisMode::Normal, size, Compare_node()),
+            nemesis_internal::encode(
+                    src, buffers[1], NemesisMode::Normal, size, Compare_node2()),
+            nemesis_internal::encode(
+                    alt, buffers[2], NemesisMode::ProgressiveXor, size, Compare_node()),
+            nemesis_internal::encode(
+                    alt, buffers[3], NemesisMode::ProgressiveXor, size, Compare_node2())};
 
     // Figure out what was the best encoding.
-    size_t best_size  = numeric_limits<size_t>::max();
-    size_t beststream = 0;
+    std::streamoff best_size  = numeric_limits<std::streamoff>::max();
+    size_t         beststream = 0;
     for (size_t ii = 0; ii < sizes.size(); ii++) {
         if (sizes[ii] < best_size) {
             best_size  = sizes[ii];
