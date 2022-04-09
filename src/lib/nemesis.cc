@@ -230,18 +230,21 @@ struct Compare_node {
     }
     // Just discard the lowest weighted item.
     void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
+        ignore_unused_variable_warning(this, nodes, codes);
+    }
+    // Initialize
+    void initialize(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
         ignore_unused_variable_warning(codes);
-        pop_heap(nodes.begin(), nodes.end(), *this);
-        nodes.pop_back();
+        make_heap(nodes.begin(), nodes.end(), *this);
     }
 };
 
 struct Compare_node2 {
-    NibbleCodeMap codemap;
+    NibbleCodeMap* codemap = nullptr;
 
     bool operator()(
             shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
-        if (codemap.empty()) {
+        if (codemap == nullptr || codemap->empty()) {
             if (*lhs < *rhs) {
                 return true;
             }
@@ -254,7 +257,7 @@ struct Compare_node2 {
         nibble_run const right_nibble = rhs->get_value();
 
         auto get_len = [&](shared_ptr<node> const& node, nibble_run nib) {
-            if (auto const iter = codemap.find(nib); iter != codemap.end()) {
+            if (auto const iter = codemap->find(nib); iter != codemap->end()) {
                 size_t bitcnt = (iter->second).length;
                 return (bitcnt & 0x7fU) * node->get_weight() + 16;
             }
@@ -285,10 +288,11 @@ struct Compare_node2 {
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
     void update(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
-        codemap = codes;
+        *codemap = codes;
         make_heap(nodes.begin(), nodes.end(), *this);
-        pop_heap(nodes.begin(), nodes.end(), *this);
-        nodes.pop_back();
+    }
+    void initialize(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
+        update(nodes, codes);
     }
 };
 
@@ -723,9 +727,6 @@ public:
                 nodes.push_back(make_shared<node>(run, frequency));
             }
         }
-        // This may seem useless, but my tests all indicate that this reduces
-        // the average file size. I haven't the foggiest idea why.
-        make_heap(nodes.begin(), nodes.end(), comp);
 
         // The base coin collection for the length-limited Huffman coding has
         // one coin list per character in length of the limitation. Each coin
@@ -739,6 +740,11 @@ public:
         // longer than 8 bits, it is possible that a supplementary code map will
         // add "fake" codes that are longer than 8 bits.
         NibbleCodeMap codemap;
+
+        // This may seem useless, but my tests all indicate that this reduces
+        // the average file size. I haven't the foggiest idea why.
+        comp.initialize(nodes, codemap);
+
         // Size estimate. This is used to build the optimal compressed file.
         size_t size_est = 0xffffffff;
 
@@ -872,6 +878,8 @@ public:
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
             comp.update(nodes, tempcodemap);
+            pop_heap(nodes.begin(), nodes.end(), comp);
+            nodes.pop_back();
 
             // Is this iteration better than the best?
             if (tempsize_est < size_est) {
@@ -1006,13 +1014,13 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     // Four different attempts to encode, for improved file size.
     std::array sizes{
             nemesis_internal::encode(
-                    src, buffers[0], NemesisMode::Normal, size, Compare_node()),
+                    src, buffers[0], NemesisMode::Normal, size, Compare_node{}),
             nemesis_internal::encode(
-                    src, buffers[1], NemesisMode::Normal, size, Compare_node2()),
+                    src, buffers[1], NemesisMode::Normal, size, Compare_node2{}),
             nemesis_internal::encode(
-                    alt, buffers[2], NemesisMode::ProgressiveXor, size, Compare_node()),
+                    alt, buffers[2], NemesisMode::ProgressiveXor, size, Compare_node{}),
             nemesis_internal::encode(
-                    alt, buffers[3], NemesisMode::ProgressiveXor, size, Compare_node2())};
+                    alt, buffers[3], NemesisMode::ProgressiveXor, size, Compare_node2{})};
 
     // Figure out what was the best encoding.
     std::streamoff best_size  = numeric_limits<std::streamoff>::max();
