@@ -74,11 +74,9 @@ class saxman_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 18;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(
-                stream_t const* data, size_t const size) noexcept {
+        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    data, size, SearchBufSize, 3, LookAheadBufSize,
-                    EdgeType::dictionary}};
+                    data, SearchBufSize, 3, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -111,8 +109,8 @@ class saxman_internal {
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
         static bool extra_matches(
-                stream_t const* data, size_t const basenode, size_t const ubound,
-                size_t const                             lbound,
+                std::span<const stream_t> data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
             using Match_t = AdjListNode<SaxmanAdaptor>::MatchInfo;
             ignore_unused_variable_warning(lbound);

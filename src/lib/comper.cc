@@ -71,11 +71,9 @@ class comper_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 256;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(
-                stream_t const* data, size_t const size) noexcept {
+        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    data, size, SearchBufSize, 2, LookAheadBufSize,
-                    EdgeType::dictionary}};
+                    data, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
@@ -104,8 +102,8 @@ class comper_internal {
         }
         // Comper finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                stream_t const* data, size_t const basenode, size_t const ubound,
-                size_t const                             lbound,
+                std::span<const stream_t> data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<ComperAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
             // Do normal matches.
