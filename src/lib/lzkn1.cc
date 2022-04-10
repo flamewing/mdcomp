@@ -73,12 +73,11 @@ class lzkn1_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 33;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(
-                stream_t const* data, size_t const size) noexcept {
+        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
             return array<SlidingWindow_t, 2>{
-                    SlidingWindow_t{data, size, 15, 2, 5, EdgeType::dictionary_short},
+                    SlidingWindow_t{data, 15, 2, 5, EdgeType::dictionary_short},
                     SlidingWindow_t{
-                            data, size, SearchBufSize, 3, LookAheadBufSize,
+                            data, SearchBufSize, 3, LookAheadBufSize,
                             EdgeType::dictionary_long}};
         }
         // Given an edge type, computes how many bits are used in the descriptor
@@ -115,8 +114,8 @@ class lzkn1_internal {
         }
         // lzkn1 finds no additional matches over normal LZSS.
         static bool extra_matches(
-                stream_t const* data, size_t const basenode, size_t const ubound,
-                size_t const                            lbound,
+                std::span<const stream_t> data, size_t const basenode,
+                size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             using Match_t = AdjListNode<Lzkn1Adaptor>::MatchInfo;
             ignore_unused_variable_warning(data, lbound);
@@ -181,8 +180,9 @@ public:
                         uint8_t High = Data;
                         uint8_t Low  = src.getbyte();
 
-                        distance = static_cast<std::streamoff>(((High * 8U) & 0x300U) | Low);
-                        Count    = (High & 0x1FU) + 3U;
+                        distance = static_cast<std::streamoff>(
+                                ((High * 8U) & 0x300U) | Low);
+                        Count = (High & 0x1FU) + 3U;
                     } else {
                         // Short dictionary match.
                         distance = Data & 0xFU;

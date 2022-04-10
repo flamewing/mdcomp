@@ -27,6 +27,7 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -128,17 +129,18 @@ public:
     using Node_t      = AdjListNode<Adaptor>;
     using Match_t     = typename Node_t::MatchInfo;
     using MatchVector = std::vector<Node_t>;
+    using Data_t      = std::span<const stream_t>;
 
     SlidingWindow(
-            stream_t const* data_, size_t const size, size_t const bufsize,
-            size_t const minmatch, size_t const labuflen, EdgeType const type_) noexcept
-            : data(data_), nlen(size), srchbufsize(bufsize), minmatchlen(minmatch),
+            Data_t data_, size_t const bufsize, size_t const minmatch,
+            size_t const labuflen, EdgeType const type_) noexcept
+            : data(data_), srchbufsize(bufsize), minmatchlen(minmatch),
               basenode(Adaptor::FirstMatchPosition),
-              ubound(std::min(labuflen + basenode, nlen)),
+              ubound(std::min(labuflen + basenode, data.size())),
               lbound(basenode > srchbufsize ? basenode - srchbufsize : 0), type(type_) {}
 
     [[nodiscard]] size_t getDataSize() const {
-        return nlen;
+        return data.size();
     }
 
     [[nodiscard]] size_t getSearchBufSize() const {
@@ -154,10 +156,10 @@ public:
     }
 
     bool slideWindow() noexcept {
-        if (ubound != nlen) {
+        if (ubound != data.size()) {
             ubound++;
         }
-        if (basenode != nlen) {
+        if (basenode != data.size()) {
             basenode++;
         }
         if (getSearchBufSize() > srchbufsize) {
@@ -220,14 +222,13 @@ public:
 
 private:
     // Source file data and its size; one node per character in source file.
-    stream_t const* const data;
-    size_t const          nlen;
-    size_t const          srchbufsize;
-    size_t const          minmatchlen;
-    size_t                basenode;
-    size_t                ubound;
-    size_t                lbound;
-    EdgeType const        type;
+    Data_t         data;
+    size_t const   srchbufsize;
+    size_t const   minmatchlen;
+    size_t         basenode;
+    size_t         ubound;
+    size_t         lbound;
+    EdgeType const type;
 };
 
 template <typename T>
@@ -276,8 +277,10 @@ concept LZSSAdaptor = requires() {
             } -> std::same_as<void>;
     };
     requires requires(
-            typename T::EdgeType type, size_t value, typename T::stream_t * data,
-            size_t lbound, std::vector<AdjListNode<T>> nodes) {
+            typename T::EdgeType type, size_t value,
+            size_t lbound, std::vector<AdjListNode<T>> nodes,
+            std::span<const typename T::stream_t> data) {
+        {T::create_sliding_window(data)};
         { T::desc_bits(type) } -> std::same_as<size_t>;
         { T::edge_weight(type, value) } -> std::same_as<size_t>;
         { T::extra_matches(data, value, value, value, nodes) } -> std::same_as<bool>;
@@ -310,6 +313,7 @@ auto find_optimal_lzss_parse(
     using Node_t          = AdjListNode<Adaptor>;
     using AdjList         = std::list<Node_t>;
     using MatchVector     = std::vector<Node_t>;
+    using Data_t          = std::span<const stream_t>;
 
     auto read_stream = [](uint8_t const*& ptr) {
         return stream_endian_t::template Read<stream_t>(ptr);
@@ -390,7 +394,7 @@ auto find_optimal_lzss_parse(
     // Since the LZSS graph is a topologically-sorted DAG by construction,
     // computing the shortest distance is very quick and easy: just go
     // through the nodes in order and update the distances.
-    auto        winSet = Adaptor::create_sliding_window(data, nlen);
+    auto        winSet = Adaptor::create_sliding_window(Data_t(data, nlen));
     MatchVector matches;
     matches.reserve(Adaptor::LookAheadBufSize);
     for (size_t ii = 0; ii < numNodes; ii++) {
