@@ -143,20 +143,20 @@ public:
         return weight <=> other.weight;
     }
     // This tells if the node is a leaf or a branch.
-    bool is_leaf() const noexcept {
+    [[nodiscard]] bool is_leaf() const noexcept {
         return left_child == nullptr && right_child == nullptr;
     }
     // Getters/setters for all properties.
-    shared_ptr<node const> get_child0() const noexcept {
+    [[nodiscard]] shared_ptr<node const> get_child0() const noexcept {
         return left_child;
     }
-    shared_ptr<node const> get_child1() const noexcept {
+    [[nodiscard]] shared_ptr<node const> get_child1() const noexcept {
         return right_child;
     }
-    size_t get_weight() const noexcept {
+    [[nodiscard]] size_t get_weight() const noexcept {
         return weight;
     }
-    nibble_run const& get_value() const noexcept {
+    [[nodiscard]] nibble_run const& get_value() const noexcept {
         return value;
     }
     void set_left_child(shared_ptr<node> left_child_) noexcept {
