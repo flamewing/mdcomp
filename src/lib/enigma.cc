@@ -64,7 +64,7 @@ class base_flag_io {
 public:
     using Callback_t = Callback;
     struct tag {};
-    static const base_flag_io& get(size_t n);
+    static base_flag_io const& get(size_t n);
     constexpr explicit base_flag_io(Callback_t callback_) noexcept
             : callback(callback_) {}
     template <typename... Ts>
@@ -81,7 +81,7 @@ using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
 
 template <size_t N>
 uint16_t read_bitfield(EniIBitstream& bits) {
-    const auto read_bit_flag
+    auto const read_bit_flag
             = [&]<size_t I>(std::integral_constant<size_t, I>) -> uint32_t {
         if constexpr ((N & (1U << (I - 1))) != 0) {
             return static_cast<uint32_t>(bits.pop() << (I + 10U));
@@ -89,8 +89,8 @@ uint16_t read_bitfield(EniIBitstream& bits) {
             return 0U;
         }
     };
-    const auto read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
-        constexpr const size_t count = sizeof...(Is);
+    auto const read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+        constexpr size_t const count = sizeof...(Is);
         return uint16_t(
                 ((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
     };
@@ -99,13 +99,13 @@ uint16_t read_bitfield(EniIBitstream& bits) {
 
 template <size_t N>
 void write_bitfield(EniOBitstream& bits, uint16_t const flags) {
-    const auto write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
+    auto const write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
         if constexpr ((N & (1U << (I - 1))) != 0) {
             bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
         }
     };
-    const auto write_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
-        constexpr const size_t count = sizeof...(Is);
+    auto const write_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+        constexpr size_t const count = sizeof...(Is);
         ((write_bit_flag(std::integral_constant<size_t, count - Is>{})), ...);
     };
     write_bit_flags(make_index_sequence<5>());
@@ -122,8 +122,8 @@ constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
 }
 
 template <typename Callback>
-const base_flag_io<Callback>& base_flag_io<Callback>::get(size_t const n) {
-    constexpr static const auto Array = createMaskArray(tag{}, make_index_sequence<32>());
+base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const n) {
+    constexpr static auto const Array = createMaskArray(tag{}, make_index_sequence<32>());
     return Array[n];
 }
 
@@ -144,7 +144,7 @@ static inline void flush_buffer(
     }
 
     bits.write(0x70U | ((buf.size() - 1) & 0xfU), 7);
-    for (const auto value : buf) {
+    for (auto const value : buf) {
         putMask(bits, value);
         bits.write(value & 0x7ffU, packet_length);
     }

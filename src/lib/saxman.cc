@@ -153,7 +153,7 @@ public:
         SaxIStream src(input);
         auto const size = static_cast<std::make_signed_t<size_t>>(Size);
 
-        constexpr const auto buffer_size
+        constexpr auto const buffer_size
                 = static_cast<diff_t>(SaxmanAdaptor::SearchBufSize);
 
         // Loop while the file is good and we haven't gone over the declared

@@ -129,7 +129,7 @@ public:
     using Node_t      = AdjListNode<Adaptor>;
     using Match_t     = typename Node_t::MatchInfo;
     using MatchVector = std::vector<Node_t>;
-    using Data_t      = std::span<const stream_t>;
+    using Data_t      = std::span<stream_t const>;
 
     SlidingWindow(
             Data_t data_, size_t const bufsize, size_t const minmatch,
@@ -243,12 +243,12 @@ concept LZSSAdaptor = requires() {
     { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
     { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
     { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
-    std::same_as<decltype(T::NumDescBits), const size_t>;
-    std::same_as<decltype(T::NeedEarlyDescriptor), const bool>;
+    std::same_as<decltype(T::NumDescBits), size_t const>;
+    std::same_as<decltype(T::NeedEarlyDescriptor), bool const>;
     std::same_as<decltype(T::DescriptorBitOrder), bit_endian>;
-    std::same_as<decltype(T::FirstMatchPosition), const size_t>;
-    std::same_as<decltype(T::SearchBufSize), const size_t>;
-    std::same_as<decltype(T::LookAheadBufSize), const size_t>;
+    std::same_as<decltype(T::FirstMatchPosition), size_t const>;
+    std::same_as<decltype(T::SearchBufSize), size_t const>;
+    std::same_as<decltype(T::LookAheadBufSize), size_t const>;
     requires requires(
             uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
             std::ostream& output, typename T::stream_t stream_val,
@@ -277,9 +277,9 @@ concept LZSSAdaptor = requires() {
             } -> std::same_as<void>;
     };
     requires requires(
-            typename T::EdgeType type, size_t value,
-            size_t lbound, std::vector<AdjListNode<T>> nodes,
-            std::span<const typename T::stream_t> data) {
+            typename T::EdgeType type, size_t value, size_t lbound,
+            std::vector<AdjListNode<T>>           nodes,
+            std::span<typename T::stream_t const> data) {
         {T::create_sliding_window(data)};
         { T::desc_bits(type) } -> std::same_as<size_t>;
         { T::edge_weight(type, value) } -> std::same_as<size_t>;
@@ -313,7 +313,7 @@ auto find_optimal_lzss_parse(
     using Node_t          = AdjListNode<Adaptor>;
     using AdjList         = std::list<Node_t>;
     using MatchVector     = std::vector<Node_t>;
-    using Data_t          = std::span<const stream_t>;
+    using Data_t          = std::span<stream_t const>;
 
     auto read_stream = [](uint8_t const*& ptr) {
         return stream_endian_t::template Read<stream_t>(ptr);
@@ -356,7 +356,7 @@ auto find_optimal_lzss_parse(
     // Extracting distance relax logic from the loop so it can be used more
     // often.
     auto Relax = [lastnode = nlen, &costs, &desccosts, &parents,
-                  &pedges](size_t index, size_t const basedesc, const auto& elem) {
+                  &pedges](size_t index, size_t const basedesc, auto const& elem) {
         // Need destination ID and edge weight.
         size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
         size_t       wgt      = costs[index] + elem.get_weight();
@@ -402,10 +402,10 @@ auto find_optimal_lzss_parse(
         size_t const basedesc = desccosts[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
-            const size_t   offset = ii + Adaptor::FirstMatchPosition;
-            const auto*    ptr    = reinterpret_cast<const uint8_t*>(data + offset);
-            const stream_t val    = read_stream(ptr);
-            const EdgeType type   = EdgeType::symbolwise;
+            size_t const   offset = ii + Adaptor::FirstMatchPosition;
+            auto const*    ptr    = reinterpret_cast<uint8_t const*>(data + offset);
+            stream_t const val    = read_stream(ptr);
+            EdgeType const type   = EdgeType::symbolwise;
             Relax(ii, basedesc, Node_t(offset, val, type));
         }
         // Get the adjacency list for this node.
@@ -413,7 +413,7 @@ auto find_optimal_lzss_parse(
             if (!win.find_extra_matches(matches)) {
                 win.find_matches(matches);
             }
-            for (const auto& elem : matches) {
+            for (auto const& elem : matches) {
                 if (elem.get_type() != EdgeType::invalid) {
                     Relax(ii, basedesc, elem);
                 }

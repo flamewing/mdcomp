@@ -73,7 +73,7 @@ class lzkn1_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 33;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
+        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array<SlidingWindow_t, 2>{
                     SlidingWindow_t{data, 15, 2, 5, EdgeType::dictionary_short},
                     SlidingWindow_t{
@@ -114,7 +114,7 @@ class lzkn1_internal {
         }
         // lzkn1 finds no additional matches over normal LZSS.
         static bool extra_matches(
-                std::span<const stream_t> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             using Match_t = AdjListNode<Lzkn1Adaptor>::MatchInfo;

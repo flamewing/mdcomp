@@ -129,8 +129,8 @@ public:
     // Construct a new leaf node for character c.
     node(nibble_run const& val, size_t const wgt) noexcept : weight(wgt), value(val) {}
     // Construct a new internal node that has children c1 and c2.
-    node(const shared_ptr<node>& left_child_,
-         const shared_ptr<node>& right_child_) noexcept
+    node(shared_ptr<node> const& left_child_,
+         shared_ptr<node> const& right_child_) noexcept
             : left_child(left_child_), right_child(right_child_),
               weight(left_child_->weight + right_child_->weight) {}
     // Free the memory used by the child nodes.
@@ -442,7 +442,7 @@ public:
         size_t    tempsize_est = size_t{3} * 8;
         std::byte last{0xff};
         // Start with any nibble runs with their own code.
-        for (const auto& [run, code] : tempcodemap) {
+        for (auto const& [run, code] : tempcodemap) {
             // Each new nibble needs an extra byte.
             if (last != run.get_nibble()) {
                 tempsize_est += 8;
@@ -460,7 +460,7 @@ public:
         // shorter nibble runs with a smaller bit length than inlining.
         NibbleCodeMap supcodemap;
         // Now we will compute the size requirements for inline nibble runs.
-        for (const auto& [run, frequency] : counts) {
+        for (auto const& [run, frequency] : counts) {
             // Find out if this nibble run has a code for it.
             auto it2 = tempcodemap.find(run);
             if (it2 == tempcodemap.end()) {
@@ -716,7 +716,7 @@ public:
         // basic coin collection.
         NodeVector nodes;
         nodes.reserve(counts.size());
-        for (const auto& [run, frequency] : counts) {
+        for (auto const& [run, frequency] : counts) {
             // No point in including anything with weight less than 2, as they
             // would actually increase compressed file size if used.
             if (frequency > 1) {
@@ -820,8 +820,8 @@ public:
             // then by frequency of the nibble run, then by the nibble run.
             using SizeSet = multiset<SizeFreqNibble, Compare_size>;
             SizeSet sizemap;
-            for (const auto& [run, size] : basesizemap) {
-                const size_t count = counts[run];
+            for (auto const& [run, size] : basesizemap) {
+                size_t const count = counts[run];
                 sizecounts[size - 1]++;
                 sizemap.emplace(count, run, size);
             }
@@ -906,8 +906,8 @@ public:
         // Write header.
         BigEndian::Write2(Dst, mode | (length / 32));
         std::byte lastnibble{0xff};
-        for (const auto& [run, bitcode] : codemap) {
-            const auto [code, size] = bitcode;
+        for (auto const& [run, bitcode] : codemap) {
+            auto const [code, size] = bitcode;
             // length with bit 7 set is a special device for further reducing file
             // size, and should NOT be on the table.
             if ((size & 0x80U) != 0) {

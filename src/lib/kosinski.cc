@@ -72,7 +72,7 @@ class kosinski_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 256;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
+        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array<SlidingWindow_t, 3>{
                     SlidingWindow_t{data, 256, 2, 5, EdgeType::dictionary_inline},
                     SlidingWindow_t{
@@ -128,7 +128,7 @@ class kosinski_internal {
         }
         // Kosinski finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                std::span<const stream_t> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<KosinskiAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
