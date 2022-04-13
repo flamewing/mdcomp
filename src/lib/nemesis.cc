@@ -502,77 +502,73 @@ public:
                 } else {
                     // We stand a chance of breaking it the nibble run.
 
-                    // This is a linear optimization problem subjected to 2
-                    // constraints. If the number of repeats of the current
-                    // nibble run is N, then we have N dimensions.
-                    // Here are some hard-coded tables, obtained by brute-force:
-                    constexpr static Matrix<2, 2> const linear_coefficients2{
-                            Row<2>{3, 0}, Row<2>{1, 1}};
-                    constexpr static Matrix<4, 3> const linear_coefficients3{
-                            Row<3>{4, 0, 0}, Row<3>{2, 1, 0}, Row<3>{1, 0, 1},
-                            Row<3>{0, 2, 0}};
-                    constexpr static Matrix<6, 4> const linear_coefficients4{
-                            Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0}, Row<4>{2, 0, 1, 0},
-                            Row<4>{1, 2, 0, 0}, Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
-                    constexpr static Matrix<10, 5> const linear_coefficients5{
-                            Row<5>{6, 0, 0, 0, 0}, Row<5>{4, 1, 0, 0, 0},
-                            Row<5>{3, 0, 1, 0, 0}, Row<5>{2, 2, 0, 0, 0},
-                            Row<5>{2, 0, 0, 1, 0}, Row<5>{1, 1, 1, 0, 0},
-                            Row<5>{1, 0, 0, 0, 1}, Row<5>{0, 3, 0, 0, 0},
-                            Row<5>{0, 1, 0, 1, 0}, Row<5>{0, 0, 2, 0, 0}};
-                    constexpr static Matrix<14, 6> const linear_coefficients6{
-                            Row<6>{7, 0, 0, 0, 0, 0}, Row<6>{5, 1, 0, 0, 0, 0},
-                            Row<6>{4, 0, 1, 0, 0, 0}, Row<6>{3, 2, 0, 0, 0, 0},
-                            Row<6>{3, 0, 0, 1, 0, 0}, Row<6>{2, 1, 1, 0, 0, 0},
-                            Row<6>{2, 0, 0, 0, 1, 0}, Row<6>{1, 3, 0, 0, 0, 0},
-                            Row<6>{1, 1, 0, 1, 0, 0}, Row<6>{1, 0, 2, 0, 0, 0},
-                            Row<6>{1, 0, 0, 0, 0, 1}, Row<6>{0, 2, 1, 0, 0, 0},
-                            Row<6>{0, 1, 0, 0, 1, 0}, Row<6>{0, 0, 1, 1, 0, 0}};
-                    constexpr static Matrix<21, 7> const linear_coefficients7{
-                            Row<7>{8, 0, 0, 0, 0, 0, 0}, Row<7>{6, 1, 0, 0, 0, 0, 0},
-                            Row<7>{5, 0, 1, 0, 0, 0, 0}, Row<7>{4, 2, 0, 0, 0, 0, 0},
-                            Row<7>{4, 0, 0, 1, 0, 0, 0}, Row<7>{3, 1, 1, 0, 0, 0, 0},
-                            Row<7>{3, 0, 0, 0, 1, 0, 0}, Row<7>{2, 3, 0, 0, 0, 0, 0},
-                            Row<7>{2, 1, 0, 1, 0, 0, 0}, Row<7>{2, 0, 2, 0, 0, 0, 0},
-                            Row<7>{2, 0, 0, 0, 0, 1, 0}, Row<7>{1, 2, 1, 0, 0, 0, 0},
-                            Row<7>{1, 1, 0, 0, 1, 0, 0}, Row<7>{1, 0, 1, 1, 0, 0, 0},
-                            Row<7>{1, 0, 0, 0, 0, 0, 1}, Row<7>{0, 4, 0, 0, 0, 0, 0},
-                            Row<7>{0, 2, 0, 1, 0, 0, 0}, Row<7>{0, 1, 2, 0, 0, 0, 0},
-                            Row<7>{0, 1, 0, 0, 0, 1, 0}, Row<7>{0, 0, 1, 0, 1, 0, 0},
-                            Row<7>{0, 0, 0, 2, 0, 0, 0}};
                     size_t const count = run.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
-                    size_t const* linear_coefficients;
-                    size_t        rows;
-                    // Get correct coefficient table:
-                    switch (count) {
-                    case 2:
-                        linear_coefficients = linear_coefficients2[0].data();
-                        rows                = linear_coefficients2.size();
-                        break;
-                    case 3:
-                        linear_coefficients = linear_coefficients3[0].data();
-                        rows                = linear_coefficients3.size();
-                        break;
-                    case 4:
-                        linear_coefficients = linear_coefficients4[0].data();
-                        rows                = linear_coefficients4.size();
-                        break;
-                    case 5:
-                        linear_coefficients = linear_coefficients5[0].data();
-                        rows                = linear_coefficients5.size();
-                        break;
-                    case 6:
-                        linear_coefficients = linear_coefficients6[0].data();
-                        rows                = linear_coefficients6.size();
-                        break;
-                    case 7:
-                    default:
-                        linear_coefficients = linear_coefficients7[0].data();
-                        rows                = linear_coefficients7.size();
-                        break;
-                    }
+                    auto const [linear_coefficients, rows]
+                            = [&]() -> std::pair<size_t const*, size_t> {
+                        // This is a linear optimization problem subjected to 2
+                        // constraints. If the number of repeats of the current
+                        // nibble run is N, then we have N dimensions.
+                        // Here are some hard-coded tables, obtained by brute-force:
+                        constexpr static Matrix<2, 2> const linear_coefficients2{
+                                Row<2>{3, 0}, Row<2>{1, 1}};
+                        constexpr static Matrix<4, 3> const linear_coefficients3{
+                                Row<3>{4, 0, 0}, Row<3>{2, 1, 0}, Row<3>{1, 0, 1},
+                                Row<3>{0, 2, 0}};
+                        constexpr static Matrix<6, 4> const linear_coefficients4{
+                                Row<4>{5, 0, 0, 0}, Row<4>{3, 1, 0, 0},
+                                Row<4>{2, 0, 1, 0}, Row<4>{1, 2, 0, 0},
+                                Row<4>{1, 0, 0, 1}, Row<4>{0, 1, 1, 0}};
+                        constexpr static Matrix<10, 5> const linear_coefficients5{
+                                Row<5>{6, 0, 0, 0, 0}, Row<5>{4, 1, 0, 0, 0},
+                                Row<5>{3, 0, 1, 0, 0}, Row<5>{2, 2, 0, 0, 0},
+                                Row<5>{2, 0, 0, 1, 0}, Row<5>{1, 1, 1, 0, 0},
+                                Row<5>{1, 0, 0, 0, 1}, Row<5>{0, 3, 0, 0, 0},
+                                Row<5>{0, 1, 0, 1, 0}, Row<5>{0, 0, 2, 0, 0}};
+                        constexpr static Matrix<14, 6> const linear_coefficients6{
+                                Row<6>{7, 0, 0, 0, 0, 0}, Row<6>{5, 1, 0, 0, 0, 0},
+                                Row<6>{4, 0, 1, 0, 0, 0}, Row<6>{3, 2, 0, 0, 0, 0},
+                                Row<6>{3, 0, 0, 1, 0, 0}, Row<6>{2, 1, 1, 0, 0, 0},
+                                Row<6>{2, 0, 0, 0, 1, 0}, Row<6>{1, 3, 0, 0, 0, 0},
+                                Row<6>{1, 1, 0, 1, 0, 0}, Row<6>{1, 0, 2, 0, 0, 0},
+                                Row<6>{1, 0, 0, 0, 0, 1}, Row<6>{0, 2, 1, 0, 0, 0},
+                                Row<6>{0, 1, 0, 0, 1, 0}, Row<6>{0, 0, 1, 1, 0, 0}};
+                        constexpr static Matrix<21, 7> const linear_coefficients7{
+                                Row<7>{8, 0, 0, 0, 0, 0, 0}, Row<7>{6, 1, 0, 0, 0, 0, 0},
+                                Row<7>{5, 0, 1, 0, 0, 0, 0}, Row<7>{4, 2, 0, 0, 0, 0, 0},
+                                Row<7>{4, 0, 0, 1, 0, 0, 0}, Row<7>{3, 1, 1, 0, 0, 0, 0},
+                                Row<7>{3, 0, 0, 0, 1, 0, 0}, Row<7>{2, 3, 0, 0, 0, 0, 0},
+                                Row<7>{2, 1, 0, 1, 0, 0, 0}, Row<7>{2, 0, 2, 0, 0, 0, 0},
+                                Row<7>{2, 0, 0, 0, 0, 1, 0}, Row<7>{1, 2, 1, 0, 0, 0, 0},
+                                Row<7>{1, 1, 0, 0, 1, 0, 0}, Row<7>{1, 0, 1, 1, 0, 0, 0},
+                                Row<7>{1, 0, 0, 0, 0, 0, 1}, Row<7>{0, 4, 0, 0, 0, 0, 0},
+                                Row<7>{0, 2, 0, 1, 0, 0, 0}, Row<7>{0, 1, 2, 0, 0, 0, 0},
+                                Row<7>{0, 1, 0, 0, 0, 1, 0}, Row<7>{0, 0, 1, 0, 1, 0, 0},
+                                Row<7>{0, 0, 0, 2, 0, 0, 0}};
+                        // Get correct coefficient table:
+                        switch (count) {
+                        case 2:
+                            return {linear_coefficients2[0].data(),
+                                    linear_coefficients2.size()};
+                        case 3:
+                            return {linear_coefficients3[0].data(),
+                                    linear_coefficients3.size()};
+                        case 4:
+                            return {linear_coefficients4[0].data(),
+                                    linear_coefficients4.size()};
+                        case 5:
+                            return {linear_coefficients5[0].data(),
+                                    linear_coefficients5.size()};
+                        case 6:
+                            return {linear_coefficients6[0].data(),
+                                    linear_coefficients6.size()};
+                        case 7:
+                        default:
+                            return {linear_coefficients7[0].data(),
+                                    linear_coefficients7.size()};
+                        }
+                    }();
 
                     std::byte const nibble = run.get_nibble();
                     // Vector containing the code length of each nibble run, or
