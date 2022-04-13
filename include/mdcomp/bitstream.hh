@@ -133,7 +133,7 @@ private:
     size_t readbits;
     uint_t bitbuffer;
 
-    static inline constexpr size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
+    constexpr static inline size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
 
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
@@ -213,8 +213,8 @@ private:
     size_t waitingbits;
     uint_t bitbuffer;
 
-    static inline constexpr size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
-    static inline constexpr uint_t const all_ones = std::numeric_limits<uint_t>::max();
+    constexpr static inline size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
+    constexpr static inline uint_t const all_ones = std::numeric_limits<uint_t>::max();
 
     INLINE void write_bits(uint_t const bits) noexcept(noexcept(writer(bits))) {
         if constexpr (bit_order == bit_endian::little) {
@@ -283,7 +283,7 @@ template <
         bool EarlyRead>
 class ibitstream {
 private:
-    static inline constexpr bool const is_noexcept
+    constexpr static inline bool const is_noexcept
             = noexcept(Endian::template Read<uint_t>(std::declval<std::istream&>()));
     struct BitReader {
         auto operator()() noexcept(is_noexcept) {
@@ -323,7 +323,7 @@ public:
 template <std::unsigned_integral uint_t, bit_endian bit_order, typename Endian>
 class obitstream {
 private:
-    static inline constexpr bool const is_noexcept = noexcept(
+    constexpr static inline bool const is_noexcept = noexcept(
             Endian::Write(std::declval<std::ostream&>(), std::declval<uint_t>()));
     struct BitWriter {
         auto operator()(uint_t count) noexcept(is_noexcept) {
