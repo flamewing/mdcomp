@@ -11,7 +11,7 @@ namespace std23 {
     };
 
     template <auto V>
-    inline constexpr nontype_t<V> nontype{};
+    constexpr inline nontype_t<V> nontype{};
 
     template <class R, class F, class... Args>
         requires std::is_invocable_r_v<R, F, Args...>
@@ -33,10 +33,10 @@ namespace std23 {
         template <class T>
         using cv = T;
 
-        static constexpr bool is_noexcept = false;
+        constexpr static bool is_noexcept = false;
 
         template <class... T>
-        static constexpr bool is_invocable_using
+        constexpr static bool is_invocable_using
                 = std::is_invocable_r_v<R, T..., Args...>;
     };
 
@@ -46,10 +46,10 @@ namespace std23 {
         template <class T>
         using cv = T;
 
-        static constexpr bool is_noexcept = true;
+        constexpr static bool is_noexcept = true;
 
         template <class... T>
-        static constexpr bool is_invocable_using
+        constexpr static bool is_invocable_using
                 = std::is_nothrow_invocable_r_v<R, T..., Args...>;
     };
 
@@ -67,7 +67,7 @@ namespace std23 {
 
     // See also: https://www.agner.org/optimize/calling_conventions.pdf
     template <class T>
-    inline constexpr auto _select_param_type = [] {
+    constexpr inline auto _select_param_type = [] {
         if constexpr (std::is_trivially_copyable_v<T>) {
             return std::type_identity<T>();
         } else {
@@ -79,7 +79,7 @@ namespace std23 {
     using _param_t = typename std::invoke_result_t<decltype(_select_param_type<T>)>::type;
 
     template <class T, class Self>
-    inline constexpr bool _is_not_self = not std::is_same_v<std::remove_cvref_t<T>, Self>;
+    constexpr inline bool _is_not_self = not std::is_same_v<std::remove_cvref_t<T>, Self>;
 
     template <class T>
     struct _unwrap_reference {
@@ -161,11 +161,11 @@ namespace std23 {
         using cvref = cv<T>&;
 
         template <class... T>
-        static constexpr bool is_invocable_using
+        constexpr static bool is_invocable_using
                 = signature::template is_invocable_using<T...>;
 
         template <class F, class... T>
-        static constexpr bool is_memfn_invocable_using
+        constexpr static bool is_memfn_invocable_using
                 = (is_invocable_using<F, T...>)&&(std::is_member_pointer_v<F>);
 
     public:

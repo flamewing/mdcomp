@@ -102,7 +102,7 @@ PenaltyReturnTypeOnItsOwnLine: 10000000
 PointerAlignment: Left
 PPIndentWidth: -1
 QualifierAlignment: Custom
-QualifierOrder: ["static", "inline", "type", "const", "volatile"]
+QualifierOrder: ["constexpr", "static", "inline", "type", "const", "volatile"]
 ReferenceAlignment: Pointer
 ReflowComments: true
 CommentPragmas: '^\\.+'
