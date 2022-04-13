@@ -48,11 +48,13 @@
  */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
+
 template <typename Adaptor>
 class AdjListNode {
 public:
     using EdgeType = typename Adaptor::EdgeType;
     using stream_t = typename Adaptor::stream_t;
+
     struct MatchInfo {
         // How many characters back does the match begin at.
         size_t distance;
@@ -65,6 +67,7 @@ private:
     size_t currpos{0};
     // Cost, in bits, of "covering" all of the characters in the match.
     EdgeType type;
+
     union {
         MatchInfo match;
         stream_t  symbol;
@@ -73,20 +76,26 @@ private:
 public:
     // Constructors.
     constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
+
     constexpr AdjListNode(size_t pos, stream_t sym, EdgeType type_) noexcept
             : currpos(pos), type(type_), symbol(sym) {}
+
     constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType type_) noexcept
             : currpos(pos), type(type_), match(match_) {}
+
     // Getters.
     [[nodiscard]] constexpr size_t get_pos() const noexcept {
         return currpos;
     }
+
     [[nodiscard]] constexpr size_t get_dest() const noexcept {
         return currpos + get_length();
     }
+
     [[nodiscard]] constexpr size_t get_weight() const noexcept {
         return Adaptor::edge_weight(type, get_length());
     }
+
     [[nodiscard]] constexpr size_t get_distance() const noexcept {
         switch (type) {
         case EdgeType::invalid:
@@ -97,6 +106,7 @@ public:
             return match.distance;
         }
     }
+
     [[nodiscard]] constexpr size_t get_length() const noexcept {
         switch (type) {
         case EdgeType::invalid:
@@ -107,6 +117,7 @@ public:
             return match.length;
         }
     }
+
     constexpr stream_t get_symbol() const noexcept {
         switch (type) {
         case EdgeType::symbolwise:
@@ -115,10 +126,12 @@ public:
             return std::numeric_limits<stream_t>::max();
         }
     }
+
     constexpr EdgeType get_type() const noexcept {
         return type;
     }
 };
+
 #pragma GCC diagnostic pop
 
 template <typename Adaptor>
@@ -466,10 +479,12 @@ private:
 public:
     // Constructor.
     explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
+
     LZSSOStream(LZSSOStream const&)                = delete;
     LZSSOStream(LZSSOStream&&) noexcept            = delete;
     LZSSOStream& operator=(LZSSOStream const&)     = delete;
     LZSSOStream& operator=(LZSSOStream&&) noexcept = delete;
+
     // Destructor: writes anything that hasn't been written.
     ~LZSSOStream() noexcept {
         // We need a dummy descriptor field if we have exactly zero bits left
@@ -489,6 +504,7 @@ public:
         // Now write the terminating sequence if it wasn't written already.
         flushbuffer();
     }
+
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, outputs it and the output parameter buffer.
     void descbit(descriptor_t const bit) noexcept {
@@ -503,6 +519,7 @@ public:
             bits.push(bit);
         }
     }
+
     // Puts a byte in the output buffer.
     void putbyte(size_t const value) noexcept {
         Write1(buffer, value);
@@ -531,11 +548,13 @@ private:
 public:
     // Constructor.
     explicit LZSSIStream(std::istream& Src) noexcept : in(Src), bits(in) {}
+
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
     descriptor_t descbit() noexcept {
         return bits.pop();
     }
+
     // Puts a byte in the input buffer.
     uint8_t getbyte() noexcept {
         return Read1(in);

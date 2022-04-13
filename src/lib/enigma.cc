@@ -63,10 +63,14 @@ template <typename Callback>
 class base_flag_io {
 public:
     using Callback_t = Callback;
+
     struct tag {};
+
     static base_flag_io const& get(size_t n);
+
     constexpr explicit base_flag_io(Callback_t callback_) noexcept
             : callback(callback_) {}
+
     template <typename... Ts>
     auto operator()(Ts&&... args) const {
         return this->callback(std::forward<Ts>(args)...);

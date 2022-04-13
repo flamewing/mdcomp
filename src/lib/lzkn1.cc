@@ -72,6 +72,7 @@ class lzkn1_internal {
         constexpr static size_t const SearchBufSize = 1023;
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 33;
+
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array{
@@ -81,12 +82,14 @@ class lzkn1_internal {
                                     EdgeType::dictionary_long}
             };
         }
+
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
         constexpr static size_t desc_bits(EdgeType const type) noexcept {
             ignore_unused_variable_warning(type);
             return 1;
         }
+
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
@@ -113,6 +116,7 @@ class lzkn1_internal {
             }
             __builtin_unreachable();
         }
+
         // lzkn1 finds no additional matches over normal LZSS.
         static bool extra_matches(
                 std::span<stream_t const> data, size_t const basenode,
@@ -130,6 +134,7 @@ class lzkn1_internal {
             // Do normal matches.
             return false;
         }
+
         // lzkn1M needs to pad each module to a multiple of 16 bytes.
         static size_t get_padding(size_t const totallen) noexcept {
             ignore_unused_variable_warning(totallen);

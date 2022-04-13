@@ -75,21 +75,27 @@ private:
 public:
     // Constructors.
     nibble_run() noexcept = default;
+
     nibble_run(std::byte nibble_, size_t count_) noexcept
             : nibble(nibble_), count(static_cast<uint8_t>(count_)) {}
+
     // Sorting operator.
     [[nodiscard]] std::strong_ordering operator<=>(
             nibble_run const& other) const noexcept = default;
+
     // Getters/setters for all properties.
     [[nodiscard]] std::byte get_nibble() const noexcept {
         return nibble;
     }
+
     [[nodiscard]] size_t get_count() const noexcept {
         return count;
     }
+
     void set_nibble(std::byte const value) noexcept {
         nibble = value;
     }
+
     void set_count(size_t const value) noexcept {
         count = static_cast<uint8_t>(value);
     }
@@ -99,8 +105,10 @@ struct SizeFreqNibble {
     size_t     count{0};
     nibble_run nibble;
     size_t     codelen{0};
+
     SizeFreqNibble(size_t cnt, nibble_run const& nib, size_t const length) noexcept
             : count(cnt), nibble(nib), codelen(length) {}
+
     SizeFreqNibble() noexcept = default;
 };
 
@@ -128,49 +136,62 @@ private:
 public:
     // Construct a new leaf node for character c.
     node(nibble_run const& val, size_t const wgt) noexcept : weight(wgt), value(val) {}
+
     // Construct a new internal node that has children c1 and c2.
     node(shared_ptr<node> const& left_child_,
          shared_ptr<node> const& right_child_) noexcept
             : left_child(left_child_), right_child(right_child_),
               weight(left_child_->weight + right_child_->weight) {}
+
     // Free the memory used by the child nodes.
     void prune() noexcept {
         left_child.reset();
         right_child.reset();
     }
+
     // Comparison operators.
     [[nodiscard]] std::weak_ordering operator<=>(node const& other) const noexcept {
         return weight <=> other.weight;
     }
+
     // This tells if the node is a leaf or a branch.
     [[nodiscard]] bool is_leaf() const noexcept {
         return left_child == nullptr && right_child == nullptr;
     }
+
     // Getters/setters for all properties.
     [[nodiscard]] shared_ptr<node const> get_child0() const noexcept {
         return left_child;
     }
+
     [[nodiscard]] shared_ptr<node const> get_child1() const noexcept {
         return right_child;
     }
+
     [[nodiscard]] size_t get_weight() const noexcept {
         return weight;
     }
+
     [[nodiscard]] nibble_run const& get_value() const noexcept {
         return value;
     }
+
     void set_left_child(shared_ptr<node> left_child_) noexcept {
         left_child = std::move(left_child_);
     }
+
     void set_right_child(shared_ptr<node> right_child_) noexcept {
         right_child = std::move(right_child_);
     }
+
     void set_weight(size_t weight_) noexcept {
         weight = weight_;
     }
+
     void set_value(nibble_run const& value_) noexcept {
         value = value_;
     }
+
     // This goes through the tree, starting with the current node, generating
     // a map associating a nibble run with its code length.
     void traverse(CodeSizeMap& sizemap) const noexcept {
@@ -228,10 +249,12 @@ struct Compare_node {
         return *lhs > *rhs;
 #endif
     }
+
     // Just discard the lowest weighted item.
     void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
         ignore_unused_variable_warning(this, nodes, codes);
     }
+
     // Initialize
     void initialize(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
         ignore_unused_variable_warning(codes);
@@ -285,12 +308,14 @@ struct Compare_node2 {
         }
         return left_nibble.get_count() < right_nibble.get_count();
     }
+
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
     void update(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
         *codemap = codes;
         make_heap(nodes.begin(), nodes.end(), *this);
     }
+
     void initialize(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
         update(nodes, codes);
     }
@@ -705,6 +730,7 @@ public:
         Normal         = 0U,
         ProgressiveXor = 1U << 15U,
     };
+
     friend uint16_t operator|(NemesisMode mode, std::streamoff length) {
         return static_cast<uint16_t>(to_underlying(mode) | static_cast<uint16_t>(length));
     }

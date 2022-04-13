@@ -71,6 +71,7 @@ class kosinski_internal {
         constexpr static size_t const SearchBufSize = 8192;
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 256;
+
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array{
@@ -82,6 +83,7 @@ class kosinski_internal {
                                     EdgeType::dictionary_long                                             }
             };
         }
+
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
         constexpr static size_t desc_bits(EdgeType const type) noexcept {
@@ -102,6 +104,7 @@ class kosinski_internal {
             }
             __builtin_unreachable();
         }
+
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
@@ -127,6 +130,7 @@ class kosinski_internal {
             }
             __builtin_unreachable();
         }
+
         // Kosinski finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
                 std::span<stream_t const> data, size_t const basenode,
@@ -136,6 +140,7 @@ class kosinski_internal {
             // Do normal matches.
             return false;
         }
+
         // KosinskiM needs to pad each module to a multiple of 16 bytes.
         static size_t get_padding(size_t const totallen) noexcept {
             return ((totallen + moduled_kosinski::PadMaskBits)
