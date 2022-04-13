@@ -74,11 +74,12 @@ class lzkn1_internal {
         constexpr static size_t const LookAheadBufSize = 33;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array<SlidingWindow_t, 2>{
-                    SlidingWindow_t{data, 15, 2, 5, EdgeType::dictionary_short},
+            return array{
+                    SlidingWindow_t{data,            15, 2,                5,EdgeType::dictionary_short                                  },
                     SlidingWindow_t{
-                            data, SearchBufSize, 3, LookAheadBufSize,
-                            EdgeType::dictionary_long}};
+                                    data, SearchBufSize, 3, LookAheadBufSize,
+                                    EdgeType::dictionary_long}
+            };
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.

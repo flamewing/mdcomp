@@ -61,9 +61,11 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    constexpr static std::array<option, 3> const long_options{
+    constexpr static std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
-            option{"crunch", no_argument, nullptr, 'c'}, option{nullptr, 0, nullptr, 0}};
+            option{ "crunch",       no_argument, nullptr, 'c'},
+            option{  nullptr,                 0, nullptr,   0}
+    };
 
     bool   extract  = false;
     bool   printend = false;
