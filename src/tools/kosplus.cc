@@ -58,10 +58,12 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    constexpr static std::array<option, 4> const long_options{
+    constexpr static std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
-            option{"moduled", no_argument, nullptr, 'm'},
-            option{"crunch", no_argument, nullptr, 'c'}, option{nullptr, 0, nullptr, 0}};
+            option{"moduled",       no_argument, nullptr, 'm'},
+            option{ "crunch",       no_argument, nullptr, 'c'},
+            option{  nullptr,                 0, nullptr,   0}
+    };
 
     bool   extract = false;
     bool   moduled = false;

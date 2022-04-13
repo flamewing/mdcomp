@@ -72,8 +72,11 @@ class comperx_internal {
         constexpr static size_t const LookAheadBufSize = 255;
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array<SlidingWindow_t, 1>{SlidingWindow_t{
-                    data, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
+            return array{
+                    SlidingWindow_t{
+                                    data, SearchBufSize, 2, LookAheadBufSize,
+                                    EdgeType::dictionary}
+            };
         }
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
