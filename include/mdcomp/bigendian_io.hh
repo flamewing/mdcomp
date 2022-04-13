@@ -219,9 +219,11 @@ namespace detail {
     struct EndianBase {
     private:
         template <std::unsigned_integral To, typename Stream>
+
             requires requires(Stream stream, char* pointer, std::streamsize count) {
                 { stream.read(pointer, count) } -> std::common_reference_with<Stream>;
             }
+
         [[nodiscard]] INLINE constexpr static To ReadImpl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -234,9 +236,11 @@ namespace detail {
         }
 
         template <std::unsigned_integral To, typename Stream>
+
             requires requires(Stream stream, char* pointer, std::streamsize count) {
                 { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
             }
+
         [[nodiscard]] INLINE constexpr static To ReadImpl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -250,6 +254,7 @@ namespace detail {
 
         template <std::unsigned_integral To, typename IterRef>
             requires(byte_input_iterator<std::remove_cvref_t<IterRef>>)
+
         [[nodiscard]] INLINE constexpr static To ReadImpl(IterRef&& input) noexcept {
             using Iter = std::remove_cvref_t<IterRef>;
             if constexpr (contiguous_reverse_iterator<Iter>) {
@@ -289,9 +294,11 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
+
             requires requires(Stream stream, char const* pointer, std::streamsize count) {
                 { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
             }
+
         INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
@@ -303,9 +310,11 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
+
             requires requires(Stream stream, char const* pointer, std::streamsize count) {
                 { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
             }
+
         INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
                 noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
@@ -329,6 +338,7 @@ namespace detail {
 
         template <typename IterRef, std::unsigned_integral From>
             requires(byte_output_iterator<std::remove_cvref_t<IterRef>>)
+
         INLINE constexpr static void WriteImpl(IterRef&& output, From value) noexcept {
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does

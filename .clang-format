@@ -90,6 +90,7 @@ IndentGotoLabels: true
 IndentPPDirectives: AfterHash
 IndentExternBlock: AfterExternBlock
 IndentRequires: true
+SeparateDefinitionBlocks: Always
 IndentWidth: 4
 IndentWrappedFunctionNames: true
 InsertTrailingCommas: None

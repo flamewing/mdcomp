@@ -30,6 +30,7 @@
 
 namespace detail {
     template <typename T1, typename T2>
+
         requires requires(T1 value1, T2 value2) {
             value1 + value2;
             value1 - value2;
@@ -37,6 +38,7 @@ namespace detail {
             value1 / value2;
             value1 % value2;
         }
+
     constexpr inline auto round_up(T1 const value, T2 const factor) noexcept {
         constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
@@ -50,6 +52,7 @@ public:
         ModuleSize    = DefaultModuleSize,
         ModulePadding = DefaultModulePadding
     };
+
     static size_t PadMaskBits;
     static bool   moduled_decode(
               std::istream& Src, std::iostream& Dst,

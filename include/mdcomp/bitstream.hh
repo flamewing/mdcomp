@@ -143,6 +143,7 @@ private:
             return bits;
         }
     }
+
     INLINE void check_buffer() noexcept(noexcept(read_bits())) {
         if (readbits != 0U) {
             return;
@@ -155,8 +156,10 @@ private:
 public:
     explicit ibitbuffer(Reader const& reader_) noexcept(noexcept(read_bits()))
             : reader(reader_), readbits(bitcount), bitbuffer(read_bits()) {}
+
     explicit ibitbuffer(Reader&& reader_) noexcept(noexcept(read_bits()))
             : reader(std::move(reader_)), readbits(bitcount), bitbuffer(read_bits()) {}
+
     // Gets a single bit from the buffer. Remembers previously read bits, and
     // gets a new T from the actual buffer once all bits in the current T has
     // been used up.
@@ -172,6 +175,7 @@ public:
         }
         return bit;
     }
+
     // Reads up to sizeof(T) * CHAR_BIT bits from the buffer. This remembers
     // previously read bits, and gets another T from the actual buffer once all
     // bits in the current T have been read.
@@ -198,6 +202,7 @@ public:
         }
         return bits;
     }
+
     [[nodiscard]] INLINE size_t have_waiting_bits() const noexcept {
         return readbits;
     }
@@ -227,8 +232,10 @@ private:
 public:
     explicit obitbuffer(Writer const& writer_) noexcept
             : writer(writer_), waitingbits(0), bitbuffer(0) {}
+
     explicit obitbuffer(Writer&& writer_) noexcept
             : writer(std::move(writer_)), waitingbits(0), bitbuffer(0) {}
+
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
@@ -242,6 +249,7 @@ public:
         }
         return false;
     }
+
     // Writes up to sizeof(T) * CHAR_BIT bits to the buffer. This remembers
     // previously written bits, and outputs a T to the actual buffer once there
     // are at least sizeof(T) * CHAR_BIT bits stored in the buffer.
@@ -259,6 +267,7 @@ public:
         waitingbits += size;
         return false;
     }
+
     // Flushes remaining bits (if any) to the buffer, completing the byte by
     // padding with zeroes.
     INLINE bool flush() noexcept(noexcept(write_bits(bitbuffer))) {
@@ -270,6 +279,7 @@ public:
         }
         return false;
     }
+
     [[nodiscard]] INLINE size_t have_waiting_bits() const noexcept {
         return waitingbits;
     }
@@ -285,10 +295,12 @@ class ibitstream {
 private:
     constexpr static inline bool const is_noexcept
             = noexcept(Endian::template Read<uint_t>(std::declval<std::istream&>()));
+
     struct BitReader {
         auto operator()() noexcept(is_noexcept) {
             return Endian::template Read<uint_t>(source);
         }
+
         std::istream& source;
     };
 
@@ -300,12 +312,14 @@ private:
 public:
     explicit ibitstream(std::istream& source) noexcept(noexcept(bitbuffer(reader)))
             : reader(source), buffer(reader) {}
+
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
     // been used up.
     [[nodiscard]] INLINE uint_t pop() noexcept(noexcept(buffer.pop())) {
         return buffer.pop();
     }
+
     // Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
@@ -313,6 +327,7 @@ public:
             read(size_t const cnt) noexcept(noexcept(buffer.read(cnt))) {
         return buffer.read(cnt);
     }
+
     [[nodiscard]] INLINE size_t have_waiting_bits() const
             noexcept(noexcept(buffer.have_waiting_bits())) {
         return buffer.have_waiting_bits();
@@ -325,10 +340,12 @@ class obitstream {
 private:
     constexpr static inline bool const is_noexcept = noexcept(
             Endian::Write(std::declval<std::ostream&>(), std::declval<uint_t>()));
+
     struct BitWriter {
         auto operator()(uint_t count) noexcept(is_noexcept) {
             return Endian::Write(dest, count);
         }
+
         std::ostream& dest;
     };
 
@@ -340,12 +357,14 @@ private:
 public:
     explicit obitstream(std::ostream& dest) noexcept(noexcept(bitbuffer(writer)))
             : writer(dest), buffer(writer) {}
+
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
     INLINE bool push(uint_t const data) noexcept(noexcept(buffer.push(data))) {
         return buffer.push(data);
     }
+
     // Writes up to sizeof(T) * CHAR_BIT bits to the stream. This remembers
     // previously written bits, and outputs a T to the actual stream once there
     // are at least sizeof(T) * CHAR_BIT bits stored in the buffer.
@@ -353,11 +372,13 @@ public:
             noexcept(buffer.write(data, size))) {
         return buffer.write(data, size);
     }
+
     // Flushes remaining bits (if any) to the buffer, completing the byte by
     // padding with zeroes.
     INLINE bool flush() noexcept {
         return buffer.flush();
     }
+
     [[nodiscard]] INLINE size_t have_waiting_bits() const
             noexcept(noexcept(buffer.have_waiting_bits())) {
         return buffer.have_waiting_bits();
