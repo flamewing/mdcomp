@@ -84,7 +84,7 @@ public:
             if (next == curr) {
                 Write1(Dst, next);
                 size_t Count = 0;
-                curr           = Read1(Src);
+                curr         = Read1(Src);
                 while (Src.good() && next == curr && Count < 255) {
                     Count++;
                     curr = Read1(Src);

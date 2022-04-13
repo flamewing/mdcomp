@@ -51,7 +51,7 @@ static void usage(char* prog) {
 }
 
 int main(int argc, char* argv[]) {
-    static constexpr const std::array<option, 4> long_options{
+    static constexpr std::array<option, 4> const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{"moduled", no_argument, nullptr, 'm'},
             option{"crunch", no_argument, nullptr, 'c'}, option{nullptr, 0, nullptr, 0}};
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
         return 4;
     }
 
-    const char* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
+    char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
     ifstream fin(argv[optind], ios::in | ios::binary);
     if (!fin.good()) {

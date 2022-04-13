@@ -73,7 +73,7 @@ struct rocket_internal {
         // Size of the look-ahead buffer.
         constexpr static size_t const LookAheadBufSize = 0x40;
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
+        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array<SlidingWindow_t, 1>{SlidingWindow_t{
                     data, SearchBufSize, 2, LookAheadBufSize, EdgeType::dictionary}};
         }
@@ -105,7 +105,7 @@ struct rocket_internal {
         }
         // Rocket finds no additional matches over normal LZSS.
         static bool extra_matches(
-                std::span<const stream_t> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const basenode,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<RocketAdaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
@@ -146,7 +146,7 @@ public:
                 // basedest + 0x3C0u.
                 constexpr auto const bias
                         = static_cast<diff_t>(RocketAdaptor::FirstMatchPosition);
-                constexpr const auto buffer_size
+                constexpr auto const buffer_size
                         = static_cast<diff_t>(RocketAdaptor::SearchBufSize);
 
                 offset = ((offset - base - bias) % buffer_size) + base - buffer_size;

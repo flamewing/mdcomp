@@ -74,12 +74,12 @@ namespace detail {
             = (std::output_iterator<Iter, uint8_t>) || (std::output_iterator<Iter, char>);
 
     template <typename T>
-    concept container = requires(T mut_container, const T const_container) {
+    concept container = requires(T mut_container, T const const_container) {
         requires std::regular<T>;
         requires std::swappable<T>;
         requires std::destructible<typename T::value_type>;
         requires std::same_as<typename T::reference, typename T::value_type&>;
-        requires std::same_as<typename T::const_reference, const typename T::value_type&>;
+        requires std::same_as<typename T::const_reference, typename T::value_type const&>;
         requires std::forward_iterator<typename T::iterator>;
         requires std::forward_iterator<typename T::const_iterator>;
         requires std::signed_integral<typename T::difference_type>;
@@ -140,13 +140,13 @@ namespace detail {
     struct is_reverse_iterator<std::reverse_iterator<T>> : std::true_type {};
 
     template <typename T>
-    struct is_reverse_iterator<const T> : is_reverse_iterator<T> {};
+    struct is_reverse_iterator<T const> : is_reverse_iterator<T> {};
 
     template <typename T>
     struct is_reverse_iterator<T&> : is_reverse_iterator<T> {};
 
     template <typename T>
-    constexpr const inline bool is_reverse_iterator_v = is_reverse_iterator<T>::value;
+    constexpr inline bool const is_reverse_iterator_v = is_reverse_iterator<T>::value;
 
     template <typename T>
     concept contiguous_reverse_iterator = (is_reverse_iterator_v<T>)&&(
@@ -266,7 +266,7 @@ namespace detail {
             } else {
                 std::copy_n(input, sizeof(To), std::begin(buffer));
             }
-            const To value = [&]() {
+            To const value = [&]() {
                 if constexpr (contiguous_reverse_iterator<Iter>) {
                     if constexpr (endian == std::endian::native) {
                         return detail::byteswap(std::bit_cast<To>(buffer));
@@ -289,11 +289,11 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
-            requires requires(Stream stream, const char* pointer, std::streamsize count) {
+            requires requires(Stream stream, char const* pointer, std::streamsize count) {
                 { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
             }
         INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
-                noexcept(output.write(std::declval<const char*>(), sizeof(From)))) {
+                noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
             }
@@ -303,11 +303,11 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
-            requires requires(Stream stream, const char* pointer, std::streamsize count) {
+            requires requires(Stream stream, char const* pointer, std::streamsize count) {
                 { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
             }
         INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
-                noexcept(output.sputn(std::declval<const char*>(), sizeof(From)))) {
+                noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
             }

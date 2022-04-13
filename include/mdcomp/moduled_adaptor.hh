@@ -37,8 +37,8 @@ namespace detail {
             value1 / value2;
             value1 % value2;
         }
-    inline constexpr auto round_up(const T1 value, const T2 factor) noexcept {
-        constexpr const decltype(factor) one{1};
+    inline constexpr auto round_up(T1 const value, T2 const factor) noexcept {
+        constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
     };
 }    // namespace detail
