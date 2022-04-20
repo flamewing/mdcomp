@@ -19,8 +19,8 @@
 #ifndef LIB_KOSPLUS_HH
 #define LIB_KOSPLUS_HH
 
-#include <mdcomp/basic_decoder.hh>
-#include <mdcomp/moduled_adaptor.hh>
+#include "mdcomp/basic_decoder.hh"
+#include "mdcomp/moduled_adaptor.hh"
 
 #include <iosfwd>
 

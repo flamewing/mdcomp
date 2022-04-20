@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mdcomp/kosinski.hh"
+
 #include <getopt.h>
-#include <mdcomp/kosinski.hh>
 
 #include <array>
 #include <cstdlib>

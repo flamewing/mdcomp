@@ -18,8 +18,8 @@
 #ifndef LIB_BITSTREAM_HH
 #define LIB_BITSTREAM_HH
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/function_ref.hh>
+#include "mdcomp/bigendian_io.hh"
+#include "mdcomp/function_ref.hh"
 
 #include <climits>
 #include <iosfwd>

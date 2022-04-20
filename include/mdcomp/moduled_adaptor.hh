@@ -20,7 +20,7 @@
 #ifndef LIB_MODULED_ADAPTOR_HH
 #define LIB_MODULED_ADAPTOR_HH
 
-#include <mdcomp/bigendian_io.hh>
+#include "mdcomp/bigendian_io.hh"
 
 #include <ios>
 #include <limits>

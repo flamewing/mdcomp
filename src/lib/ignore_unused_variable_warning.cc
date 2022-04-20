@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mdcomp/ignore_unused_variable_warning.hh>
+#include "mdcomp/ignore_unused_variable_warning.hh"

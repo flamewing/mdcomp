@@ -16,10 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mdcomp/artc42.hh>
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
+#include "mdcomp/artc42.hh"
+
+#include "mdcomp/bigendian_io.hh"
+#include "mdcomp/bitstream.hh"
+#include "mdcomp/ignore_unused_variable_warning.hh"
 
 #include <cstdint>
 #include <iostream>

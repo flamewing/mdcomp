@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mdcomp/bigendian_io.hh>
+#include "mdcomp/bigendian_io.hh"

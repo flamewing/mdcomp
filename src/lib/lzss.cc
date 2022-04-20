@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <mdcomp/lzss.hh>
+#include "mdcomp/lzss.hh"
