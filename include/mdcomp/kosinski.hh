@@ -19,8 +19,8 @@
 #ifndef LIB_KOSINSKI_HH
 #define LIB_KOSINSKI_HH
 
-#include <mdcomp/basic_decoder.hh>
-#include <mdcomp/moduled_adaptor.hh>
+#include "mdcomp/basic_decoder.hh"
+#include "mdcomp/moduled_adaptor.hh"
 
 #include <iosfwd>
 

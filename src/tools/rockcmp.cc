@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mdcomp/rocket.hh"
+
 #include <getopt.h>
-#include <mdcomp/rocket.hh>
 
 #include <array>
 #include <cstdlib>

@@ -15,9 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mdcomp/nemesis.hh"
+
 #include <boost/io/ios_state.hpp>
 #include <getopt.h>
-#include <mdcomp/nemesis.hh>
 
 #include <array>
 #include <cstdlib>

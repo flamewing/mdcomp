@@ -19,8 +19,8 @@
 #ifndef LIB_LZSS_HH
 #define LIB_LZSS_HH
 
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
+#include "mdcomp/bigendian_io.hh"
+#include "mdcomp/bitstream.hh"
 
 #include <algorithm>
 #include <array>

@@ -19,8 +19,8 @@
 #ifndef LIB_COMPER_HH
 #define LIB_COMPER_HH
 
-#include <mdcomp/basic_decoder.hh>
-#include <mdcomp/moduled_adaptor.hh>
+#include "mdcomp/basic_decoder.hh"
+#include "mdcomp/moduled_adaptor.hh"
 
 #include <iosfwd>
 
