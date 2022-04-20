@@ -17,6 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mdcomp/bigendian_io.hh>
+#include <mdcomp/bitstream.hh>
+#include <mdcomp/enigma.hh>
+#include <mdcomp/ignore_unused_variable_warning.hh>
+
 #include <algorithm>
 #include <array>
 #include <functional>
@@ -32,15 +37,6 @@
 #include <utility>
 #include <vector>
 
-#if defined(_MSC_VER)
-#    include <intrin.h>
-#    pragma intrinsic(_BitScanReverse)
-#endif
-
-#include <mdcomp/bigendian_io.hh>
-#include <mdcomp/bitstream.hh>
-#include <mdcomp/enigma.hh>
-#include <mdcomp/ignore_unused_variable_warning.hh>
 
 using std::array;
 using std::ios;
