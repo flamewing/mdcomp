@@ -71,6 +71,11 @@ IncludeCategories:
     Priority: 5
     SortPriority: 0
     CaseSensitive: false
+  # Boost headers.
+  - Regex: '<boost/([A-Za-z0-9.\Q/-_\E])+>'
+    Priority: 4
+    SortPriority: 0
+    CaseSensitive: false
   # Headers in <> with extension.
   - Regex: '<([A-Za-z0-9.\Q/-_\E])+>'
     Priority: 3

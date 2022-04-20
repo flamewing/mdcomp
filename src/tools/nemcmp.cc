@@ -17,8 +17,9 @@
 
 #include "mdcomp/nemesis.hh"
 
-#include <boost/io/ios_state.hpp>
 #include <getopt.h>
+
+#include <boost/io/ios_state.hpp>
 
 #include <array>
 #include <cstdlib>
