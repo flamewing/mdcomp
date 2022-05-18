@@ -67,7 +67,7 @@ class lzkn1_internal {
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
         constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
-        // How many characters to skip looking for matchs for at the start.
+        // How many characters to skip looking for matches for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
         constexpr static size_t const SearchBufSize = 1023;
@@ -120,16 +120,16 @@ class lzkn1_internal {
 
         // lzkn1 finds no additional matches over normal LZSS.
         static bool extra_matches(
-                std::span<stream_t const> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<Lzkn1Adaptor>>& matches) noexcept {
             using Match_t = AdjListNode<Lzkn1Adaptor>::MatchInfo;
             ignore_unused_variable_warning(data, lbound);
             // Add packed symbolwise matches.
-            size_t const end = std::min(ubound - basenode, size_t{72});
+            size_t const end = std::min(ubound - base_node, size_t{72});
             for (size_t ii = 8; ii < end; ii++) {
                 matches.emplace_back(
-                        basenode, Match_t{numeric_limits<size_t>::max(), ii},
+                        base_node, Match_t{numeric_limits<size_t>::max(), ii},
                         EdgeType::packed_symbolwise);
             }
             // Do normal matches.
@@ -137,8 +137,8 @@ class lzkn1_internal {
         }
 
         // lzkn1M needs to pad each module to a multiple of 16 bytes.
-        static size_t get_padding(size_t const totallen) noexcept {
-            ignore_unused_variable_warning(totallen);
+        static size_t get_padding(size_t const total_length) noexcept {
+            ignore_unused_variable_warning(total_length);
             return 0;
         }
     };
@@ -157,13 +157,13 @@ public:
         size_t BytesWritten = 0U;
 
         while (input.good()) {
-            if (src.descbit() == 0U) {
+            if (src.descriptor_bit() == 0U) {
                 // Symbolwise match.
-                Write1(Dst, src.getbyte());
+                Write1(Dst, src.get_byte());
                 BytesWritten++;
             } else {
                 // Dictionary matches or packed symbolwise match.
-                uint8_t const Data = src.getbyte();
+                uint8_t const Data = src.get_byte();
                 if (Data == eof_marker) {
                     // Terminator.
                     break;
@@ -172,7 +172,7 @@ public:
                     // Packed symbolwise.
                     size_t const Count = Data - packed_symbolwise_marker + 8U;
                     for (size_t i = 0; i < Count; i++) {
-                        Write1(Dst, src.getbyte());
+                        Write1(Dst, src.get_byte());
                     }
                     BytesWritten += Count;
                 } else {
@@ -185,7 +185,7 @@ public:
                     if (long_match) {
                         // Long dictionary match.
                         uint8_t High = Data;
-                        uint8_t Low  = src.getbyte();
+                        uint8_t Low  = src.get_byte();
 
                         distance = static_cast<std::streamoff>(
                                 ((High * 8U) & 0x300U) | Low);
@@ -229,46 +229,46 @@ public:
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descbit(0);
-                out.putbyte(edge.get_symbol());
+                out.descriptor_bit(0);
+                out.put_byte(edge.get_symbol());
                 break;
             case EdgeType::packed_symbolwise: {
-                out.descbit(1);
+                out.descriptor_bit(1);
                 size_t const  Count    = edge.get_length();
-                size_t const  position = edge.get_pos();
+                size_t const  position = edge.get_position();
                 uint8_t const data     = (Count + packed_symbolwise_marker - 8U)
                                      & std::numeric_limits<uint8_t>::max();
-                out.putbyte(data);
-                for (size_t currpos = position; currpos < position + Count; currpos++) {
-                    out.putbyte(Data[currpos]);
+                out.put_byte(data);
+                for (size_t current = position; current < position + Count; current++) {
+                    out.put_byte(Data[current]);
                 }
                 break;
             }
             case EdgeType::dictionary_short: {
-                out.descbit(1);
+                out.descriptor_bit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
                 uint8_t const data     = (((Count + 6U) << 4U) | distance)
                                      & std::numeric_limits<uint8_t>::max();
-                out.putbyte(data);
+                out.put_byte(data);
                 break;
             }
             case EdgeType::dictionary_long: {
-                out.descbit(1);
+                out.descriptor_bit(1);
                 size_t const  Count    = edge.get_length();
                 size_t const  distance = edge.get_distance();
                 uint8_t const high     = ((Count - 3U) | ((distance & 0x300U) >> 3U))
                                      & std::numeric_limits<uint8_t>::max();
                 uint8_t const low = distance & 0xFFU;
-                out.putbyte(high);
-                out.putbyte(low);
+                out.put_byte(high);
+                out.put_byte(low);
                 break;
             }
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
-                out.descbit(1);
+                out.descriptor_bit(1);
                 // Write end-of-file marker.
-                out.putbyte(eof_marker);
+                out.put_byte(eof_marker);
                 break;
             }
             case EdgeType::invalid:

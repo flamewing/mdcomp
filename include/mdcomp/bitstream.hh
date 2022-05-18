@@ -130,10 +130,10 @@ template <
 class ibitbuffer {
 private:
     Reader reader;
-    size_t readbits;
-    uint_t bitbuffer;
+    size_t num_read_bits;
+    uint_t bit_buffer;
 
-    constexpr static inline size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
+    constexpr static inline size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
 
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
@@ -145,20 +145,21 @@ private:
     }
 
     INLINE void check_buffer() noexcept(noexcept(read_bits())) {
-        if (readbits != 0U) {
+        if (num_read_bits != 0U) {
             return;
         }
 
-        bitbuffer = read_bits();
-        readbits  = bitcount;
+        bit_buffer    = read_bits();
+        num_read_bits = bit_count;
     }
 
 public:
     explicit ibitbuffer(Reader const& reader_) noexcept(noexcept(read_bits()))
-            : reader(reader_), readbits(bitcount), bitbuffer(read_bits()) {}
+            : reader(reader_), num_read_bits(bit_count), bit_buffer(read_bits()) {}
 
     explicit ibitbuffer(Reader&& reader_) noexcept(noexcept(read_bits()))
-            : reader(std::move(reader_)), readbits(bitcount), bitbuffer(read_bits()) {}
+            : reader(std::move(reader_)), num_read_bits(bit_count),
+              bit_buffer(read_bits()) {}
 
     // Gets a single bit from the buffer. Remembers previously read bits, and
     // gets a new T from the actual buffer once all bits in the current T has
@@ -167,9 +168,9 @@ public:
         if constexpr (!EarlyRead) {
             check_buffer();
         }
-        --readbits;
-        uint_t bit = (bitbuffer >> readbits) & 1U;
-        bitbuffer ^= (bit << readbits);
+        --num_read_bits;
+        uint_t bit = (bit_buffer >> num_read_bits) & 1U;
+        bit_buffer ^= (bit << num_read_bits);
         if constexpr (EarlyRead) {
             check_buffer();
         }
@@ -184,18 +185,18 @@ public:
             check_buffer();
         }
         uint_t bits;
-        if (readbits < cnt) {
-            size_t delta   = cnt - readbits;
-            bits           = bitbuffer << delta;
-            bitbuffer      = read_bits();
-            readbits       = bitcount - delta;
-            uint_t newbits = bitbuffer >> readbits;
-            bitbuffer ^= (newbits << readbits);
-            bits |= newbits;
+        if (num_read_bits < cnt) {
+            size_t delta    = cnt - num_read_bits;
+            bits            = bit_buffer << delta;
+            bit_buffer      = read_bits();
+            num_read_bits   = bit_count - delta;
+            uint_t new_bits = bit_buffer >> num_read_bits;
+            bit_buffer ^= (new_bits << num_read_bits);
+            bits |= new_bits;
         } else {
-            readbits -= cnt;
-            bits = bitbuffer >> readbits;
-            bitbuffer ^= (bits << readbits);
+            num_read_bits -= cnt;
+            bits = bit_buffer >> num_read_bits;
+            bit_buffer ^= (bits << num_read_bits);
         }
         if constexpr (EarlyRead) {
             check_buffer();
@@ -204,7 +205,7 @@ public:
     }
 
     [[nodiscard]] INLINE size_t have_waiting_bits() const noexcept {
-        return readbits;
+        return num_read_bits;
     }
 };
 
@@ -215,11 +216,11 @@ template <
 class obitbuffer {
 private:
     Writer writer;
-    size_t waitingbits;
-    uint_t bitbuffer;
+    size_t waiting_bits;
+    uint_t bit_buffer;
 
-    constexpr static inline size_t const bitcount = sizeof(uint_t) * CHAR_BIT;
-    constexpr static inline uint_t const all_ones = std::numeric_limits<uint_t>::max();
+    constexpr static inline size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
+    constexpr static inline uint_t const all_ones  = std::numeric_limits<uint_t>::max();
 
     INLINE void write_bits(uint_t const bits) noexcept(noexcept(writer(bits))) {
         if constexpr (bit_order == bit_endian::little) {
@@ -231,20 +232,20 @@ private:
 
 public:
     explicit obitbuffer(Writer const& writer_) noexcept
-            : writer(writer_), waitingbits(0), bitbuffer(0) {}
+            : writer(writer_), waiting_bits(0), bit_buffer(0) {}
 
     explicit obitbuffer(Writer&& writer_) noexcept
-            : writer(std::move(writer_)), waitingbits(0), bitbuffer(0) {}
+            : writer(std::move(writer_)), waiting_bits(0), bit_buffer(0) {}
 
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
-    INLINE bool push(uint_t const data) noexcept(noexcept(write_bits(bitbuffer))) {
-        bitbuffer = (bitbuffer << 1U) | (data & 1U);
-        if (++waitingbits >= bitcount) {
-            write_bits(bitbuffer);
-            waitingbits = 0;
-            bitbuffer   = 0;
+    INLINE bool push(uint_t const data) noexcept(noexcept(write_bits(bit_buffer))) {
+        bit_buffer = (bit_buffer << 1U) | (data & 1U);
+        if (++waiting_bits >= bit_count) {
+            write_bits(bit_buffer);
+            waiting_bits = 0;
+            bit_buffer   = 0;
             return true;
         }
         return false;
@@ -254,34 +255,34 @@ public:
     // previously written bits, and outputs a T to the actual buffer once there
     // are at least sizeof(T) * CHAR_BIT bits stored in the buffer.
     INLINE bool write(uint_t const data, size_t const size) noexcept(
-            noexcept(write_bits(bitbuffer))) {
-        if (waitingbits + size >= bitcount) {
-            size_t delta = bitcount - waitingbits;
-            waitingbits  = waitingbits + size % (bitcount);
-            uint_t bits  = (bitbuffer << delta) | (data >> waitingbits);
+            noexcept(write_bits(bit_buffer))) {
+        if (waiting_bits + size >= bit_count) {
+            size_t delta = bit_count - waiting_bits;
+            waiting_bits = waiting_bits + size % (bit_count);
+            uint_t bits  = (bit_buffer << delta) | (data >> waiting_bits);
             write_bits(bits);
-            bitbuffer = data & (all_ones >> (bitcount - waitingbits));
+            bit_buffer = data & (all_ones >> (bit_count - waiting_bits));
             return true;
         }
-        bitbuffer = (bitbuffer << size) | data;
-        waitingbits += size;
+        bit_buffer = (bit_buffer << size) | data;
+        waiting_bits += size;
         return false;
     }
 
     // Flushes remaining bits (if any) to the buffer, completing the byte by
     // padding with zeroes.
-    INLINE bool flush() noexcept(noexcept(write_bits(bitbuffer))) {
-        if (waitingbits != 0U) {
-            bitbuffer <<= ((bitcount)-waitingbits);
-            write_bits(bitbuffer);
-            waitingbits = 0;
+    INLINE bool flush() noexcept(noexcept(write_bits(bit_buffer))) {
+        if (waiting_bits != 0U) {
+            bit_buffer <<= ((bit_count)-waiting_bits);
+            write_bits(bit_buffer);
+            waiting_bits = 0;
             return true;
         }
         return false;
     }
 
     [[nodiscard]] INLINE size_t have_waiting_bits() const noexcept {
-        return waitingbits;
+        return waiting_bits;
     }
 };
 
@@ -304,13 +305,13 @@ private:
         std::istream& source;
     };
 
-    using Callback  = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
-    using bitbuffer = ibitbuffer<uint_t, Callback, bit_order, EarlyRead>;
-    BitReader reader;
-    bitbuffer buffer;
+    using Callback   = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
+    using bit_buffer = ibitbuffer<uint_t, Callback, bit_order, EarlyRead>;
+    BitReader  reader;
+    bit_buffer buffer;
 
 public:
-    explicit ibitstream(std::istream& source) noexcept(noexcept(bitbuffer(reader)))
+    explicit ibitstream(std::istream& source) noexcept(noexcept(bit_buffer(reader)))
             : reader(source), buffer(reader) {}
 
     // Gets a single bit from the stream. Remembers previously read bits, and
@@ -349,13 +350,13 @@ private:
         std::ostream& dest;
     };
 
-    using Callback  = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
-    using bitbuffer = obitbuffer<uint_t, Callback, bit_order>;
-    BitWriter writer;
-    bitbuffer buffer;
+    using Callback   = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
+    using bit_buffer = obitbuffer<uint_t, Callback, bit_order>;
+    BitWriter  writer;
+    bit_buffer buffer;
 
 public:
-    explicit obitstream(std::ostream& dest) noexcept(noexcept(bitbuffer(writer)))
+    explicit obitstream(std::ostream& dest) noexcept(noexcept(bit_buffer(writer)))
             : writer(dest), buffer(writer) {}
 
     // Puts a single bit into the stream. Remembers previously written bits, and

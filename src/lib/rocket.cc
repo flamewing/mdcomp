@@ -67,7 +67,7 @@ struct rocket_internal {
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
         constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
-        // How many characters to skip looking for matchs for at the start.
+        // How many characters to skip looking for matches for at the start.
         constexpr static size_t const FirstMatchPosition = 0x3C0;
         // Size of the search buffer.
         constexpr static size_t const SearchBufSize = 0x400;
@@ -113,17 +113,17 @@ struct rocket_internal {
 
         // Rocket finds no additional matches over normal LZSS.
         static bool extra_matches(
-                std::span<stream_t const> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<RocketAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
 
         // Rocket needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const totallen) noexcept {
-            ignore_unused_variable_warning(totallen);
+        constexpr static size_t get_padding(size_t const total_length) noexcept {
+            ignore_unused_variable_warning(total_length);
             return 0;
         }
     };
@@ -138,21 +138,21 @@ public:
         RockIStream src(input);
 
         while (input.good() && input.tellg() < Size) {
-            if (src.descbit() != 0U) {
+            if (src.descriptor_bit() != 0U) {
                 // Symbolwise match.
                 uint8_t const Byte = Read1(input);
                 Write1(Dst, Byte);
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                size_t const high   = src.getbyte();
-                size_t const low    = src.getbyte();
+                size_t const high   = src.get_byte();
+                size_t const low    = src.get_byte();
                 diff_t const base   = Dst.tellp();
                 auto         length = static_cast<diff_t>(((high & 0xFCU) >> 2U) + 1U);
                 auto         offset = static_cast<diff_t>(((high & 3U) << 8U) | low);
                 // The offset is stored as being absolute within a 0x400-byte
                 // buffer, starting at position 0x3C0. We just rebase it around
-                // basedest + 0x3C0u.
+                // base + 0x3C0u.
                 constexpr auto const bias
                         = static_cast<diff_t>(RocketAdaptor::FirstMatchPosition);
                 constexpr auto const buffer_size
@@ -190,16 +190,17 @@ public:
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descbit(1);
-                out.putbyte(edge.get_symbol());
+                out.descriptor_bit(1);
+                out.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary: {
                 size_t const len  = edge.get_length();
                 size_t const dist = edge.get_distance();
-                size_t const pos = (edge.get_pos() - dist) % RocketAdaptor::SearchBufSize;
-                out.descbit(0);
-                out.putbyte(((len - 1) << 2U) | (pos >> 8U));
-                out.putbyte(pos);
+                size_t const pos
+                        = (edge.get_position() - dist) % RocketAdaptor::SearchBufSize;
+                out.descriptor_bit(0);
+                out.put_byte(((len - 1) << 2U) | (pos >> 8U));
+                out.put_byte(pos);
                 break;
             }
             case EdgeType::terminator:

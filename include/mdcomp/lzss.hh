@@ -64,7 +64,7 @@ public:
 
 private:
     // The first character after the match ends.
-    size_t currpos{0};
+    size_t position{0};
     // Cost, in bits, of "covering" all of the characters in the match.
     EdgeType type;
 
@@ -78,18 +78,18 @@ public:
     constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
 
     constexpr AdjListNode(size_t pos, stream_t sym, EdgeType type_) noexcept
-            : currpos(pos), type(type_), symbol(sym) {}
+            : position(pos), type(type_), symbol(sym) {}
 
     constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType type_) noexcept
-            : currpos(pos), type(type_), match(match_) {}
+            : position(pos), type(type_), match(match_) {}
 
     // Getters.
-    [[nodiscard]] constexpr size_t get_pos() const noexcept {
-        return currpos;
+    [[nodiscard]] constexpr size_t get_position() const noexcept {
+        return position;
     }
 
-    [[nodiscard]] constexpr size_t get_dest() const noexcept {
-        return currpos + get_length();
+    [[nodiscard]] constexpr size_t get_destination() const noexcept {
+        return position + get_length();
     }
 
     [[nodiscard]] constexpr size_t get_weight() const noexcept {
@@ -145,60 +145,65 @@ public:
     using Data_t      = std::span<stream_t const>;
 
     SlidingWindow(
-            Data_t data_, size_t const bufsize, size_t const minmatch,
-            size_t const labuflen, EdgeType const type_) noexcept
-            : data(data_), srchbufsize(bufsize), minmatchlen(minmatch),
-              basenode(Adaptor::FirstMatchPosition),
-              ubound(std::min(labuflen + basenode, data.size())),
-              lbound(basenode > srchbufsize ? basenode - srchbufsize : 0), type(type_) {}
+            Data_t data_, size_t const search_buffer_size_,
+            size_t const minimal_match_length_, size_t const lookahead_buffer_length,
+            EdgeType const type_) noexcept
+            : data(data_), search_buffer_size(search_buffer_size_),
+              minimal_match_length(minimal_match_length_),
+              base_node(Adaptor::FirstMatchPosition),
+              upper_bound(std::min(lookahead_buffer_length + base_node, data.size())),
+              lower_bound(
+                      base_node > search_buffer_size ? base_node - search_buffer_size
+                                                     : 0),
+              type(type_) {}
 
-    [[nodiscard]] size_t getDataSize() const {
+    [[nodiscard]] size_t get_data_size() const {
         return data.size();
     }
 
-    [[nodiscard]] size_t getSearchBufSize() const {
-        return basenode - lbound;
+    [[nodiscard]] size_t get_search_buffer_size() const {
+        return base_node - lower_bound;
     }
 
-    [[nodiscard]] size_t getLookAheadBufSize() const {
-        return ubound - basenode;
+    [[nodiscard]] size_t get_lookahead_buffer_size() const {
+        return upper_bound - base_node;
     }
 
-    [[nodiscard]] size_t getWindowSize() const {
-        return ubound - lbound;
+    [[nodiscard]] size_t get_window_size() const {
+        return upper_bound - lower_bound;
     }
 
-    bool slideWindow() noexcept {
-        if (ubound != data.size()) {
-            ubound++;
+    bool slide_window() noexcept {
+        if (upper_bound != data.size()) {
+            upper_bound++;
         }
-        if (basenode != data.size()) {
-            basenode++;
+        if (base_node != data.size()) {
+            base_node++;
         }
-        if (getSearchBufSize() > srchbufsize) {
-            lbound++;
+        if (get_search_buffer_size() > search_buffer_size) {
+            lower_bound++;
         }
-        return getLookAheadBufSize() != 0;
+        return get_lookahead_buffer_size() != 0;
     }
 
     void find_matches(MatchVector& matches) const noexcept {
         static_assert(
                 noexcept(Adaptor::edge_weight(EdgeType(), size_t())),
                 "Adaptor::edge_weight() is not noexcept");
-        size_t const end = getLookAheadBufSize();
+        size_t const end = get_lookahead_buffer_size();
         // This is what we produce.
         matches.clear();
         // First node is special.
-        if (getSearchBufSize() == 0) {
+        if (get_search_buffer_size() == 0) {
             return;
         }
-        size_t base     = basenode - 1;
+        size_t base     = base_node - 1;
         size_t best_pos = 0;
         size_t best_len = 0;
         do {
             // Keep looking for dictionary matches.
             size_t offset = 0;
-            while (offset < end && data[base + offset] == data[basenode + offset]) {
+            while (offset < end && data[base + offset] == data[base_node + offset]) {
                 ++offset;
             }
             if (best_len < offset) {
@@ -208,16 +213,16 @@ public:
             if (offset == end) {
                 break;
             }
-        } while (base-- > lbound);
+        } while (base-- > lower_bound);
 
-        if (best_len >= minmatchlen) {
-            // We have found a match that links (basenode) with
-            // (basenode + best_len) with length (best_len) and distance
-            // equal to (basenode-best_pos).
+        if (best_len >= minimal_match_length) {
+            // We have found a match that links (base_node) with
+            // (base_node + best_len) with length (best_len) and distance
+            // equal to (base_node-best_pos).
             // Add it, and all prefixes, to the list, as long as it is a better
             // match.
-            for (size_t jj = minmatchlen; jj <= best_len; ++jj) {
-                matches.emplace_back(basenode, Match_t{basenode - best_pos, jj}, type);
+            for (size_t jj = minimal_match_length; jj <= best_len; ++jj) {
+                matches.emplace_back(base_node, Match_t{base_node - best_pos, jj}, type);
             }
         }
     }
@@ -225,22 +230,23 @@ public:
     bool find_extra_matches(MatchVector& matches) const noexcept {
         static_assert(
                 noexcept(Adaptor::extra_matches(
-                        data, basenode, ubound, lbound, std::declval<MatchVector&>())),
+                        data, base_node, upper_bound, lower_bound,
+                        std::declval<MatchVector&>())),
                 "Adaptor::extra_matches() is not noexcept");
         // This is what we produce.
         matches.clear();
         // Get extra dictionary matches dependent on specific encoder.
-        return Adaptor::extra_matches(data, basenode, ubound, lbound, matches);
+        return Adaptor::extra_matches(data, base_node, upper_bound, lower_bound, matches);
     }
 
 private:
     // Source file data and its size; one node per character in source file.
     Data_t         data;
-    size_t const   srchbufsize;
-    size_t const   minmatchlen;
-    size_t         basenode;
-    size_t         ubound;
-    size_t         lbound;
+    size_t const   search_buffer_size;
+    size_t const   minimal_match_length;
+    size_t         base_node;
+    size_t         upper_bound;
+    size_t         lower_bound;
     EdgeType const type;
 };
 
@@ -363,44 +369,47 @@ auto find_optimal_lzss_parse(
     //   After tallying up the ending node, the end-of-file marker may cause
     //   an additional dummy descriptor bitfield to be emitted; this vector
     //   is used to counteract that.
-    std::vector<size_t> desccosts(numNodes + 1, std::numeric_limits<size_t>::max());
-    desccosts[0] = 0;
+    std::vector<size_t> descriptor_costs(
+            numNodes + 1, std::numeric_limits<size_t>::max());
+    descriptor_costs[0] = 0;
 
     // Extracting distance relax logic from the loop so it can be used more
     // often.
-    auto Relax = [lastnode = nlen, &costs, &desccosts, &parents,
-                  &pedges](size_t index, size_t const basedesc, auto const& elem) {
+    auto Relax = [last_node = nlen, &costs, &descriptor_costs, &parents, &pedges](
+                         size_t index, size_t const base_descriptor_cost,
+                         auto const& elem) {
         // Need destination ID and edge weight.
-        size_t const nextnode = elem.get_dest() - Adaptor::FirstMatchPosition;
-        size_t       wgt      = costs[index] + elem.get_weight();
+        size_t const next_node   = elem.get_destination() - Adaptor::FirstMatchPosition;
+        size_t       edge_weight = costs[index] + elem.get_weight();
         // Compute descriptor bits from using this edge.
-        size_t desccost = basedesc + Adaptor::desc_bits(elem.get_type());
-        if (nextnode == lastnode) {
+        size_t descriptor_cost
+                = base_descriptor_cost + Adaptor::desc_bits(elem.get_type());
+        if (next_node == last_node) {
             // This is the ending node. Add the descriptor bits for the
             // end-of-file marker.
-            wgt += Adaptor::edge_weight(EdgeType::terminator, 0);
-            desccost += Adaptor::desc_bits(EdgeType::terminator);
+            edge_weight += Adaptor::edge_weight(EdgeType::terminator, 0);
+            descriptor_cost += Adaptor::desc_bits(EdgeType::terminator);
             // If the descriptor bitfield had exactly 0 bits left after
             // this, we may need to emit a new descriptor bitfield (the
             // full Adaptor::NumDescBits bits). Otherwise, we need to
             // pads the last descriptor bitfield to full size.
             // This accomplishes both.
-            size_t const descmod = desccost % Adaptor::NumDescBits;
-            if (descmod != 0 || Adaptor::NeedEarlyDescriptor) {
-                wgt += (Adaptor::NumDescBits - descmod);
-                desccost += (Adaptor::NumDescBits - descmod);
+            size_t const descriptor_modulus = descriptor_cost % Adaptor::NumDescBits;
+            if (descriptor_modulus != 0 || Adaptor::NeedEarlyDescriptor) {
+                edge_weight += (Adaptor::NumDescBits - descriptor_modulus);
+                descriptor_cost += (Adaptor::NumDescBits - descriptor_modulus);
             }
             // Compensate for the Adaptor's padding, if any.
-            wgt += Adaptor::get_padding(wgt);
+            edge_weight += Adaptor::get_padding(edge_weight);
         }
         // Is the cost to reach the target node through this edge less
         // than the current cost?
-        if (costs[nextnode] > wgt) {
+        if (costs[next_node] > edge_weight) {
             // If so, update the data structures with new best edge.
-            costs[nextnode]     = wgt;
-            parents[nextnode]   = index;
-            pedges[nextnode]    = elem;
-            desccosts[nextnode] = desccost;
+            costs[next_node]            = edge_weight;
+            parents[next_node]          = index;
+            pedges[next_node]           = elem;
+            descriptor_costs[next_node] = descriptor_cost;
         }
     };
 
@@ -412,14 +421,14 @@ auto find_optimal_lzss_parse(
     matches.reserve(Adaptor::LookAheadBufSize);
     for (size_t ii = 0; ii < numNodes; ii++) {
         // Get remaining unused descriptor bits up to this node.
-        size_t const basedesc = desccosts[ii];
+        size_t const base_descriptor_cost = descriptor_costs[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
             size_t const   offset = ii + Adaptor::FirstMatchPosition;
             auto const*    ptr    = reinterpret_cast<uint8_t const*>(data + offset);
             stream_t const val    = read_stream(ptr);
             EdgeType const type   = EdgeType::symbolwise;
-            Relax(ii, basedesc, Node_t(offset, val, type));
+            Relax(ii, base_descriptor_cost, Node_t(offset, val, type));
         }
         // Get the adjacency list for this node.
         for (auto& win : winSet) {
@@ -428,20 +437,20 @@ auto find_optimal_lzss_parse(
             }
             for (auto const& elem : matches) {
                 if (elem.get_type() != EdgeType::invalid) {
-                    Relax(ii, basedesc, elem);
+                    Relax(ii, base_descriptor_cost, elem);
                 }
             }
-            win.slideWindow();
+            win.slide_window();
         }
     }
 
     // This is what we will produce.
     lzss_parse_result<AdjList> result{
-            {Node_t{0, 0, EdgeType::terminator}}, desccosts.back(), costs.back()};
-    AdjList& parselist = result.parse_list;
+            {Node_t{0, 0, EdgeType::terminator}}, descriptor_costs.back(), costs.back()};
+    AdjList& parse_list = result.parse_list;
     for (size_t ii = numNodes; ii != 0;) {
         // Insert the edge up front...
-        parselist.push_front(pedges[ii]);
+        parse_list.push_front(pedges[ii]);
         // ... and switch to parent node.
         ii = parents[ii];
     }
@@ -462,16 +471,16 @@ class LZSSOStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
-    using bitbuffer_t
+    using bit_buffer_t
             = obitstream<descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t>;
     // Where we will output to.
     std::ostream& out;
     // Internal bitstream output buffer.
-    bitbuffer_t bits;
+    bit_buffer_t bits;
     // Internal parameter buffer.
     std::string buffer;
 
-    void flushbuffer() noexcept {
+    void flush_buffer() noexcept {
         out.write(buffer.c_str(), buffer.size());
         buffer.clear();
     }
@@ -492,36 +501,36 @@ public:
         // immediately fetch a new descriptor field when the previous one has
         // expired, and we don't want it to be the terminating sequence.
         // First, save current state.
-        bool const needdummydesc = !bits.have_waiting_bits();
+        bool const need_dummy_descriptor = !bits.have_waiting_bits();
         // Now, flush the queue if needed.
         bits.flush();
         if constexpr (Adaptor::NeedEarlyDescriptor) {
-            if (needdummydesc) {
+            if (need_dummy_descriptor) {
                 // We need to add a dummy descriptor field; so add it.
                 descriptor_endian_t::Write(out, descriptor_t{0});
             }
         }
         // Now write the terminating sequence if it wasn't written already.
-        flushbuffer();
+        flush_buffer();
     }
 
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, outputs it and the output parameter buffer.
-    void descbit(descriptor_t const bit) noexcept {
+    void descriptor_bit(descriptor_t const bit) noexcept {
         if constexpr (Adaptor::NeedEarlyDescriptor) {
             if (bits.push(bit)) {
-                flushbuffer();
+                flush_buffer();
             }
         } else {
             if (!bits.have_waiting_bits()) {
-                flushbuffer();
+                flush_buffer();
             }
             bits.push(bit);
         }
     }
 
     // Puts a byte in the output buffer.
-    void putbyte(size_t const value) noexcept {
+    void put_byte(size_t const value) noexcept {
         Write1(buffer, value);
     }
 };
@@ -537,13 +546,13 @@ class LZSSIStream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
-    using bitbuffer_t         = ibitstream<
+    using bit_buffer_t        = ibitstream<
             descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t,
             Adaptor::NeedEarlyDescriptor>;
     // Where we will input to.
     std::istream& in;
     // Internal bitstream input buffer.
-    bitbuffer_t bits;
+    bit_buffer_t bits;
 
 public:
     // Constructor.
@@ -551,12 +560,12 @@ public:
 
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
-    descriptor_t descbit() noexcept {
+    descriptor_t descriptor_bit() noexcept {
         return bits.pop();
     }
 
     // Puts a byte in the input buffer.
-    uint8_t getbyte() noexcept {
+    uint8_t get_byte() noexcept {
         return Read1(in);
     }
 };

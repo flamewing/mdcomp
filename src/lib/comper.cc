@@ -65,7 +65,7 @@ class comper_internal {
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
         constexpr static bit_endian const DescriptorBitOrder = bit_endian::big;
-        // How many characters to skip looking for matchs for at the start.
+        // How many characters to skip looking for matches for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
         constexpr static size_t const SearchBufSize = 256;
@@ -110,17 +110,17 @@ class comper_internal {
 
         // Comper finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                std::span<stream_t const> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<ComperAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
 
         // Comper needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const totallen) noexcept {
-            ignore_unused_variable_warning(totallen);
+        constexpr static size_t get_padding(size_t const total_length) noexcept {
+            ignore_unused_variable_warning(total_length);
             return 0;
         }
     };
@@ -132,14 +132,14 @@ public:
         CompIStream src(input);
 
         while (input.good()) {
-            if (src.descbit() == 0U) {
+            if (src.descriptor_bit() == 0U) {
                 // Symbolwise match.
                 BigEndian::Write2(Dst, BigEndian::Read2(input));
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                auto const   distance = (std::streamoff{0x100} - src.getbyte()) * 2;
-                size_t const length   = src.getbyte();
+                auto const   distance = (std::streamoff{0x100} - src.get_byte()) * 2;
+                size_t const length   = src.get_byte();
                 if (length == 0) {
                     break;
                 }
@@ -170,24 +170,24 @@ public:
                 size_t const value = edge.get_symbol();
                 size_t const high  = (value >> 8U) & 0xFFU;
                 size_t const low   = (value & 0xFFU);
-                out.descbit(0);
-                out.putbyte(high);
-                out.putbyte(low);
+                out.descriptor_bit(0);
+                out.put_byte(high);
+                out.put_byte(low);
                 break;
             }
             case EdgeType::dictionary: {
                 size_t const len  = edge.get_length();
                 size_t const dist = edge.get_distance();
-                out.descbit(1);
-                out.putbyte(-dist);
-                out.putbyte(len - 1);
+                out.descriptor_bit(1);
+                out.put_byte(-dist);
+                out.put_byte(len - 1);
                 break;
             }
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
-                out.descbit(1);
-                out.putbyte(0);
-                out.putbyte(0);
+                out.descriptor_bit(1);
+                out.put_byte(0);
+                out.put_byte(0);
                 break;
             }
             case EdgeType::invalid:
