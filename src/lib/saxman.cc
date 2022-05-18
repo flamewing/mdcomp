@@ -68,7 +68,7 @@ class saxman_internal {
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
         constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
-        // How many characters to skip looking for matchs for at the start.
+        // How many characters to skip looking for matches for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
         constexpr static size_t const SearchBufSize = 4096;
@@ -117,20 +117,20 @@ class saxman_internal {
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
         static bool extra_matches(
-                std::span<const stream_t> data, size_t const basenode,
+                std::span<const stream_t> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
             using Match_t = AdjListNode<SaxmanAdaptor>::MatchInfo;
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
-            if (basenode >= SearchBufSize - 1) {
+            if (base_node >= SearchBufSize - 1) {
                 // Do normal matches.
                 return false;
             }
             // Try matching zeroes.
             size_t       offset = 0;
-            size_t const end    = ubound - basenode;
-            while (data[basenode + offset] == 0) {
+            size_t const end    = ubound - base_node;
+            while (data[base_node + offset] == 0) {
                 if (++offset >= end) {
                     break;
                 }
@@ -140,7 +140,7 @@ class saxman_internal {
                 // Got them, so add them to the list.
                 for (size_t len = 3; len <= offset; len++) {
                     matches.emplace_back(
-                            basenode, Match_t{numeric_limits<size_t>::max(), len},
+                            base_node, Match_t{numeric_limits<size_t>::max(), len},
                             EdgeType::zerofill);
                 }
             }
@@ -148,8 +148,8 @@ class saxman_internal {
         }
 
         // Saxman needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const totallen) noexcept {
-            ignore_unused_variable_warning(totallen);
+        constexpr static size_t get_padding(size_t const total_length) noexcept {
+            ignore_unused_variable_warning(total_length);
             return 0;
         }
     };
@@ -168,12 +168,12 @@ public:
         // Loop while the file is good and we haven't gone over the declared
         // length.
         while (input.good() && input.tellg() < size) {
-            if (src.descbit() != 0U) {
+            if (src.descriptor_bit() != 0U) {
                 // Symbolwise match.
                 if (input.peek() == EOF) {
                     break;
                 }
-                Write1(Dst, src.getbyte());
+                Write1(Dst, src.get_byte());
             } else {
                 if (input.peek() == EOF) {
                     break;
@@ -181,10 +181,10 @@ public:
 
                 // Dictionary match.
                 // Offset and length of match.
-                size_t const high = src.getbyte();
-                size_t const low  = src.getbyte();
+                size_t const high = src.get_byte();
+                size_t const low  = src.get_byte();
 
-                auto const baseoffset
+                auto const base_offset
                         = static_cast<diff_t>((high | ((low & 0xF0U) << 4U)) + 18)
                           % buffer_size;
                 auto const length = static_cast<diff_t>((low & 0xFU) + 3);
@@ -192,10 +192,10 @@ public:
                 // The offset is stored as being absolute within current
                 // 0x1000-byte block, with part of it being remapped to the end
                 // of the previous 0x1000-byte block. We just rebase it around
-                // basedest.
+                // base.
                 auto const base = Dst.tellp();
                 auto const offset
-                        = ((baseoffset - base) % buffer_size) + base - buffer_size;
+                        = ((base_offset - base) % buffer_size) + base - buffer_size;
 
                 if (offset < base) {
                     // If the offset is before the current output position, we
@@ -227,20 +227,20 @@ public:
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descbit(1);
-                out.putbyte(edge.get_symbol());
+                out.descriptor_bit(1);
+                out.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary:
             case EdgeType::zerofill: {
                 size_t const len  = edge.get_length();
                 size_t const dist = edge.get_distance();
-                size_t const pos  = edge.get_pos();
+                size_t const pos  = edge.get_position();
                 size_t const base = (pos - dist - 0x12U) & 0xFFFU;
                 size_t const low  = base & 0xFFU;
                 size_t const high = ((len - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
-                out.descbit(0);
-                out.putbyte(low);
-                out.putbyte(high);
+                out.descriptor_bit(0);
+                out.put_byte(low);
+                out.put_byte(high);
                 break;
             }
             case EdgeType::terminator:

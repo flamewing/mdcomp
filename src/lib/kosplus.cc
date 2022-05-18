@@ -66,7 +66,7 @@ class kosplus_internal {
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
         constexpr static bit_endian const DescriptorBitOrder = bit_endian::big;
-        // How many characters to skip looking for matchs for at the start.
+        // How many characters to skip looking for matches for at the start.
         constexpr static size_t const FirstMatchPosition = 0;
         // Size of the search buffer.
         constexpr static size_t const SearchBufSize = 8192;
@@ -90,7 +90,7 @@ class kosplus_internal {
         constexpr static size_t desc_bits(EdgeType const type) noexcept {
             switch (type) {
             case EdgeType::symbolwise:
-                // 1-bit describtor.
+                // 1-bit descriptor.
                 return 1;
             case EdgeType::dictionary_inline:
                 // 2-bit descriptor, 2-bit count.
@@ -134,17 +134,17 @@ class kosplus_internal {
 
         // KosPlus finds no additional matches over normal LZSS.
         constexpr static bool extra_matches(
-                std::span<stream_t const> data, size_t const basenode,
+                std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<KosPlusAdaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(data, basenode, ubound, lbound, matches);
+            ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
             // Do normal matches.
             return false;
         }
 
         // KosPlusM needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const totallen) noexcept {
-            ignore_unused_variable_warning(totallen);
+        constexpr static size_t get_padding(size_t const total_length) noexcept {
+            ignore_unused_variable_warning(total_length);
             return 0;
         }
     };
@@ -156,25 +156,25 @@ public:
         KosIStream src(input);
 
         while (input.good()) {
-            if (src.descbit() != 0U) {
+            if (src.descriptor_bit() != 0U) {
                 // Symbolwise match.
-                Write1(Dst, src.getbyte());
+                Write1(Dst, src.get_byte());
             } else {
                 // Dictionary matches.
                 // Count and distance
                 size_t         Count    = 0U;
                 std::streamoff distance = 0U;
 
-                if (src.descbit() != 0U) {
+                if (src.descriptor_bit() != 0U) {
                     // Separate dictionary match.
-                    uint8_t High = src.getbyte();
-                    uint8_t Low  = src.getbyte();
+                    uint8_t High = src.get_byte();
+                    uint8_t Low  = src.get_byte();
 
                     Count = High & 0x07U;
 
                     if (Count == 0U) {
                         // 3-byte dictionary match.
-                        Count = src.getbyte();
+                        Count = src.get_byte();
                         if (Count == 0U) {
                             break;
                         }
@@ -187,10 +187,10 @@ public:
                     distance = std::streamoff{0x2000} - (((0xF8U & High) << 5U) | Low);
                 } else {
                     // Inline dictionary match.
-                    distance = std::streamoff{0x100} - src.getbyte();
+                    distance = std::streamoff{0x100} - src.get_byte();
 
-                    size_t High = src.descbit();
-                    size_t Low  = src.descbit();
+                    size_t High = src.descriptor_bit();
+                    size_t Low  = src.descriptor_bit();
 
                     Count = ((High << 1U) | Low) + 2;
                 }
@@ -218,17 +218,17 @@ public:
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descbit(1);
-                out.putbyte(edge.get_symbol());
+                out.descriptor_bit(1);
+                out.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary_inline: {
                 size_t const len  = edge.get_length() - 2;
                 size_t const dist = 0x100U - edge.get_distance();
-                out.descbit(0);
-                out.descbit(0);
-                out.putbyte(dist);
-                out.descbit((len >> 1U) & 1U);
-                out.descbit(len & 1U);
+                out.descriptor_bit(0);
+                out.descriptor_bit(0);
+                out.put_byte(dist);
+                out.descriptor_bit((len >> 1U) & 1U);
+                out.descriptor_bit(len & 1U);
                 break;
             }
             case EdgeType::dictionary_short:
@@ -237,26 +237,26 @@ public:
                 size_t const dist = 0x2000U - edge.get_distance();
                 size_t       high = (dist >> 5U) & 0xF8U;
                 size_t       low  = (dist & 0xFFU);
-                out.descbit(0);
-                out.descbit(1);
+                out.descriptor_bit(0);
+                out.descriptor_bit(1);
                 if (edge.get_type() == EdgeType::dictionary_short) {
-                    out.putbyte(high | (10 - len));
-                    out.putbyte(low);
+                    out.put_byte(high | (10 - len));
+                    out.put_byte(low);
                 } else {
-                    out.putbyte(high);
-                    out.putbyte(low);
-                    out.putbyte(len - 9);
+                    out.put_byte(high);
+                    out.put_byte(low);
+                    out.put_byte(len - 9);
                 }
                 break;
             }
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
-                out.descbit(0);
-                out.descbit(1);
+                out.descriptor_bit(0);
+                out.descriptor_bit(1);
                 // Write end-of-file marker.
-                out.putbyte(0xF0);
-                out.putbyte(0x00);
-                out.putbyte(0x00);
+                out.put_byte(0xF0);
+                out.put_byte(0x00);
+                out.put_byte(0x00);
                 break;
             }
             case EdgeType::invalid:

@@ -69,10 +69,10 @@ int main(int argc, char* argv[]) {
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    bool   extract  = false;
-    bool   printend = false;
-    bool   crunch   = false;
-    size_t pointer  = 0;
+    bool   extract   = false;
+    bool   print_end = false;
+    bool   crunch    = false;
+    size_t pointer   = 0;
 
     while (true) {
         int option_index = 0;
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
         switch (option_char) {
         case 'i':
-            printend = true;
+            print_end = true;
             break;
         case 'x':
             extract = true;
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
              << endl;
         return 4;
     }
-    if (printend && !extract) {
+    if (print_end && !extract) {
         cerr << "Error: -i must be used with --extract." << endl << endl;
         return 5;
     }
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
         if (extract) {
             fin.seekg(static_cast<std::streamsize>(pointer));
             nemesis::decode(fin, fout);
-            if (printend) {
+            if (print_end) {
                 boost::io::ios_all_saver flags(cout);
                 cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right
                      << fin.tellg() << endl;

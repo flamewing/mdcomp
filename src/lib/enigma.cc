@@ -229,7 +229,7 @@ public:
 
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
-        uint16_t maskval = 0;
+        uint16_t mask_val = 0;
         Src.clear();
         Src.seekg(0);
         while (true) {
@@ -237,14 +237,14 @@ public:
             if (!Src.good()) {
                 break;
             }
-            maskval |= value;
+            mask_val |= value;
             counts[value] += 1;
             elems.insert(value);
             unpack.push_back(value);
         }
 
-        auto         putMask       = flag_writer::get(maskval >> 11U);
-        size_t const packet_length = std::bit_width(maskval & 0x7ffU);
+        auto         putMask       = flag_writer::get(mask_val >> 11U);
+        size_t const packet_length = std::bit_width(mask_val & 0x7ffU);
 
         // Find the most common 2-byte value.
         Compare_count  cmp;
@@ -277,7 +277,7 @@ public:
 
         // Output header.
         Write1(Dst, packet_length & std::numeric_limits<uint8_t>::max());
-        Write1(Dst, maskval >> 11U);
+        Write1(Dst, mask_val >> 11U);
         BigEndian::Write2(Dst, incrementing_value);
         BigEndian::Write2(Dst, common_value);
 
