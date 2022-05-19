@@ -126,7 +126,7 @@ using NibbleCodeMap = map<nibble_run, Code>;
 using CodeNibbleMap = map<Code, nibble_run>;
 
 // Slightly based on code by Mark Nelson for Huffman encoding.
-// http://marknelson.us/1996/01/01/priority-queues/
+// https://marknelson.us/posts/1996/01/01/priority-queues.html
 // This represents a node (leaf or branch) in the Huffman encoding tree.
 class node : public enable_shared_from_this<node> {
 private:
