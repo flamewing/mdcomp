@@ -138,9 +138,9 @@ class saxman_internal {
             // Need at least 3 zeroes in sequence.
             if (offset >= 3) {
                 // Got them, so add them to the list.
-                for (size_t len = 3; len <= offset; len++) {
+                for (size_t length = 3; length <= offset; length++) {
                     matches.emplace_back(
-                            base_node, Match_t{numeric_limits<size_t>::max(), len},
+                            base_node, Match_t{numeric_limits<size_t>::max(), length},
                             EdgeType::zerofill);
                 }
             }
@@ -155,11 +155,11 @@ class saxman_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dst, size_t const Size) {
+    static void decode(istream& input, iostream& Dest, size_t const Size) {
         using SaxIStream = LZSSIStream<SaxmanAdaptor>;
         using diff_t     = std::make_signed_t<size_t>;
 
-        SaxIStream src(input);
+        SaxIStream source(input);
         auto const size = static_cast<std::make_signed_t<size_t>>(Size);
 
         constexpr auto const buffer_size
@@ -168,12 +168,12 @@ public:
         // Loop while the file is good and we haven't gone over the declared
         // length.
         while (input.good() && input.tellg() < size) {
-            if (src.descriptor_bit() != 0U) {
+            if (source.descriptor_bit() != 0U) {
                 // Symbolwise match.
                 if (input.peek() == EOF) {
                     break;
                 }
-                Write1(Dst, src.get_byte());
+                Write1(Dest, source.get_byte());
             } else {
                 if (input.peek() == EOF) {
                     break;
@@ -181,8 +181,8 @@ public:
 
                 // Dictionary match.
                 // Offset and length of match.
-                size_t const high = src.get_byte();
-                size_t const low  = src.get_byte();
+                size_t const high = source.get_byte();
+                size_t const low  = source.get_byte();
 
                 auto const base_offset
                         = static_cast<diff_t>((high | ((low & 0xF0U) << 4U)) + 18)
@@ -193,7 +193,7 @@ public:
                 // 0x1000-byte block, with part of it being remapped to the end
                 // of the previous 0x1000-byte block. We just rebase it around
                 // base.
-                auto const base = Dst.tellp();
+                auto const base = Dest.tellp();
                 auto const offset
                         = ((base_offset - base) % buffer_size) + base - buffer_size;
 
@@ -201,46 +201,46 @@ public:
                     // If the offset is before the current output position, we
                     // copy bytes from the given location.
                     for (auto csrc = offset; csrc < offset + length; csrc++) {
-                        auto const Pointer = Dst.tellp();
-                        Dst.seekg(csrc);
-                        uint8_t const Byte = Read1(Dst);
-                        Dst.seekp(Pointer);
-                        Write1(Dst, Byte);
+                        auto const Pointer = Dest.tellp();
+                        Dest.seekg(csrc);
+                        uint8_t const Byte = Read1(Dest);
+                        Dest.seekp(Pointer);
+                        Write1(Dest, Byte);
                     }
                 } else {
                     // Otherwise, it is a zero fill.
-                    fill_n(ostreambuf_iterator<char>(Dst), length, 0);
+                    fill_n(ostreambuf_iterator<char>(Dest), length, 0);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dst, uint8_t const*& Data, size_t const Size) {
+    static void encode(ostream& Dest, uint8_t const*& Data, size_t const Size) {
         using EdgeType   = typename SaxmanAdaptor::EdgeType;
         using SaxOStream = LZSSOStream<SaxmanAdaptor>;
 
         // Compute optimal Saxman parsing of input file.
         auto       list = find_optimal_lzss_parse(Data, Size, SaxmanAdaptor{});
-        SaxOStream out(Dst);
+        SaxOStream output(Dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descriptor_bit(1);
-                out.put_byte(edge.get_symbol());
+                output.descriptor_bit(1);
+                output.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary:
             case EdgeType::zerofill: {
-                size_t const len  = edge.get_length();
-                size_t const dist = edge.get_distance();
-                size_t const pos  = edge.get_position();
-                size_t const base = (pos - dist - 0x12U) & 0xFFFU;
-                size_t const low  = base & 0xFFU;
-                size_t const high = ((len - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
-                out.descriptor_bit(0);
-                out.put_byte(low);
-                out.put_byte(high);
+                size_t const length   = edge.get_length();
+                size_t const dist     = edge.get_distance();
+                size_t const position = edge.get_position();
+                size_t const base     = (position - dist - 0x12U) & 0xFFFU;
+                size_t const low      = base & 0xFFU;
+                size_t const high     = ((length - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
+                output.descriptor_bit(0);
+                output.put_byte(low);
+                output.put_byte(high);
                 break;
             }
             case EdgeType::terminator:
@@ -255,22 +255,22 @@ public:
     }
 };
 
-bool saxman::decode(istream& Src, iostream& Dst, size_t Size) {
+bool saxman::decode(istream& Source, iostream& Dest, size_t Size) {
     if (Size == 0) {
-        Size = LittleEndian::Read2(Src);
+        Size = LittleEndian::Read2(Source);
     }
 
-    auto const   Location = Src.tellg();
+    auto const   Location = Source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Src, input);
+    extract(Source, input);
 
-    saxman_internal::decode(input, Dst, Size);
-    Src.seekg(Location + input.tellg());
+    saxman_internal::decode(input, Dest, Size);
+    Source.seekg(Location + input.tellg());
     return true;
 }
 
 bool saxman::encode(
-        ostream& Dst, uint8_t const* data, size_t const Size, bool const WithSize) {
+        ostream& Dest, uint8_t const* data, size_t const Size, bool const WithSize) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
     auto const   Start = outbuff.tellg();
     saxman_internal::encode(outbuff, data, Size);
@@ -278,9 +278,9 @@ bool saxman::encode(
         outbuff.seekg(Start);
         outbuff.ignore(numeric_limits<streamsize>::max());
         auto FullSize = outbuff.gcount();
-        LittleEndian::Write2(Dst, static_cast<uint16_t>(FullSize));
+        LittleEndian::Write2(Dest, static_cast<uint16_t>(FullSize));
     }
     outbuff.seekg(Start);
-    Dst << outbuff.rdbuf();
+    Dest << outbuff.rdbuf();
     return true;
 }

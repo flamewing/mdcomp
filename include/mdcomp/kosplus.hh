@@ -31,11 +31,11 @@ using moduled_kosplus = ModuledAdaptor<kosplus, 4096U, 1U>;
 class kosplus : public basic_kosplus, public moduled_kosplus {
     friend basic_kosplus;
     friend moduled_kosplus;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
 
 public:
     using basic_kosplus::encode;
-    static bool decode(std::istream& Src, std::iostream& Dst);
+    static bool decode(std::istream& Source, std::iostream& Dest);
 };
 
 #endif    // LIB_KOSPLUS_HH

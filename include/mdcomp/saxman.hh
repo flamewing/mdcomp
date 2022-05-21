@@ -32,11 +32,11 @@ class saxman : public basic_saxman, public moduled_saxman {
     friend basic_saxman;
     friend moduled_saxman;
     static bool encode(
-            std::ostream& Dst, uint8_t const* data, size_t Size, bool WithSize = true);
+            std::ostream& Dest, uint8_t const* data, size_t Size, bool WithSize = true);
 
 public:
     using basic_saxman::encode;
-    static bool decode(std::istream& Src, std::iostream& Dst, size_t Size = 0);
+    static bool decode(std::istream& Source, std::iostream& Dest, size_t Size = 0);
 };
 
 #endif    // LIB_SAXMAN_HH

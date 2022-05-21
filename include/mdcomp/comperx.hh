@@ -31,11 +31,11 @@ using moduled_comperx = ModuledAdaptor<comperx, 4096U, 1U>;
 class comperx : public basic_comperx, public moduled_comperx {
     friend basic_comperx;
     friend moduled_comperx;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
 
 public:
     using basic_comperx::encode;
-    static bool decode(std::istream& Src, std::iostream& Dst);
+    static bool decode(std::istream& Source, std::iostream& Dest);
 };
 
 #endif    // LIB_COMPERX_HH

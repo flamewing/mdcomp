@@ -151,31 +151,31 @@ class kosinski_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dst) {
+    static void decode(istream& input, iostream& Dest) {
         using KosIStream = LZSSIStream<KosinskiAdaptor>;
 
-        KosIStream src(input);
+        KosIStream source(input);
 
         while (input.good()) {
-            if (src.descriptor_bit() != 0U) {
+            if (source.descriptor_bit() != 0U) {
                 // Symbolwise match.
-                Write1(Dst, src.get_byte());
+                Write1(Dest, source.get_byte());
             } else {
                 // Dictionary matches.
                 // Count and distance
                 size_t         Count    = 0U;
                 std::streamoff distance = 0;
 
-                if (src.descriptor_bit() != 0U) {
+                if (source.descriptor_bit() != 0U) {
                     // Separate dictionary match.
-                    uint8_t Low  = src.get_byte();
-                    uint8_t High = src.get_byte();
+                    uint8_t Low  = source.get_byte();
+                    uint8_t High = source.get_byte();
 
                     Count = High & 0x07U;
 
                     if (Count == 0U) {
                         // 3-byte dictionary match.
-                        Count = src.get_byte();
+                        Count = source.get_byte();
                         if (Count == 0U) {
                             break;
                         }
@@ -191,76 +191,76 @@ public:
                     distance = std::streamoff{0x2000} - (((0xF8U & High) << 5U) | Low);
                 } else {
                     // Inline dictionary match.
-                    size_t High = src.descriptor_bit();
-                    size_t Low  = src.descriptor_bit();
+                    size_t High = source.descriptor_bit();
+                    size_t Low  = source.descriptor_bit();
 
                     Count = ((High << 1U) | Low) + 2;
 
-                    distance = std::streamoff{0x100} - src.get_byte();
+                    distance = std::streamoff{0x100} - source.get_byte();
                 }
 
                 for (size_t i = 0; i < Count; i++) {
-                    std::streamsize const Pointer = Dst.tellp();
-                    Dst.seekg(Pointer - distance);
-                    uint8_t const Byte = Read1(Dst);
-                    Dst.seekp(Pointer);
-                    Write1(Dst, Byte);
+                    std::streamsize const Pointer = Dest.tellp();
+                    Dest.seekg(Pointer - distance);
+                    uint8_t const Byte = Read1(Dest);
+                    Dest.seekp(Pointer);
+                    Write1(Dest, Byte);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dst, uint8_t const* Data, size_t const Size) {
+    static void encode(ostream& Dest, uint8_t const* Data, size_t const Size) {
         using EdgeType   = typename KosinskiAdaptor::EdgeType;
         using KosOStream = LZSSOStream<KosinskiAdaptor>;
 
         // Compute optimal Kosinski parsing of input file.
         auto       list = find_optimal_lzss_parse(Data, Size, KosinskiAdaptor{});
-        KosOStream out(Dst);
+        KosOStream output(Dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descriptor_bit(1);
-                out.put_byte(edge.get_symbol());
+                output.descriptor_bit(1);
+                output.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary_inline: {
-                size_t const len  = edge.get_length() - 2;
-                size_t const dist = 0x100U - edge.get_distance();
-                out.descriptor_bit(0);
-                out.descriptor_bit(0);
-                out.descriptor_bit((len >> 1U) & 1U);
-                out.descriptor_bit(len & 1U);
-                out.put_byte(dist);
+                size_t const length = edge.get_length() - 2;
+                size_t const dist   = 0x100U - edge.get_distance();
+                output.descriptor_bit(0);
+                output.descriptor_bit(0);
+                output.descriptor_bit((length >> 1U) & 1U);
+                output.descriptor_bit(length & 1U);
+                output.put_byte(dist);
                 break;
             }
             case EdgeType::dictionary_short:
             case EdgeType::dictionary_long: {
-                size_t const len  = edge.get_length();
-                size_t const dist = 0x2000U - edge.get_distance();
-                size_t const high = (dist >> 5U) & 0xF8U;
-                size_t const low  = (dist & 0xFFU);
-                out.descriptor_bit(0);
-                out.descriptor_bit(1);
+                size_t const length = edge.get_length();
+                size_t const dist   = 0x2000U - edge.get_distance();
+                size_t const high   = (dist >> 5U) & 0xF8U;
+                size_t const low    = (dist & 0xFFU);
+                output.descriptor_bit(0);
+                output.descriptor_bit(1);
                 if (edge.get_type() == EdgeType::dictionary_short) {
-                    out.put_byte(low);
-                    out.put_byte(high | (len - 2));
+                    output.put_byte(low);
+                    output.put_byte(high | (length - 2));
                 } else {
-                    out.put_byte(low);
-                    out.put_byte(high);
-                    out.put_byte(len - 1);
+                    output.put_byte(low);
+                    output.put_byte(high);
+                    output.put_byte(length - 1);
                 }
                 break;
             }
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
-                out.descriptor_bit(0);
-                out.descriptor_bit(1);
+                output.descriptor_bit(0);
+                output.descriptor_bit(1);
                 // Write end-of-file marker. Maybe use 0x00 0xF8 0x00 instead?
-                out.put_byte(0x00);
-                out.put_byte(0xF0);
-                out.put_byte(0x00);
+                output.put_byte(0x00);
+                output.put_byte(0xF0);
+                output.put_byte(0x00);
                 break;
             }
             case EdgeType::invalid:
@@ -273,17 +273,17 @@ public:
     }
 };
 
-bool kosinski::decode(istream& Src, iostream& Dst) {
-    auto const   Location = Src.tellg();
+bool kosinski::decode(istream& Source, iostream& Dest) {
+    auto const   Location = Source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Src, input);
+    extract(Source, input);
 
-    kosinski_internal::decode(input, Dst);
-    Src.seekg(Location + input.tellg());
+    kosinski_internal::decode(input, Dest);
+    Source.seekg(Location + input.tellg());
     return true;
 }
 
-bool kosinski::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
-    kosinski_internal::encode(Dst, data, Size);
+bool kosinski::encode(ostream& Dest, uint8_t const* data, size_t const Size) {
+    kosinski_internal::encode(Dest, data, Size);
     return true;
 }
