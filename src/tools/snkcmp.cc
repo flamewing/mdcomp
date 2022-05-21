@@ -97,8 +97,8 @@ int main(int argc, char* argv[]) {
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
@@ -106,22 +106,22 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(static_cast<std::streamsize>(pointer));
-        snkrle::decode(fin, buffer);
-        fin.close();
+        input.seekg(static_cast<std::streamsize>(pointer));
+        snkrle::decode(input, buffer);
+        input.close();
         buffer.seekg(0);
 
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
             return 3;
         }
-        snkrle::encode(buffer, fout);
+        snkrle::encode(buffer, output);
     } else {
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
@@ -129,10 +129,10 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(static_cast<std::streamsize>(pointer));
-            snkrle::decode(fin, fout);
+            input.seekg(static_cast<std::streamsize>(pointer));
+            snkrle::decode(input, output);
         } else {
-            snkrle::encode(fin, fout);
+            snkrle::encode(input, output);
         }
     }
 

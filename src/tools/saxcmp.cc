@@ -119,8 +119,8 @@ int main(int argc, char* argv[]) {
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
@@ -128,22 +128,22 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(static_cast<std::streamsize>(pointer));
-        saxman::decode(fin, buffer, BSize);
-        fin.close();
+        input.seekg(static_cast<std::streamsize>(pointer));
+        saxman::decode(input, buffer, BSize);
+        input.close();
         buffer.seekg(0);
 
-        ofstream fout(outfile, ios::out | ios::binary);
-        if (!fout.good()) {
+        ofstream output(outfile, ios::out | ios::binary);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
             return 3;
         }
-        saxman::encode(buffer, fout, WithSize);
+        saxman::encode(buffer, output, WithSize);
     } else {
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
@@ -151,10 +151,10 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(static_cast<std::streamsize>(pointer));
-            saxman::decode(fin, fout, BSize);
+            input.seekg(static_cast<std::streamsize>(pointer));
+            saxman::decode(input, output, BSize);
         } else {
-            saxman::encode(fin, fout, WithSize);
+            saxman::encode(input, output, WithSize);
         }
     }
 
