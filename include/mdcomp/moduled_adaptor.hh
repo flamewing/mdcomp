@@ -108,27 +108,27 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
 
     BigEndian::Write2(
             Dest, static_cast<size_t>(FullSize) & std::numeric_limits<uint16_t>::max());
-    std::stringstream sout(std::ios::in | std::ios::out | std::ios::binary);
+    std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
 
     while (FullSize > ModuleSize) {
         // We want to manage internal padding for all modules but the last.
         PadMaskBits = 8 * ModulePadding - 1U;
-        Format::encode(sout, std::to_address(pointer), ModuleSize);
+        Format::encode(buffer, std::to_address(pointer), ModuleSize);
         FullSize -= ModuleSize;
         pointer += ModuleSize;
 
         // Padding between modules
-        int64_t const paddingEnd = detail::round_up(sout.tellp(), padding);
-        while (sout.tellp() < paddingEnd) {
-            sout.put(0);
+        int64_t const paddingEnd = detail::round_up(buffer.tellp(), padding);
+        while (buffer.tellp() < paddingEnd) {
+            buffer.put(0);
         }
     }
 
     PadMaskBits = 7U;
-    Format::encode(sout, std::to_address(pointer), FullSize);
+    Format::encode(buffer, std::to_address(pointer), FullSize);
 
     // Pad to even size.
-    Dest << sout.rdbuf();
+    Dest << buffer.rdbuf();
     if ((Dest.tellp() % 2) != 0) {
         Dest.put(0);
     }

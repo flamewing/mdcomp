@@ -110,8 +110,8 @@ int main(int argc, char* argv[]) {
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
@@ -119,30 +119,30 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(static_cast<std::streamsize>(pointer));
+        input.seekg(static_cast<std::streamsize>(pointer));
         if (moduled) {
-            kosplus::moduled_decode(fin, buffer);
+            kosplus::moduled_decode(input, buffer);
         } else {
-            kosplus::decode(fin, buffer);
+            kosplus::decode(input, buffer);
         }
-        fin.close();
+        input.close();
         buffer.seekg(0);
 
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
             return 3;
         }
         if (moduled) {
-            kosplus::moduled_encode(buffer, fout);
+            kosplus::moduled_encode(buffer, output);
         } else {
-            kosplus::encode(buffer, fout);
+            kosplus::encode(buffer, output);
         }
     } else {
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
@@ -150,17 +150,17 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(static_cast<std::streamsize>(pointer));
+            input.seekg(static_cast<std::streamsize>(pointer));
             if (moduled) {
-                kosplus::moduled_decode(fin, fout);
+                kosplus::moduled_decode(input, output);
             } else {
-                kosplus::decode(fin, fout);
+                kosplus::decode(input, output);
             }
         } else {
             if (moduled) {
-                kosplus::moduled_encode(fin, fout);
+                kosplus::moduled_encode(input, output);
             } else {
-                kosplus::encode(fin, fout);
+                kosplus::encode(input, output);
             }
         }
     }

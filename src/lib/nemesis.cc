@@ -490,8 +490,8 @@ public:
         // Now we will compute the size requirements for inline nibble runs.
         for (auto const& [run, frequency] : counts) {
             // Find out if this nibble run has a code for it.
-            auto it2 = code_map.find(run);
-            if (it2 == code_map.end()) {
+            auto found_run = code_map.find(run);
+            if (found_run == code_map.end()) {
                 // Nibble run does not have its own code. We need to find out if
                 // we can break it up into smaller nibble runs with total code
                 // size less than 13 bits or if we need to inline it (13 bits).
@@ -506,8 +506,8 @@ public:
                     // We can break this up only as 2 consecutive runs of a
                     // nibble run with count == 0.
                     nibble_run target{run.get_nibble(), 0};
-                    it2 = code_map.find(target);
-                    if (it2 == code_map.end() || (it2->second).length > 6) {
+                    found_run = code_map.find(target);
+                    if (found_run == code_map.end() || (found_run->second).length > 6) {
                         // The smaller nibble run either does not have its own
                         // code or it results in a longer bit code when doubled
                         // up than would result from inlining the run. In either
@@ -519,8 +519,8 @@ public:
                         // our nibble run. So we do exactly that, by adding a
                         // (temporary) entry in the supplementary code_map, which
                         // will later be merged into the main code_map.
-                        size_t code   = (it2->second).code;
-                        size_t length = (it2->second).length;
+                        size_t code   = (found_run->second).code;
+                        size_t length = (found_run->second).length;
                         code          = (code << length) | code;
                         length <<= 1U;
                         size_estimate += length * frequency;
@@ -640,15 +640,15 @@ public:
                     for (size_t i = 0; i < count; i++) {
                         // Is this run in the code_map?
                         nibble_run target(nibble, i);
-                        auto       it3 = code_map.find(target);
-                        if (it3 == code_map.end()) {
+                        auto       target_iter = code_map.find(target);
+                        if (target_iter == code_map.end()) {
                             // It is not.
                             // Put inline length in the vector.
                             run_length.push_back(6 + 7);
                         } else {
                             // It is.
                             // Put code length in the vector.
-                            run_length.push_back((it3->second).length);
+                            run_length.push_back((target_iter->second).length);
                         }
                     }
 
@@ -690,15 +690,15 @@ public:
                                 continue;
                             }
                             // Is this run in the code_map?
-                            nibble_run trg(nibble, i);
-                            auto       it3 = code_map.find(trg);
-                            if (it3 != code_map.end()) {
+                            nibble_run target(nibble, i);
+                            auto       target_iter = code_map.find(target);
+                            if (target_iter != code_map.end()) {
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
                                 for (size_t j = 0; j < coeff; j++) {
-                                    length += (it3->second).length;
-                                    code <<= (it3->second).length;
-                                    code |= (it3->second).code;
+                                    length += (target_iter->second).length;
+                                    code <<= (target_iter->second).length;
+                                    code |= (target_iter->second).code;
                                 }
                             }
                         }
@@ -1058,15 +1058,15 @@ bool nemesis::encode(istream& Source, ostream& Dest) {
     source.clear();
     source.seekg(0);
 
-    string sin   = source.str();
-    auto*  bytes = reinterpret_cast<uint8_t*>(sin.data());
-    for (size_t i = sin.size() - 4; i > 0; i -= 4) {
+    string buffer = source.str();
+    auto*  bytes  = reinterpret_cast<uint8_t*>(buffer.data());
+    for (size_t i = buffer.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
         bytes[i + 1] ^= bytes[i - 3];
         bytes[i + 2] ^= bytes[i - 2];
         bytes[i + 3] ^= bytes[i - 1];
     }
-    stringstream alt(sin, ios::in | ios::out | ios::binary);
+    stringstream source_xor(buffer, ios::in | ios::out | ios::binary);
 
     std::array<stringstream, 4> buffers;
     using NemesisMode = nemesis_internal::NemesisMode;
@@ -1077,9 +1077,11 @@ bool nemesis::encode(istream& Source, ostream& Dest) {
             nemesis_internal::encode(
                     source, buffers[1], NemesisMode::Normal, size, Compare_node2{}),
             nemesis_internal::encode(
-                    alt, buffers[2], NemesisMode::ProgressiveXor, size, Compare_node{}),
+                    source_xor, buffers[2], NemesisMode::ProgressiveXor, size,
+                    Compare_node{}),
             nemesis_internal::encode(
-                    alt, buffers[3], NemesisMode::ProgressiveXor, size, Compare_node2{})};
+                    source_xor, buffers[3], NemesisMode::ProgressiveXor, size,
+                    Compare_node2{})};
 
     // Figure out what was the best encoding.
     std::streamoff best_size   = numeric_limits<std::streamoff>::max();

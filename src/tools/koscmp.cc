@@ -129,8 +129,8 @@ int main(int argc, char* argv[]) {
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
@@ -138,30 +138,30 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(static_cast<std::streamsize>(pointer));
+        input.seekg(static_cast<std::streamsize>(pointer));
         if (moduled) {
-            kosinski::moduled_decode(fin, buffer, padding);
+            kosinski::moduled_decode(input, buffer, padding);
         } else {
-            kosinski::decode(fin, buffer);
+            kosinski::decode(input, buffer);
         }
-        fin.close();
+        input.close();
         buffer.seekg(0);
 
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
             return 3;
         }
         if (moduled) {
-            kosinski::moduled_encode(buffer, fout, padding);
+            kosinski::moduled_encode(buffer, output, padding);
         } else {
-            kosinski::encode(buffer, fout);
+            kosinski::encode(buffer, output);
         }
     } else {
-        fstream fout(outfile, ios::in | ios::out | ios::binary | ios::trunc);
-        if (!fout.good()) {
+        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        if (!output.good()) {
             cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
                  << endl
                  << endl;
@@ -169,17 +169,17 @@ int main(int argc, char* argv[]) {
         }
 
         if (extract) {
-            fin.seekg(static_cast<std::streamsize>(pointer));
+            input.seekg(static_cast<std::streamsize>(pointer));
             if (moduled) {
-                kosinski::moduled_decode(fin, fout, padding);
+                kosinski::moduled_decode(input, output, padding);
             } else {
-                kosinski::decode(fin, fout);
+                kosinski::decode(input, output);
             }
         } else {
             if (moduled) {
-                kosinski::moduled_encode(fin, fout, padding);
+                kosinski::moduled_encode(input, output, padding);
             } else {
-                kosinski::encode(fin, fout);
+                kosinski::encode(input, output);
             }
         }
     }

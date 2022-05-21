@@ -130,8 +130,8 @@ base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const n) {
 // Comparison functor, see below.
 struct Compare_count {
     bool operator()(
-            pair<uint16_t const, size_t>& it1, pair<uint16_t const, size_t>& it2) {
-        return (it1.second < it2.second);
+            pair<uint16_t const, size_t>& left, pair<uint16_t const, size_t>& right) {
+        return (left.second < right.second);
     }
 };
 

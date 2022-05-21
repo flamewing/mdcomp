@@ -69,25 +69,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
     }
 
-    ofstream fout(argv[optind + 1], ios::out | ios::binary);
-    if (!fout.good()) {
+    ofstream output(argv[optind + 1], ios::out | ios::binary);
+    if (!output.good()) {
         cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl
              << endl;
         return 3;
     }
 
     if (extract) {
-        fin.seekg(static_cast<std::streamsize>(pointer));
-        enigma::decode(fin, fout);
+        input.seekg(static_cast<std::streamsize>(pointer));
+        enigma::decode(input, output);
     } else {
-        enigma::encode(fin, fout);
+        enigma::encode(input, output);
     }
 
     return 0;

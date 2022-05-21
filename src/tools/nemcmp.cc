@@ -117,8 +117,8 @@ int main(int argc, char* argv[]) {
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream fin(argv[optind], ios::in | ios::binary);
-    if (!fin.good()) {
+    ifstream input(argv[optind], ios::in | ios::binary);
+    if (!input.good()) {
         cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
              << endl;
         return 2;
@@ -126,36 +126,36 @@ int main(int argc, char* argv[]) {
 
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
-        fin.seekg(static_cast<std::streamsize>(pointer));
-        nemesis::decode(fin, buffer);
-        fin.close();
+        input.seekg(static_cast<std::streamsize>(pointer));
+        nemesis::decode(input, buffer);
+        input.close();
         buffer.seekg(0);
 
-        ofstream fout(outfile, ios::out | ios::binary);
-        if (!fout.good()) {
+        ofstream output(outfile, ios::out | ios::binary);
+        if (!output.good()) {
             cerr << "Output file '" << outfile << "' could not be opened." << endl
                  << endl;
             return 3;
         }
-        nemesis::encode(buffer, fout);
+        nemesis::encode(buffer, output);
     } else {
-        ofstream fout(outfile, ios::out | ios::binary);
-        if (!fout.good()) {
+        ofstream output(outfile, ios::out | ios::binary);
+        if (!output.good()) {
             cerr << "Output file '" << outfile << "' could not be opened." << endl
                  << endl;
             return 3;
         }
 
         if (extract) {
-            fin.seekg(static_cast<std::streamsize>(pointer));
-            nemesis::decode(fin, fout);
+            input.seekg(static_cast<std::streamsize>(pointer));
+            nemesis::decode(input, output);
             if (print_end) {
                 boost::io::ios_all_saver flags(cout);
                 cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right
-                     << fin.tellg() << endl;
+                     << input.tellg() << endl;
             }
         } else {
-            nemesis::encode(fin, fout);
+            nemesis::encode(input, output);
         }
     }
     return 0;
