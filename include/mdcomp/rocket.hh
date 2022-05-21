@@ -31,11 +31,11 @@ using moduled_rocket = ModuledAdaptor<rocket, 4096U, 1U>;
 class rocket : public basic_rocket, public moduled_rocket {
     friend basic_rocket;
     friend moduled_rocket;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
 
 public:
-    static bool encode(std::istream& Src, std::ostream& Dst);
-    static bool decode(std::istream& Src, std::iostream& Dst);
+    static bool encode(std::istream& Source, std::ostream& Dest);
+    static bool decode(std::istream& Source, std::iostream& Dest);
 };
 
 #endif    // LIB_ROCKET_HH

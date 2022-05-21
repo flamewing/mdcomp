@@ -129,25 +129,25 @@ struct rocket_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dst) {
+    static void decode(istream& input, iostream& Dest) {
         using RockIStream = LZSSIStream<RocketAdaptor>;
         using diff_t      = std::make_signed_t<size_t>;
 
         input.ignore(2);
         auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(input) + 4);
-        RockIStream src(input);
+        RockIStream source(input);
 
         while (input.good() && input.tellg() < Size) {
-            if (src.descriptor_bit() != 0U) {
+            if (source.descriptor_bit() != 0U) {
                 // Symbolwise match.
                 uint8_t const Byte = Read1(input);
-                Write1(Dst, Byte);
+                Write1(Dest, Byte);
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                size_t const high   = src.get_byte();
-                size_t const low    = src.get_byte();
-                diff_t const base   = Dst.tellp();
+                size_t const high   = source.get_byte();
+                size_t const low    = source.get_byte();
+                diff_t const base   = Dest.tellp();
                 auto         length = static_cast<diff_t>(((high & 0xFCU) >> 2U) + 1U);
                 auto         offset = static_cast<diff_t>(((high & 3U) << 8U) | low);
                 // The offset is stored as being absolute within a 0x400-byte
@@ -161,46 +161,46 @@ public:
                 offset = ((offset - base - bias) % buffer_size) + base - buffer_size;
 
                 if (offset < 0) {
-                    diff_t cnt = (offset + length < 0) ? length
-                                                       : (length - (offset + length));
-                    fill_n(ostreambuf_iterator<char>(Dst), cnt, 0x20);
-                    length -= cnt;
-                    offset += cnt;
+                    diff_t count = (offset + length < 0) ? length
+                                                         : (length - (offset + length));
+                    fill_n(ostreambuf_iterator<char>(Dest), count, 0x20);
+                    length -= count;
+                    offset += count;
                 }
                 for (diff_t csrc = offset; csrc < offset + length; csrc++) {
-                    diff_t const Pointer = Dst.tellp();
-                    Dst.seekg(csrc);
-                    uint8_t const Byte = Read1(Dst);
-                    Dst.seekp(Pointer);
-                    Write1(Dst, Byte);
+                    diff_t const Pointer = Dest.tellp();
+                    Dest.seekg(csrc);
+                    uint8_t const Byte = Read1(Dest);
+                    Dest.seekp(Pointer);
+                    Write1(Dest, Byte);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dst, uint8_t const*& Data, size_t const Size) {
+    static void encode(ostream& Dest, uint8_t const*& Data, size_t const Size) {
         using EdgeType    = typename RocketAdaptor::EdgeType;
         using RockOStream = LZSSOStream<RocketAdaptor>;
 
         // Compute optimal Rocket parsing of input file.
         auto        list = find_optimal_lzss_parse(Data, Size, RocketAdaptor{});
-        RockOStream out(Dst);
+        RockOStream output(Dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
             case EdgeType::symbolwise:
-                out.descriptor_bit(1);
-                out.put_byte(edge.get_symbol());
+                output.descriptor_bit(1);
+                output.put_byte(edge.get_symbol());
                 break;
             case EdgeType::dictionary: {
-                size_t const len  = edge.get_length();
-                size_t const dist = edge.get_distance();
-                size_t const pos
+                size_t const length = edge.get_length();
+                size_t const dist   = edge.get_distance();
+                size_t const position
                         = (edge.get_position() - dist) % RocketAdaptor::SearchBufSize;
-                out.descriptor_bit(0);
-                out.put_byte(((len - 1) << 2U) | (pos >> 8U));
-                out.put_byte(pos);
+                output.descriptor_bit(0);
+                output.put_byte(((length - 1) << 2U) | (position >> 8U));
+                output.put_byte(position);
                 break;
             }
             case EdgeType::terminator:
@@ -215,28 +215,28 @@ public:
     }
 };
 
-bool rocket::decode(istream& Src, iostream& Dst) {
-    auto const   Location = Src.tellg();
+bool rocket::decode(istream& Source, iostream& Dest) {
+    auto const   Location = Source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Src, input);
+    extract(Source, input);
 
-    rocket_internal::decode(input, Dst);
-    Src.seekg(Location + input.tellg());
+    rocket_internal::decode(input, Dest);
+    Source.seekg(Location + input.tellg());
     return true;
 }
 
-bool rocket::encode(istream& Src, ostream& Dst) {
+bool rocket::encode(istream& Source, ostream& Dest) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
     stringstream input(ios::in | ios::out | ios::binary);
     fill_n(ostreambuf_iterator<char>(input),
            rocket_internal::RocketAdaptor::FirstMatchPosition, 0x20);
     // Copy to buffer.
-    input << Src.rdbuf();
+    input << Source.rdbuf();
     input.seekg(0);
-    return basic_rocket::encode(input, Dst);
+    return basic_rocket::encode(input, Dest);
 }
 
-bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
+bool rocket::encode(ostream& Dest, uint8_t const* data, size_t const Size) {
     // Internal buffer.
     stringstream outbuff(ios::in | ios::out | ios::binary);
     rocket_internal::encode(outbuff, data, Size);
@@ -244,12 +244,12 @@ bool rocket::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
     // Fill in header
     // Size of decompressed file
     BigEndian::Write2(
-            Dst, static_cast<uint16_t>(
-                         Size - rocket_internal::RocketAdaptor::FirstMatchPosition));
+            Dest, static_cast<uint16_t>(
+                          Size - rocket_internal::RocketAdaptor::FirstMatchPosition));
     // Size of compressed file
-    BigEndian::Write2(Dst, static_cast<uint16_t>(outbuff.tellp()));
+    BigEndian::Write2(Dest, static_cast<uint16_t>(outbuff.tellp()));
 
     outbuff.seekg(0);
-    Dst << outbuff.rdbuf();
+    Dest << outbuff.rdbuf();
     return true;
 }

@@ -32,21 +32,21 @@ using std::ostream;
 
 class artc42_internal {
 public:
-    static void decode(istream& Src, ostream& Dst) {
-        ignore_unused_variable_warning(Src, Dst);
+    static void decode(istream& Source, ostream& Dest) {
+        ignore_unused_variable_warning(Source, Dest);
     }
 
-    static void encode(istream& Src, ostream& Dst) {
-        ignore_unused_variable_warning(Src, Dst);
+    static void encode(istream& Source, ostream& Dest) {
+        ignore_unused_variable_warning(Source, Dest);
     }
 };
 
-bool artc42::decode(istream& Src, ostream& Dst) {
-    ignore_unused_variable_warning(Src, Dst);
+bool artc42::decode(istream& Source, ostream& Dest) {
+    ignore_unused_variable_warning(Source, Dest);
     return false;
 }
 
-bool artc42::encode(istream& Src, ostream& Dst) {
-    ignore_unused_variable_warning(Src, Dst);
+bool artc42::encode(istream& Source, ostream& Dest) {
+    ignore_unused_variable_warning(Source, Dest);
     return false;
 }

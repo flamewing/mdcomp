@@ -126,42 +126,42 @@ class comper_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dst) {
+    static void decode(istream& input, iostream& Dest) {
         using CompIStream = LZSSIStream<ComperAdaptor>;
 
-        CompIStream src(input);
+        CompIStream source(input);
 
         while (input.good()) {
-            if (src.descriptor_bit() == 0U) {
+            if (source.descriptor_bit() == 0U) {
                 // Symbolwise match.
-                BigEndian::Write2(Dst, BigEndian::Read2(input));
+                BigEndian::Write2(Dest, BigEndian::Read2(input));
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                auto const   distance = (std::streamoff{0x100} - src.get_byte()) * 2;
-                size_t const length   = src.get_byte();
+                auto const   distance = (std::streamoff{0x100} - source.get_byte()) * 2;
+                size_t const length   = source.get_byte();
                 if (length == 0) {
                     break;
                 }
 
                 for (size_t i = 0; i <= length; i++) {
-                    std::streamsize const Pointer = Dst.tellp();
-                    Dst.seekg(Pointer - distance);
-                    uint16_t const Word = BigEndian::Read2(Dst);
-                    Dst.seekp(Pointer);
-                    BigEndian::Write2(Dst, Word);
+                    std::streamsize const Pointer = Dest.tellp();
+                    Dest.seekg(Pointer - distance);
+                    uint16_t const Word = BigEndian::Read2(Dest);
+                    Dest.seekp(Pointer);
+                    BigEndian::Write2(Dest, Word);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dst, uint8_t const* Data, size_t const Size) {
+    static void encode(ostream& Dest, uint8_t const* Data, size_t const Size) {
         using EdgeType    = typename ComperAdaptor::EdgeType;
         using CompOStream = LZSSOStream<ComperAdaptor>;
 
         // Compute optimal Comper parsing of input file.
         auto        list = find_optimal_lzss_parse(Data, Size, ComperAdaptor{});
-        CompOStream out(Dst);
+        CompOStream output(Dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
@@ -170,24 +170,24 @@ public:
                 size_t const value = edge.get_symbol();
                 size_t const high  = (value >> 8U) & 0xFFU;
                 size_t const low   = (value & 0xFFU);
-                out.descriptor_bit(0);
-                out.put_byte(high);
-                out.put_byte(low);
+                output.descriptor_bit(0);
+                output.put_byte(high);
+                output.put_byte(low);
                 break;
             }
             case EdgeType::dictionary: {
-                size_t const len  = edge.get_length();
-                size_t const dist = edge.get_distance();
-                out.descriptor_bit(1);
-                out.put_byte(-dist);
-                out.put_byte(len - 1);
+                size_t const length = edge.get_length();
+                size_t const dist   = edge.get_distance();
+                output.descriptor_bit(1);
+                output.put_byte(-dist);
+                output.put_byte(length - 1);
                 break;
             }
             case EdgeType::terminator: {
                 // Push descriptor for end-of-file marker.
-                out.descriptor_bit(1);
-                out.put_byte(0);
-                out.put_byte(0);
+                output.descriptor_bit(1);
+                output.put_byte(0);
+                output.put_byte(0);
                 break;
             }
             case EdgeType::invalid:
@@ -200,17 +200,17 @@ public:
     }
 };
 
-bool comper::decode(istream& Src, iostream& Dst) {
-    auto const   Location = Src.tellg();
+bool comper::decode(istream& Source, iostream& Dest) {
+    auto const   Location = Source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Src, input);
+    extract(Source, input);
 
-    comper_internal::decode(input, Dst);
-    Src.seekg(Location + input.tellg());
+    comper_internal::decode(input, Dest);
+    Source.seekg(Location + input.tellg());
     return true;
 }
 
-bool comper::encode(ostream& Dst, uint8_t const* data, size_t const Size) {
-    comper_internal::encode(Dst, data, Size);
+bool comper::encode(ostream& Dest, uint8_t const* data, size_t const Size) {
+    comper_internal::encode(Dest, data, Size);
     return true;
 }

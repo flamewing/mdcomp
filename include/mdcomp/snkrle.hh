@@ -31,11 +31,11 @@ using moduled_snkrle = ModuledAdaptor<snkrle, 4096U, 1U>;
 class snkrle : public basic_snkrle, public moduled_snkrle {
     friend basic_snkrle;
     friend moduled_snkrle;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
 
 public:
     using basic_snkrle::encode;
-    static bool decode(std::istream& Src, std::ostream& Dst);
+    static bool decode(std::istream& Source, std::ostream& Dest);
 };
 
 #endif    // LIB_SNKRLE_HH

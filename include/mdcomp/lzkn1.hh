@@ -31,11 +31,11 @@ using moduled_lzkn1 = ModuledAdaptor<lzkn1, 4096U, 1U>;
 class lzkn1 : public basic_lzkn1, public moduled_lzkn1 {
     friend basic_lzkn1;
     friend moduled_lzkn1;
-    static bool encode(std::ostream& Dst, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
 
 public:
     using basic_lzkn1::encode;
-    static bool decode(std::istream& Src, std::iostream& Dst);
+    static bool decode(std::istream& Source, std::iostream& Dest);
 };
 
 #endif    // LIB_LZKN1_HH

@@ -63,8 +63,8 @@ concept Enumerator = requires() {
 };
 
 template <Enumerator Enum>
-constexpr std::underlying_type_t<Enum> to_underlying(Enum val) {
-    return static_cast<std::underlying_type_t<Enum>>(val);
+constexpr std::underlying_type_t<Enum> to_underlying(Enum value) {
+    return static_cast<std::underlying_type_t<Enum>>(value);
 };
 
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
@@ -107,8 +107,8 @@ struct SizeFreqNibble {
     nibble_run nibble;
     size_t     code_length{0};
 
-    SizeFreqNibble(size_t cnt, nibble_run const& nib, size_t const length) noexcept
-            : count(cnt), nibble(nib), code_length(length) {}
+    SizeFreqNibble(size_t count_, nibble_run const& nibble_, size_t const length) noexcept
+            : count(count_), nibble(nibble_), code_length(length) {}
 
     SizeFreqNibble() noexcept = default;
 };
@@ -136,7 +136,8 @@ private:
 
 public:
     // Construct a new leaf node for character c.
-    node(nibble_run const& val, size_t const wgt) noexcept : weight(wgt), value(val) {}
+    node(nibble_run const& value_, size_t const weight_) noexcept
+            : weight(weight_), value(value_) {}
 
     // Construct a new internal node that has children c1 and c2.
     node(shared_ptr<node> const& left_child_,
@@ -212,42 +213,43 @@ public:
 using NodeVector = vector<shared_ptr<node>>;
 
 struct Compare_size {
-    bool operator()(SizeFreqNibble const& lhs, SizeFreqNibble const& rhs) const noexcept {
-        if (lhs.code_length < rhs.code_length) {
+    bool operator()(
+            SizeFreqNibble const& left, SizeFreqNibble const& right) const noexcept {
+        if (left.code_length < right.code_length) {
             return true;
         }
-        if (lhs.code_length > rhs.code_length) {
+        if (left.code_length > right.code_length) {
             return false;
         }
         // rhs.code_length == lhs.code_length
-        if (lhs.count > rhs.count) {
+        if (left.count > right.count) {
             return true;
         }
-        if (lhs.count < rhs.count) {
+        if (left.count < right.count) {
             return false;
         }
         // rhs.count == lhs.count
-        nibble_run const& left  = lhs.nibble;
-        nibble_run const  right = rhs.nibble;
-        return (left.get_nibble() < right.get_nibble()
-                || (left.get_nibble() == right.get_nibble()
-                    && left.get_count() > right.get_count()));
+        nibble_run const& left_nibble  = left.nibble;
+        nibble_run const  right_nibble = right.nibble;
+        return (left_nibble.get_nibble() < right_nibble.get_nibble()
+                || (left_nibble.get_nibble() == right_nibble.get_nibble()
+                    && left_nibble.get_count() > right_nibble.get_count()));
     }
 };
 
 struct Compare_node {
     bool operator()(
-            shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
+            shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
 #if 1
-        if (*lhs > *rhs) {
+        if (*left > *right) {
             return true;
         }
-        if (*lhs < *rhs) {
+        if (*left < *right) {
             return false;
         }
-        return lhs->get_value().get_count() < rhs->get_value().get_count();
+        return left->get_value().get_count() < right->get_value().get_count();
 #else
-        return *lhs > *rhs;
+        return *left > *right;
 #endif
     }
 
@@ -267,29 +269,29 @@ struct Compare_node2 {
     NibbleCodeMap* code_map = nullptr;
 
     bool operator()(
-            shared_ptr<node> const& lhs, shared_ptr<node> const& rhs) const noexcept {
+            shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
         if (code_map == nullptr || code_map->empty()) {
-            if (*lhs < *rhs) {
+            if (*left < *right) {
                 return true;
             }
-            if (*lhs > *rhs) {
+            if (*left > *right) {
                 return false;
             }
-            return lhs->get_value().get_count() > rhs->get_value().get_count();
+            return left->get_value().get_count() > right->get_value().get_count();
         }
-        nibble_run const left_nibble  = lhs->get_value();
-        nibble_run const right_nibble = rhs->get_value();
+        nibble_run const left_nibble  = left->get_value();
+        nibble_run const right_nibble = right->get_value();
 
-        auto get_len = [&](shared_ptr<node> const& node, nibble_run nib) {
-            if (auto const iter = code_map->find(nib); iter != code_map->end()) {
+        auto get_len = [&](shared_ptr<node> const& node, nibble_run nibble) {
+            if (auto const iter = code_map->find(nibble); iter != code_map->end()) {
                 size_t bit_count = (iter->second).length;
                 return (bit_count & 0x7fU) * node->get_weight() + 16;
             }
             return (6 + 7) * node->get_weight();
         };
 
-        size_t const left_code_length  = get_len(lhs, left_nibble);
-        size_t const right_code_length = get_len(rhs, right_nibble);
+        size_t const left_code_length  = get_len(left, left_nibble);
+        size_t const right_code_length = get_len(right, right_nibble);
         if (left_code_length > right_code_length) {
             return true;
         }
@@ -298,9 +300,9 @@ struct Compare_node2 {
         }
 
         size_t const left_weighted_count
-                = (left_nibble.get_count() + 1) * lhs->get_weight();
+                = (left_nibble.get_count() + 1) * left->get_weight();
         size_t const right_weighted_count
-                = (right_nibble.get_count() + 1) * rhs->get_weight();
+                = (right_nibble.get_count() + 1) * right->get_weight();
         if (left_weighted_count < right_weighted_count) {
             return true;
         }
@@ -330,22 +332,22 @@ using NemOBitstream = obitstream<uint8_t, bit_endian::big, BigEndian>;
 
 class nemesis_internal {
 public:
-    static void decode_header(std::istream& Src, CodeNibbleMap& code_map) {
+    static void decode_header(std::istream& Source, CodeNibbleMap& code_map) {
         // storage for output value to decompression buffer
         std::byte out_val{0};
 
         // main loop. Header is terminated by the value of 0xFF
-        for (size_t in_val = Read1(Src); in_val != 0xFF; in_val = Read1(Src)) {
+        for (size_t in_val = Read1(Source); in_val != 0xFF; in_val = Read1(Source)) {
             // if most significant bit is set, store the last 4 bits and discard
             // the rest
             if ((in_val & 0x80U) != 0) {
                 out_val = static_cast<std::byte>(in_val & 0xfU);
-                in_val  = Read1(Src);
+                in_val  = Read1(Source);
             }
 
             nibble_run const run(out_val, ((in_val & 0x70U) >> 4U) + 1);
 
-            size_t const code   = Read1(Src);
+            size_t const code   = Read1(Source);
             size_t const length = in_val & 0xfU;
             // Read the run's code from stream.
             code_map[Code{code, length}] = run;
@@ -353,14 +355,14 @@ public:
     }
 
     static void decode(
-            std::istream& Src, std::ostream& Dst, CodeNibbleMap& code_map,
+            std::istream& Source, std::ostream& Dest, CodeNibbleMap& code_map,
             size_t const num_tiles, bool const alt_out = false) {
         // This buffer is used for alternating mode decoding.
-        stringstream dst(ios::in | ios::out | ios::binary);
+        stringstream dest(ios::in | ios::out | ios::binary);
 
         // Set bit I/O streams.
-        NemIBitstream bits(Src);
-        NemOBitstream out(dst);
+        NemIBitstream bits(Source);
+        NemOBitstream output(dest);
 
         size_t code   = bits.pop();
         size_t length = 1;
@@ -380,14 +382,14 @@ public:
 
                 // Write single nibble if needed.
                 if ((count % 2) != 0) {
-                    out.write(nibble, 4);
+                    output.write(nibble, 4);
                 }
 
                 // Now write pairs of nibbles.
                 count >>= 1U;
                 nibble |= static_cast<uint8_t>(nibble << 4U);
                 for (size_t i = 0; i < count; i++) {
-                    out.write(nibble, 8);
+                    output.write(nibble, 8);
                 }
 
                 if (bits_written >= total_bits) {
@@ -406,19 +408,19 @@ public:
                     nibble_run const& run = iter->second;
 
                     std::byte nibble = run.get_nibble();
-                    size_t    cnt    = run.get_count();
-                    bits_written += cnt * 4;
+                    size_t    count  = run.get_count();
+                    bits_written += count * 4;
 
                     // Write single nibble if needed.
-                    if ((cnt % 2) != 0) {
-                        out.write(static_cast<uint8_t>(nibble), 4);
+                    if ((count % 2) != 0) {
+                        output.write(static_cast<uint8_t>(nibble), 4);
                     }
 
                     // Now write pairs of nibbles.
-                    cnt >>= 1U;
+                    count >>= 1U;
                     nibble |= (nibble << 4U);
-                    for (size_t i = 0; i < cnt; i++) {
-                        out.write(static_cast<uint8_t>(nibble), 8);
+                    for (size_t i = 0; i < count; i++) {
+                        output.write(static_cast<uint8_t>(nibble), 8);
                     }
 
                     if (bits_written >= total_bits) {
@@ -437,22 +439,22 @@ public:
         }
 
         // Write out any remaining bits, padding with zeroes.
-        out.flush();
+        output.flush();
 
         auto const final_size = static_cast<std::streamsize>(num_tiles << 5U);
         if (alt_out) {
             // For alternating decoding, we must now incrementally XOR and
             // output the lines.
-            dst.seekg(0);
-            dst.clear();
-            uint32_t value = LittleEndian::Read4(dst);
-            LittleEndian::Write4(Dst, value);
-            while (dst.tellg() < final_size) {
-                value ^= LittleEndian::Read4(dst);
-                LittleEndian::Write4(Dst, value);
+            dest.seekg(0);
+            dest.clear();
+            uint32_t value = LittleEndian::Read4(dest);
+            LittleEndian::Write4(Dest, value);
+            while (dest.tellg() < final_size) {
+                value ^= LittleEndian::Read4(dest);
+                LittleEndian::Write4(Dest, value);
             }
         } else {
-            Dst.write(dst.str().c_str(), final_size);
+            Dest.write(dest.str().c_str(), final_size);
         }
     }
 
@@ -503,8 +505,8 @@ public:
                     // This case is rather trivial, so we hard-code it.
                     // We can break this up only as 2 consecutive runs of a
                     // nibble run with count == 0.
-                    nibble_run trg{run.get_nibble(), 0};
-                    it2 = code_map.find(trg);
+                    nibble_run target{run.get_nibble(), 0};
+                    it2 = code_map.find(target);
                     if (it2 == code_map.end() || (it2->second).length > 6) {
                         // The smaller nibble run either does not have its own
                         // code or it results in a longer bit code when doubled
@@ -637,8 +639,8 @@ public:
                     // Init vector.
                     for (size_t i = 0; i < count; i++) {
                         // Is this run in the code_map?
-                        nibble_run trg(nibble, i);
-                        auto       it3 = code_map.find(trg);
+                        nibble_run target(nibble, i);
+                        auto       it3 = code_map.find(target);
                         if (it3 == code_map.end()) {
                             // It is not.
                             // Put inline length in the vector.
@@ -738,16 +740,16 @@ public:
 
     template <typename Compare>
     static std::streamoff encode(
-            istream& Src, ostream& Dst, NemesisMode mode, std::streamoff const length,
+            istream& Source, ostream& Dest, NemesisMode mode, std::streamoff const length,
             Compare&& comp) {
         // Seek to start and clear all errors.
-        Src.clear();
-        Src.seekg(0);
+        Source.clear();
+        Source.seekg(0);
         // Unpack source so we don't have to deal with nibble IO after.
         constexpr const std::byte low_nibble{0xfU};
         vector<std::byte>         unpack;
         for (std::streamoff i = 0; i < length; i++) {
-            std::byte const value{Read1(Src)};
+            std::byte const value{Read1(Source)};
             unpack.emplace_back((value >> 4U) & low_nibble);
             unpack.emplace_back(value & low_nibble);
         }
@@ -965,7 +967,7 @@ public:
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
-        BigEndian::Write2(Dst, mode | (length / 32));
+        BigEndian::Write2(Dest, mode | (length / 32));
         std::byte last_nibble{0xff};
         for (auto const& [run, bit_code] : code_map) {
             auto const [code, size] = bit_code;
@@ -976,29 +978,29 @@ public:
             }
             if (run.get_nibble() != last_nibble) {
                 // 0x80 marks byte as setting a new nibble.
-                Write1(Dst, 0x80U | static_cast<uint8_t>(run.get_nibble()));
+                Write1(Dest, 0x80U | static_cast<uint8_t>(run.get_nibble()));
                 last_nibble = run.get_nibble();
             }
 
-            Write1(Dst, static_cast<uint8_t>(run.get_count() << 4U | size));
-            Write1(Dst, static_cast<uint8_t>(code));
+            Write1(Dest, static_cast<uint8_t>(run.get_count() << 4U | size));
+            Write1(Dest, static_cast<uint8_t>(code));
         }
 
         // Mark end of header.
-        Write1(Dst, 0xff);
+        Write1(Dest, 0xff);
 
         // Time to write the encoded bitstream.
-        NemOBitstream bits(Dst);
+        NemOBitstream bits(Dest);
 
         // The RLE-encoded source makes for a far faster encode as we simply
         // use the nibble runs as an index into the map, meaning a quick binary
         // search gives us the code to use (if in the map) or tells us that we
         // need to use inline RLE.
         for (auto& run : rleSrc) {
-            auto val = code_map.find(run);
-            if (val != code_map.end()) {
-                size_t const code  = (val->second).code;
-                size_t       count = (val->second).length;
+            auto value = code_map.find(run);
+            if (value != code_map.end()) {
+                size_t const code  = (value->second).code;
+                size_t       count = (value->second).length;
                 // length with bit 7 set is a device to bypass the code table at
                 // the start of the file. We need to clear the bit here before
                 // writing the code to the file.
@@ -1019,44 +1021,44 @@ public:
         }
         // Fill remainder of last byte with zeroes and write if needed.
         bits.flush();
-        return Dst.tellp();
+        return Dest.tellp();
     }
 };
 
-bool nemesis::decode(istream& Src, ostream& Dst) {
+bool nemesis::decode(istream& Source, ostream& Dest) {
     CodeNibbleMap code_map;
-    size_t        num_tiles = BigEndian::Read2(Src);
+    size_t        num_tiles = BigEndian::Read2(Source);
     // sets the output mode based on the value of the first bit
     bool xor_mode = (num_tiles & 0x8000U) != 0;
     num_tiles &= 0x7fffU;
 
     if (num_tiles > 0) {
-        nemesis_internal::decode_header(Src, code_map);
-        nemesis_internal::decode(Src, Dst, code_map, num_tiles, xor_mode);
+        nemesis_internal::decode_header(Source, code_map);
+        nemesis_internal::decode(Source, Dest, code_map, num_tiles, xor_mode);
     }
     return true;
 }
 
-bool nemesis::encode(istream& Src, ostream& Dst) {
+bool nemesis::encode(istream& Source, ostream& Dest) {
     // We will use these as output buffers, as well as an input/output
     // buffers for the padded Nemesis input.
-    stringstream src(ios::in | ios::out | ios::binary);
+    stringstream source(ios::in | ios::out | ios::binary);
 
     // Copy to buffer.
-    src << Src.rdbuf();
+    source << Source.rdbuf();
 
     // Pad source with zeroes until it is a multiple of 32 bytes.
-    auto const pos = src.tellp();
-    if ((pos % 32) != 0) {
-        fill_n(ostreambuf_iterator<char>(src), 32 - (pos % 32), 0);
+    auto const position = source.tellp();
+    if ((position % 32) != 0) {
+        fill_n(ostreambuf_iterator<char>(source), 32 - (position % 32), 0);
     }
-    auto const size = src.tellp();
+    auto const size = source.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
-    src.clear();
-    src.seekg(0);
+    source.clear();
+    source.seekg(0);
 
-    string sin   = src.str();
+    string sin   = source.str();
     auto*  bytes = reinterpret_cast<uint8_t*>(sin.data());
     for (size_t i = sin.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
@@ -1071,9 +1073,9 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     // Four different attempts to encode, for improved file size.
     std::array sizes{
             nemesis_internal::encode(
-                    src, buffers[0], NemesisMode::Normal, size, Compare_node{}),
+                    source, buffers[0], NemesisMode::Normal, size, Compare_node{}),
             nemesis_internal::encode(
-                    src, buffers[1], NemesisMode::Normal, size, Compare_node2{}),
+                    source, buffers[1], NemesisMode::Normal, size, Compare_node2{}),
             nemesis_internal::encode(
                     alt, buffers[2], NemesisMode::ProgressiveXor, size, Compare_node{}),
             nemesis_internal::encode(
@@ -1090,13 +1092,13 @@ bool nemesis::encode(istream& Src, ostream& Dst) {
     }
 
     buffers[best_stream].seekg(0);
-    Dst << buffers[best_stream].rdbuf();
+    Dest << buffers[best_stream].rdbuf();
     return true;
 }
 
-bool nemesis::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
-    stringstream Src(ios::in | ios::out | ios::binary);
-    Src.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
-    Src.seekg(0);
-    return encode(Src, Dst);
+bool nemesis::encode(std::ostream& Dest, uint8_t const* data, size_t const Size) {
+    stringstream source(ios::in | ios::out | ios::binary);
+    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
+    source.seekg(0);
+    return encode(source, Dest);
 }

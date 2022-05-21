@@ -56,53 +56,54 @@ namespace detail {
     }
 
     template <size_t size, auto mask, std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr uint_t reverseByteBits(uint_t val) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr uint_t reverseByteBits(uint_t value) noexcept {
         constexpr size_t const new_size = size >> 1U;
         constexpr auto const   factor   = uint_t{1} << new_size;
         constexpr auto const   new_mask = nextMask<uint_t>(mask, new_size);
         if constexpr (size > 1) {
-            uint_t const val1    = val & new_mask;
-            uint_t const val2    = val ^ val1;
+            uint_t const val1    = value & new_mask;
+            uint_t const val2    = value ^ val1;
             uint_t const new_val = factor * val1 + val2 / factor;
             return reverseByteBits<new_size, new_mask>(new_val);
         }
-        return val;
+        return value;
     }
 
     template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(uint_t val) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(uint_t value) noexcept {
 #ifdef __clang__
         if constexpr (CHAR_BIT == 8) {
             if (!std::is_constant_evaluated()) {
                 if constexpr (sizeof(uint_t) == 1) {
-                    return val = __builtin_bitreverse8(val);
+                    return value = __builtin_bitreverse8(value);
                 }
                 if constexpr (sizeof(uint_t) == 2) {
-                    return val = __builtin_bitreverse16(val);
+                    return value = __builtin_bitreverse16(value);
                 }
                 if constexpr (sizeof(uint_t) == 4) {
-                    return val = __builtin_bitreverse32(val);
+                    return value = __builtin_bitreverse32(value);
                 }
                 if constexpr (sizeof(uint_t) == 8) {
-                    return val = __builtin_bitreverse64(val);
+                    return value = __builtin_bitreverse64(value);
                 }
                 if constexpr (sizeof(uint_t) == 16) {
                     if constexpr (__has_builtin(__builtin_bitreverse128)) {
-                        return __builtin_bitreverse128(val);
+                        return __builtin_bitreverse128(value);
                     }
-                    return (__builtin_bitreverse64(val >> 64U)
-                            | (static_cast<uint_t>(__builtin_bitreverse64(val)) << 64U));
+                    return (__builtin_bitreverse64(value >> 64U)
+                            | (static_cast<uint_t>(__builtin_bitreverse64(value))
+                               << 64U));
                 }
             }
         }
 #endif
         constexpr auto const mask = getMask<uint_t>();
-        return reverseByteBits<CHAR_BIT, mask>(byteswap(val));
+        return reverseByteBits<CHAR_BIT, mask>(byteswap(value));
     }
 
     template <std::signed_integral int_t>
-    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(int_t val) noexcept {
-        return detail::bit_cast<int_t>(reverseBits(std::make_unsigned_t<int_t>(val)));
+    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(int_t value) noexcept {
+        return detail::bit_cast<int_t>(reverseBits(std::make_unsigned_t<int_t>(value)));
     }
 
     static_assert(reverseBits<uint8_t>(0x35U) == 0xacU);
@@ -180,13 +181,13 @@ public:
     // Reads up to sizeof(T) * CHAR_BIT bits from the buffer. This remembers
     // previously read bits, and gets another T from the actual buffer once all
     // bits in the current T have been read.
-    [[nodiscard]] INLINE uint_t read(size_t const cnt) noexcept(noexcept(read_bits())) {
+    [[nodiscard]] INLINE uint_t read(size_t const count) noexcept(noexcept(read_bits())) {
         if constexpr (!EarlyRead) {
             check_buffer();
         }
         uint_t bits;
-        if (num_read_bits < cnt) {
-            size_t delta    = cnt - num_read_bits;
+        if (num_read_bits < count) {
+            size_t delta    = count - num_read_bits;
             bits            = bit_buffer << delta;
             bit_buffer      = read_bits();
             num_read_bits   = bit_count - delta;
@@ -194,7 +195,7 @@ public:
             bit_buffer ^= (new_bits << num_read_bits);
             bits |= new_bits;
         } else {
-            num_read_bits -= cnt;
+            num_read_bits -= count;
             bits = bit_buffer >> num_read_bits;
             bit_buffer ^= (bits << num_read_bits);
         }
@@ -325,8 +326,8 @@ public:
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
     [[nodiscard]] INLINE uint_t
-            read(size_t const cnt) noexcept(noexcept(buffer.read(cnt))) {
-        return buffer.read(cnt);
+            read(size_t const count) noexcept(noexcept(buffer.read(count))) {
+        return buffer.read(count);
     }
 
     [[nodiscard]] INLINE size_t have_waiting_bits() const

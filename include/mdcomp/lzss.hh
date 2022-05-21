@@ -77,11 +77,11 @@ public:
     // Constructors.
     constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
 
-    constexpr AdjListNode(size_t pos, stream_t sym, EdgeType type_) noexcept
-            : position(pos), type(type_), symbol(sym) {}
+    constexpr AdjListNode(size_t position_, stream_t symbol, EdgeType type_) noexcept
+            : position(position_), type(type_), symbol(symbol) {}
 
-    constexpr AdjListNode(size_t pos, MatchInfo match_, EdgeType type_) noexcept
-            : position(pos), type(type_), match(match_) {}
+    constexpr AdjListNode(size_t position_, MatchInfo match_, EdgeType type_) noexcept
+            : position(position_), type(type_), match(match_) {}
 
     // Getters.
     [[nodiscard]] constexpr size_t get_position() const noexcept {
@@ -334,8 +334,8 @@ auto find_optimal_lzss_parse(
     using MatchVector     = std::vector<Node_t>;
     using Data_t          = std::span<stream_t const>;
 
-    auto read_stream = [](uint8_t const*& ptr) {
-        return stream_endian_t::template Read<stream_t>(ptr);
+    auto read_stream = [](uint8_t const*& pointer) {
+        return stream_endian_t::template Read<stream_t>(pointer);
     };
 
     // Adjacency lists for all the nodes in the graph.
@@ -424,23 +424,23 @@ auto find_optimal_lzss_parse(
         size_t const base_descriptor_cost = descriptor_costs[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
-            size_t const   offset = ii + Adaptor::FirstMatchPosition;
-            auto const*    ptr    = reinterpret_cast<uint8_t const*>(data + offset);
-            stream_t const val    = read_stream(ptr);
-            EdgeType const type   = EdgeType::symbolwise;
-            Relax(ii, base_descriptor_cost, Node_t(offset, val, type));
+            size_t const   offset  = ii + Adaptor::FirstMatchPosition;
+            auto const*    pointer = reinterpret_cast<uint8_t const*>(data + offset);
+            stream_t const value   = read_stream(pointer);
+            EdgeType const type    = EdgeType::symbolwise;
+            Relax(ii, base_descriptor_cost, Node_t(offset, value, type));
         }
         // Get the adjacency list for this node.
-        for (auto& win : winSet) {
-            if (!win.find_extra_matches(matches)) {
-                win.find_matches(matches);
+        for (auto& window : winSet) {
+            if (!window.find_extra_matches(matches)) {
+                window.find_matches(matches);
             }
             for (auto const& elem : matches) {
                 if (elem.get_type() != EdgeType::invalid) {
                     Relax(ii, base_descriptor_cost, elem);
                 }
             }
-            win.slide_window();
+            window.slide_window();
         }
     }
 
@@ -487,7 +487,7 @@ private:
 
 public:
     // Constructor.
-    explicit LZSSOStream(std::ostream& Dst) noexcept : out(Dst), bits(out) {}
+    explicit LZSSOStream(std::ostream& Dest) noexcept : out(Dest), bits(out) {}
 
     LZSSOStream(LZSSOStream const&)                = delete;
     LZSSOStream(LZSSOStream&&) noexcept            = delete;
@@ -556,7 +556,7 @@ private:
 
 public:
     // Constructor.
-    explicit LZSSIStream(std::istream& Src) noexcept : in(Src), bits(in) {}
+    explicit LZSSIStream(std::istream& Source) noexcept : in(Source), bits(in) {}
 
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.

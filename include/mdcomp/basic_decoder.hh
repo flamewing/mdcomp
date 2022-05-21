@@ -34,31 +34,31 @@ enum class PadMode {
 template <typename Format, PadMode Pad, typename... Args>
 class BasicDecoder {
 public:
-    static bool encode(std::istream& Src, std::ostream& Dst, Args... args);
-    static void extract(std::istream& Src, std::iostream& Dst);
+    static bool encode(std::istream& Source, std::ostream& Dest, Args... args);
+    static void extract(std::istream& Source, std::iostream& Dest);
 };
 
 template <typename Format, PadMode Pad, typename... Args>
 bool BasicDecoder<Format, Pad, Args...>::encode(
-        std::istream& Src, std::ostream& Dst, Args... args) {
-    auto Start = Src.tellg();
-    Src.ignore(std::numeric_limits<std::streamsize>::max());
-    auto FullSize = static_cast<size_t>(Src.gcount());
-    Src.seekg(Start);
+        std::istream& Source, std::ostream& Dest, Args... args) {
+    auto Start = Source.tellg();
+    Source.ignore(std::numeric_limits<std::streamsize>::max());
+    auto FullSize = static_cast<size_t>(Source.gcount());
+    Source.seekg(Start);
     std::vector<uint8_t> data;
     if (Pad == PadMode::PadEven) {
         data.resize(FullSize + (FullSize % 2));
     } else {
         data.resize(FullSize);
     }
-    Src.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
+    Source.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
     if (Pad == PadMode::PadEven && data.size() > FullSize) {
         data.back() = 0;
     }
-    if (Format::encode(Dst, data.data(), data.size(), std::forward<Args>(args)...)) {
+    if (Format::encode(Dest, data.data(), data.size(), std::forward<Args>(args)...)) {
         // Pad to even size.
-        if ((Dst.tellp() % 2) != 0) {
-            Dst.put(0);
+        if ((Dest.tellp() % 2) != 0) {
+            Dest.put(0);
         }
         return true;
     }
@@ -66,13 +66,14 @@ bool BasicDecoder<Format, Pad, Args...>::encode(
 }
 
 template <typename Format, PadMode Pad, typename... Args>
-void BasicDecoder<Format, Pad, Args...>::extract(std::istream& Src, std::iostream& Dst) {
-    Dst << Src.rdbuf();
+void BasicDecoder<Format, Pad, Args...>::extract(
+        std::istream& Source, std::iostream& Dest) {
+    Dest << Source.rdbuf();
     // Pad to even size.
-    if ((Dst.tellp() % 2) != 0) {
-        Dst.put(0);
+    if ((Dest.tellp() % 2) != 0) {
+        Dest.put(0);
     }
-    Dst.seekg(0);
+    Dest.seekg(0);
 }
 
 #endif    // LIB_MODULED_ADAPTOR_H

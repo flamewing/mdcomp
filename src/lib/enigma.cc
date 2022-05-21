@@ -137,18 +137,18 @@ struct Compare_count {
 
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(
-        vector<uint16_t>& buf, EniOBitstream& bits, flag_writer& putMask,
+        vector<uint16_t>& buffer, EniOBitstream& bits, flag_writer& putMask,
         size_t const packet_length) {
-    if (buf.empty()) {
+    if (buffer.empty()) {
         return;
     }
 
-    bits.write(0x70U | ((buf.size() - 1) & 0xfU), 7);
-    for (auto const value : buf) {
+    bits.write(0x70U | ((buffer.size() - 1) & 0xfU), 7);
+    for (auto const value : buffer) {
         putMask(bits, value);
         bits.write(value & 0x7ffU, packet_length);
     }
-    buf.clear();
+    buffer.clear();
 }
 
 template <>
@@ -156,7 +156,7 @@ size_t moduled_enigma::PadMaskBits = 1U;
 
 class enigma_internal {
 public:
-    static void decode(std::istream& input, std::ostream& Dst) {
+    static void decode(std::istream& input, std::ostream& Dest) {
         // Read header.
         size_t const   packet_length      = Read1(input);
         auto           getMask            = flag_reader::get(Read1(input));
@@ -175,28 +175,28 @@ public:
                 case 2:
                 case 1:
                 case 0: {
-                    size_t const   cnt   = bits.read(4) + 1;
+                    size_t const   count = bits.read(4) + 1;
                     uint16_t const flags = getMask(bits);
                     uint16_t       outv  = bits.read(packet_length);
                     outv |= flags;
 
-                    for (size_t i = 0; i < cnt; i++) {
-                        BigEndian::Write2(Dst, outv);
+                    for (size_t i = 0; i < count; i++) {
+                        BigEndian::Write2(Dest, outv);
                         outv += modeDeltaLUT[mode];
                     }
                     break;
                 }
                 case 3: {
-                    size_t const cnt = bits.read(4);
+                    size_t const count = bits.read(4);
                     // This marks decompression as being done.
-                    if (cnt == 0x0F) {
+                    if (count == 0x0F) {
                         return;
                     }
 
-                    for (size_t i = 0; i <= cnt; i++) {
+                    for (size_t i = 0; i <= count; i++) {
                         uint16_t flags = getMask(bits);
                         uint16_t outv  = bits.read(packet_length);
-                        BigEndian::Write2(Dst, outv | flags);
+                        BigEndian::Write2(Dest, outv | flags);
                     }
                     break;
                 }
@@ -205,21 +205,21 @@ public:
                 }
             } else {
                 if (bits.pop() == 0U) {
-                    size_t const cnt = bits.read(4) + 1;
-                    for (size_t i = 0; i < cnt; i++) {
-                        BigEndian::Write2(Dst, incrementing_value++);
+                    size_t const count = bits.read(4) + 1;
+                    for (size_t i = 0; i < count; i++) {
+                        BigEndian::Write2(Dest, incrementing_value++);
                     }
                 } else {
-                    size_t const cnt = bits.read(4) + 1;
-                    for (size_t i = 0; i < cnt; i++) {
-                        BigEndian::Write2(Dst, common_value);
+                    size_t const count = bits.read(4) + 1;
+                    for (size_t i = 0; i < count; i++) {
+                        BigEndian::Write2(Dest, common_value);
                     }
                 }
             }
         }
     }
 
-    static void encode(std::istream& Src, std::ostream& Dst) {
+    static void encode(std::istream& Source, std::ostream& Dest) {
         // To unpack source into 2-byte words.
         vector<uint16_t> unpack;
         // Frequency map.
@@ -230,11 +230,11 @@ public:
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
         uint16_t mask_val = 0;
-        Src.clear();
-        Src.seekg(0);
+        Source.clear();
+        Source.seekg(0);
         while (true) {
-            uint16_t value = BigEndian::Read2(Src);
-            if (!Src.good()) {
+            uint16_t value = BigEndian::Read2(Source);
+            if (!Source.good()) {
                 break;
             }
             mask_val |= value;
@@ -247,8 +247,8 @@ public:
         size_t const packet_length = std::bit_width(mask_val & 0x7ffU);
 
         // Find the most common 2-byte value.
-        Compare_count  cmp;
-        auto           high         = max_element(counts.begin(), counts.end(), cmp);
+        Compare_count  comp;
+        auto           high         = max_element(counts.begin(), counts.end(), comp);
         uint16_t const common_value = high->first;
         // No longer needed.
         counts.clear();
@@ -270,65 +270,65 @@ public:
         elems.clear();
 
         // Find the starting 2-byte value with the longest incrementing run.
-        auto     incr               = max_element(runs.begin(), runs.end(), cmp);
+        auto     incr               = max_element(runs.begin(), runs.end(), comp);
         uint16_t incrementing_value = incr->first;
         // No longer needed.
         runs.clear();
 
         // Output header.
-        Write1(Dst, packet_length & std::numeric_limits<uint8_t>::max());
-        Write1(Dst, mask_val >> 11U);
-        BigEndian::Write2(Dst, incrementing_value);
-        BigEndian::Write2(Dst, common_value);
+        Write1(Dest, packet_length & std::numeric_limits<uint8_t>::max());
+        Write1(Dest, mask_val >> 11U);
+        BigEndian::Write2(Dest, incrementing_value);
+        BigEndian::Write2(Dest, common_value);
 
         // Time now to compress the file.
-        EniOBitstream    bits(Dst);
-        vector<uint16_t> buf;
-        size_t           pos = 0;
-        while (pos < unpack.size()) {
-            uint16_t const value = unpack[pos];
+        EniOBitstream    bits(Dest);
+        vector<uint16_t> buffer;
+        size_t           position = 0;
+        while (position < unpack.size()) {
+            uint16_t const value = unpack[position];
             if (value == incrementing_value) {
-                flush_buffer(buf, bits, putMask, packet_length);
-                uint16_t next = value + 1;
-                size_t   cnt  = 0;
-                for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
+                flush_buffer(buffer, bits, putMask, packet_length);
+                uint16_t next  = value + 1;
+                size_t   count = 0;
+                for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
                     if (next != unpack[i]) {
                         break;
                     }
                     next++;
-                    cnt++;
+                    count++;
                 }
-                bits.write(0b00'0000U | (cnt & 0xffU), 6);
+                bits.write(0b00'0000U | (count & 0xffU), 6);
                 incrementing_value = next;
-                pos += cnt;
+                position += count;
             } else if (value == common_value) {
-                flush_buffer(buf, bits, putMask, packet_length);
-                uint16_t next = value;
-                size_t   cnt  = 0;
-                for (size_t i = pos + 1; i < unpack.size() && cnt < 0xf; i++) {
+                flush_buffer(buffer, bits, putMask, packet_length);
+                uint16_t next  = value;
+                size_t   count = 0;
+                for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
                     if (next != unpack[i]) {
                         break;
                     }
-                    cnt++;
+                    count++;
                 }
-                bits.write(0b01'0000U | (cnt & 0xffU), 6);
-                pos += cnt;
+                bits.write(0b01'0000U | (count & 0xffU), 6);
+                position += count;
             } else {
-                uint16_t next  = unpack[pos + 1];
+                uint16_t next  = unpack[position + 1];
                 uint16_t delta = next - value;
 
                 constexpr const uint16_t minus_one = std::numeric_limits<uint16_t>::max();
-                if (pos + 1 < unpack.size() && next != incrementing_value
+                if (position + 1 < unpack.size() && next != incrementing_value
                     && (delta == minus_one || delta == 0 || delta == 1)) {
-                    flush_buffer(buf, bits, putMask, packet_length);
-                    size_t cnt = 1;
+                    flush_buffer(buffer, bits, putMask, packet_length);
+                    size_t count = 1;
                     next += delta;
-                    for (size_t i = pos + 2; i < unpack.size() && cnt < 0xf; i++) {
+                    for (size_t i = position + 2; i < unpack.size() && count < 0xf; i++) {
                         if (next != unpack[i] || next == incrementing_value) {
                             break;
                         }
                         next += delta;
-                        cnt++;
+                        count++;
                     }
 
                     if (delta == minus_one) {
@@ -336,22 +336,22 @@ public:
                     }
 
                     delta = (((delta | 4U)) << 4U) & 0xffffU;
-                    bits.write((delta | cnt) & 0xffU, 7);
+                    bits.write((delta | count) & 0xffU, 7);
                     putMask(bits, value);
                     bits.write(value & 0x7ffU, packet_length);
-                    pos += cnt;
+                    position += count;
                 } else {
-                    if (buf.size() >= 0xf) {
-                        flush_buffer(buf, bits, putMask, packet_length);
+                    if (buffer.size() >= 0xf) {
+                        flush_buffer(buffer, bits, putMask, packet_length);
                     }
 
-                    buf.push_back(value);
+                    buffer.push_back(value);
                 }
             }
-            pos++;
+            position++;
         }
 
-        flush_buffer(buf, bits, putMask, packet_length);
+        flush_buffer(buffer, bits, putMask, packet_length);
 
         // Terminator.
         bits.write(0x7f, 7);
@@ -359,24 +359,24 @@ public:
     }
 };
 
-bool enigma::decode(istream& Src, ostream& Dst) {
-    auto const   Location = Src.tellg();
+bool enigma::decode(istream& Source, ostream& Dest) {
+    auto const   Location = Source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Src, input);
+    extract(Source, input);
 
-    enigma_internal::decode(input, Dst);
-    Src.seekg(Location + input.tellg());
+    enigma_internal::decode(input, Dest);
+    Source.seekg(Location + input.tellg());
     return true;
 }
 
-bool enigma::encode(istream& Src, ostream& Dst) {
-    enigma_internal::encode(Src, Dst);
+bool enigma::encode(istream& Source, ostream& Dest) {
+    enigma_internal::encode(Source, Dest);
     return true;
 }
 
-bool enigma::encode(std::ostream& Dst, uint8_t const* data, size_t const Size) {
-    stringstream Src(ios::in | ios::out | ios::binary);
-    Src.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
-    Src.seekg(0);
-    return encode(Src, Dst);
+bool enigma::encode(std::ostream& Dest, uint8_t const* data, size_t const Size) {
+    stringstream source(ios::in | ios::out | ios::binary);
+    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
+    source.seekg(0);
+    return encode(source, Dest);
 }
