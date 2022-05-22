@@ -62,7 +62,7 @@ public:
 
     struct tag {};
 
-    static base_flag_io const& get(size_t n);
+    static base_flag_io const& get(size_t flags);
 
     constexpr explicit base_flag_io(Callback_t callback_) noexcept
             : callback(callback_) {}
@@ -122,9 +122,9 @@ constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
 }
 
 template <typename Callback>
-base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const n) {
+base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
     constexpr static auto const Array = createMaskArray(tag{}, make_index_sequence<32>());
-    return Array[n];
+    return Array[flags];
 }
 
 // Comparison functor, see below.
