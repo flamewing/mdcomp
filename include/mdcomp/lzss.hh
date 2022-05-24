@@ -250,55 +250,56 @@ private:
     EdgeType const type;
 };
 
+// clang-format off
 template <typename T>
-concept LZSSAdaptor = requires() {
-    std::unsigned_integral<typename T::stream_t>;
-    !std::same_as<typename T::stream_t, bool>;
-    std::is_class_v<typename T::stream_endian_t>;
-    std::unsigned_integral<typename T::descriptor_t>;
-    !std::same_as<typename T::descriptor_t, bool>;
-    std::is_class_v<typename T::descriptor_endian_t>;
-    std::is_enum_v<typename T::EdgeType>;
-    { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
-    { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
-    { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
-    std::same_as<decltype(T::NumDescBits), size_t const>;
-    std::same_as<decltype(T::NeedEarlyDescriptor), bool const>;
-    std::same_as<decltype(T::DescriptorBitOrder), bit_endian>;
-    std::same_as<decltype(T::FirstMatchPosition), size_t const>;
-    std::same_as<decltype(T::SearchBufSize), size_t const>;
-    std::same_as<decltype(T::LookAheadBufSize), size_t const>;
-    requires requires(
-            uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
-            std::ostream& output, typename T::stream_t stream_val,
-            typename T::stream_endian_t     stream_endian,
-            typename T::descriptor_t        descriptor_val,
-            typename T::descriptor_endian_t descriptor_endian) {
+concept LZSSAdaptor =
+    std::unsigned_integral<typename T::stream_t> &&
+    !std::same_as<typename T::stream_t, bool> &&
+    std::is_class_v<typename T::stream_endian_t> &&
+    std::unsigned_integral<typename T::descriptor_t> &&
+    !std::same_as<typename T::descriptor_t, bool> &&
+    std::is_class_v<typename T::descriptor_endian_t> &&
+    std::is_enum_v<typename T::EdgeType> &&
+    requires() {
+        { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
+        { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
+        { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
+    } &&
+    std::same_as<decltype(T::NumDescBits), size_t const> &&
+    std::same_as<decltype(T::NeedEarlyDescriptor), bool const> &&
+    std::same_as<decltype(T::DescriptorBitOrder), bit_endian const> &&
+    std::same_as<decltype(T::FirstMatchPosition), size_t const> &&
+    std::same_as<decltype(T::SearchBufSize), size_t const> &&
+    std::same_as<decltype(T::LookAheadBufSize), size_t const> &&
+    requires(uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
+             std::ostream& output, typename T::stream_t stream_val,
+             typename T::stream_endian_t     stream_endian,
+             typename T::descriptor_t        descriptor_val,
+             typename T::descriptor_endian_t descriptor_endian) {
         {
             decltype(stream_endian)::template Read<decltype(stream_val)>(rptr)
-            } -> std::same_as<decltype(stream_val)>;
+        } -> std::same_as<decltype(stream_val)>;
         {
             decltype(stream_endian)::template Read<decltype(stream_val)>(input)
-            } -> std::same_as<decltype(stream_val)>;
+        } -> std::same_as<decltype(stream_val)>;
         { decltype(stream_endian)::Write(wptr, stream_val) } -> std::same_as<void>;
         { decltype(stream_endian)::Write(output, stream_val) } -> std::same_as<void>;
         {
             decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(rptr)
-            } -> std::same_as<decltype(descriptor_val)>;
+        } -> std::same_as<decltype(descriptor_val)>;
         {
             decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(input)
-            } -> std::same_as<decltype(descriptor_val)>;
+        } -> std::same_as<decltype(descriptor_val)>;
         {
             decltype(descriptor_endian)::Write(wptr, descriptor_val)
-            } -> std::same_as<void>;
+        } -> std::same_as<void>;
         {
             decltype(descriptor_endian)::Write(output, descriptor_val)
-            } -> std::same_as<void>;
-    };
-    requires requires(
-            typename T::EdgeType type, size_t value, size_t lbound,
-            std::vector<AdjListNode<T>>           nodes,
-            std::span<typename T::stream_t const> data) {
+        } -> std::same_as<void>;
+    } &&
+    requires(typename T::EdgeType type, size_t value, size_t lbound,
+             std::vector<AdjListNode<T>>           nodes,
+             std::span<typename T::stream_t const> data) {
         {T::create_sliding_window(data)};
         { T::desc_bits(type) } -> std::same_as<size_t>;
         { T::edge_weight(type, value) } -> std::same_as<size_t>;
@@ -309,7 +310,8 @@ concept LZSSAdaptor = requires() {
         noexcept(T::get_padding(value));
         noexcept(T::extra_matches(data, value, value, value, nodes));
     };
-};
+
+// clang-format on
 
 /*
  * Function which creates a LZSS structure and finds the optimal parse.
