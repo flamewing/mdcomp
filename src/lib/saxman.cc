@@ -76,7 +76,7 @@ class saxman_internal {
         constexpr static size_t const LookAheadBufSize = 18;
 
         // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<const stream_t> data) noexcept {
+        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array{
                     SlidingWindow_t{
                                     data, SearchBufSize, 3, LookAheadBufSize,
@@ -117,7 +117,7 @@ class saxman_internal {
         // Saxman allows encoding of a sequence of zeroes with no previous
         // match.
         static bool extra_matches(
-                std::span<const stream_t> data, size_t const base_node,
+                std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
                 std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
             using Match_t = AdjListNode<SaxmanAdaptor>::MatchInfo;
