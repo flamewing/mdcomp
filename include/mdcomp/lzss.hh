@@ -30,6 +30,7 @@
 #include <span>
 #include <string>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #ifdef _MSC_VER
@@ -46,9 +47,6 @@
  * in the [u, v) range (half-open) -- that is, node v is not part of the match.
  * Each node is a character in the file, and is represented by its position.
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-enum"
-
 template <typename Adaptor>
 class AdjListNode {
 public:
@@ -67,18 +65,15 @@ private:
     size_t position{0};
     // Cost, in bits, of "covering" all of the characters in the match.
     EdgeType type;
-
-    union {
-        MatchInfo match;
-        stream_t  symbol;
-    };
+    // Data about the match.
+    std::variant<stream_t, MatchInfo> match;
 
 public:
     // Constructors.
-    constexpr AdjListNode() noexcept : type(EdgeType::invalid), symbol(stream_t(0)) {}
+    constexpr AdjListNode() noexcept : type(EdgeType::invalid), match(stream_t(0)) {}
 
     constexpr AdjListNode(size_t position_, stream_t symbol, EdgeType type_) noexcept
-            : position(position_), type(type_), symbol(symbol) {}
+            : position(position_), type(type_), match(symbol) {}
 
     constexpr AdjListNode(size_t position_, MatchInfo match_, EdgeType type_) noexcept
             : position(position_), type(type_), match(match_) {}
@@ -97,42 +92,48 @@ public:
     }
 
     [[nodiscard]] constexpr size_t get_distance() const noexcept {
-        switch (type) {
-        case EdgeType::invalid:
-        case EdgeType::terminator:
-        case EdgeType::symbolwise:
-            return 0;
-        default:
-            return match.distance;
-        }
+        return std::visit(
+                [](auto&& arg) noexcept {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, MatchInfo>) {
+                        return arg.distance;
+                    } else {
+                        return size_t{0};
+                    }
+                },
+                match);
     }
 
     [[nodiscard]] constexpr size_t get_length() const noexcept {
-        switch (type) {
-        case EdgeType::invalid:
-        case EdgeType::terminator:
-        case EdgeType::symbolwise:
-            return 1;
-        default:
-            return match.length;
-        }
+        return std::visit(
+                [](auto&& arg) noexcept {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, MatchInfo>) {
+                        return arg.length;
+                    } else {
+                        return size_t{0};
+                    }
+                },
+                match);
     }
 
-    constexpr stream_t get_symbol() const noexcept {
-        switch (type) {
-        case EdgeType::symbolwise:
-            return symbol;
-        default:
-            return std::numeric_limits<stream_t>::max();
-        }
+    [[nodiscard]] constexpr stream_t get_symbol() const noexcept {
+        return std::visit(
+                [](auto&& arg) noexcept {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, stream_t>) {
+                        return arg;
+                    } else {
+                        return std::numeric_limits<stream_t>::max();
+                    }
+                },
+                match);
     }
 
-    constexpr EdgeType get_type() const noexcept {
+    [[nodiscard]] constexpr EdgeType get_type() const noexcept {
         return type;
     }
 };
-
-#pragma GCC diagnostic pop
 
 template <typename Adaptor>
 class SlidingWindow {
@@ -227,7 +228,7 @@ public:
         }
     }
 
-    bool find_extra_matches(MatchVector& matches) const noexcept {
+    [[nodiscard]] bool find_extra_matches(MatchVector& matches) const noexcept {
         static_assert(
                 noexcept(Adaptor::extra_matches(
                         data, base_node, upper_bound, lower_bound,
