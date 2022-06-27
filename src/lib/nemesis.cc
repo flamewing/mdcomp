@@ -915,7 +915,7 @@ public:
                         count = j;
                         break;
                     }
-                    codes.emplace_back(code, i);
+                    codes.emplace_back(Code{code, i});
                 }
                 // This is the beginning bit pattern for the next bit length.
                 base = (base + count) << 1U;
