@@ -313,7 +313,7 @@ private:
 
 public:
     explicit ibitstream(std::istream& source) noexcept(noexcept(bit_buffer(reader)))
-            : reader(source), buffer(reader) {}
+            : reader{source}, buffer(reader) {}
 
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
@@ -358,7 +358,7 @@ private:
 
 public:
     explicit obitstream(std::ostream& dest) noexcept(noexcept(bit_buffer(writer)))
-            : writer(dest), buffer(writer) {}
+            : writer{dest}, buffer(writer) {}
 
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
