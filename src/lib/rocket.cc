@@ -134,7 +134,7 @@ public:
         using diff_t      = std::make_signed_t<size_t>;
 
         input.ignore(2);
-        auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(input) + 4);
+        auto const  Size = static_cast<std::streamsize>(BigEndian::Read2(input)) + 4;
         RockIStream source(input);
 
         while (input.good() && input.tellg() < Size) {
