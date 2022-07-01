@@ -47,12 +47,12 @@ jobs:
         uses: actions/checkout@master
       - name: Configure
         run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib$LDFLAGS"
-          export CFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include$CFLAGS"
+          export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib $LDFLAGS"
+          export CFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CFLAGS"
           export CXXFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CXXFLAGS"
-          export CC="-I$(brew --prefix llvm)/bin/clang"
-          export CXX="-I$(brew --prefix llvm)/bin/clang++"
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
+          export CC="$(brew --prefix llvm)/bin/clang"
+          export CXX="$(brew --prefix llvm)/bin/clang++"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -D CMAKE_C_COMPILER="$CC" -D CMAKE_CXX_COMPILER="$CXX"
       - name: Build
         run: |
           cmake --build build -j2
