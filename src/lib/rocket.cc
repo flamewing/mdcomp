@@ -134,8 +134,7 @@ public:
         using diff_t      = std::make_signed_t<size_t>;
 
         auto const  OutSize = static_cast<std::streamsize>(BigEndian::Read2(input));
-        auto const  InSize  = static_cast<std::streamsize>(BigEndian::Read2(input) + 4);
-        RockIStream source(input);
+        auto const  InSize  = static_cast<std::streamsize>(BigEndian::Read2(input)) + 4;
 
         while (input.good() && input.tellg() < InSize && Dest.tellp() < OutSize) {
             if (source.descriptor_bit() != 0U) {

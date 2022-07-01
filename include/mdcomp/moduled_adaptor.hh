@@ -77,7 +77,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_de
 
     input.seekg(0);
 
-    auto const padding = static_cast<std::streamsize>(ModulePadding);
+    auto const padding = static_cast<std::streamoff>(ModulePadding);
 
     while (true) {
         Format::decode(input, Dest);
@@ -104,7 +104,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
     auto pointer = data.cbegin();
     Source.read(reinterpret_cast<char*>(data.data()), FullSize);
 
-    auto const padding = static_cast<std::streamsize>(ModulePadding);
+    auto const padding = static_cast<std::streamoff>(ModulePadding);
 
     BigEndian::Write2(
             Dest, static_cast<size_t>(FullSize) & std::numeric_limits<uint16_t>::max());
