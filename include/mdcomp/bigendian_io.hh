@@ -197,14 +197,15 @@ namespace detail {
 
         using uint_t = std::make_unsigned_t<std::remove_cv_t<T>>;
         // Fallback implementation that handles even __int24 etc.
-        size_t nbits = CHAR_BIT;
+        size_t const nbits = CHAR_BIT;
+
         size_t diff  = nbits * (sizeof(T) - 1);
-        size_t mask1 = static_cast<unsigned char>(~0U);
-        size_t mask2 = mask1 << diff;
-        size_t value = value_;
+        uint_t mask1 = static_cast<unsigned char>(~0U);
+        auto   mask2 = static_cast<uint_t>(mask1 << diff);
+        uint_t value = value_;
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-            size_t byte1 = value & mask1;
-            size_t byte2 = value & mask2;
+            uint_t byte1 = value & mask1;
+            uint_t byte2 = value & mask2;
             value        = static_cast<uint_t>(
                     value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
             mask1 = static_cast<uint_t>(mask1 << nbits);
