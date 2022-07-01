@@ -42,8 +42,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          brew install boost make ninja
-          brew install --with-toolchain llvm
+          brew install boost make ninja llvm
       - name: Checkout code
         uses: actions/checkout@master
       - name: Configure
