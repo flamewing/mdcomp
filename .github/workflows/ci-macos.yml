@@ -43,17 +43,17 @@ jobs:
       - name: Install dependencies
         run: |
           brew install boost make ninja
+          brew install --with-toolchain llvm
       - name: Checkout code
         uses: actions/checkout@master
       - name: Configure
         run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib $LDFLAGS"
-          export CFLAGS="-I$(brew --prefix boost)/include $CFLAGS"
-          export CXXFLAGS="-I$(brew --prefix boost)/include $CXXFLAGS"
+          export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib$LDFLAGS"
+          export CFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include$CFLAGS"
+          export CXXFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CXXFLAGS"
+          export CC="-I$(brew --prefix llvm)/bin/clang"
+          export CXX="-I$(brew --prefix llvm)/bin/clang++"
           cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib $LDFLAGS"
-          export CFLAGS="-I$(brew --prefix boost)/include $CFLAGS"
-          export CXXFLAGS="-I$(brew --prefix boost)/include $CXXFLAGS"
           cmake --build build -j2
