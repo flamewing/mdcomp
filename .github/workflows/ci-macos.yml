@@ -31,14 +31,12 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        generator: [make, ninja, xcode]
+        generator: [make, ninja]
         include:
           - generator: make
             cmake_generator: "Unix Makefiles"
           - generator: ninja
             cmake_generator: "Ninja"
-          - generator: xcode
-            cmake_generator: "Xcode"
     steps:
       - name: Install dependencies
         run: |
@@ -52,7 +50,7 @@ jobs:
           export CXXFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CXXFLAGS"
           export CC="$(brew --prefix llvm)/bin/clang"
           export CXX="$(brew --prefix llvm)/bin/clang++"
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -D CMAKE_C_COMPILER="$CC" -D CMAKE_CXX_COMPILER="$CXX"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
       - name: Build
         run: |
           cmake --build build -j2
