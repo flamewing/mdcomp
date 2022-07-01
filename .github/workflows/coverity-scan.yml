@@ -31,6 +31,11 @@ jobs:
               echo REPO_ALIVE=true >> $GITHUB_ENV
             fi
           fi
+      - name: Set up GCC
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: 11
       - name: Install dependencies
         if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
@@ -48,6 +53,8 @@ jobs:
       - name: Configure
         if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
+          export CC=gcc-11
+          export CXX=g++-11
           cmake -S . -B build -G 'Unix Makefiles'
       - name: Build with cov-build
         if: ${{ env.REPO_ALIVE == 'true' }}
