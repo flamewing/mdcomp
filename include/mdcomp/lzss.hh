@@ -145,7 +145,7 @@ public:
     using MatchVector = std::vector<Node_t>;
     using Data_t      = std::span<stream_t const>;
 
-    SlidingWindow(
+    constexpr SlidingWindow(
             Data_t data_, size_t const search_buffer_size_,
             size_t const minimal_match_length_, size_t const lookahead_buffer_length,
             EdgeType const type_) noexcept
