@@ -484,7 +484,7 @@ private:
     std::string buffer;
 
     void flush_buffer() noexcept {
-        out.write(buffer.c_str(), buffer.size());
+        out.write(buffer.c_str(), static_cast<std::streamsize>(buffer.size()));
         buffer.clear();
     }
 
@@ -534,7 +534,7 @@ public:
 
     // Puts a byte in the output buffer.
     void put_byte(size_t const value) noexcept {
-        Write1(buffer, value);
+        Write1(buffer, static_cast<uint8_t>(value));
     }
 };
 
