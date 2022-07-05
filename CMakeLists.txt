@@ -10,7 +10,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
+check_ipo_supported(RESULT iposupported OUTPUT ipoerror)
+if(iposupported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+    message(WARNING "IPO is not supported: ${ipoerror}")
+endif()
 
 if(APPLE)
     set(UseLibCxxDefault TRUE)
@@ -263,7 +268,6 @@ set_target_properties(bigendian_io
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
         POSITION_INDEPENDENT_CODE ON
-        INTERPROCEDURAL_OPTIMIZATION TRUE
         PUBLIC_HEADER "${BIGENDIANIO_HEADERS}"
 )
 
@@ -289,7 +293,6 @@ set_target_properties(dummy-mdcomp
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
         POSITION_INDEPENDENT_CODE ON
-        INTERPROCEDURAL_OPTIMIZATION TRUE
 )
 
 function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
@@ -325,7 +328,6 @@ function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
             POSITION_INDEPENDENT_CODE ON
-            INTERPROCEDURAL_OPTIMIZATION TRUE
             PUBLIC_HEADER "${HDRFILE};${COMMON_HEADERS}"
     )
 endfunction()
@@ -365,7 +367,6 @@ function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
             POSITION_INDEPENDENT_CODE ON
-            INTERPROCEDURAL_OPTIMIZATION TRUE
             OUTPUT_NAME ${EXENAME}
     )
 endfunction()
