@@ -125,7 +125,7 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_en
     }
 
     PadMaskBits = 7U;
-    Format::encode(buffer, std::to_address(pointer), FullSize);
+    Format::encode(buffer, std::to_address(pointer), static_cast<size_t>(FullSize));
 
     // Pad to even size.
     Dest << buffer.rdbuf();

@@ -188,7 +188,7 @@ public:
         uint_t bits;
         if (num_read_bits < count) {
             size_t delta    = count - num_read_bits;
-            bits            = bit_buffer << delta;
+            bits            = static_cast<uint_t>(bit_buffer << delta);
             bit_buffer      = read_bits();
             num_read_bits   = bit_count - delta;
             uint_t new_bits = bit_buffer >> num_read_bits;
@@ -242,7 +242,7 @@ public:
     // outputs a T to the actual buffer once there are at least sizeof(T) *
     // CHAR_BIT bits stored in the buffer.
     INLINE bool push(uint_t const data) noexcept(noexcept(write_bits(bit_buffer))) {
-        bit_buffer = (bit_buffer << 1U) | (data & 1U);
+        bit_buffer = static_cast<uint_t>(bit_buffer << 1U) | (data & 1U);
         if (++waiting_bits >= bit_count) {
             write_bits(bit_buffer);
             waiting_bits = 0;
@@ -260,12 +260,13 @@ public:
         if (waiting_bits + size >= bit_count) {
             size_t delta = bit_count - waiting_bits;
             waiting_bits = waiting_bits + size % (bit_count);
-            uint_t bits  = (bit_buffer << delta) | (data >> waiting_bits);
+            uint_t bits
+                    = static_cast<uint_t>(bit_buffer << delta) | (data >> waiting_bits);
             write_bits(bits);
             bit_buffer = data & (all_ones >> (bit_count - waiting_bits));
             return true;
         }
-        bit_buffer = (bit_buffer << size) | data;
+        bit_buffer = static_cast<uint_t>(bit_buffer << size) | data;
         waiting_bits += size;
         return false;
     }
