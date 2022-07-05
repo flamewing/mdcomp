@@ -23,3 +23,4 @@ CompileFlags:
       -Wno-c++20-compat-pedantic,
     ]
   Remove: -W*
+  Compiler: D:/msys64/mingw64/bin/clang++.exe
