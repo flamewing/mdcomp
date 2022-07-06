@@ -102,8 +102,8 @@ config.sub
 .clangd/*
 test
 .cache
-
+.vs
 .vscode
 
 #### cmake ####
-build
+build*
