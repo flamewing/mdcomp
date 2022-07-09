@@ -10,10 +10,12 @@ Checks: >
   cert-msc50-cpp,
   cert-msc51-cpp,
   clang-diagnostic-*,
-  -clang-diagnostic-pre-c++*-compat
-  -clang-diagnostic-pre-c++*-compat-pedantic
-  -clang-diagnostic-c++*-compat
-  -clang-diagnostic-c++*-compat-pedantic
+  -clang-diagnostic-pre-c++*-compat*,
+  -clang-diagnostic-c++*-compat*,
+  -clang-diagnostic-ignored-optimization-argument,
+  -clang-diagnostic-undefined-var-template,
+  -clang-diagnostic-unused-macros,
+  clang-diagnostic-c++20-compat*,
   clang-analyzer-*,
   clang-analyzer-alpha*,
   cppcoreguidelines-*,
