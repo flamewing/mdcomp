@@ -259,7 +259,7 @@ public:
             noexcept(write_bits(bit_buffer))) {
         if (waiting_bits + size >= bit_count) {
             size_t delta = bit_count - waiting_bits;
-            waiting_bits = waiting_bits + size % (bit_count);
+            waiting_bits = (waiting_bits + size) % bit_count;
             uint_t bits
                     = static_cast<uint_t>(bit_buffer << delta) | (data >> waiting_bits);
             write_bits(bits);
