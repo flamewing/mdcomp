@@ -15,7 +15,6 @@ Checks: >
   -clang-diagnostic-ignored-optimization-argument,
   -clang-diagnostic-undefined-var-template,
   -clang-diagnostic-unused-macros,
-  clang-diagnostic-c++20-compat*,
   clang-analyzer-*,
   clang-analyzer-alpha*,
   cppcoreguidelines-*,
