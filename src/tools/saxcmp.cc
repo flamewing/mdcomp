@@ -64,11 +64,11 @@ int main(int argc, char* argv[]) {
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    bool   extract  = false;
-    bool   crunch   = false;
-    bool   WithSize = true;
-    size_t pointer  = 0;
-    size_t BSize    = 0;
+    bool   extract   = false;
+    bool   crunch    = false;
+    bool   with_size = true;
+    size_t pointer   = 0;
+    size_t size      = 0;
 
     while (true) {
         int option_index = 0;
@@ -90,16 +90,16 @@ int main(int argc, char* argv[]) {
             break;
         case 's':
             if (optarg != nullptr) {
-                BSize = strtoul(optarg, nullptr, 0);
+                size = strtoul(optarg, nullptr, 0);
             }
-            if (BSize == 0) {
+            if (size == 0) {
                 cerr << "Error: specified size must be a positive number." << endl
                      << endl;
                 return 4;
             }
             break;
         case 'S':
-            WithSize = false;
+            with_size = false;
             break;
         default:
             break;
@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
     if (crunch) {
         stringstream buffer(ios::in | ios::out | ios::binary);
         input.seekg(static_cast<std::streamsize>(pointer));
-        saxman::decode(input, buffer, BSize);
+        saxman::decode(input, buffer, size);
         input.close();
         buffer.seekg(0);
 
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]) {
                  << endl;
             return 3;
         }
-        saxman::encode(buffer, output, WithSize);
+        saxman::encode(buffer, output, with_size);
     } else {
         fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
         if (!output.good()) {
@@ -152,9 +152,9 @@ int main(int argc, char* argv[]) {
 
         if (extract) {
             input.seekg(static_cast<std::streamsize>(pointer));
-            saxman::decode(input, output, BSize);
+            saxman::decode(input, output, size);
         } else {
-            saxman::encode(input, output, WithSize);
+            saxman::encode(input, output, with_size);
         }
     }
 

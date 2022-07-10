@@ -48,12 +48,12 @@
  * Each node is a character in the file, and is represented by its position.
  */
 template <typename Adaptor>
-class AdjListNode {
+class adj_list_node {
 public:
-    using EdgeType = typename Adaptor::EdgeType;
-    using stream_t = typename Adaptor::stream_t;
+    using edge_type = typename Adaptor::edge_type;
+    using stream_t  = typename Adaptor::stream_t;
 
-    struct MatchInfo {
+    struct match_info {
         // How many characters back does the match begin at.
         size_t distance;
         // How long the match is.
@@ -64,19 +64,21 @@ private:
     // The first character after the match ends.
     size_t position{0};
     // Cost, in bits, of "covering" all of the characters in the match.
-    EdgeType type;
+    edge_type type;
     // Data about the match.
-    std::variant<stream_t, MatchInfo> match;
+    std::variant<stream_t, match_info> match;
 
 public:
     // Constructors.
-    constexpr AdjListNode() noexcept : type(EdgeType::invalid), match(stream_t(0)) {}
+    constexpr adj_list_node() noexcept : type(edge_type::invalid), match(stream_t(0)) {}
 
-    constexpr AdjListNode(size_t position_, stream_t symbol, EdgeType type_) noexcept
-            : position(position_), type(type_), match(symbol) {}
+    constexpr adj_list_node(
+            size_t position_in, stream_t symbol, edge_type type_in) noexcept
+            : position(position_in), type(type_in), match(symbol) {}
 
-    constexpr AdjListNode(size_t position_, MatchInfo match_, EdgeType type_) noexcept
-            : position(position_), type(type_), match(match_) {}
+    constexpr adj_list_node(
+            size_t position_in, match_info match_in, edge_type type_in) noexcept
+            : position(position_in), type(type_in), match(match_in) {}
 
     // Getters.
     [[nodiscard]] constexpr size_t get_position() const noexcept {
@@ -94,8 +96,8 @@ public:
     [[nodiscard]] constexpr size_t get_distance() const noexcept {
         return std::visit(
                 [](auto&& arg) noexcept {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, MatchInfo>) {
+                    using info_t = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<info_t, match_info>) {
                         return arg.distance;
                     } else {
                         return size_t{0};
@@ -107,8 +109,8 @@ public:
     [[nodiscard]] constexpr size_t get_length() const noexcept {
         return std::visit(
                 [](auto&& arg) noexcept {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, MatchInfo>) {
+                    using info_t = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<info_t, match_info>) {
                         return arg.length;
                     } else {
                         return size_t{0};
@@ -120,8 +122,8 @@ public:
     [[nodiscard]] constexpr stream_t get_symbol() const noexcept {
         return std::visit(
                 [](auto&& arg) noexcept {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, stream_t>) {
+                    using info_t = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<info_t, stream_t>) {
                         return arg;
                     } else {
                         return std::numeric_limits<stream_t>::max();
@@ -130,33 +132,33 @@ public:
                 match);
     }
 
-    [[nodiscard]] constexpr EdgeType get_type() const noexcept {
+    [[nodiscard]] constexpr edge_type get_type() const noexcept {
         return type;
     }
 };
 
 template <typename Adaptor>
-class SlidingWindow {
+class sliding_window {
 public:
-    using EdgeType    = typename Adaptor::EdgeType;
-    using stream_t    = typename Adaptor::stream_t;
-    using Node_t      = AdjListNode<Adaptor>;
-    using Match_t     = typename Node_t::MatchInfo;
-    using MatchVector = std::vector<Node_t>;
-    using Data_t      = std::span<stream_t const>;
+    using edge_type    = typename Adaptor::edge_type;
+    using stream_t     = typename Adaptor::stream_t;
+    using node_t       = adj_list_node<Adaptor>;
+    using match_t      = typename node_t::match_info;
+    using match_vector = std::vector<node_t>;
+    using data_t       = std::span<stream_t const>;
 
-    constexpr SlidingWindow(
-            Data_t data_, size_t const search_buffer_size_,
-            size_t const minimal_match_length_, size_t const lookahead_buffer_length,
-            EdgeType const type_) noexcept
-            : data(data_), search_buffer_size(search_buffer_size_),
-              minimal_match_length(minimal_match_length_),
-              base_node(Adaptor::FirstMatchPosition),
+    constexpr sliding_window(
+            data_t data_in, size_t const search_buffer_size_in,
+            size_t const minimal_match_length_in, size_t const lookahead_buffer_length,
+            edge_type const type_in) noexcept
+            : data(data_in), search_buffer_size(search_buffer_size_in),
+              minimal_match_length(minimal_match_length_in),
+              base_node(Adaptor::first_match_position),
               upper_bound(std::min(lookahead_buffer_length + base_node, data.size())),
               lower_bound(
                       base_node > search_buffer_size ? base_node - search_buffer_size
                                                      : 0),
-              type(type_) {}
+              type(type_in) {}
 
     [[nodiscard]] size_t get_data_size() const {
         return data.size();
@@ -187,9 +189,9 @@ public:
         return get_lookahead_buffer_size() != 0;
     }
 
-    void find_matches(MatchVector& matches) const noexcept {
+    void find_matches(match_vector& matches) const noexcept {
         static_assert(
-                noexcept(Adaptor::edge_weight(EdgeType(), size_t())),
+                noexcept(Adaptor::edge_weight(edge_type(), size_t())),
                 "Adaptor::edge_weight() is not noexcept");
         size_t const end = get_lookahead_buffer_size();
         // This is what we produce.
@@ -223,16 +225,16 @@ public:
             // Add it, and all prefixes, to the list, as long as it is a better
             // match.
             for (size_t jj = minimal_match_length; jj <= best_len; ++jj) {
-                matches.emplace_back(base_node, Match_t{base_node - best_pos, jj}, type);
+                matches.emplace_back(base_node, match_t{base_node - best_pos, jj}, type);
             }
         }
     }
 
-    [[nodiscard]] bool find_extra_matches(MatchVector& matches) const noexcept {
+    [[nodiscard]] bool find_extra_matches(match_vector& matches) const noexcept {
         static_assert(
                 noexcept(Adaptor::extra_matches(
                         data, base_node, upper_bound, lower_bound,
-                        std::declval<MatchVector&>())),
+                        std::declval<match_vector&>())),
                 "Adaptor::extra_matches() is not noexcept");
         // This is what we produce.
         matches.clear();
@@ -242,64 +244,64 @@ public:
 
 private:
     // Source file data and its size; one node per character in source file.
-    Data_t         data;
-    size_t const   search_buffer_size;
-    size_t const   minimal_match_length;
-    size_t         base_node;
-    size_t         upper_bound;
-    size_t         lower_bound;
-    EdgeType const type;
+    data_t          data;
+    size_t const    search_buffer_size;
+    size_t const    minimal_match_length;
+    size_t          base_node;
+    size_t          upper_bound;
+    size_t          lower_bound;
+    edge_type const type;
 };
 
 // clang-format off
 template <typename T>
-concept LZSSAdaptor =
+concept lzss_adaptor =
     std::unsigned_integral<typename T::stream_t> &&
     !std::same_as<typename T::stream_t, bool> &&
     std::is_class_v<typename T::stream_endian_t> &&
     std::unsigned_integral<typename T::descriptor_t> &&
     !std::same_as<typename T::descriptor_t, bool> &&
     std::is_class_v<typename T::descriptor_endian_t> &&
-    std::is_enum_v<typename T::EdgeType> &&
+    std::is_enum_v<typename T::edge_type> &&
     requires() {
-        { T::EdgeType::invalid } -> std::same_as<typename T::EdgeType>;
-        { T::EdgeType::terminator } -> std::same_as<typename T::EdgeType>;
-        { T::EdgeType::symbolwise } -> std::same_as<typename T::EdgeType>;
+        { T::edge_type::invalid } -> std::same_as<typename T::edge_type>;
+        { T::edge_type::terminator } -> std::same_as<typename T::edge_type>;
+        { T::edge_type::symbolwise } -> std::same_as<typename T::edge_type>;
     } &&
-    std::same_as<decltype(T::NumDescBits), size_t const> &&
-    std::same_as<decltype(T::NeedEarlyDescriptor), bool const> &&
-    std::same_as<decltype(T::DescriptorBitOrder), bit_endian const> &&
-    std::same_as<decltype(T::FirstMatchPosition), size_t const> &&
-    std::same_as<decltype(T::SearchBufSize), size_t const> &&
-    std::same_as<decltype(T::LookAheadBufSize), size_t const> &&
+    std::same_as<decltype(T::num_desc_bits), size_t const> &&
+    std::same_as<decltype(T::need_early_descriptor), bool const> &&
+    std::same_as<decltype(T::descriptor_bit_order), bit_endian const> &&
+    std::same_as<decltype(T::first_match_position), size_t const> &&
+    std::same_as<decltype(T::search_buf_size), size_t const> &&
+    std::same_as<decltype(T::look_ahead_buf_size), size_t const> &&
     requires(uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
              std::ostream& output, typename T::stream_t stream_val,
              typename T::stream_endian_t     stream_endian,
              typename T::descriptor_t        descriptor_val,
              typename T::descriptor_endian_t descriptor_endian) {
         {
-            decltype(stream_endian)::template Read<decltype(stream_val)>(rptr)
+            decltype(stream_endian)::template read<decltype(stream_val)>(rptr)
         } -> std::same_as<decltype(stream_val)>;
         {
-            decltype(stream_endian)::template Read<decltype(stream_val)>(input)
+            decltype(stream_endian)::template read<decltype(stream_val)>(input)
         } -> std::same_as<decltype(stream_val)>;
-        { decltype(stream_endian)::Write(wptr, stream_val) } -> std::same_as<void>;
-        { decltype(stream_endian)::Write(output, stream_val) } -> std::same_as<void>;
+        { decltype(stream_endian)::write(wptr, stream_val) } -> std::same_as<void>;
+        { decltype(stream_endian)::write(output, stream_val) } -> std::same_as<void>;
         {
-            decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(rptr)
+            decltype(descriptor_endian)::template read<decltype(descriptor_val)>(rptr)
         } -> std::same_as<decltype(descriptor_val)>;
         {
-            decltype(descriptor_endian)::template Read<decltype(descriptor_val)>(input)
+            decltype(descriptor_endian)::template read<decltype(descriptor_val)>(input)
         } -> std::same_as<decltype(descriptor_val)>;
         {
-            decltype(descriptor_endian)::Write(wptr, descriptor_val)
+            decltype(descriptor_endian)::write(wptr, descriptor_val)
         } -> std::same_as<void>;
         {
-            decltype(descriptor_endian)::Write(output, descriptor_val)
+            decltype(descriptor_endian)::write(output, descriptor_val)
         } -> std::same_as<void>;
     } &&
-    requires(typename T::EdgeType type, size_t value, size_t lbound,
-             std::vector<AdjListNode<T>>           nodes,
+    requires(typename T::edge_type type, size_t value, size_t lbound,
+             std::vector<adj_list_node<T>>           nodes,
              std::span<typename T::stream_t const> data) {
         {T::create_sliding_window(data)};
         { T::desc_bits(type) } -> std::same_as<size_t>;
@@ -325,27 +327,27 @@ struct lzss_parse_result {
     size_t  file_size;
 };
 
-template <LZSSAdaptor Adaptor>
+template <lzss_adaptor Adaptor>
 auto find_optimal_lzss_parse(
-        uint8_t const* data_, size_t const size, Adaptor adaptor) noexcept {
+        uint8_t const* data_in, size_t const size, Adaptor adaptor) noexcept {
     ignore_unused_variable_warning(adaptor);
-    using EdgeType        = typename Adaptor::EdgeType;
+    using edge_type       = typename Adaptor::edge_type;
     using stream_t        = typename Adaptor::stream_t;
     using stream_endian_t = typename Adaptor::stream_endian_t;
-    using Node_t          = AdjListNode<Adaptor>;
-    using AdjList         = std::list<Node_t>;
-    using MatchVector     = std::vector<Node_t>;
-    using Data_t          = std::span<stream_t const>;
+    using node_t          = adj_list_node<Adaptor>;
+    using adj_list        = std::list<node_t>;
+    using match_vector    = std::vector<node_t>;
+    using data_t          = std::span<stream_t const>;
 
     auto read_stream = [](uint8_t const*& pointer) {
-        return stream_endian_t::template Read<stream_t>(pointer);
+        return stream_endian_t::template read<stream_t>(pointer);
     };
 
     // Adjacency lists for all the nodes in the graph.
-    stream_t const* const data{reinterpret_cast<stream_t const*>(data_)};
+    stream_t const* const data{reinterpret_cast<stream_t const*>(data_in)};
     size_t const          nlen{size / sizeof(stream_t)};
     static_assert(
-            noexcept(Adaptor::desc_bits(EdgeType())),
+            noexcept(Adaptor::desc_bits(edge_type())),
             "Adaptor::desc_bits() is not noexcept");
     static_assert(
             noexcept(Adaptor::get_padding(0)), "Adaptor::get_padding() is not noexcept");
@@ -354,18 +356,18 @@ auto find_optimal_lzss_parse(
             __builtin_unreachable();
         }
     };
-    assume(nlen >= Adaptor::FirstMatchPosition);
-    size_t numNodes = nlen - Adaptor::FirstMatchPosition;
-    assume(numNodes <= std::numeric_limits<size_t>::max() - 1);
+    assume(nlen >= Adaptor::first_match_position);
+    size_t num_nodes = nlen - Adaptor::first_match_position;
+    assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
     // Auxiliary data structures:
     // * The parent of a node is the node that reaches that node with the
     //   lowest cost from the start of the file.
-    std::vector<size_t> parents(numNodes + 1);
+    std::vector<size_t> parents(num_nodes + 1);
     // * This is the edge used to go from the parent of a node to said node.
-    std::vector<Node_t> pedges(numNodes + 1);
+    std::vector<node_t> pedges(num_nodes + 1);
     // * This is the total cost to reach the edge. They start as high as
     //   possible for all nodes but the first, which starts at 0.
-    std::vector<size_t> costs(numNodes + 1, std::numeric_limits<size_t>::max());
+    std::vector<size_t> costs(num_nodes + 1, std::numeric_limits<size_t>::max());
     costs[0] = 0;
     // * And this is a vector that tallies up the amount of bits in
     //   the descriptor bitfield for the shortest path up to this node.
@@ -373,16 +375,16 @@ auto find_optimal_lzss_parse(
     //   an additional dummy descriptor bitfield to be emitted; this vector
     //   is used to counteract that.
     std::vector<size_t> descriptor_costs(
-            numNodes + 1, std::numeric_limits<size_t>::max());
+            num_nodes + 1, std::numeric_limits<size_t>::max());
     descriptor_costs[0] = 0;
 
     // Extracting distance relax logic from the loop so it can be used more
     // often.
-    auto Relax = [last_node = nlen, &costs, &descriptor_costs, &parents, &pedges](
+    auto relax = [last_node = nlen, &costs, &descriptor_costs, &parents, &pedges](
                          size_t index, size_t const base_descriptor_cost,
                          auto const& elem) {
         // Need destination ID and edge weight.
-        size_t const next_node   = elem.get_destination() - Adaptor::FirstMatchPosition;
+        size_t const next_node   = elem.get_destination() - Adaptor::first_match_position;
         size_t       edge_weight = costs[index] + elem.get_weight();
         // Compute descriptor bits from using this edge.
         size_t descriptor_cost
@@ -390,17 +392,17 @@ auto find_optimal_lzss_parse(
         if (next_node == last_node) {
             // This is the ending node. Add the descriptor bits for the
             // end-of-file marker.
-            edge_weight += Adaptor::edge_weight(EdgeType::terminator, 0);
-            descriptor_cost += Adaptor::desc_bits(EdgeType::terminator);
+            edge_weight += Adaptor::edge_weight(edge_type::terminator, 0);
+            descriptor_cost += Adaptor::desc_bits(edge_type::terminator);
             // If the descriptor bitfield had exactly 0 bits left after
             // this, we may need to emit a new descriptor bitfield (the
-            // full Adaptor::NumDescBits bits). Otherwise, we need to
+            // full Adaptor::num_desc_bits bits). Otherwise, we need to
             // pads the last descriptor bitfield to full size.
             // This accomplishes both.
-            size_t const descriptor_modulus = descriptor_cost % Adaptor::NumDescBits;
-            if (descriptor_modulus != 0 || Adaptor::NeedEarlyDescriptor) {
-                edge_weight += (Adaptor::NumDescBits - descriptor_modulus);
-                descriptor_cost += (Adaptor::NumDescBits - descriptor_modulus);
+            size_t const descriptor_modulus = descriptor_cost % Adaptor::num_desc_bits;
+            if (descriptor_modulus != 0 || Adaptor::need_early_descriptor) {
+                edge_weight += (Adaptor::num_desc_bits - descriptor_modulus);
+                descriptor_cost += (Adaptor::num_desc_bits - descriptor_modulus);
             }
             // Compensate for the Adaptor's padding, if any.
             edge_weight += Adaptor::get_padding(edge_weight);
@@ -419,28 +421,28 @@ auto find_optimal_lzss_parse(
     // Since the LZSS graph is a topologically-sorted DAG by construction,
     // computing the shortest distance is very quick and easy: just go
     // through the nodes in order and update the distances.
-    auto        winSet = Adaptor::create_sliding_window(Data_t(data, nlen));
-    MatchVector matches;
-    matches.reserve(Adaptor::LookAheadBufSize);
-    for (size_t ii = 0; ii < numNodes; ii++) {
+    auto         win_set = Adaptor::create_sliding_window(data_t(data, nlen));
+    match_vector matches;
+    matches.reserve(Adaptor::look_ahead_buf_size);
+    for (size_t ii = 0; ii < num_nodes; ii++) {
         // Get remaining unused descriptor bits up to this node.
         size_t const base_descriptor_cost = descriptor_costs[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
-            size_t const   offset  = ii + Adaptor::FirstMatchPosition;
-            auto const*    pointer = reinterpret_cast<uint8_t const*>(data + offset);
-            stream_t const value   = read_stream(pointer);
-            EdgeType const type    = EdgeType::symbolwise;
-            Relax(ii, base_descriptor_cost, Node_t(offset, value, type));
+            size_t const    offset  = ii + Adaptor::first_match_position;
+            auto const*     pointer = reinterpret_cast<uint8_t const*>(data + offset);
+            stream_t const  value   = read_stream(pointer);
+            edge_type const type    = edge_type::symbolwise;
+            relax(ii, base_descriptor_cost, node_t(offset, value, type));
         }
         // Get the adjacency list for this node.
-        for (auto& window : winSet) {
+        for (auto& window : win_set) {
             if (!window.find_extra_matches(matches)) {
                 window.find_matches(matches);
             }
             for (auto const& elem : matches) {
-                if (elem.get_type() != EdgeType::invalid) {
-                    Relax(ii, base_descriptor_cost, elem);
+                if (elem.get_type() != edge_type::invalid) {
+                    relax(ii, base_descriptor_cost, elem);
                 }
             }
             window.slide_window();
@@ -448,10 +450,10 @@ auto find_optimal_lzss_parse(
     }
 
     // This is what we will produce.
-    lzss_parse_result<AdjList> result{
-            {Node_t{0, 0, EdgeType::terminator}}, descriptor_costs.back(), costs.back()};
-    AdjList& parse_list = result.parse_list;
-    for (size_t ii = numNodes; ii != 0;) {
+    lzss_parse_result<adj_list> result{
+            {node_t{0, 0, edge_type::terminator}}, descriptor_costs.back(), costs.back()};
+    adj_list& parse_list = result.parse_list;
+    for (size_t ii = num_nodes; ii != 0;) {
         // Insert the edge up front...
         parse_list.push_front(pedges[ii]);
         // ... and switch to parent node.
@@ -469,13 +471,13 @@ auto find_optimal_lzss_parse(
  * by buffering the bytes until a descriptor field is full, at which point it
  * writes the descriptor field and flushes the output buffer.
  */
-template <LZSSAdaptor Adaptor>
-class LZSSOStream {
+template <lzss_adaptor Adaptor>
+class lzss_ostream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
-    using bit_buffer_t
-            = obitstream<descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t>;
+    using bit_buffer_t        = obitstream<
+            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
     // Where we will output to.
     std::ostream& out;
     // Internal bitstream output buffer.
@@ -490,15 +492,15 @@ private:
 
 public:
     // Constructor.
-    explicit LZSSOStream(std::ostream& Dest) noexcept : out(Dest), bits(out) {}
+    explicit lzss_ostream(std::ostream& dest) noexcept : out(dest), bits(out) {}
 
-    LZSSOStream(LZSSOStream const&)                = delete;
-    LZSSOStream(LZSSOStream&&) noexcept            = delete;
-    LZSSOStream& operator=(LZSSOStream const&)     = delete;
-    LZSSOStream& operator=(LZSSOStream&&) noexcept = delete;
+    lzss_ostream(lzss_ostream const&)                = delete;
+    lzss_ostream(lzss_ostream&&) noexcept            = delete;
+    lzss_ostream& operator=(lzss_ostream const&)     = delete;
+    lzss_ostream& operator=(lzss_ostream&&) noexcept = delete;
 
     // Destructor: writes anything that hasn't been written.
-    ~LZSSOStream() noexcept {
+    ~lzss_ostream() noexcept {
         // We need a dummy descriptor field if we have exactly zero bits left
         // on the previous descriptor field; this is because the decoder will
         // immediately fetch a new descriptor field when the previous one has
@@ -507,10 +509,10 @@ public:
         bool const need_dummy_descriptor = !bits.have_waiting_bits();
         // Now, flush the queue if needed.
         bits.flush();
-        if constexpr (Adaptor::NeedEarlyDescriptor) {
+        if constexpr (Adaptor::need_early_descriptor) {
             if (need_dummy_descriptor) {
                 // We need to add a dummy descriptor field; so add it.
-                descriptor_endian_t::Write(out, descriptor_t{0});
+                descriptor_endian_t::write(out, descriptor_t{0});
             }
         }
         // Now write the terminating sequence if it wasn't written already.
@@ -520,7 +522,7 @@ public:
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, outputs it and the output parameter buffer.
     void descriptor_bit(descriptor_t const bit) noexcept {
-        if constexpr (Adaptor::NeedEarlyDescriptor) {
+        if constexpr (Adaptor::need_early_descriptor) {
             if (bits.push(bit)) {
                 flush_buffer();
             }
@@ -534,7 +536,7 @@ public:
 
     // Puts a byte in the output buffer.
     void put_byte(size_t const value) noexcept {
-        Write1(buffer, static_cast<uint8_t>(value));
+        write1(buffer, static_cast<uint8_t>(value));
     }
 };
 
@@ -544,14 +546,14 @@ public:
  * by reading a descriptor field when one is required (as defined by the adaptor
  * class), so that bytes can be read when needed from the input stream.
  */
-template <LZSSAdaptor Adaptor>
-class LZSSIStream {
+template <lzss_adaptor Adaptor>
+class lzss_istream {
 private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
     using bit_buffer_t        = ibitstream<
-            descriptor_t, Adaptor::DescriptorBitOrder, descriptor_endian_t,
-            Adaptor::NeedEarlyDescriptor>;
+            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
+            Adaptor::need_early_descriptor>;
     // Where we will input to.
     std::istream& in;
     // Internal bitstream input buffer.
@@ -559,7 +561,7 @@ private:
 
 public:
     // Constructor.
-    explicit LZSSIStream(std::istream& Source) noexcept : in(Source), bits(in) {}
+    explicit lzss_istream(std::istream& source) noexcept : in(source), bits(in) {}
 
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
@@ -569,7 +571,7 @@ public:
 
     // Puts a byte in the input buffer.
     uint8_t get_byte() noexcept {
-        return Read1(in);
+        return read1(in);
     }
 };
 

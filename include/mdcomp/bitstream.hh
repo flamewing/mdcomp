@@ -41,36 +41,36 @@
 
 namespace detail {
     template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr uint_t nextMask(
+    [[nodiscard]] CONST_INLINE constexpr uint_t next_mask(
             uint_t mask, size_t size) noexcept {
         return mask ^ static_cast<uint_t>(mask << size);
     }
 
     template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE consteval uint_t getMask() noexcept {
+    [[nodiscard]] CONST_INLINE consteval uint_t get_mask() noexcept {
         uint_t mask = std::numeric_limits<uint_t>::max();
         for (size_t size = sizeof(uint_t); size > 1; size >>= 1U) {
-            mask = nextMask(mask, size * CHAR_BIT / 2);
+            mask = next_mask(mask, size * CHAR_BIT / 2);
         }
         return mask;
     }
 
     template <size_t size, auto mask, std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr uint_t reverseByteBits(uint_t value) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr uint_t reverse_byte_bits(uint_t value) noexcept {
         constexpr size_t const new_size = size >> 1U;
         constexpr auto const   factor   = uint_t{1} << new_size;
-        constexpr auto const   new_mask = nextMask<uint_t>(mask, new_size);
+        constexpr auto const   new_mask = next_mask<uint_t>(mask, new_size);
         if constexpr (size > 1) {
             uint_t const val1    = value & new_mask;
             uint_t const val2    = value ^ val1;
             uint_t const new_val = factor * val1 + val2 / factor;
-            return reverseByteBits<new_size, new_mask>(new_val);
+            return reverse_byte_bits<new_size, new_mask>(new_val);
         }
         return value;
     }
 
     template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(uint_t value) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr auto reverse_bits(uint_t value) noexcept {
 #ifdef __clang__
         if constexpr (CHAR_BIT == 8) {
             if (!std::is_constant_evaluated()) {
@@ -97,19 +97,19 @@ namespace detail {
             }
         }
 #endif
-        constexpr auto const mask = getMask<uint_t>();
-        return reverseByteBits<CHAR_BIT, mask>(byteswap(value));
+        constexpr auto const mask = get_mask<uint_t>();
+        return reverse_byte_bits<CHAR_BIT, mask>(byteswap(value));
     }
 
     template <std::signed_integral int_t>
-    [[nodiscard]] CONST_INLINE constexpr auto reverseBits(int_t value) noexcept {
-        return detail::bit_cast<int_t>(reverseBits(std::make_unsigned_t<int_t>(value)));
+    [[nodiscard]] CONST_INLINE constexpr auto reverse_bits(int_t value) noexcept {
+        return detail::bit_cast<int_t>(reverse_bits(std::make_unsigned_t<int_t>(value)));
     }
 
-    static_assert(reverseBits<uint8_t>(0x35U) == 0xacU);
-    static_assert(reverseBits<uint16_t>(0x1357U) == 0xeac8U);
-    static_assert(reverseBits(0x01234567U) == 0xE6A2C480U);
-    static_assert(reverseBits(0x0123456789abcdefULL) == 0xf7b3d591E6A2C480ULL);
+    static_assert(reverse_bits<uint8_t>(0x35U) == 0xacU);
+    static_assert(reverse_bits<uint16_t>(0x1357U) == 0xeac8U);
+    static_assert(reverse_bits(0x01234567U) == 0xE6A2C480U);
+    static_assert(reverse_bits(0x0123456789abcdefULL) == 0xf7b3d591E6A2C480ULL);
 
     template <typename F, typename R, typename... Args>
     concept bit_callback = requires(F callable, Args... arguments) {
@@ -139,7 +139,7 @@ private:
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
         if constexpr (bit_order == bit_endian::little) {
-            return detail::reverseBits(bits);
+            return detail::reverse_bits(bits);
         } else {
             return bits;
         }
@@ -155,11 +155,11 @@ private:
     }
 
 public:
-    explicit ibitbuffer(Reader const& reader_) noexcept(noexcept(read_bits()))
-            : reader(reader_), num_read_bits(bit_count), bit_buffer(read_bits()) {}
+    explicit ibitbuffer(Reader const& reader_in) noexcept(noexcept(read_bits()))
+            : reader(reader_in), num_read_bits(bit_count), bit_buffer(read_bits()) {}
 
-    explicit ibitbuffer(Reader&& reader_) noexcept(noexcept(read_bits()))
-            : reader(std::move(reader_)), num_read_bits(bit_count),
+    explicit ibitbuffer(Reader&& reader_in) noexcept(noexcept(read_bits()))
+            : reader(std::move(reader_in)), num_read_bits(bit_count),
               bit_buffer(read_bits()) {}
 
     // Gets a single bit from the buffer. Remembers previously read bits, and
@@ -225,18 +225,18 @@ private:
 
     INLINE void write_bits(uint_t const bits) noexcept(noexcept(writer(bits))) {
         if constexpr (bit_order == bit_endian::little) {
-            writer(detail::reverseBits(bits));
+            writer(detail::reverse_bits(bits));
         } else {
             writer(bits);
         }
     }
 
 public:
-    explicit obitbuffer(Writer const& writer_) noexcept
-            : writer(writer_), waiting_bits(0), bit_buffer(0) {}
+    explicit obitbuffer(Writer const& writer_in) noexcept
+            : writer(writer_in), waiting_bits(0), bit_buffer(0) {}
 
-    explicit obitbuffer(Writer&& writer_) noexcept
-            : writer(std::move(writer_)), waiting_bits(0), bit_buffer(0) {}
+    explicit obitbuffer(Writer&& writer_in) noexcept
+            : writer(std::move(writer_in)), waiting_bits(0), bit_buffer(0) {}
 
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *
@@ -297,19 +297,19 @@ template <
 class ibitstream {
 private:
     constexpr static inline bool const is_noexcept
-            = noexcept(Endian::template Read<uint_t>(std::declval<std::istream&>()));
+            = noexcept(Endian::template read<uint_t>(std::declval<std::istream&>()));
 
-    struct BitReader {
+    struct bit_reader {
         auto operator()() noexcept(is_noexcept) {
-            return Endian::template Read<uint_t>(source);
+            return Endian::template read<uint_t>(source);
         }
 
         std::istream& source;
     };
 
-    using Callback   = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
-    using bit_buffer = ibitbuffer<uint_t, Callback, bit_order, EarlyRead>;
-    BitReader  reader;
+    using callback   = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
+    using bit_buffer = ibitbuffer<uint_t, callback, bit_order, EarlyRead>;
+    bit_reader reader;
     bit_buffer buffer;
 
 public:
@@ -342,19 +342,19 @@ template <std::unsigned_integral uint_t, bit_endian bit_order, typename Endian>
 class obitstream {
 private:
     constexpr static inline bool const is_noexcept = noexcept(
-            Endian::Write(std::declval<std::ostream&>(), std::declval<uint_t>()));
+            Endian::write(std::declval<std::ostream&>(), std::declval<uint_t>()));
 
-    struct BitWriter {
+    struct bit_writer {
         auto operator()(uint_t count) noexcept(is_noexcept) {
-            return Endian::Write(dest, count);
+            return Endian::write(dest, count);
         }
 
         std::ostream& dest;
     };
 
-    using Callback   = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
-    using bit_buffer = obitbuffer<uint_t, Callback, bit_order>;
-    BitWriter  writer;
+    using callback   = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
+    using bit_buffer = obitbuffer<uint_t, callback, bit_order>;
+    bit_writer writer;
     bit_buffer buffer;
 
 public:

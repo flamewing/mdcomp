@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class kosplus;
-using basic_kosplus   = BasicDecoder<kosplus, PadMode::DontPad>;
-using moduled_kosplus = ModuledAdaptor<kosplus, 4096U, 1U>;
+using basic_kosplus   = basic_decoder<kosplus, pad_mode::dont_pad>;
+using moduled_kosplus = moduled_adaptor<kosplus, 4096U, 1U>;
 
 class kosplus : public basic_kosplus, public moduled_kosplus {
     friend basic_kosplus;
     friend moduled_kosplus;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
     using basic_kosplus::encode;
-    static bool decode(std::istream& Source, std::iostream& Dest);
+    static bool decode(std::istream& source, std::iostream& dest);
 };
 
 #endif    // LIB_KOSPLUS_HH

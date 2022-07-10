@@ -77,8 +77,8 @@ public:
     // Constructors.
     nibble_run() noexcept = default;
 
-    nibble_run(std::byte nibble_, size_t count_) noexcept
-            : nibble(nibble_), count(static_cast<uint8_t>(count_)) {}
+    nibble_run(std::byte nibble_in, size_t count_in) noexcept
+            : nibble(nibble_in), count(static_cast<uint8_t>(count_in)) {}
 
     // Sorting operator.
     [[nodiscard]] std::strong_ordering operator<=>(
@@ -102,28 +102,30 @@ public:
     }
 };
 
-struct SizeFreqNibble {
+struct size_freq_nibble {
     size_t     count{0};
     nibble_run nibble;
     size_t     code_length{0};
 
-    SizeFreqNibble(size_t count_, nibble_run const& nibble_, size_t const length) noexcept
-            : count(count_), nibble(nibble_), code_length(length) {}
+    size_freq_nibble(
+            size_t count_in, nibble_run const& nibble_in, size_t const length) noexcept
+            : count(count_in), nibble(nibble_in), code_length(length) {}
 
-    SizeFreqNibble() noexcept = default;
+    size_freq_nibble() noexcept = default;
 };
 
-struct Code {
+struct bit_code {
     size_t code;
     size_t length;
 
-    [[nodiscard]] std::strong_ordering operator<=>(Code const&) const noexcept = default;
+    [[nodiscard]] std::strong_ordering operator<=>(
+            bit_code const&) const noexcept = default;
 };
 
-using CodeSizeMap   = map<nibble_run, size_t>;
-using RunCountMap   = map<nibble_run, size_t>;
-using NibbleCodeMap = map<nibble_run, Code>;
-using CodeNibbleMap = map<Code, nibble_run>;
+using code_size_map   = map<nibble_run, size_t>;
+using run_count_map   = map<nibble_run, size_t>;
+using nibble_code_map = map<nibble_run, bit_code>;
+using code_nibble_map = map<bit_code, nibble_run>;
 
 // Slightly based on code by Mark Nelson for Huffman encoding.
 // https://marknelson.us/posts/1996/01/01/priority-queues.html
@@ -136,14 +138,14 @@ private:
 
 public:
     // Construct a new leaf node for character c.
-    node(nibble_run const& value_, size_t const weight_) noexcept
-            : weight(weight_), value(value_) {}
+    node(nibble_run const& value_in, size_t const weight_in) noexcept
+            : weight(weight_in), value(value_in) {}
 
     // Construct a new internal node that has children c1 and c2.
-    node(shared_ptr<node> const& left_child_,
-         shared_ptr<node> const& right_child_) noexcept
-            : left_child(left_child_), right_child(right_child_),
-              weight(left_child_->weight + right_child_->weight) {}
+    node(shared_ptr<node> const& left_child_in,
+         shared_ptr<node> const& right_child_in) noexcept
+            : left_child(left_child_in), right_child(right_child_in),
+              weight(left_child_in->weight + right_child_in->weight) {}
 
     // Free the memory used by the child nodes.
     void prune() noexcept {
@@ -178,25 +180,25 @@ public:
         return value;
     }
 
-    void set_left_child(shared_ptr<node> left_child_) noexcept {
-        left_child = std::move(left_child_);
+    void set_left_child(shared_ptr<node> left_child_in) noexcept {
+        left_child = std::move(left_child_in);
     }
 
-    void set_right_child(shared_ptr<node> right_child_) noexcept {
-        right_child = std::move(right_child_);
+    void set_right_child(shared_ptr<node> right_child_in) noexcept {
+        right_child = std::move(right_child_in);
     }
 
-    void set_weight(size_t weight_) noexcept {
-        weight = weight_;
+    void set_weight(size_t weight_in) noexcept {
+        weight = weight_in;
     }
 
-    void set_value(nibble_run const& value_) noexcept {
-        value = value_;
+    void set_value(nibble_run const& value_in) noexcept {
+        value = value_in;
     }
 
     // This goes through the tree, starting with the current node, generating
     // a map associating a nibble run with its code length.
-    void traverse(CodeSizeMap& sizemap) const noexcept {
+    void traverse(code_size_map& sizemap) const noexcept {
         if (is_leaf()) {
             sizemap[value] += 1;
         } else {
@@ -210,11 +212,11 @@ public:
     }
 };
 
-using NodeVector = vector<shared_ptr<node>>;
+using node_vector = vector<shared_ptr<node>>;
 
-struct Compare_size {
+struct compare_size {
     bool operator()(
-            SizeFreqNibble const& left, SizeFreqNibble const& right) const noexcept {
+            size_freq_nibble const& left, size_freq_nibble const& right) const noexcept {
         if (left.code_length < right.code_length) {
             return true;
         }
@@ -237,7 +239,7 @@ struct Compare_size {
     }
 };
 
-struct Compare_node {
+struct compare_node {
     bool operator()(
             shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
 #if 1
@@ -254,19 +256,19 @@ struct Compare_node {
     }
 
     // Just discard the lowest weighted item.
-    void update(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
+    void update(node_vector& nodes, nibble_code_map& codes) const noexcept {
         ignore_unused_variable_warning(this, nodes, codes);
     }
 
     // Initialize
-    void initialize(NodeVector& nodes, NibbleCodeMap& codes) const noexcept {
+    void initialize(node_vector& nodes, nibble_code_map& codes) const noexcept {
         ignore_unused_variable_warning(codes);
         make_heap(nodes.begin(), nodes.end(), *this);
     }
 };
 
-struct Compare_node2 {
-    NibbleCodeMap* code_map = nullptr;
+struct compare_node2 {
+    nibble_code_map* code_map = nullptr;
 
     bool operator()(
             shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
@@ -314,55 +316,55 @@ struct Compare_node2 {
 
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
-    void update(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
+    void update(node_vector& nodes, nibble_code_map& codes) noexcept {
         *code_map = codes;
         make_heap(nodes.begin(), nodes.end(), *this);
     }
 
-    void initialize(NodeVector& nodes, NibbleCodeMap& codes) noexcept {
+    void initialize(node_vector& nodes, nibble_code_map& codes) noexcept {
         update(nodes, codes);
     }
 };
 
 template <>
-size_t moduled_nemesis::PadMaskBits = 1U;
+size_t moduled_nemesis::pad_mask_bits = 1U;
 
-using NemIBitstream = ibitstream<uint8_t, bit_endian::big, BigEndian, true>;
-using NemOBitstream = obitstream<uint8_t, bit_endian::big, BigEndian>;
+using nem_ibitstream = ibitstream<uint8_t, bit_endian::big, big_endian, true>;
+using nem_obitstream = obitstream<uint8_t, bit_endian::big, big_endian>;
 
 class nemesis_internal {
 public:
-    static void decode_header(std::istream& Source, CodeNibbleMap& code_map) {
+    static void decode_header(std::istream& source, code_nibble_map& code_map) {
         // storage for output value to decompression buffer
         std::byte out_val{0};
 
         // main loop. Header is terminated by the value of 0xFF
-        for (size_t in_val = Read1(Source); in_val != 0xFF; in_val = Read1(Source)) {
+        for (size_t in_val = read1(source); in_val != 0xFF; in_val = read1(source)) {
             // if most significant bit is set, store the last 4 bits and discard
             // the rest
             if ((in_val & 0x80U) != 0) {
                 out_val = static_cast<std::byte>(in_val & 0xfU);
-                in_val  = Read1(Source);
+                in_val  = read1(source);
             }
 
             nibble_run const run(out_val, ((in_val & 0x70U) >> 4U) + 1);
 
-            size_t const code   = Read1(Source);
+            size_t const code   = read1(source);
             size_t const length = in_val & 0xfU;
             // Read the run's code from stream.
-            code_map[Code{code, length}] = run;
+            code_map[bit_code{code, length}] = run;
         }
     }
 
     static void decode(
-            std::istream& Source, std::ostream& Dest, CodeNibbleMap& code_map,
+            std::istream& source, std::ostream& dest, code_nibble_map& code_map,
             size_t const num_tiles, bool const alt_out = false) {
         // This buffer is used for alternating mode decoding.
-        stringstream dest(ios::in | ios::out | ios::binary);
+        stringstream str_dest(ios::in | ios::out | ios::binary);
 
         // Set bit I/O streams.
-        NemIBitstream bits(Source);
-        NemOBitstream output(dest);
+        nem_ibitstream bits(source);
+        nem_obitstream output(str_dest);
 
         size_t code   = bits.pop();
         size_t length = 1;
@@ -401,7 +403,7 @@ public:
                 length = 1;
             } else {
                 // Find out if the data so far is a nibble code.
-                if (auto const iter = code_map.find(Code{code, length});
+                if (auto const iter = code_map.find(bit_code{code, length});
                     iter != code_map.end()) {
                     // If it is, then it is time to output the encoded nibble
                     // run.
@@ -445,25 +447,25 @@ public:
         if (alt_out) {
             // For alternating decoding, we must now incrementally XOR and
             // output the lines.
-            dest.seekg(0);
-            dest.clear();
-            uint32_t value = LittleEndian::Read4(dest);
-            LittleEndian::Write4(Dest, value);
-            while (dest.tellg() < final_size) {
-                value ^= LittleEndian::Read4(dest);
-                LittleEndian::Write4(Dest, value);
+            str_dest.seekg(0);
+            str_dest.clear();
+            uint32_t value = little_endian::read4(str_dest);
+            little_endian::write4(dest, value);
+            while (str_dest.tellg() < final_size) {
+                value ^= little_endian::read4(str_dest);
+                little_endian::write4(dest, value);
             }
         } else {
-            Dest.write(dest.str().c_str(), final_size);
+            dest.write(str_dest.str().c_str(), final_size);
         }
     }
 
     template <size_t N>
-    using Row = std::array<size_t, N>;
+    using row_t = std::array<size_t, N>;
     template <size_t M, size_t N>
-    using Matrix = std::array<Row<N>, M>;
+    using matrix_t = std::array<row_t<N>, M>;
 
-    static size_t estimate_file_size(NibbleCodeMap& code_map, RunCountMap& counts) {
+    static size_t estimate_file_size(nibble_code_map& code_map, run_count_map& counts) {
         // We now compute the final file size for this code table.
         // 2 bytes at the start of the file, plus 1 byte at the end of the
         // code table.
@@ -486,7 +488,7 @@ public:
 
         // Supplementary code map for the nibble runs that can be broken up into
         // shorter nibble runs with a smaller bit length than inlining.
-        NibbleCodeMap extra_code_map;
+        nibble_code_map extra_code_map;
         // Now we will compute the size requirements for inline nibble runs.
         for (auto const& [run, frequency] : counts) {
             // Find out if this nibble run has a code for it.
@@ -525,7 +527,7 @@ public:
                         length <<= 1U;
                         size_estimate += length * frequency;
                         length |= 0x80U;    // Flag this as a false code.
-                        extra_code_map[run] = Code{code, length};
+                        extra_code_map[run] = bit_code{code, length};
                     }
                 } else {
                     // We stand a chance of breaking it the nibble run.
@@ -539,74 +541,74 @@ public:
                         // constraints. If the number of repeats of the current
                         // nibble run is N, then we have N dimensions.
                         // Here are some hard-coded tables, obtained by brute-force:
-                        constexpr static Matrix<2, 2> const linear_coefficients2{
-                                Row<2>{3, 0},
-                                Row<2>{1, 1}
+                        constexpr static matrix_t<2, 2> const linear_coefficients2{
+                                row_t<2>{3, 0},
+                                row_t<2>{1, 1}
                         };
-                        constexpr static Matrix<4, 3> const linear_coefficients3{
-                                Row<3>{4, 0, 0},
-                                Row<3>{2, 1, 0},
-                                Row<3>{1, 0, 1},
-                                Row<3>{0, 2, 0}
+                        constexpr static matrix_t<4, 3> const linear_coefficients3{
+                                row_t<3>{4, 0, 0},
+                                row_t<3>{2, 1, 0},
+                                row_t<3>{1, 0, 1},
+                                row_t<3>{0, 2, 0}
                         };
-                        constexpr static Matrix<6, 4> const linear_coefficients4{
-                                Row<4>{5, 0, 0, 0},
-                                Row<4>{3, 1, 0, 0},
-                                Row<4>{2, 0, 1, 0},
-                                Row<4>{1, 2, 0, 0},
-                                Row<4>{1, 0, 0, 1},
-                                Row<4>{0, 1, 1, 0}
+                        constexpr static matrix_t<6, 4> const linear_coefficients4{
+                                row_t<4>{5, 0, 0, 0},
+                                row_t<4>{3, 1, 0, 0},
+                                row_t<4>{2, 0, 1, 0},
+                                row_t<4>{1, 2, 0, 0},
+                                row_t<4>{1, 0, 0, 1},
+                                row_t<4>{0, 1, 1, 0}
                         };
-                        constexpr static Matrix<10, 5> const linear_coefficients5{
-                                Row<5>{6, 0, 0, 0, 0},
-                                Row<5>{4, 1, 0, 0, 0},
-                                Row<5>{3, 0, 1, 0, 0},
-                                Row<5>{2, 2, 0, 0, 0},
-                                Row<5>{2, 0, 0, 1, 0},
-                                Row<5>{1, 1, 1, 0, 0},
-                                Row<5>{1, 0, 0, 0, 1},
-                                Row<5>{0, 3, 0, 0, 0},
-                                Row<5>{0, 1, 0, 1, 0},
-                                Row<5>{0, 0, 2, 0, 0}
+                        constexpr static matrix_t<10, 5> const linear_coefficients5{
+                                row_t<5>{6, 0, 0, 0, 0},
+                                row_t<5>{4, 1, 0, 0, 0},
+                                row_t<5>{3, 0, 1, 0, 0},
+                                row_t<5>{2, 2, 0, 0, 0},
+                                row_t<5>{2, 0, 0, 1, 0},
+                                row_t<5>{1, 1, 1, 0, 0},
+                                row_t<5>{1, 0, 0, 0, 1},
+                                row_t<5>{0, 3, 0, 0, 0},
+                                row_t<5>{0, 1, 0, 1, 0},
+                                row_t<5>{0, 0, 2, 0, 0}
                         };
-                        constexpr static Matrix<14, 6> const linear_coefficients6{
-                                Row<6>{7, 0, 0, 0, 0, 0},
-                                Row<6>{5, 1, 0, 0, 0, 0},
-                                Row<6>{4, 0, 1, 0, 0, 0},
-                                Row<6>{3, 2, 0, 0, 0, 0},
-                                Row<6>{3, 0, 0, 1, 0, 0},
-                                Row<6>{2, 1, 1, 0, 0, 0},
-                                Row<6>{2, 0, 0, 0, 1, 0},
-                                Row<6>{1, 3, 0, 0, 0, 0},
-                                Row<6>{1, 1, 0, 1, 0, 0},
-                                Row<6>{1, 0, 2, 0, 0, 0},
-                                Row<6>{1, 0, 0, 0, 0, 1},
-                                Row<6>{0, 2, 1, 0, 0, 0},
-                                Row<6>{0, 1, 0, 0, 1, 0},
-                                Row<6>{0, 0, 1, 1, 0, 0}
+                        constexpr static matrix_t<14, 6> const linear_coefficients6{
+                                row_t<6>{7, 0, 0, 0, 0, 0},
+                                row_t<6>{5, 1, 0, 0, 0, 0},
+                                row_t<6>{4, 0, 1, 0, 0, 0},
+                                row_t<6>{3, 2, 0, 0, 0, 0},
+                                row_t<6>{3, 0, 0, 1, 0, 0},
+                                row_t<6>{2, 1, 1, 0, 0, 0},
+                                row_t<6>{2, 0, 0, 0, 1, 0},
+                                row_t<6>{1, 3, 0, 0, 0, 0},
+                                row_t<6>{1, 1, 0, 1, 0, 0},
+                                row_t<6>{1, 0, 2, 0, 0, 0},
+                                row_t<6>{1, 0, 0, 0, 0, 1},
+                                row_t<6>{0, 2, 1, 0, 0, 0},
+                                row_t<6>{0, 1, 0, 0, 1, 0},
+                                row_t<6>{0, 0, 1, 1, 0, 0}
                         };
-                        constexpr static Matrix<21, 7> const linear_coefficients7{
-                                Row<7>{8, 0, 0, 0, 0, 0, 0},
-                                Row<7>{6, 1, 0, 0, 0, 0, 0},
-                                Row<7>{5, 0, 1, 0, 0, 0, 0},
-                                Row<7>{4, 2, 0, 0, 0, 0, 0},
-                                Row<7>{4, 0, 0, 1, 0, 0, 0},
-                                Row<7>{3, 1, 1, 0, 0, 0, 0},
-                                Row<7>{3, 0, 0, 0, 1, 0, 0},
-                                Row<7>{2, 3, 0, 0, 0, 0, 0},
-                                Row<7>{2, 1, 0, 1, 0, 0, 0},
-                                Row<7>{2, 0, 2, 0, 0, 0, 0},
-                                Row<7>{2, 0, 0, 0, 0, 1, 0},
-                                Row<7>{1, 2, 1, 0, 0, 0, 0},
-                                Row<7>{1, 1, 0, 0, 1, 0, 0},
-                                Row<7>{1, 0, 1, 1, 0, 0, 0},
-                                Row<7>{1, 0, 0, 0, 0, 0, 1},
-                                Row<7>{0, 4, 0, 0, 0, 0, 0},
-                                Row<7>{0, 2, 0, 1, 0, 0, 0},
-                                Row<7>{0, 1, 2, 0, 0, 0, 0},
-                                Row<7>{0, 1, 0, 0, 0, 1, 0},
-                                Row<7>{0, 0, 1, 0, 1, 0, 0},
-                                Row<7>{0, 0, 0, 2, 0, 0, 0}
+                        constexpr static matrix_t<21, 7> const linear_coefficients7{
+                                row_t<7>{8, 0, 0, 0, 0, 0, 0},
+                                row_t<7>{6, 1, 0, 0, 0, 0, 0},
+                                row_t<7>{5, 0, 1, 0, 0, 0, 0},
+                                row_t<7>{4, 2, 0, 0, 0, 0, 0},
+                                row_t<7>{4, 0, 0, 1, 0, 0, 0},
+                                row_t<7>{3, 1, 1, 0, 0, 0, 0},
+                                row_t<7>{3, 0, 0, 0, 1, 0, 0},
+                                row_t<7>{2, 3, 0, 0, 0, 0, 0},
+                                row_t<7>{2, 1, 0, 1, 0, 0, 0},
+                                row_t<7>{2, 0, 2, 0, 0, 0, 0},
+                                row_t<7>{2, 0, 0, 0, 0, 1, 0},
+                                row_t<7>{1, 2, 1, 0, 0, 0, 0},
+                                row_t<7>{1, 1, 0, 0, 1, 0, 0},
+                                row_t<7>{1, 0, 1, 1, 0, 0, 0},
+                                row_t<7>{1, 0, 0, 0, 0, 0, 1},
+                                row_t<7>{0, 4, 0, 0, 0, 0, 0},
+                                row_t<7>{0, 2, 0, 1, 0, 0, 0},
+                                row_t<7>{0, 1, 2, 0, 0, 0, 0},
+                                row_t<7>{0, 1, 0, 0, 0, 1, 0},
+                                row_t<7>{0, 0, 1, 0, 1, 0, 0},
+                                row_t<7>{0, 0, 0, 2, 0, 0, 0}
                         };
                         // Get correct coefficient table:
                         switch (count) {
@@ -711,7 +713,7 @@ public:
                             // Flag it as a false code.
                             size_t const mlen = best_size | 0x80U;
                             // Add it to supplementary code map.
-                            extra_code_map[run] = Code{code, mlen};
+                            extra_code_map[run] = bit_code{code, mlen};
                             size_estimate += best_size * frequency;
                         }
                     } else {
@@ -729,27 +731,27 @@ public:
         return size_estimate;
     }
 
-    enum class NemesisMode : uint16_t {
-        Normal         = 0U,
-        ProgressiveXor = 1U << 15U,
+    enum class nemesis_mode : uint16_t {
+        normal          = 0U,
+        progressive_xor = 1U << 15U,
     };
 
-    friend uint16_t operator|(NemesisMode mode, std::streamoff length) {
+    friend uint16_t operator|(nemesis_mode mode, std::streamoff length) {
         return static_cast<uint16_t>(to_underlying(mode) | static_cast<uint16_t>(length));
     }
 
     template <typename Compare>
     static std::streamoff encode(
-            istream& Source, ostream& Dest, NemesisMode mode, std::streamoff const length,
-            Compare&& comp) {
+            istream& source, ostream& dest, nemesis_mode mode,
+            std::streamoff const length, Compare&& comp) {
         // Seek to start and clear all errors.
-        Source.clear();
-        Source.seekg(0);
+        source.clear();
+        source.seekg(0);
         // Unpack source so we don't have to deal with nibble IO after.
         constexpr const std::byte low_nibble{0xfU};
         vector<std::byte>         unpack;
         for (std::streamoff i = 0; i < length; i++) {
-            std::byte const value{Read1(Source)};
+            std::byte const value{read1(source)};
             unpack.emplace_back((value >> 4U) & low_nibble);
             unpack.emplace_back(value & low_nibble);
         }
@@ -757,13 +759,13 @@ public:
 
         // Build RLE nibble runs, RLE-encoding the nibble runs as we go along.
         // Maximum run length is 8, meaning 7 repetitions.
-        vector<nibble_run> rleSrc;
-        RunCountMap        counts;
+        vector<nibble_run> rle_src;
+        run_count_map      counts;
         nibble_run         curr{unpack[0], 0};
         for (size_t i = 1; i < unpack.size(); i++) {
             nibble_run next{unpack[i], 0};
             if (next.get_nibble() != curr.get_nibble() || curr.get_count() >= 7) {
-                rleSrc.push_back(curr);
+                rle_src.push_back(curr);
                 counts[curr] += 1;
                 curr = next;
             } else {
@@ -777,7 +779,7 @@ public:
         // length-limited Huffman code for the current file. To do this, we must
         // map the current problem onto the Coin Collector's problem. Build the
         // basic coin collection.
-        NodeVector nodes;
+        node_vector nodes;
         nodes.reserve(counts.size());
         for (auto const& [run, frequency] : counts) {
             // No point in including anything with weight less than 2, as they
@@ -798,7 +800,7 @@ public:
         // NOTE: while the codes that will be written in the header will not be
         // longer than 8 bits, it is possible that a supplementary code map will
         // add "fake" codes that are longer than 8 bits.
-        NibbleCodeMap code_map;
+        nibble_code_map code_map;
 
         // This may seem useless, but my tests all indicate that this reduces
         // the average file size. I haven't the foggiest idea why.
@@ -812,16 +814,17 @@ public:
         // find *the* lowest file size.
         while (nodes.size() > 1) {
             // Make a copy of the basic coin collection.
-            using CoinQueue = priority_queue<shared_ptr<node>, NodeVector, Compare_node>;
-            CoinQueue base_coins(nodes.begin(), nodes.end());
+            using coin_queue
+                    = priority_queue<shared_ptr<node>, node_vector, compare_node>;
+            coin_queue base_coins(nodes.begin(), nodes.end());
 
             // We now solve the Coin collector's problem using the Package-merge
             // algorithm. The solution goes here.
-            NodeVector solution;
+            node_vector solution;
             // This holds the packages from the last iteration.
-            CoinQueue current_coins(base_coins);
-            size_t    target = (base_coins.size() - 1) << 8U;
-            size_t    index  = 0;
+            coin_queue current_coins(base_coins);
+            size_t     target = (base_coins.size() - 1) << 8U;
+            size_t     index  = 0;
             while (target != 0) {
                 // Gets lowest bit set in its proper place:
                 size_t value = (target & -target);
@@ -837,7 +840,7 @@ public:
 
                 // The coin collection has coins of values 1 to 8; copy from the
                 // original in those cases for the next step.
-                CoinQueue next_coins;
+                coin_queue next_coins;
                 if (index < 7) {
                     next_coins = base_coins;
                 }
@@ -864,7 +867,7 @@ public:
             // collection had multiple coins associated with each nibble run) --
             // this number is the optimal bit length for the nibble run for the
             // current coin collection.
-            CodeSizeMap base_size_map;
+            code_size_map base_size_map;
             for (auto& elem : solution) {
                 (elem)->traverse(base_size_map);
             }
@@ -881,8 +884,8 @@ public:
             // This set contains lots more information, and is used to associate
             // the nibble run with its optimal code. It is sorted by code size,
             // then by frequency of the nibble run, then by the nibble run.
-            using SizeSet = multiset<SizeFreqNibble, Compare_size>;
-            SizeSet sizemap;
+            using size_set = multiset<size_freq_nibble, compare_size>;
+            size_set sizemap;
             for (auto const& [run, size] : base_size_map) {
                 size_t const count = counts[run];
                 size_counts[size - 1]++;
@@ -897,7 +900,7 @@ public:
             size_t base  = 0;
             size_t carry = 0;
             // This vector contains the codes sorted by size.
-            vector<Code> codes;
+            vector<bit_code> codes;
             for (size_t i = 1; i <= 8; i++) {
                 // How many nibble runs have the desired bit length.
                 size_t       count = size_counts[i - 1] + carry;
@@ -917,15 +920,15 @@ public:
                         count = j;
                         break;
                     }
-                    codes.emplace_back(Code{code, i});
+                    codes.emplace_back(bit_code{code, i});
                 }
                 // This is the beginning bit pattern for the next bit length.
                 base = (base + count) << 1U;
             }
 
             // With the canonical table build, the code_map can finally be built.
-            NibbleCodeMap temp_code_map;
-            size_t        position = 0;
+            nibble_code_map temp_code_map;
+            size_t          position = 0;
             for (auto it = sizemap.begin();
                  it != sizemap.end() && position < codes.size(); ++it, position++) {
                 temp_code_map[it->nibble] = codes[position];
@@ -949,9 +952,9 @@ public:
         }
         // Special case.
         if (nodes.size() == 1) {
-            NibbleCodeMap    temp_code_map;
+            nibble_code_map  temp_code_map;
             shared_ptr<node> child            = nodes.front();
-            temp_code_map[child->get_value()] = Code{0U, 1};
+            temp_code_map[child->get_value()] = bit_code{0U, 1};
             size_t const temp_size_est        = estimate_file_size(temp_code_map, counts);
 
             // Is this iteration better than the best?
@@ -967,7 +970,7 @@ public:
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
-        BigEndian::Write2(Dest, mode | (length / 32));
+        big_endian::write2(dest, mode | (length / 32));
         std::byte last_nibble{0xff};
         for (auto const& [run, bit_code] : code_map) {
             auto const [code, size] = bit_code;
@@ -978,25 +981,25 @@ public:
             }
             if (run.get_nibble() != last_nibble) {
                 // 0x80 marks byte as setting a new nibble.
-                Write1(Dest, 0x80U | static_cast<uint8_t>(run.get_nibble()));
+                write1(dest, 0x80U | static_cast<uint8_t>(run.get_nibble()));
                 last_nibble = run.get_nibble();
             }
 
-            Write1(Dest, static_cast<uint8_t>(run.get_count() << 4U | size));
-            Write1(Dest, static_cast<uint8_t>(code));
+            write1(dest, static_cast<uint8_t>(run.get_count() << 4U | size));
+            write1(dest, static_cast<uint8_t>(code));
         }
 
         // Mark end of header.
-        Write1(Dest, 0xff);
+        write1(dest, 0xff);
 
         // Time to write the encoded bitstream.
-        NemOBitstream bits(Dest);
+        nem_obitstream bits(dest);
 
         // The RLE-encoded source makes for a far faster encode as we simply
         // use the nibble runs as an index into the map, meaning a quick binary
         // search gives us the code to use (if in the map) or tells us that we
         // need to use inline RLE.
-        for (auto& run : rleSrc) {
+        for (auto& run : rle_src) {
             auto value = code_map.find(run);
             if (value != code_map.end()) {
                 size_t const code  = (value->second).code;
@@ -1021,44 +1024,44 @@ public:
         }
         // Fill remainder of last byte with zeroes and write if needed.
         bits.flush();
-        return Dest.tellp();
+        return dest.tellp();
     }
 };
 
-bool nemesis::decode(istream& Source, ostream& Dest) {
-    CodeNibbleMap code_map;
-    size_t        num_tiles = BigEndian::Read2(Source);
+bool nemesis::decode(istream& source, ostream& dest) {
+    code_nibble_map code_map;
+    size_t          num_tiles = big_endian::read2(source);
     // sets the output mode based on the value of the first bit
     bool xor_mode = (num_tiles & 0x8000U) != 0;
     num_tiles &= 0x7fffU;
 
     if (num_tiles > 0) {
-        nemesis_internal::decode_header(Source, code_map);
-        nemesis_internal::decode(Source, Dest, code_map, num_tiles, xor_mode);
+        nemesis_internal::decode_header(source, code_map);
+        nemesis_internal::decode(source, dest, code_map, num_tiles, xor_mode);
     }
     return true;
 }
 
-bool nemesis::encode(istream& Source, ostream& Dest) {
+bool nemesis::encode(istream& source, ostream& dest) {
     // We will use these as output buffers, as well as an input/output
     // buffers for the padded Nemesis input.
-    stringstream source(ios::in | ios::out | ios::binary);
+    stringstream str_source(ios::in | ios::out | ios::binary);
 
     // Copy to buffer.
-    source << Source.rdbuf();
+    str_source << source.rdbuf();
 
     // Pad source with zeroes until it is a multiple of 32 bytes.
-    auto const position = source.tellp();
+    auto const position = str_source.tellp();
     if ((position % 32) != 0) {
-        fill_n(ostreambuf_iterator<char>(source), 32 - (position % 32), 0);
+        fill_n(ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
     }
-    auto const size = source.tellp();
+    auto const size = str_source.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
-    source.clear();
-    source.seekg(0);
+    str_source.clear();
+    str_source.seekg(0);
 
-    string buffer = source.str();
+    string buffer = str_source.str();
     auto*  bytes  = reinterpret_cast<uint8_t*>(buffer.data());
     for (size_t i = buffer.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
@@ -1069,19 +1072,19 @@ bool nemesis::encode(istream& Source, ostream& Dest) {
     stringstream source_xor(buffer, ios::in | ios::out | ios::binary);
 
     std::array<stringstream, 4> buffers;
-    using NemesisMode = nemesis_internal::NemesisMode;
+    using nemesis_mode = nemesis_internal::nemesis_mode;
     // Four different attempts to encode, for improved file size.
     std::array sizes{
             nemesis_internal::encode(
-                    source, buffers[0], NemesisMode::Normal, size, Compare_node{}),
+                    str_source, buffers[0], nemesis_mode::normal, size, compare_node{}),
             nemesis_internal::encode(
-                    source, buffers[1], NemesisMode::Normal, size, Compare_node2{}),
+                    str_source, buffers[1], nemesis_mode::normal, size, compare_node2{}),
             nemesis_internal::encode(
-                    source_xor, buffers[2], NemesisMode::ProgressiveXor, size,
-                    Compare_node{}),
+                    source_xor, buffers[2], nemesis_mode::progressive_xor, size,
+                    compare_node{}),
             nemesis_internal::encode(
-                    source_xor, buffers[3], NemesisMode::ProgressiveXor, size,
-                    Compare_node2{})};
+                    source_xor, buffers[3], nemesis_mode::progressive_xor, size,
+                    compare_node2{})};
 
     // Figure out what was the best encoding.
     std::streamoff best_size   = numeric_limits<std::streamoff>::max();
@@ -1094,13 +1097,13 @@ bool nemesis::encode(istream& Source, ostream& Dest) {
     }
 
     buffers[best_stream].seekg(0);
-    Dest << buffers[best_stream].rdbuf();
+    dest << buffers[best_stream].rdbuf();
     return true;
 }
 
-bool nemesis::encode(std::ostream& Dest, uint8_t const* data, size_t const Size) {
+bool nemesis::encode(std::ostream& dest, uint8_t const* data, size_t const size) {
     stringstream source(ios::in | ios::out | ios::binary);
-    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
+    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(size));
     source.seekg(0);
-    return encode(source, Dest);
+    return encode(source, dest);
 }

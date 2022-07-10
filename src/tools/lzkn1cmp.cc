@@ -63,7 +63,7 @@ static void usage(char* prog) {
             "given number; use 1 for"
          << endl
          << "\t            \tno padding. Must be a power of 2 (default: "
-         << moduled_lzkn1::ModulePadding << ")." << endl
+         << moduled_lzkn1::MODULE_PADDING << ")." << endl
          << endl;
 }
 

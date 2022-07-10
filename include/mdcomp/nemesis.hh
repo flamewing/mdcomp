@@ -26,17 +26,17 @@
 #include <iosfwd>
 
 class nemesis;
-using basic_nemesis   = BasicDecoder<nemesis, PadMode::DontPad>;
-using moduled_nemesis = ModuledAdaptor<nemesis, 4096U, 1U>;
+using basic_nemesis   = basic_decoder<nemesis, pad_mode::dont_pad>;
+using moduled_nemesis = moduled_adaptor<nemesis, 4096U, 1U>;
 
 class nemesis : public basic_nemesis, public moduled_nemesis {
     friend basic_nemesis;
     friend moduled_nemesis;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
-    static bool encode(std::istream& Source, std::ostream& Dest);
-    static bool decode(std::istream& Source, std::ostream& Dest);
+    static bool encode(std::istream& source, std::ostream& dest);
+    static bool decode(std::istream& source, std::ostream& dest);
 };
 
 #endif    // LIB_NEMESIS_HH

@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class rocket;
-using basic_rocket   = BasicDecoder<rocket, PadMode::DontPad>;
-using moduled_rocket = ModuledAdaptor<rocket, 4096U, 1U>;
+using basic_rocket   = basic_decoder<rocket, pad_mode::dont_pad>;
+using moduled_rocket = moduled_adaptor<rocket, 4096U, 1U>;
 
 class rocket : public basic_rocket, public moduled_rocket {
     friend basic_rocket;
     friend moduled_rocket;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
-    static bool encode(std::istream& Source, std::ostream& Dest);
-    static bool decode(std::istream& Source, std::iostream& Dest);
+    static bool encode(std::istream& source, std::ostream& dest);
+    static bool decode(std::istream& source, std::iostream& dest);
 };
 
 #endif    // LIB_ROCKET_HH

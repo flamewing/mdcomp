@@ -156,40 +156,40 @@ namespace detail {
     // supports; but MSVC compiler does not support a 128-bit integer, so this
     // is not portable.
     template <std::integral T>
-    [[nodiscard]] CONST_INLINE constexpr T byteswap(T value_) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
         if constexpr (CHAR_BIT == 8) {
             if constexpr (sizeof(T) == 1) {
-                return value_;
+                return value;
             }
             if (!std::is_constant_evaluated()) {
                 if constexpr (sizeof(T) == 2) {
 #ifdef __GNUG__
-                    return __builtin_bswap16(value_);
+                    return __builtin_bswap16(value);
 #elif defined(_MSC_VER)
-                    return _byteswap_ushort(value_);
+                    return _byteswap_ushort(value);
 #endif
                 }
                 if constexpr (sizeof(T) == 4) {
 #ifdef __GNUG__
-                    return __builtin_bswap32(value_);
+                    return __builtin_bswap32(value);
 #elif defined(_MSC_VER)
-                    return _byteswap_ulong(value_);
+                    return _byteswap_ulong(value);
 #endif
                 }
                 if constexpr (sizeof(T) == 8) {
 #ifdef __GNUG__
-                    return __builtin_bswap64(value_);
+                    return __builtin_bswap64(value);
 #elif defined(_MSC_VER)
-                    return _byteswap_uint64(value_);
+                    return _byteswap_uint64(value);
 #endif
                 }
 #ifdef __GNUG__
                 if constexpr (sizeof(T) == 16) {
                     if constexpr (__has_builtin(__builtin_bswap128)) {
-                        return __builtin_bswap128(value_);
+                        return __builtin_bswap128(value);
                     }
-                    return (__builtin_bswap64(value_ >> 64U)
-                            | (static_cast<T>(__builtin_bswap64(value_)) << 64U));
+                    return (__builtin_bswap64(value >> 64U)
+                            | (static_cast<T>(__builtin_bswap64(value)) << 64U));
                 }
 #endif
             }
@@ -199,20 +199,20 @@ namespace detail {
         // Fallback implementation that handles even __int24 etc.
         size_t const nbits = CHAR_BIT;
 
-        size_t diff  = nbits * (sizeof(T) - 1);
-        uint_t mask1 = static_cast<unsigned char>(~0U);
-        auto   mask2 = static_cast<uint_t>(mask1 << diff);
-        uint_t value = value_;
+        size_t diff      = nbits * (sizeof(T) - 1);
+        uint_t mask1     = static_cast<unsigned char>(~0U);
+        auto   mask2     = static_cast<uint_t>(mask1 << diff);
+        uint_t new_value = value;
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-            uint_t byte1 = value & mask1;
-            uint_t byte2 = value & mask2;
-            value        = static_cast<uint_t>(
-                    value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
+            uint_t byte1 = new_value & mask1;
+            uint_t byte2 = new_value & mask2;
+            new_value    = static_cast<uint_t>(
+                    new_value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
             mask1 = static_cast<uint_t>(mask1 << nbits);
             mask2 = static_cast<uint_t>(mask2 >> nbits);
             diff -= 2ULL * nbits;
         }
-        return uint_t(value & std::numeric_limits<uint_t>::max());
+        return uint_t(new_value & std::numeric_limits<uint_t>::max());
     }
 
     template <typename To, typename From>
@@ -234,7 +234,7 @@ namespace detail {
     }
 
     template <std::endian endian>
-    struct EndianBase {
+    struct endian_base {
     private:
         template <std::unsigned_integral To, typename Stream>
 
@@ -242,7 +242,7 @@ namespace detail {
                 { stream.read(pointer, count) } -> std::common_reference_with<Stream>;
             }
 
-        [[nodiscard]] INLINE constexpr static To ReadImpl(Stream&& input) noexcept(
+        [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             input.read(buffer.data(), sizeof(To));
@@ -259,7 +259,7 @@ namespace detail {
                 { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
             }
 
-        [[nodiscard]] INLINE constexpr static To ReadImpl(Stream&& input) noexcept(
+        [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             input.sgetn(buffer.data(), sizeof(To));
@@ -273,9 +273,9 @@ namespace detail {
         template <std::unsigned_integral To, typename IterRef>
             requires(byte_input_iterator<std::remove_cvref_t<IterRef>>)
 
-        [[nodiscard]] INLINE constexpr static To ReadImpl(IterRef&& input) noexcept {
-            using Iter = std::remove_cvref_t<IterRef>;
-            if constexpr (contiguous_reverse_iterator<Iter>) {
+        [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept {
+            using iterator = std::remove_cvref_t<IterRef>;
+            if constexpr (contiguous_reverse_iterator<iterator>) {
                 std::advance(input, sizeof(To));
             }
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
@@ -283,14 +283,14 @@ namespace detail {
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
             if constexpr (
-                    (std::contiguous_iterator<Iter>)
-                    || (contiguous_reverse_iterator<Iter>)) {
+                    (std::contiguous_iterator<iterator>)
+                    || (contiguous_reverse_iterator<iterator>)) {
                 std::copy_n(std::to_address(input), sizeof(To), buffer.data());
             } else {
                 std::copy_n(input, sizeof(To), std::begin(buffer));
             }
             To const value = [&]() {
-                if constexpr (contiguous_reverse_iterator<Iter>) {
+                if constexpr (contiguous_reverse_iterator<iterator>) {
                     if constexpr (endian == std::endian::native) {
                         return detail::byteswap(detail::bit_cast<To>(buffer));
                     } else {
@@ -304,8 +304,8 @@ namespace detail {
                     }
                 }
             }();
-            if constexpr ((std::forward_iterator<Iter>)&&(
-                                  !contiguous_reverse_iterator<Iter>)) {
+            if constexpr ((std::forward_iterator<iterator>)&&(
+                                  !contiguous_reverse_iterator<iterator>)) {
                 std::advance(input, sizeof(To));
             }
             return value;
@@ -317,7 +317,7 @@ namespace detail {
                 { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
             }
 
-        INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
+        INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
@@ -333,7 +333,7 @@ namespace detail {
                 { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
             }
 
-        INLINE constexpr static void WriteImpl(Stream&& output, From value) noexcept(
+        INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
@@ -344,25 +344,25 @@ namespace detail {
         }
 
         template <contiguous_container Cont, std::unsigned_integral From>
-        INLINE constexpr static void WriteImpl(Cont& output, From value) noexcept(
+        INLINE constexpr static void write_impl(Cont& output, From value) noexcept(
                 noexcept(output.resize(std::declval<size_t>()))) {
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
             }
             auto const size = output.size();
             output.resize(size + sizeof(From));
-            WriteImpl(std::addressof(output[size]), value);
+            write_impl(std::addressof(output[size]), value);
         }
 
         template <typename IterRef, std::unsigned_integral From>
             requires(byte_output_iterator<std::remove_cvref_t<IterRef>>)
 
-        INLINE constexpr static void WriteImpl(IterRef&& output, From value) noexcept {
+        INLINE constexpr static void write_impl(IterRef&& output, From value) noexcept {
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
-            using Iter = std::remove_cvref_t<IterRef>;
-            if constexpr (contiguous_reverse_iterator<Iter>) {
+            using iterator = std::remove_cvref_t<IterRef>;
+            if constexpr (contiguous_reverse_iterator<iterator>) {
                 std::advance(output, sizeof(From));
                 if constexpr (endian == std::endian::native) {
                     value = detail::byteswap(value);
@@ -375,121 +375,121 @@ namespace detail {
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
                     = detail::bit_cast<decltype(buffer)>(value);
             if constexpr (
-                    (std::contiguous_iterator<Iter>)
-                    || (contiguous_reverse_iterator<Iter>)) {
+                    (std::contiguous_iterator<iterator>)
+                    || (contiguous_reverse_iterator<iterator>)) {
                 std::copy_n(buffer.data(), sizeof(From), std::to_address(output));
             } else {
                 std::copy_n(buffer.data(), sizeof(From), output);
             }
-            if constexpr ((std::forward_iterator<Iter>)&&(
-                                  !contiguous_reverse_iterator<Iter>)) {
+            if constexpr ((std::forward_iterator<iterator>)&&(
+                                  !contiguous_reverse_iterator<iterator>)) {
                 std::advance(output, sizeof(From));
             }
         }
 
     public:
         template <typename Src>
-        [[nodiscard]] INLINE constexpr static uint8_t Read1(Src&& input) noexcept(
-                noexcept(ReadImpl<uint8_t>(std::forward<Src>(input)))) {
-            return ReadImpl<uint8_t>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static uint8_t read1(Src&& input) noexcept(
+                noexcept(read_impl<uint8_t>(std::forward<Src>(input)))) {
+            return read_impl<uint8_t>(std::forward<Src>(input));
         }
 
         template <typename Src>
-        [[nodiscard]] INLINE constexpr static uint16_t Read2(Src&& input) noexcept(
-                noexcept(ReadImpl<uint16_t>(std::forward<Src>(input)))) {
-            return ReadImpl<uint16_t>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static uint16_t read2(Src&& input) noexcept(
+                noexcept(read_impl<uint16_t>(std::forward<Src>(input)))) {
+            return read_impl<uint16_t>(std::forward<Src>(input));
         }
 
         template <typename Src>
-        [[nodiscard]] INLINE constexpr static uint32_t Read4(Src&& input) noexcept(
-                noexcept(ReadImpl<uint32_t>(std::forward<Src>(input)))) {
-            return ReadImpl<uint32_t>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static uint32_t read4(Src&& input) noexcept(
+                noexcept(read_impl<uint32_t>(std::forward<Src>(input)))) {
+            return read_impl<uint32_t>(std::forward<Src>(input));
         }
 
         template <typename Src>
-        [[nodiscard]] INLINE constexpr static uint64_t Read8(Src&& input) noexcept(
-                noexcept(ReadImpl<uint64_t>(std::forward<Src>(input)))) {
-            return ReadImpl<uint64_t>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static uint64_t read8(Src&& input) noexcept(
+                noexcept(read_impl<uint64_t>(std::forward<Src>(input)))) {
+            return read_impl<uint64_t>(std::forward<Src>(input));
         }
 
         template <size_t Size, typename Src>
-        [[nodiscard]] INLINE constexpr static auto ReadN(Src&& input) noexcept(noexcept(
-                ReadImpl<detail::select_unsigned_t<Size>>(std::forward<Src>(input)))) {
-            return ReadImpl<detail::select_unsigned_t<Size>>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(noexcept(
+                read_impl<detail::select_unsigned_t<Size>>(std::forward<Src>(input)))) {
+            return read_impl<detail::select_unsigned_t<Size>>(std::forward<Src>(input));
         }
 
         template <typename Src, std::integral To>
-        INLINE constexpr static auto Read(Src&& input, To& value) noexcept(
-                noexcept(ReadImpl<To>(std::forward<Src>(input)))) {
-            value = ReadImpl<To>(std::forward<Src>(input));
+        INLINE constexpr static auto read(Src&& input, To& value) noexcept(
+                noexcept(read_impl<To>(std::forward<Src>(input)))) {
+            value = read_impl<To>(std::forward<Src>(input));
         }
 
         template <std::unsigned_integral To, typename Src>
-        [[nodiscard]] INLINE constexpr static auto Read(Src&& input) noexcept(
-                noexcept(ReadImpl<To>(std::forward<Src>(input)))) {
+        [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
+                noexcept(read_impl<To>(std::forward<Src>(input)))) {
             static_assert(
                     !std::same_as<std::remove_cvref_t<To>, bool>,
                     "Cannot portably use bool because sizeof(bool) is "
                     "implementation-defined");
-            return ReadImpl<To>(std::forward<Src>(input));
+            return read_impl<To>(std::forward<Src>(input));
         }
 
         template <std::signed_integral To, typename Src>
-        [[nodiscard]] INLINE constexpr static auto Read(Src&& input) noexcept(
+        [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
                 noexcept(detail::bit_cast<To>(
-                        ReadImpl<std::make_unsigned_t<To>>(std::forward<Src>(input))))) {
+                        read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input))))) {
             return detail::bit_cast<To>(
-                    ReadImpl<std::make_unsigned_t<To>>(std::forward<Src>(input)));
+                    read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input)));
         }
 
         template <typename Dst>
-        INLINE constexpr static void Write1(Dst&& output, uint8_t value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
-            WriteImpl(std::forward<Dst>(output), value);
+        INLINE constexpr static void write1(Dst&& output, uint8_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
-        INLINE constexpr static void Write2(Dst&& output, uint16_t value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
-            WriteImpl(std::forward<Dst>(output), value);
+        INLINE constexpr static void write2(Dst&& output, uint16_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
-        INLINE constexpr static void Write4(Dst&& output, uint32_t value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
-            WriteImpl(std::forward<Dst>(output), value);
+        INLINE constexpr static void write4(Dst&& output, uint32_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
-        INLINE constexpr static void Write8(Dst&& output, uint64_t value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
-            WriteImpl(std::forward<Dst>(output), value);
+        INLINE constexpr static void write8(Dst&& output, uint64_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <
                 size_t Size, typename Dst,
                 typename Uint_t = detail::select_unsigned_t<Size>>
-        INLINE constexpr static void WriteN(Dst&& output, Uint_t value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
-            WriteImpl(std::forward<Dst>(output), value);
+        INLINE constexpr static void write_n(Dst&& output, Uint_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst, std::unsigned_integral From>
-        INLINE constexpr static auto Write(Dst&& output, From value) noexcept(
-                noexcept(WriteImpl(std::forward<Dst>(output), value))) {
+        INLINE constexpr static auto write(Dst&& output, From value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
             static_assert(
                     !std::same_as<std::remove_cvref_t<From>, bool>,
                     "Cannot portably use bool because sizeof(bool) is "
                     "implementation-defined");
-            WriteImpl(std::forward<Dst>(output), value);
+            write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst, std::signed_integral From>
-        INLINE constexpr static auto Write(Dst&& output, From value) noexcept(
-                noexcept(WriteImpl(
+        INLINE constexpr static auto write(Dst&& output, From value) noexcept(
+                noexcept(write_impl(
                         std::forward<Dst>(output),
                         detail::bit_cast<std::make_unsigned_t<From>>(value)))) {
-            WriteImpl(
+            write_impl(
                     std::forward<Dst>(output),
                     detail::bit_cast<std::make_unsigned_t<From>>(value));
         }
@@ -504,21 +504,21 @@ namespace detail {
 }    // namespace detail
 
 template <typename Src>
-INLINE constexpr uint8_t Read1(Src& input) noexcept(
-        noexcept(detail::EndianBase<std::endian::native>::Read<uint8_t>(input))) {
-    return detail::EndianBase<std::endian::native>::Read<uint8_t>(input);
+INLINE constexpr uint8_t read1(Src& input) noexcept(
+        noexcept(detail::endian_base<std::endian::native>::read<uint8_t>(input))) {
+    return detail::endian_base<std::endian::native>::read<uint8_t>(input);
 }
 
 template <typename Dst>
-INLINE constexpr void Write1(Dst& output, uint8_t const value) noexcept(
-        noexcept(detail::EndianBase<std::endian::native>::Write(output, value))) {
-    detail::EndianBase<std::endian::native>::Write(output, value);
+INLINE constexpr void write1(Dst& output, uint8_t const value) noexcept(
+        noexcept(detail::endian_base<std::endian::native>::write(output, value))) {
+    detail::endian_base<std::endian::native>::write(output, value);
 }
 
-using SourceEndian  = detail::EndianBase<std::endian::native>;
-using ReverseEndian = detail::EndianBase<detail::reverse(std::endian::native)>;
-using BigEndian     = detail::EndianBase<std::endian::big>;
-using LittleEndian  = detail::EndianBase<std::endian::little>;
+using source_endian  = detail::endian_base<std::endian::native>;
+using reverse_endian = detail::endian_base<detail::reverse(std::endian::native)>;
+using big_endian     = detail::endian_base<std::endian::big>;
+using little_endian  = detail::endian_base<std::endian::little>;
 
 #undef INLINE
 #undef CONST_INLINE

@@ -23,8 +23,8 @@
 
 class artc42 {
 public:
-    static bool decode(std::istream& Source, std::ostream& Dest);
-    static bool encode(std::istream& Source, std::ostream& Dest);
+    static bool decode(std::istream& source, std::ostream& dest);
+    static bool encode(std::istream& source, std::ostream& dest);
 };
 
 #endif    // LIB_ARTC42_HH

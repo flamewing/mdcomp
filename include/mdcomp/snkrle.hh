@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class snkrle;
-using basic_snkrle   = BasicDecoder<snkrle, PadMode::PadEven>;
-using moduled_snkrle = ModuledAdaptor<snkrle, 4096U, 1U>;
+using basic_snkrle   = basic_decoder<snkrle, pad_mode::pad_even>;
+using moduled_snkrle = moduled_adaptor<snkrle, 4096U, 1U>;
 
 class snkrle : public basic_snkrle, public moduled_snkrle {
     friend basic_snkrle;
     friend moduled_snkrle;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
     using basic_snkrle::encode;
-    static bool decode(std::istream& Source, std::ostream& Dest);
+    static bool decode(std::istream& source, std::ostream& dest);
 };
 
 #endif    // LIB_SNKRLE_HH

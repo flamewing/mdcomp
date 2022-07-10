@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class lzkn1;
-using basic_lzkn1   = BasicDecoder<lzkn1, PadMode::DontPad>;
-using moduled_lzkn1 = ModuledAdaptor<lzkn1, 4096U, 1U>;
+using basic_lzkn1   = basic_decoder<lzkn1, pad_mode::dont_pad>;
+using moduled_lzkn1 = moduled_adaptor<lzkn1, 4096U, 1U>;
 
 class lzkn1 : public basic_lzkn1, public moduled_lzkn1 {
     friend basic_lzkn1;
     friend moduled_lzkn1;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
     using basic_lzkn1::encode;
-    static bool decode(std::istream& Source, std::iostream& Dest);
+    static bool decode(std::istream& source, std::iostream& dest);
 };
 
 #endif    // LIB_LZKN1_HH

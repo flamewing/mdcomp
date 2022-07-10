@@ -25,18 +25,18 @@
 #include <iosfwd>
 
 class saxman;
-using basic_saxman   = BasicDecoder<saxman, PadMode::DontPad, bool>;
-using moduled_saxman = ModuledAdaptor<saxman, 4096U, 1U>;
+using basic_saxman   = basic_decoder<saxman, pad_mode::dont_pad, bool>;
+using moduled_saxman = moduled_adaptor<saxman, 4096U, 1U>;
 
 class saxman : public basic_saxman, public moduled_saxman {
     friend basic_saxman;
     friend moduled_saxman;
     static bool encode(
-            std::ostream& Dest, uint8_t const* data, size_t Size, bool WithSize = true);
+            std::ostream& dest, uint8_t const* data, size_t size, bool with_size = true);
 
 public:
     using basic_saxman::encode;
-    static bool decode(std::istream& Source, std::iostream& Dest, size_t Size = 0);
+    static bool decode(std::istream& source, std::iostream& dest, size_t size = 0);
 };
 
 #endif    // LIB_SAXMAN_HH
