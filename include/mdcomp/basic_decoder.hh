@@ -26,54 +26,54 @@
 #include <limits>
 #include <vector>
 
-enum class PadMode {
-    DontPad,
-    PadEven
+enum class pad_mode {
+    dont_pad,
+    pad_even
 };
 
-template <typename Format, PadMode Pad, typename... Args>
-class BasicDecoder {
+template <typename Format, pad_mode Pad, typename... Args>
+class basic_decoder {
 public:
-    static bool encode(std::istream& Source, std::ostream& Dest, Args... args);
-    static void extract(std::istream& Source, std::iostream& Dest);
+    static bool encode(std::istream& source, std::ostream& dest, Args... args);
+    static void extract(std::istream& source, std::iostream& dest);
 };
 
-template <typename Format, PadMode Pad, typename... Args>
-bool BasicDecoder<Format, Pad, Args...>::encode(
-        std::istream& Source, std::ostream& Dest, Args... args) {
-    auto Start = Source.tellg();
-    Source.ignore(std::numeric_limits<std::streamsize>::max());
-    auto FullSize = static_cast<size_t>(Source.gcount());
-    Source.seekg(Start);
+template <typename Format, pad_mode Pad, typename... Args>
+bool basic_decoder<Format, Pad, Args...>::encode(
+        std::istream& source, std::ostream& dest, Args... args) {
+    auto start = source.tellg();
+    source.ignore(std::numeric_limits<std::streamsize>::max());
+    auto full_size = static_cast<size_t>(source.gcount());
+    source.seekg(start);
     std::vector<uint8_t> data;
-    if (Pad == PadMode::PadEven) {
-        data.resize(FullSize + (FullSize % 2));
+    if (Pad == pad_mode::pad_even) {
+        data.resize(full_size + (full_size % 2));
     } else {
-        data.resize(FullSize);
+        data.resize(full_size);
     }
-    Source.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
-    if (Pad == PadMode::PadEven && data.size() > FullSize) {
+    source.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
+    if (Pad == pad_mode::pad_even && data.size() > full_size) {
         data.back() = 0;
     }
-    if (Format::encode(Dest, data.data(), data.size(), std::forward<Args>(args)...)) {
+    if (Format::encode(dest, data.data(), data.size(), std::forward<Args>(args)...)) {
         // Pad to even size.
-        if ((Dest.tellp() % 2) != 0) {
-            Dest.put(0);
+        if ((dest.tellp() % 2) != 0) {
+            dest.put(0);
         }
         return true;
     }
     return false;
 }
 
-template <typename Format, PadMode Pad, typename... Args>
-void BasicDecoder<Format, Pad, Args...>::extract(
-        std::istream& Source, std::iostream& Dest) {
-    Dest << Source.rdbuf();
+template <typename Format, pad_mode Pad, typename... Args>
+void basic_decoder<Format, Pad, Args...>::extract(
+        std::istream& source, std::iostream& dest) {
+    dest << source.rdbuf();
     // Pad to even size.
-    if ((Dest.tellp() % 2) != 0) {
-        Dest.put(0);
+    if ((dest.tellp() % 2) != 0) {
+        dest.put(0);
     }
-    Dest.seekg(0);
+    dest.seekg(0);
 }
 
 #endif    // LIB_MODULED_ADAPTOR_H

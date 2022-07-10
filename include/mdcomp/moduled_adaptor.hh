@@ -46,29 +46,29 @@ namespace detail {
 }    // namespace detail
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-class ModuledAdaptor {
+class moduled_adaptor {
 public:
     enum {
-        ModuleSize    = DefaultModuleSize,
-        ModulePadding = DefaultModulePadding
+        MODULE_SIZE    = DefaultModuleSize,
+        MODULE_PADDING = DefaultModulePadding
     };
 
-    static size_t PadMaskBits;
+    static size_t pad_mask_bits;
     static bool   moduled_decode(
-              std::istream& Source, std::iostream& Dest,
-              size_t ModulePadding = DefaultModulePadding);
+              std::istream& source, std::iostream& dest,
+              size_t module_padding = DefaultModulePadding);
 
     static bool moduled_encode(
-            std::istream& Source, std::ostream& Dest,
-            size_t ModulePadding = DefaultModulePadding);
+            std::istream& source, std::ostream& dest,
+            size_t module_padding = DefaultModulePadding);
 };
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
-        std::istream& Source, std::iostream& Dest, size_t const ModulePadding) {
-    int64_t const     FullSize = BigEndian::Read2(Source);
+bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
+        std::istream& source, std::iostream& dest, size_t const module_padding) {
+    int64_t const     full_size = big_endian::read2(source);
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
-    input << Source.rdbuf();
+    input << source.rdbuf();
 
     // Pad to even length, for safety.
     if ((input.tellp() % 2) != 0) {
@@ -77,11 +77,11 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_de
 
     input.seekg(0);
 
-    auto const padding = static_cast<std::streamoff>(ModulePadding);
+    auto const padding = static_cast<std::streamoff>(module_padding);
 
     while (true) {
-        Format::decode(input, Dest);
-        if (Dest.tellp() >= FullSize) {
+        Format::decode(input, dest);
+        if (dest.tellp() >= full_size) {
             break;
         }
 
@@ -93,44 +93,44 @@ bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_de
 }
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool ModuledAdaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
-        std::istream& Source, std::ostream& Dest, size_t const ModulePadding) {
-    auto Location = Source.tellg();
-    Source.ignore(std::numeric_limits<std::streamsize>::max());
-    auto FullSize = Source.gcount();
-    Source.seekg(Location);
+bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
+        std::istream& source, std::ostream& dest, size_t const module_padding) {
+    auto location = source.tellg();
+    source.ignore(std::numeric_limits<std::streamsize>::max());
+    auto full_size = source.gcount();
+    source.seekg(location);
     std::vector<uint8_t> data;
-    data.resize(static_cast<size_t>(FullSize));
+    data.resize(static_cast<size_t>(full_size));
     auto pointer = data.cbegin();
-    Source.read(reinterpret_cast<char*>(data.data()), FullSize);
+    source.read(reinterpret_cast<char*>(data.data()), full_size);
 
-    auto const padding = static_cast<std::streamoff>(ModulePadding);
+    auto const padding = static_cast<std::streamoff>(module_padding);
 
-    BigEndian::Write2(
-            Dest, static_cast<size_t>(FullSize) & std::numeric_limits<uint16_t>::max());
+    big_endian::write2(
+            dest, static_cast<size_t>(full_size) & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
 
-    while (FullSize > ModuleSize) {
+    while (full_size > MODULE_SIZE) {
         // We want to manage internal padding for all modules but the last.
-        PadMaskBits = 8 * ModulePadding - 1U;
-        Format::encode(buffer, std::to_address(pointer), ModuleSize);
-        FullSize -= ModuleSize;
-        pointer += ModuleSize;
+        pad_mask_bits = 8 * module_padding - 1U;
+        Format::encode(buffer, std::to_address(pointer), MODULE_SIZE);
+        full_size -= MODULE_SIZE;
+        pointer += MODULE_SIZE;
 
         // Padding between modules
-        int64_t const paddingEnd = detail::round_up(buffer.tellp(), padding);
-        while (buffer.tellp() < paddingEnd) {
+        int64_t const padding_end = detail::round_up(buffer.tellp(), padding);
+        while (buffer.tellp() < padding_end) {
             buffer.put(0);
         }
     }
 
-    PadMaskBits = 7U;
-    Format::encode(buffer, std::to_address(pointer), static_cast<size_t>(FullSize));
+    pad_mask_bits = 7U;
+    Format::encode(buffer, std::to_address(pointer), static_cast<size_t>(full_size));
 
     // Pad to even size.
-    Dest << buffer.rdbuf();
-    if ((Dest.tellp() % 2) != 0) {
-        Dest.put(0);
+    dest << buffer.rdbuf();
+    if ((dest.tellp() % 2) != 0) {
+        dest.put(0);
     }
     return true;
 }

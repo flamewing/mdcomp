@@ -26,17 +26,17 @@
 #include <iosfwd>
 
 class enigma;
-using basic_enigma   = BasicDecoder<enigma, PadMode::DontPad>;
-using moduled_enigma = ModuledAdaptor<enigma, 4096U, 1U>;
+using basic_enigma   = basic_decoder<enigma, pad_mode::dont_pad>;
+using moduled_enigma = moduled_adaptor<enigma, 4096U, 1U>;
 
 class enigma : public basic_enigma, public moduled_enigma {
     friend basic_enigma;
     friend moduled_enigma;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
-    static bool encode(std::istream& Source, std::ostream& Dest);
-    static bool decode(std::istream& Source, std::ostream& Dest);
+    static bool encode(std::istream& source, std::ostream& dest);
+    static bool decode(std::istream& source, std::ostream& dest);
 };
 
 #endif    // LIB_ENIGMA_HH

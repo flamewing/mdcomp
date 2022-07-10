@@ -35,33 +35,33 @@ using std::streamsize;
 using std::stringstream;
 
 template <>
-size_t moduled_snkrle::PadMaskBits = 1U;
+size_t moduled_snkrle::pad_mask_bits = 1U;
 
 class snkrle_internal {
 public:
-    static void decode(istream& Source, ostream& Dest) {
-        size_t Size = BigEndian::Read2(Source);
-        if (Size == 0) {
+    static void decode(istream& source, ostream& dest) {
+        size_t size = big_endian::read2(source);
+        if (size == 0) {
             return;
         }
-        uint8_t curr = Read1(Source);
-        Write1(Dest, curr);
-        Size--;
-        while (Size > 0) {
-            uint8_t next = Read1(Source);
-            Write1(Dest, next);
-            Size--;
+        uint8_t curr = read1(source);
+        write1(dest, curr);
+        size--;
+        while (size > 0) {
+            uint8_t next = read1(source);
+            write1(dest, next);
+            size--;
             if (curr == next) {
                 // RLE marker. Get repeat count.
-                size_t Count = Read1(Source);
-                for (size_t ii = 0; ii < Count; ii++) {
-                    Write1(Dest, next);
+                size_t count = read1(source);
+                for (size_t ii = 0; ii < count; ii++) {
+                    write1(dest, next);
                 }
-                Size -= Count;
-                if (Count == 255 && Size > 0) {
-                    curr = Read1(Source);
-                    Write1(Dest, next);
-                    Size--;
+                size -= count;
+                if (count == 255 && size > 0) {
+                    curr = read1(source);
+                    write1(dest, next);
+                    size--;
                 }
             } else {
                 curr = next;
@@ -69,28 +69,28 @@ public:
         }
     }
 
-    static void encode(istream& Source, ostream& Dest) {
-        auto position = Source.tellg();
-        Source.ignore(numeric_limits<streamsize>::max());
-        std::streampos Size = Source.gcount();
-        Source.seekg(position);
-        BigEndian::Write2(Dest, static_cast<uint16_t>(Size));
-        uint8_t curr = Read1(Source);
-        while (Source.good()) {
-            Write1(Dest, curr);
-            uint8_t next = Read1(Source);
-            if (!Source.good()) {
+    static void encode(istream& source, ostream& dest) {
+        auto position = source.tellg();
+        source.ignore(numeric_limits<streamsize>::max());
+        std::streampos size = source.gcount();
+        source.seekg(position);
+        big_endian::write2(dest, static_cast<uint16_t>(size));
+        uint8_t curr = read1(source);
+        while (source.good()) {
+            write1(dest, curr);
+            uint8_t next = read1(source);
+            if (!source.good()) {
                 break;
             }
             if (next == curr) {
-                Write1(Dest, next);
-                size_t Count = 0;
-                curr         = Read1(Source);
-                while (Source.good() && next == curr && Count < 255) {
-                    Count++;
-                    curr = Read1(Source);
+                write1(dest, next);
+                size_t count = 0;
+                curr         = read1(source);
+                while (source.good() && next == curr && count < 255) {
+                    count++;
+                    curr = read1(source);
                 }
-                Write1(Dest, Count & std::numeric_limits<uint8_t>::max());
+                write1(dest, count & std::numeric_limits<uint8_t>::max());
             } else {
                 curr = next;
             }
@@ -98,20 +98,20 @@ public:
     }
 };
 
-bool snkrle::decode(istream& Source, ostream& Dest) {
-    auto const   Location = Source.tellg();
+bool snkrle::decode(istream& source, ostream& dest) {
+    auto const   location = source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Source, input);
+    extract(source, input);
 
-    snkrle_internal::decode(input, Dest);
-    Source.seekg(Location + input.tellg());
+    snkrle_internal::decode(input, dest);
+    source.seekg(location + input.tellg());
     return true;
 }
 
-bool snkrle::encode(ostream& Dest, uint8_t const* data, size_t const Size) {
+bool snkrle::encode(ostream& dest, uint8_t const* data, size_t const size) {
     stringstream source(ios::in | ios::out | ios::binary);
-    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
+    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(size));
     source.seekg(0);
-    snkrle_internal::encode(source, Dest);
+    snkrle_internal::encode(source, dest);
     return true;
 }

@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class kosinski;
-using basic_kosinski   = BasicDecoder<kosinski, PadMode::DontPad>;
-using moduled_kosinski = ModuledAdaptor<kosinski, 4096U, 16U>;
+using basic_kosinski   = basic_decoder<kosinski, pad_mode::dont_pad>;
+using moduled_kosinski = moduled_adaptor<kosinski, 4096U, 16U>;
 
 class kosinski : public basic_kosinski, public moduled_kosinski {
     friend basic_kosinski;
     friend moduled_kosinski;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
     using basic_kosinski::encode;
-    static bool decode(std::istream& Source, std::iostream& Dest);
+    static bool decode(std::istream& source, std::iostream& dest);
 };
 
 #endif    // LIB_KOSINSKI_HH

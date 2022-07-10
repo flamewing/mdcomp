@@ -63,7 +63,7 @@ static void usage(char* prog) {
             "given number; use 1 for"
          << endl
          << "\t            \tno padding. Must be a power of 2 (default: "
-         << moduled_kosinski::ModulePadding << ")." << endl
+         << moduled_kosinski::MODULE_PADDING << ")." << endl
          << endl;
 }
 
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     bool   moduled = false;
     bool   crunch  = false;
     size_t pointer = 0ULL;
-    size_t padding = moduled_kosinski::ModulePadding;
+    size_t padding = moduled_kosinski::MODULE_PADDING;
 
     while (true) {
         int option_index = 0;

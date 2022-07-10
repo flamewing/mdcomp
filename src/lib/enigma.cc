@@ -52,20 +52,20 @@ using std::streamsize;
 using std::stringstream;
 using std::vector;
 
-using EniIBitstream = ibitstream<uint16_t, bit_endian::big, BigEndian, true>;
-using EniOBitstream = obitstream<uint16_t, bit_endian::big, BigEndian>;
+using eni_ibitstream = ibitstream<uint16_t, bit_endian::big, big_endian, true>;
+using eni_obitstream = obitstream<uint16_t, bit_endian::big, big_endian>;
 
 template <typename Callback>
 class base_flag_io {
 public:
-    using Callback_t = Callback;
+    using callback_t = Callback;
 
     struct tag {};
 
     static base_flag_io const& get(size_t flags);
 
-    constexpr explicit base_flag_io(Callback_t callback_) noexcept
-            : callback(callback_) {}
+    constexpr explicit base_flag_io(callback_t callback_in) noexcept
+            : callback(callback_in) {}
 
     template <typename... Ts>
     auto operator()(Ts&&... args) const {
@@ -73,14 +73,14 @@ public:
     }
 
 private:
-    Callback_t* callback;
+    callback_t* callback;
 };
 
-using flag_reader = base_flag_io<uint16_t(EniIBitstream&)>;
-using flag_writer = base_flag_io<void(EniOBitstream&, uint16_t)>;
+using flag_reader = base_flag_io<uint16_t(eni_ibitstream&)>;
+using flag_writer = base_flag_io<void(eni_obitstream&, uint16_t)>;
 
 template <size_t N>
-uint16_t read_bitfield(EniIBitstream& bits) {
+uint16_t read_bitfield(eni_ibitstream& bits) {
     auto const read_bit_flag
             = [&]<size_t I>(std::integral_constant<size_t, I>) -> uint32_t {
         if constexpr ((N & (1U << (I - 1))) != 0) {
@@ -98,7 +98,7 @@ uint16_t read_bitfield(EniIBitstream& bits) {
 }
 
 template <size_t N>
-void write_bitfield(EniOBitstream& bits, uint16_t const flags) {
+void write_bitfield(eni_obitstream& bits, uint16_t const flags) {
     auto const write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
         if constexpr ((N & (1U << (I - 1))) != 0) {
             bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
@@ -112,23 +112,24 @@ void write_bitfield(EniOBitstream& bits, uint16_t const flags) {
 }
 
 template <std::size_t... I>
-constexpr auto createMaskArray(flag_reader::tag, std::index_sequence<I...>) {
+constexpr auto create_mask_array(flag_reader::tag, std::index_sequence<I...>) {
     return array<flag_reader, sizeof...(I)>{flag_reader(read_bitfield<I>)...};
 }
 
 template <std::size_t... I>
-constexpr auto createMaskArray(flag_writer::tag, std::index_sequence<I...>) {
+constexpr auto create_mask_array(flag_writer::tag, std::index_sequence<I...>) {
     return array<flag_writer, sizeof...(I)>{flag_writer(write_bitfield<I>)...};
 }
 
 template <typename Callback>
 base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
-    constexpr static auto const Array = createMaskArray(tag{}, make_index_sequence<32>());
-    return Array[flags];
+    constexpr static auto const array
+            = create_mask_array(tag{}, make_index_sequence<32>());
+    return array[flags];
 }
 
 // Comparison functor, see below.
-struct Compare_count {
+struct compare_count {
     bool operator()(
             pair<uint16_t const, size_t>& left, pair<uint16_t const, size_t>& right) {
         return (left.second < right.second);
@@ -137,7 +138,7 @@ struct Compare_count {
 
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(
-        vector<uint16_t>& buffer, EniOBitstream& bits, flag_writer& putMask,
+        vector<uint16_t>& buffer, eni_obitstream& bits, flag_writer& put_mask,
         size_t const packet_length) {
     if (buffer.empty()) {
         return;
@@ -145,27 +146,27 @@ static inline void flush_buffer(
 
     bits.write(0x70U | ((buffer.size() - 1) & 0xfU), 7);
     for (auto const value : buffer) {
-        putMask(bits, value);
+        put_mask(bits, value);
         bits.write(value & 0x7ffU, packet_length);
     }
     buffer.clear();
 }
 
 template <>
-size_t moduled_enigma::PadMaskBits = 1U;
+size_t moduled_enigma::pad_mask_bits = 1U;
 
 class enigma_internal {
 public:
-    static void decode(std::istream& input, std::ostream& Dest) {
+    static void decode(std::istream& input, std::ostream& dest) {
         // Read header.
-        size_t const   packet_length      = Read1(input);
-        auto           getMask            = flag_reader::get(Read1(input));
-        uint16_t       incrementing_value = BigEndian::Read2(input);
-        uint16_t const common_value       = BigEndian::Read2(input);
+        size_t const   packet_length      = read1(input);
+        auto           get_mask           = flag_reader::get(read1(input));
+        uint16_t       incrementing_value = big_endian::read2(input);
+        uint16_t const common_value       = big_endian::read2(input);
 
-        EniIBitstream bits(input);
+        eni_ibitstream bits(input);
 
-        constexpr static std::array<int, 3> const modeDeltaLUT = {0, 1, -1};
+        constexpr static std::array<int, 3> const mode_delta_lut = {0, 1, -1};
 
         // Lets put in a safe termination condition here.
         while (input.good()) {
@@ -176,13 +177,13 @@ public:
                 case 1:
                 case 0: {
                     size_t const   count = bits.read(4) + 1;
-                    uint16_t const flags = getMask(bits);
+                    uint16_t const flags = get_mask(bits);
                     uint16_t       outv  = bits.read(packet_length);
                     outv |= flags;
 
                     for (size_t i = 0; i < count; i++) {
-                        BigEndian::Write2(Dest, outv);
-                        outv += modeDeltaLUT[mode];
+                        big_endian::write2(dest, outv);
+                        outv += mode_delta_lut[mode];
                     }
                     break;
                 }
@@ -194,9 +195,9 @@ public:
                     }
 
                     for (size_t i = 0; i <= count; i++) {
-                        uint16_t flags = getMask(bits);
+                        uint16_t flags = get_mask(bits);
                         uint16_t outv  = bits.read(packet_length);
-                        BigEndian::Write2(Dest, outv | flags);
+                        big_endian::write2(dest, outv | flags);
                     }
                     break;
                 }
@@ -207,19 +208,19 @@ public:
                 if (bits.pop() == 0U) {
                     size_t const count = bits.read(4) + 1;
                     for (size_t i = 0; i < count; i++) {
-                        BigEndian::Write2(Dest, incrementing_value++);
+                        big_endian::write2(dest, incrementing_value++);
                     }
                 } else {
                     size_t const count = bits.read(4) + 1;
                     for (size_t i = 0; i < count; i++) {
-                        BigEndian::Write2(Dest, common_value);
+                        big_endian::write2(dest, common_value);
                     }
                 }
             }
         }
     }
 
-    static void encode(std::istream& Source, std::ostream& Dest) {
+    static void encode(std::istream& source, std::ostream& dest) {
         // To unpack source into 2-byte words.
         vector<uint16_t> unpack;
         // Frequency map.
@@ -230,11 +231,11 @@ public:
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
         uint16_t mask_val = 0;
-        Source.clear();
-        Source.seekg(0);
+        source.clear();
+        source.seekg(0);
         while (true) {
-            uint16_t value = BigEndian::Read2(Source);
-            if (!Source.good()) {
+            uint16_t value = big_endian::read2(source);
+            if (!source.good()) {
                 break;
             }
             mask_val |= value;
@@ -243,11 +244,11 @@ public:
             unpack.push_back(value);
         }
 
-        auto         putMask       = flag_writer::get(mask_val >> 11U);
+        auto         put_mask      = flag_writer::get(mask_val >> 11U);
         size_t const packet_length = std::bit_width(mask_val & 0x7ffU);
 
         // Find the most common 2-byte value.
-        Compare_count  comp;
+        compare_count  comp;
         auto           high         = max_element(counts.begin(), counts.end(), comp);
         uint16_t const common_value = high->first;
         // No longer needed.
@@ -276,19 +277,19 @@ public:
         runs.clear();
 
         // Output header.
-        Write1(Dest, packet_length & std::numeric_limits<uint8_t>::max());
-        Write1(Dest, mask_val >> 11U);
-        BigEndian::Write2(Dest, incrementing_value);
-        BigEndian::Write2(Dest, common_value);
+        write1(dest, packet_length & std::numeric_limits<uint8_t>::max());
+        write1(dest, mask_val >> 11U);
+        big_endian::write2(dest, incrementing_value);
+        big_endian::write2(dest, common_value);
 
         // Time now to compress the file.
-        EniOBitstream    bits(Dest);
+        eni_obitstream   bits(dest);
         vector<uint16_t> buffer;
         size_t           position = 0;
         while (position < unpack.size()) {
             uint16_t const value = unpack[position];
             if (value == incrementing_value) {
-                flush_buffer(buffer, bits, putMask, packet_length);
+                flush_buffer(buffer, bits, put_mask, packet_length);
                 uint16_t next  = value + 1;
                 size_t   count = 0;
                 for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
@@ -302,7 +303,7 @@ public:
                 incrementing_value = next;
                 position += count;
             } else if (value == common_value) {
-                flush_buffer(buffer, bits, putMask, packet_length);
+                flush_buffer(buffer, bits, put_mask, packet_length);
                 uint16_t next  = value;
                 size_t   count = 0;
                 for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
@@ -320,7 +321,7 @@ public:
                 constexpr const uint16_t minus_one = std::numeric_limits<uint16_t>::max();
                 if (position + 1 < unpack.size() && next != incrementing_value
                     && (delta == minus_one || delta == 0 || delta == 1)) {
-                    flush_buffer(buffer, bits, putMask, packet_length);
+                    flush_buffer(buffer, bits, put_mask, packet_length);
                     size_t count = 1;
                     next += delta;
                     for (size_t i = position + 2; i < unpack.size() && count < 0xf; i++) {
@@ -337,12 +338,12 @@ public:
 
                     delta = (((delta | 4U)) << 4U) & 0xffffU;
                     bits.write((delta | count) & 0xffU, 7);
-                    putMask(bits, value);
+                    put_mask(bits, value);
                     bits.write(value & 0x7ffU, packet_length);
                     position += count;
                 } else {
                     if (buffer.size() >= 0xf) {
-                        flush_buffer(buffer, bits, putMask, packet_length);
+                        flush_buffer(buffer, bits, put_mask, packet_length);
                     }
 
                     buffer.push_back(value);
@@ -351,7 +352,7 @@ public:
             position++;
         }
 
-        flush_buffer(buffer, bits, putMask, packet_length);
+        flush_buffer(buffer, bits, put_mask, packet_length);
 
         // Terminator.
         bits.write(0x7f, 7);
@@ -359,24 +360,24 @@ public:
     }
 };
 
-bool enigma::decode(istream& Source, ostream& Dest) {
-    auto const   Location = Source.tellg();
+bool enigma::decode(istream& source, ostream& dest) {
+    auto const   location = source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Source, input);
+    extract(source, input);
 
-    enigma_internal::decode(input, Dest);
-    Source.seekg(Location + input.tellg());
+    enigma_internal::decode(input, dest);
+    source.seekg(location + input.tellg());
     return true;
 }
 
-bool enigma::encode(istream& Source, ostream& Dest) {
-    enigma_internal::encode(Source, Dest);
+bool enigma::encode(istream& source, ostream& dest) {
+    enigma_internal::encode(source, dest);
     return true;
 }
 
-bool enigma::encode(std::ostream& Dest, uint8_t const* data, size_t const Size) {
+bool enigma::encode(std::ostream& dest, uint8_t const* data, size_t const size) {
     stringstream source(ios::in | ios::out | ios::binary);
-    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(Size));
+    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(size));
     source.seekg(0);
-    return encode(source, Dest);
+    return encode(source, dest);
 }

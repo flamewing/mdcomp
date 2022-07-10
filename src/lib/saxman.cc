@@ -42,17 +42,17 @@ using std::streamsize;
 using std::stringstream;
 
 template <>
-size_t moduled_saxman::PadMaskBits = 1U;
+size_t moduled_saxman::pad_mask_bits = 1U;
 
 class saxman_internal {
     // NOTE: This has to be changed for other LZSS-based compression schemes.
-    struct SaxmanAdaptor {
+    struct saxman_adaptor {
         using stream_t            = uint8_t;
-        using stream_endian_t     = BigEndian;
+        using stream_endian_t     = big_endian;
         using descriptor_t        = uint8_t;
-        using descriptor_endian_t = LittleEndian;
-        using SlidingWindow_t     = SlidingWindow<SaxmanAdaptor>;
-        enum class EdgeType : size_t {
+        using descriptor_endian_t = little_endian;
+        using sliding_window_t    = sliding_window<saxman_adaptor>;
+        enum class edge_type : size_t {
             invalid,
             terminator,
             symbolwise,
@@ -60,55 +60,56 @@ class saxman_internal {
             zerofill
         };
         // Number of bits on descriptor bitfield.
-        constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+        constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
-        constexpr static bool const NeedEarlyDescriptor = false;
+        constexpr static bool const need_early_descriptor = false;
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
-        constexpr static bit_endian const DescriptorBitOrder = bit_endian::little;
+        constexpr static bit_endian const descriptor_bit_order = bit_endian::little;
         // How many characters to skip looking for matches for at the start.
-        constexpr static size_t const FirstMatchPosition = 0;
+        constexpr static size_t const first_match_position = 0;
         // Size of the search buffer.
-        constexpr static size_t const SearchBufSize = 4096;
+        constexpr static size_t const search_buf_size = 4096;
         // Size of the look-ahead buffer.
-        constexpr static size_t const LookAheadBufSize = 18;
+        constexpr static size_t const look_ahead_buf_size = 18;
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array{
-                    SlidingWindow_t{
-                                    data, SearchBufSize, 3, LookAheadBufSize,
-                                    EdgeType::dictionary}
+                    sliding_window_t{
+                                     data, search_buf_size, 3, look_ahead_buf_size,
+                                     edge_type::dictionary}
             };
         }
 
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
-        constexpr static size_t desc_bits(EdgeType const type) noexcept {
+        constexpr static size_t desc_bits(edge_type const type) noexcept {
             // Saxman always uses a single bit descriptor.
             ignore_unused_variable_warning(type);
-            return type == EdgeType::terminator ? 0 : 1;
+            return type == edge_type::terminator ? 0 : 1;
         }
 
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(
+                edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
-            case EdgeType::terminator:
+            case edge_type::terminator:
                 // Does not have a terminator.
                 return 0;
-            case EdgeType::symbolwise:
+            case edge_type::symbolwise:
                 // 8-bit value.
                 return desc_bits(type) + 8;
-            case EdgeType::dictionary:
-            case EdgeType::zerofill:
+            case edge_type::dictionary:
+            case edge_type::zerofill:
                 // 12-bit offset, 4-bit length.
                 return desc_bits(type) + 12 + 4;
-            case EdgeType::invalid:
+            case edge_type::invalid:
                 return numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
@@ -119,11 +120,11 @@ class saxman_internal {
         static bool extra_matches(
                 std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
-                std::vector<AdjListNode<SaxmanAdaptor>>& matches) noexcept {
-            using Match_t = AdjListNode<SaxmanAdaptor>::MatchInfo;
+                std::vector<adj_list_node<saxman_adaptor>>& matches) noexcept {
+            using match_t = adj_list_node<saxman_adaptor>::match_info;
             ignore_unused_variable_warning(lbound);
             // Can't encode zero match after this point.
-            if (base_node >= SearchBufSize - 1) {
+            if (base_node >= search_buf_size - 1) {
                 // Do normal matches.
                 return false;
             }
@@ -140,8 +141,8 @@ class saxman_internal {
                 // Got them, so add them to the list.
                 for (size_t length = 3; length <= offset; length++) {
                     matches.emplace_back(
-                            base_node, Match_t{numeric_limits<size_t>::max(), length},
-                            EdgeType::zerofill);
+                            base_node, match_t{numeric_limits<size_t>::max(), length},
+                            edge_type::zerofill);
                 }
             }
             return !matches.empty();
@@ -155,25 +156,25 @@ class saxman_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dest, size_t const Size) {
-        using SaxIStream = LZSSIStream<SaxmanAdaptor>;
-        using diff_t     = std::make_signed_t<size_t>;
+    static void decode(istream& input, iostream& dest, size_t const size) {
+        using sax_istream = lzss_istream<saxman_adaptor>;
+        using diff_t      = std::make_signed_t<size_t>;
 
-        SaxIStream source(input);
-        auto const size = static_cast<std::make_signed_t<size_t>>(Size);
+        sax_istream source(input);
+        auto const  ssize = static_cast<std::make_signed_t<size_t>>(size);
 
         constexpr auto const buffer_size
-                = static_cast<diff_t>(SaxmanAdaptor::SearchBufSize);
+                = static_cast<diff_t>(saxman_adaptor::search_buf_size);
 
         // Loop while the file is good and we haven't gone over the declared
         // length.
-        while (input.good() && input.tellg() < size) {
+        while (input.good() && input.tellg() < ssize) {
             if (source.descriptor_bit() != 0U) {
                 // Symbolwise match.
                 if (input.peek() == EOF) {
                     break;
                 }
-                Write1(Dest, source.get_byte());
+                write1(dest, source.get_byte());
             } else {
                 if (input.peek() == EOF) {
                     break;
@@ -193,7 +194,7 @@ public:
                 // 0x1000-byte block, with part of it being remapped to the end
                 // of the previous 0x1000-byte block. We just rebase it around
                 // base.
-                auto const base = Dest.tellp();
+                auto const base = dest.tellp();
                 auto const offset
                         = ((base_offset - base) % buffer_size) + base - buffer_size;
 
@@ -201,37 +202,37 @@ public:
                     // If the offset is before the current output position, we
                     // copy bytes from the given location.
                     for (auto csrc = offset; csrc < offset + length; csrc++) {
-                        auto const Pointer = Dest.tellp();
-                        Dest.seekg(csrc);
-                        uint8_t const Byte = Read1(Dest);
-                        Dest.seekp(Pointer);
-                        Write1(Dest, Byte);
+                        auto const pointer = dest.tellp();
+                        dest.seekg(csrc);
+                        uint8_t const byte = read1(dest);
+                        dest.seekp(pointer);
+                        write1(dest, byte);
                     }
                 } else {
                     // Otherwise, it is a zero fill.
-                    fill_n(ostreambuf_iterator<char>(Dest), length, 0);
+                    fill_n(ostreambuf_iterator<char>(dest), length, 0);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dest, uint8_t const*& Data, size_t const Size) {
-        using EdgeType   = typename SaxmanAdaptor::EdgeType;
-        using SaxOStream = LZSSOStream<SaxmanAdaptor>;
+    static void encode(ostream& dest, uint8_t const*& data, size_t const size) {
+        using edge_type   = typename saxman_adaptor::edge_type;
+        using sax_ostream = lzss_ostream<saxman_adaptor>;
 
         // Compute optimal Saxman parsing of input file.
-        auto       list = find_optimal_lzss_parse(Data, Size, SaxmanAdaptor{});
-        SaxOStream output(Dest);
+        auto        list = find_optimal_lzss_parse(data, size, saxman_adaptor{});
+        sax_ostream output(dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
-            case EdgeType::symbolwise:
+            case edge_type::symbolwise:
                 output.descriptor_bit(1);
                 output.put_byte(edge.get_symbol());
                 break;
-            case EdgeType::dictionary:
-            case EdgeType::zerofill: {
+            case edge_type::dictionary:
+            case edge_type::zerofill: {
                 size_t const length   = edge.get_length();
                 size_t const dist     = edge.get_distance();
                 size_t const position = edge.get_position();
@@ -243,9 +244,9 @@ public:
                 output.put_byte(high);
                 break;
             }
-            case EdgeType::terminator:
+            case edge_type::terminator:
                 break;
-            case EdgeType::invalid:
+            case edge_type::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << std::endl;
@@ -255,32 +256,32 @@ public:
     }
 };
 
-bool saxman::decode(istream& Source, iostream& Dest, size_t Size) {
-    if (Size == 0) {
-        Size = LittleEndian::Read2(Source);
+bool saxman::decode(istream& source, iostream& dest, size_t size) {
+    if (size == 0) {
+        size = little_endian::read2(source);
     }
 
-    auto const   Location = Source.tellg();
+    auto const   location = source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Source, input);
+    extract(source, input);
 
-    saxman_internal::decode(input, Dest, Size);
-    Source.seekg(Location + input.tellg());
+    saxman_internal::decode(input, dest, size);
+    source.seekg(location + input.tellg());
     return true;
 }
 
 bool saxman::encode(
-        ostream& Dest, uint8_t const* data, size_t const Size, bool const WithSize) {
+        ostream& dest, uint8_t const* data, size_t const size, bool const with_size) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
-    auto const   Start = outbuff.tellg();
-    saxman_internal::encode(outbuff, data, Size);
-    if (WithSize) {
-        outbuff.seekg(Start);
+    auto const   start = outbuff.tellg();
+    saxman_internal::encode(outbuff, data, size);
+    if (with_size) {
+        outbuff.seekg(start);
         outbuff.ignore(numeric_limits<streamsize>::max());
-        auto FullSize = outbuff.gcount();
-        LittleEndian::Write2(Dest, static_cast<uint16_t>(FullSize));
+        auto full_size = outbuff.gcount();
+        little_endian::write2(dest, static_cast<uint16_t>(full_size));
     }
-    outbuff.seekg(Start);
-    Dest << outbuff.rdbuf();
+    outbuff.seekg(start);
+    dest << outbuff.rdbuf();
     return true;
 }

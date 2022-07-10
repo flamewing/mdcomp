@@ -25,17 +25,17 @@
 #include <iosfwd>
 
 class comper;
-using basic_comper   = BasicDecoder<comper, PadMode::PadEven>;
-using moduled_comper = ModuledAdaptor<comper, 4096U, 1U>;
+using basic_comper   = basic_decoder<comper, pad_mode::pad_even>;
+using moduled_comper = moduled_adaptor<comper, 4096U, 1U>;
 
 class comper : public basic_comper, public moduled_comper {
     friend basic_comper;
     friend moduled_comper;
-    static bool encode(std::ostream& Dest, uint8_t const* data, size_t Size);
+    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
 
 public:
     using basic_comper::encode;
-    static bool decode(std::istream& Source, std::iostream& Dest);
+    static bool decode(std::istream& source, std::iostream& dest);
 };
 
 #endif    // LIB_COMPER_HH

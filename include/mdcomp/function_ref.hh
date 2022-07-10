@@ -68,7 +68,7 @@ namespace std23 {
 
     // See also: https://www.agner.org/optimize/calling_conventions.pdf
     template <class T>
-    constexpr inline auto _select_param_type = [] {
+    constexpr inline auto select_param_type = [] {
         if constexpr (std::is_trivially_copyable_v<T>) {
             return std::type_identity<T>();
         } else {
@@ -77,73 +77,74 @@ namespace std23 {
     };
 
     template <class T>
-    using _param_t = typename std::invoke_result_t<decltype(_select_param_type<T>)>::type;
+    using param_t = typename std::invoke_result_t<decltype(select_param_type<T>)>::type;
 
     template <class T, class Self>
-    constexpr inline bool _is_not_self = not std::is_same_v<std::remove_cvref_t<T>, Self>;
+    constexpr inline bool is_not_self = not std::is_same_v<std::remove_cvref_t<T>, Self>;
 
     template <class T>
-    struct _unwrap_reference {
+    struct unwrap_reference {
         using type = T;
     };
 
     template <class U>
-    struct _unwrap_reference<std::reference_wrapper<U>> {
+    struct unwrap_reference<std::reference_wrapper<U>> {
         using type = U;
     };
 
     template <class U>
-    struct _unwrap_reference<std::reference_wrapper<U> const> {
+    struct unwrap_reference<std::reference_wrapper<U> const> {
         using type = U;
     };
 
     template <class U>
-    struct _unwrap_reference<std::reference_wrapper<U> volatile> {
+    struct unwrap_reference<std::reference_wrapper<U> volatile> {
         using type = U;
     };
 
     template <class U>
-    struct _unwrap_reference<std::reference_wrapper<U> const volatile> {
+    struct unwrap_reference<std::reference_wrapper<U> const volatile> {
         using type = U;
     };
 
     template <class T>
-    using _remove_and_unwrap_reference_t =
-            typename _unwrap_reference<std::remove_reference_t<T>>::type;
+    using remove_and_unwrap_reference_t =
+            typename unwrap_reference<std::remove_reference_t<T>>::type;
 
-    struct _function_ref_base {
+    struct function_ref_base {
         union storage {
-            void*       p_ = nullptr;
-            void const* cp_;
-            void (*fp_)();
+            void*       pointer = nullptr;
+            void const* const_pointer;
+            void (*fun_pointer)();
 
             constexpr storage() noexcept = default;
 
             template <class T>
                 requires std::is_object_v<T>
 
-            constexpr explicit storage(T* pointer) noexcept : p_(pointer) {}
+            constexpr explicit storage(T* pointer_in) noexcept : pointer(pointer_in) {}
 
             template <class T>
                 requires std::is_object_v<T>
 
-            constexpr explicit storage(T const* pointer) noexcept : cp_(pointer) {}
+            constexpr explicit storage(T const* pointer_in) noexcept
+                    : const_pointer(pointer_in) {}
 
             template <class T>
                 requires std::is_function_v<T>
 
-            constexpr explicit storage(T* pointer) noexcept
-                    : fp_(reinterpret_cast<decltype(fp_)>(pointer)) {}
+            constexpr explicit storage(T* pointer_in) noexcept
+                    : fun_pointer(reinterpret_cast<decltype(fun_pointer)>(pointer_in)) {}
         };
 
         template <class T>
         constexpr static auto get(storage obj) {
             if constexpr (std::is_const_v<T>) {
-                return static_cast<T*>(obj.cp_);
+                return static_cast<T*>(obj.const_pointer);
             } else if constexpr (std::is_object_v<T>) {
-                return static_cast<T*>(obj.p_);
+                return static_cast<T*>(obj.pointer);
             } else {
-                return reinterpret_cast<T*>(obj.fp_);
+                return reinterpret_cast<T*>(obj.fun_pointer);
             }
         }
     };
@@ -152,10 +153,10 @@ namespace std23 {
     struct function_ref;
 
     template <class Sig, class R, class... Args>
-    struct function_ref<Sig, R(Args...)> : _function_ref_base {
-        storage obj_;
-        using fwd_t  = R(storage, _param_t<Args>...);
-        fwd_t* fptr_ = nullptr;
+    struct function_ref<Sig, R(Args...)> : function_ref_base {
+        storage object;
+        using fwd_t        = R(storage, param_t<Args>...);
+        fwd_t* fun_pointer = nullptr;
 
         using signature = _qual_fn_sig<Sig>;
         template <class T>
@@ -179,18 +180,19 @@ namespace std23 {
 
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(F* callable) noexcept
-                : obj_(callable), fptr_([](storage fn_, _param_t<Args>... args) {
-                      return std23::invoke_r<R>(get<F>(fn_), std::forward<Args>(args)...);
+                : object(callable), fun_pointer([](storage func, param_t<Args>... args) {
+                      return std23::invoke_r<R>(
+                              get<F>(func), std::forward<Args>(args)...);
                   }) {}
 
-        template <class F, class T = _remove_and_unwrap_reference_t<F>>
-            requires _is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
+        template <class F, class T = remove_and_unwrap_reference_t<F>>
+            requires is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
 
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
         constexpr function_ref(F&& callable) noexcept
-                : obj_(std::addressof(static_cast<T&>(callable))),
-                  fptr_([](storage fn_, _param_t<Args>... args) {
-                      cvref<T> obj = *get<T>(fn_);
+                : object(std::addressof(static_cast<T&>(callable))),
+                  fun_pointer([](storage func, param_t<Args>... args) {
+                      cvref<T> obj = *get<T>(func);
                       return std23::invoke_r<R>(obj, std::forward<Args>(args)...);
                   }) {}
 
@@ -199,7 +201,7 @@ namespace std23 {
 
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(nontype_t<F>) noexcept
-                : fptr_([](storage, _param_t<Args>... args) {
+                : fun_pointer([](storage, param_t<Args>... args) {
                       return std23::invoke_r<R>(F, std::forward<Args>(args)...);
                   }) {}
         // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
@@ -211,22 +213,22 @@ namespace std23 {
                     decltype(F), cvref<T>>
 
         constexpr function_ref(nontype_t<F>, U&& obj) noexcept
-                : obj_(std::addressof(static_cast<Ty>(obj))),
-                  fptr_([](storage this_, _param_t<Args>... args) {
-                      cvref<T> real_obj = *get<T>(this_);
+                : object(std::addressof(static_cast<Ty>(obj))),
+                  fun_pointer([](storage self, param_t<Args>... args) {
+                      cvref<T> real_obj = *get<T>(self);
                       return std23::invoke_r<R>(F, real_obj, std::forward<Args>(args)...);
                   }) {}
 
         template <auto F, class T>
         constexpr function_ref(nontype_t<F>, cv<T>* obj) noexcept requires
                 is_memfn_invocable_using<decltype(F), decltype(obj)>
-                : obj_(obj), fptr_([](storage this_, _param_t<Args>... args) {
+                : object(obj), fun_pointer([](storage self, param_t<Args>... args) {
                     return std23::invoke_r<R>(
-                            F, get<cv<T>>(this_), std::forward<Args>(args)...);
+                            F, get<cv<T>>(self), std::forward<Args>(args)...);
                 }) {}
 
         constexpr R operator()(Args... args) const noexcept(signature::is_noexcept) {
-            return fptr_(obj_, std::forward<Args>(args)...);
+            return fun_pointer(object, std::forward<Args>(args)...);
         }
     };
 
@@ -241,7 +243,7 @@ namespace std23 {
     };
 
     template <class Fp>
-    using _adapt_signature_t = typename _adapt_signature<Fp>::type;
+    using adapt_signature_t = typename _adapt_signature<Fp>::type;
 
     template <class T>
     struct _drop_first_arg_to_invoke;
@@ -271,7 +273,7 @@ namespace std23 {
     };
 
     template <class Fp>
-    using _drop_first_arg_to_invoke_t = typename _drop_first_arg_to_invoke<Fp>::type;
+    using drop_first_arg_to_invoke_t = typename _drop_first_arg_to_invoke<Fp>::type;
 
     // clang-format off
     template <class F>
@@ -279,10 +281,10 @@ namespace std23 {
     function_ref(F*) -> function_ref<F>;
 
     template <auto V>
-    function_ref(nontype_t<V>) -> function_ref<_adapt_signature_t<decltype(V)>>;
+    function_ref(nontype_t<V>) -> function_ref<adapt_signature_t<decltype(V)>>;
 
     template <auto V>
-    function_ref(nontype_t<V>, auto) -> function_ref<_drop_first_arg_to_invoke_t<decltype(V)>>;
+    function_ref(nontype_t<V>, auto) -> function_ref<drop_first_arg_to_invoke_t<decltype(V)>>;
     // clang-format on
 
 }    // namespace std23

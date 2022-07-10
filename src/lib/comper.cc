@@ -40,50 +40,50 @@ using std::streamsize;
 using std::stringstream;
 
 template <>
-size_t moduled_comper::PadMaskBits = 1U;
+size_t moduled_comper::pad_mask_bits = 1U;
 
 class comper_internal {
     // NOTE: This has to be changed for other LZSS-based compression schemes.
-    struct ComperAdaptor {
+    struct comper_adaptor {
         using stream_t            = uint16_t;
-        using stream_endian_t     = BigEndian;
+        using stream_endian_t     = big_endian;
         using descriptor_t        = uint16_t;
-        using descriptor_endian_t = BigEndian;
-        using SlidingWindow_t     = SlidingWindow<ComperAdaptor>;
-        enum class EdgeType : size_t {
+        using descriptor_endian_t = big_endian;
+        using sliding_window_t    = sliding_window<comper_adaptor>;
+        enum class edge_type : size_t {
             invalid,
             terminator,
             symbolwise,
             dictionary
         };
         // Number of bits on descriptor bitfield.
-        constexpr static size_t const NumDescBits = sizeof(descriptor_t) * 8;
+        constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
         // Flag that tells the compressor that new descriptor fields is needed
         // when a new bit is needed and all bits in the previous one have been
         // used up.
-        constexpr static bool const NeedEarlyDescriptor = false;
+        constexpr static bool const need_early_descriptor = false;
         // Ordering of bits on descriptor field. Big bit endian order means high
         // order bits come out first.
-        constexpr static bit_endian const DescriptorBitOrder = bit_endian::big;
+        constexpr static bit_endian const descriptor_bit_order = bit_endian::big;
         // How many characters to skip looking for matches for at the start.
-        constexpr static size_t const FirstMatchPosition = 0;
+        constexpr static size_t const first_match_position = 0;
         // Size of the search buffer.
-        constexpr static size_t const SearchBufSize = 256;
+        constexpr static size_t const search_buf_size = 256;
         // Size of the look-ahead buffer.
-        constexpr static size_t const LookAheadBufSize = 256;
+        constexpr static size_t const look_ahead_buf_size = 256;
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             return array{
-                    SlidingWindow_t{
-                                    data, SearchBufSize, 2, LookAheadBufSize,
-                                    EdgeType::dictionary}
+                    sliding_window_t{
+                                     data, search_buf_size, 2, look_ahead_buf_size,
+                                     edge_type::dictionary}
             };
         }
 
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
-        constexpr static size_t desc_bits(EdgeType const type) noexcept {
+        constexpr static size_t desc_bits(edge_type const type) noexcept {
             // Comper always uses a single bit descriptor.
             ignore_unused_variable_warning(type);
             return 1;
@@ -92,17 +92,18 @@ class comper_internal {
         // Given an edge type, computes how many bits are used in total by this
         // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
         // or "no edge".
-        constexpr static size_t edge_weight(EdgeType const type, size_t length) noexcept {
+        constexpr static size_t edge_weight(
+                edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
-            case EdgeType::symbolwise:
-            case EdgeType::terminator:
+            case edge_type::symbolwise:
+            case edge_type::terminator:
                 // 16-bit value.
                 return desc_bits(type) + 16;
-            case EdgeType::dictionary:
+            case edge_type::dictionary:
                 // 8-bit distance, 8-bit length.
                 return desc_bits(type) + 8 + 8;
-            case EdgeType::invalid:
+            case edge_type::invalid:
                 return numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
@@ -112,7 +113,7 @@ class comper_internal {
         constexpr static bool extra_matches(
                 std::span<stream_t const> data, size_t const base_node,
                 size_t const ubound, size_t const lbound,
-                std::vector<AdjListNode<ComperAdaptor>>& matches) noexcept {
+                std::vector<adj_list_node<comper_adaptor>>& matches) noexcept {
             ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
             // Do normal matches.
             return false;
@@ -126,15 +127,15 @@ class comper_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& Dest) {
-        using CompIStream = LZSSIStream<ComperAdaptor>;
+    static void decode(istream& input, iostream& dest) {
+        using comp_istream = lzss_istream<comper_adaptor>;
 
-        CompIStream source(input);
+        comp_istream source(input);
 
         while (input.good()) {
             if (source.descriptor_bit() == 0U) {
                 // Symbolwise match.
-                BigEndian::Write2(Dest, BigEndian::Read2(input));
+                big_endian::write2(dest, big_endian::read2(input));
             } else {
                 // Dictionary match.
                 // Distance and length of match.
@@ -145,28 +146,28 @@ public:
                 }
 
                 for (size_t i = 0; i <= length; i++) {
-                    std::streamsize const Pointer = Dest.tellp();
-                    Dest.seekg(Pointer - distance);
-                    uint16_t const Word = BigEndian::Read2(Dest);
-                    Dest.seekp(Pointer);
-                    BigEndian::Write2(Dest, Word);
+                    std::streamsize const pointer = dest.tellp();
+                    dest.seekg(pointer - distance);
+                    uint16_t const word = big_endian::read2(dest);
+                    dest.seekp(pointer);
+                    big_endian::write2(dest, word);
                 }
             }
         }
     }
 
-    static void encode(ostream& Dest, uint8_t const* Data, size_t const Size) {
-        using EdgeType    = typename ComperAdaptor::EdgeType;
-        using CompOStream = LZSSOStream<ComperAdaptor>;
+    static void encode(ostream& dest, uint8_t const* data, size_t const size) {
+        using edge_type    = typename comper_adaptor::edge_type;
+        using comp_ostream = lzss_ostream<comper_adaptor>;
 
         // Compute optimal Comper parsing of input file.
-        auto        list = find_optimal_lzss_parse(Data, Size, ComperAdaptor{});
-        CompOStream output(Dest);
+        auto         list = find_optimal_lzss_parse(data, size, comper_adaptor{});
+        comp_ostream output(dest);
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
-            case EdgeType::symbolwise: {
+            case edge_type::symbolwise: {
                 size_t const value = edge.get_symbol();
                 size_t const high  = (value >> 8U) & 0xFFU;
                 size_t const low   = (value & 0xFFU);
@@ -175,7 +176,7 @@ public:
                 output.put_byte(low);
                 break;
             }
-            case EdgeType::dictionary: {
+            case edge_type::dictionary: {
                 size_t const length = edge.get_length();
                 size_t const dist   = edge.get_distance();
                 output.descriptor_bit(1);
@@ -183,14 +184,14 @@ public:
                 output.put_byte(length - 1);
                 break;
             }
-            case EdgeType::terminator: {
+            case edge_type::terminator: {
                 // Push descriptor for end-of-file marker.
                 output.descriptor_bit(1);
                 output.put_byte(0);
                 output.put_byte(0);
                 break;
             }
-            case EdgeType::invalid:
+            case edge_type::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << std::endl;
@@ -200,17 +201,17 @@ public:
     }
 };
 
-bool comper::decode(istream& Source, iostream& Dest) {
-    auto const   Location = Source.tellg();
+bool comper::decode(istream& source, iostream& dest) {
+    auto const   location = source.tellg();
     stringstream input(ios::in | ios::out | ios::binary);
-    extract(Source, input);
+    extract(source, input);
 
-    comper_internal::decode(input, Dest);
-    Source.seekg(Location + input.tellg());
+    comper_internal::decode(input, dest);
+    source.seekg(location + input.tellg());
     return true;
 }
 
-bool comper::encode(ostream& Dest, uint8_t const* data, size_t const Size) {
-    comper_internal::encode(Dest, data, Size);
+bool comper::encode(ostream& dest, uint8_t const* data, size_t const size) {
+    comper_internal::encode(dest, data, size);
     return true;
 }
