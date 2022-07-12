@@ -31,7 +31,6 @@
 using std::cerr;
 using std::cout;
 using std::endl;
-using std::fstream;
 using std::hex;
 using std::ifstream;
 using std::ios;

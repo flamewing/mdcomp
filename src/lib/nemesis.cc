@@ -40,9 +40,7 @@
 #include <vector>
 
 using std::enable_shared_from_this;
-using std::fill_n;
 using std::ios;
-using std::iostream;
 using std::istream;
 using std::make_shared;
 using std::map;
@@ -52,7 +50,6 @@ using std::ostream;
 using std::ostreambuf_iterator;
 using std::priority_queue;
 using std::shared_ptr;
-using std::streamsize;
 using std::string;
 using std::stringstream;
 using std::vector;

@@ -26,11 +26,9 @@
 
 using std::cerr;
 using std::endl;
-using std::fstream;
 using std::ifstream;
 using std::ios;
 using std::ofstream;
-using std::stringstream;
 
 static void usage(char* prog) {
     cerr << "Usage: " << prog
