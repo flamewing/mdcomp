@@ -34,10 +34,8 @@ using std::array;
 using std::ios;
 using std::iostream;
 using std::istream;
-using std::make_signed_t;
 using std::numeric_limits;
 using std::ostream;
-using std::streamsize;
 using std::stringstream;
 
 template <>

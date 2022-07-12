@@ -40,15 +40,12 @@
 
 using std::array;
 using std::ios;
-using std::iostream;
 using std::istream;
 using std::make_index_sequence;
-using std::make_signed_t;
 using std::map;
 using std::ostream;
 using std::pair;
 using std::set;
-using std::streamsize;
 using std::stringstream;
 using std::vector;
 

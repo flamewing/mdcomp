@@ -31,7 +31,6 @@
 #include <sstream>
 
 using std::array;
-using std::fill_n;
 using std::ios;
 using std::iostream;
 using std::istream;
@@ -161,7 +160,7 @@ public:
         using diff_t      = std::make_signed_t<size_t>;
 
         sax_istream source(input);
-        auto const  ssize = static_cast<std::make_signed_t<size_t>>(size);
+        auto const  ssize = static_cast<diff_t>(size);
 
         constexpr auto const buffer_size
                 = static_cast<diff_t>(saxman_adaptor::search_buf_size);

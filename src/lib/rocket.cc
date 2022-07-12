@@ -31,14 +31,12 @@
 #include <type_traits>
 
 using std::array;
-using std::fill_n;
 using std::ios;
 using std::iostream;
 using std::istream;
 using std::numeric_limits;
 using std::ostream;
 using std::ostreambuf_iterator;
-using std::streamsize;
 using std::stringstream;
 
 template <>
