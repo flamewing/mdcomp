@@ -200,7 +200,7 @@ namespace detail {
         size_t const nbits = CHAR_BIT;
 
         size_t diff      = nbits * (sizeof(T) - 1);
-        uint_t mask1     = static_cast<unsigned char>(~0U);
+        uint_t mask1     = std::numeric_limits<uint8_t>::max();
         auto   mask2     = static_cast<uint_t>(mask1 << diff);
         uint_t new_value = value;
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
