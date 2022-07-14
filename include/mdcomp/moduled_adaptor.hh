@@ -54,9 +54,10 @@ public:
     };
 
     static size_t pad_mask_bits;
-    static bool   moduled_decode(
-              std::istream& source, std::iostream& dest,
-              size_t module_padding = DefaultModulePadding);
+
+    static bool moduled_decode(
+            std::istream& source, std::iostream& dest,
+            size_t module_padding = DefaultModulePadding);
 
     static bool moduled_encode(
             std::istream& source, std::ostream& dest,

@@ -46,14 +46,16 @@ bool basic_decoder<Format, Pad, Args...>::encode(
     auto full_size = static_cast<size_t>(source.gcount());
     source.seekg(start);
     std::vector<uint8_t> data;
-    if (Pad == pad_mode::pad_even) {
+    if constexpr (Pad == pad_mode::pad_even) {
         data.resize(full_size + (full_size % 2));
     } else {
         data.resize(full_size);
     }
     source.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
-    if (Pad == pad_mode::pad_even && data.size() > full_size) {
-        data.back() = 0;
+    if constexpr (Pad == pad_mode::pad_even) {
+        if (data.size() > full_size) {
+            data.back() = 0;
+        }
     }
     if (Format::encode(dest, data.data(), data.size(), std::forward<Args>(args)...)) {
         // Pad to even size.
