@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS FALSE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT iposupported OUTPUT ipoerror)
+
 if(iposupported)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -30,6 +31,7 @@ if(APPLE)
 else()
     set(UseLibCxxDefault FALSE)
 endif()
+
 option(UseLibCxx "Compile using libc++" UseLibCxxDefault)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -37,6 +39,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_PREFIX "$ENV{MSYSTEM_PREFIX}" CACHE PATH "Default install prefix" FORCE)
     endif(DEFINED ENV{MSYSTEM_PREFIX})
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
 include(GNUInstallDirs)
 
 find_package(Boost 1.54 REQUIRED)
@@ -46,38 +49,44 @@ include(CheckCXXCompilerFlag)
 function(add_compile_options_safe FLAG)
     string(REGEX REPLACE "[-=+]" "" FLAG_NO_SIGNS ${FLAG}) # <- The variable recieving the result of the test can't have those signs in its name
     check_cxx_compiler_flag(${FLAG} CXX_COMPILER_SUPPORTS_${FLAG_NO_SIGNS})
+
     if(CXX_COMPILER_SUPPORTS_${FLAG_NO_SIGNS})
         add_compile_options("${FLAG}")
     endif(CXX_COMPILER_SUPPORTS_${FLAG_NO_SIGNS})
 endfunction()
 
 if(UseLibCxx AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(FATAL_ERROR "You can only use libc++ with clang" )
+    message(FATAL_ERROR "You can only use libc++ with clang")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    if (${FORCE_COLORED_OUTPUT})
-        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(${FORCE_COLORED_OUTPUT})
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             add_compile_options(-fcolor-diagnostics -fansi-escape-codes)
             add_link_options(-fcolor-diagnostics -fansi-escape-codes)
-        elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
             add_compile_options(-fdiagnostics-color=always)
             add_link_options(-fdiagnostics-color=always)
         endif()
     endif()
-    if (WARNINGS_ARE_ERRORS)
+
+    if(WARNINGS_ARE_ERRORS)
         add_compile_options(-Werror)
         add_compile_options_safe(-pedantic-errors)
     endif()
+
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         add_compile_options_safe(-Og)
         add_compile_options_safe(-g3)
     endif()
+
     if(UseLibCxx)
         add_compile_options(-stdlib=libc++)
         add_link_options(-stdlib=libc++ -lc++)
+
         # add_link_options("-lc++abi")
     endif()
+
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Weverything)
         add_compile_options(-Wno-pre-c++14-compat)
@@ -98,6 +107,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wno-c++20-compat-pedantic)
         add_compile_options(-Wno-padded)
         add_compile_options(-Wno-undefined-var-template)
+
         # Need this because clang support for operator<=> is bad
         add_compile_options(-Wno-zero-as-null-pointer-constant)
     else()
@@ -125,6 +135,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wlogical-op)
         add_compile_options(-Wmisleading-indentation)
         add_compile_options(-Wmismatched-tags)
+
         # add_compile_options(-Wmissing-braces)
         add_compile_options(-Wmissing-include-dirs)
         add_compile_options_safe(-Wmissing-requires)
@@ -138,6 +149,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wredundant-decls -Wredundant-tags)
         add_compile_options(-Wregister)
         add_compile_options(-Wshadow=compatible-local -Wshadow=local)
+
         # add_compile_options(-Wsign-promo)
         add_compile_options(-Wstack-protector)
         add_compile_options(-Wstrict-null-sentinel)
@@ -148,6 +160,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wsuggest-attribute=noreturn)
         add_compile_options(-Wsuggest-attribute=pure)
         add_compile_options(-Wsuggest-final-methods -Wsuggest-final-types -Wsuggest-override)
+
         # add_compile_options(-Wswitch-default)
         add_compile_options(-Wswitch-enum)
         add_compile_options(-Wsynth)
@@ -175,15 +188,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wstringop-overflow=4)
         add_compile_options(-Wunused-const-variable=1)
     endif()
-elseif (MSVC)
-    if (WARNINGS_ARE_ERRORS)
+elseif(MSVC)
+    if(WARNINGS_ARE_ERRORS)
         add_compile_options("/WX")
     endif()
+
     add_compile_options("/W4")
     add_compile_options("/wd4018") # warning C4018: '>': signed/unsigned mismatch
     add_compile_options("/wd4127") # warning C4127: conditional expression is constant
     add_compile_options("/wd4244") # warning C4244: 'initializing': conversion from 'int' to 'char', possible loss of data
     add_compile_options("/wd4251")
+
     # Clang: -Wshorten-64-to-32 -Wimplicit-int-conversion
     add_compile_options("/wd4267") # warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
     add_compile_options("/wd4389") # warning C4389: '==': signed/unsigned mismatch
@@ -200,9 +215,11 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     # It is useful when building Visual Studio projects with the SDK
     # toolchain rather than Visual Studio.
     include(FindSetEnv)
-    if (WINSDK_SETENV)
+
+    if(WINSDK_SETENV)
         set(MSBUILD_SETUP "call \"${WINSDK_SETENV}\"")
-    endif ()
+    endif()
+
     # Set FrameworkPathOverride to get rid of MSB3644 warnings.
     set(netfxpath "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
     file(WRITE run-msbuild.bat "
@@ -229,12 +246,12 @@ add_library(bigendian_io INTERFACE "${BIGENDIANIO_HEADERS}")
 add_library(mdcomp::bigendian_io ALIAS bigendian_io)
 target_include_directories(bigendian_io
     INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 set_target_properties(bigendian_io
     PROPERTIES
-        PUBLIC_HEADER "${BIGENDIANIO_HEADERS}"
+    PUBLIC_HEADER "${BIGENDIANIO_HEADERS}"
 )
 
 # Dummy library for generating compile_commands.json that
@@ -250,40 +267,41 @@ add_library(dummy-mdcomp
 )
 target_include_directories(dummy-mdcomp
     PRIVATE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
     if("${TYPE}" STREQUAL "STATIC")
         add_library(${TARGETNAME}
             STATIC
-                "${SRCFILE}"
-                "${HDRFILE}"
-                "${COMMON_HEADERS}"
+            "${SRCFILE}"
+            "${HDRFILE}"
+            "${COMMON_HEADERS}"
         )
         set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME ${OUTPUT})
     else()
         add_library(${TARGETNAME}
             SHARED
-                "${SRCFILE}"
-                "${HDRFILE}"
-                "${COMMON_HEADERS}"
+            "${SRCFILE}"
+            "${HDRFILE}"
+            "${COMMON_HEADERS}"
         )
     endif()
+
     add_library(mdcomp::${TARGETNAME} ALIAS ${TARGETNAME})
     target_include_directories(${TARGETNAME}
         PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(${TARGETNAME}
         INTERFACE
-            bigendian_io
+        bigendian_io
     )
     set_target_properties(${TARGETNAME}
         PROPERTIES
-            PUBLIC_HEADER "${HDRFILE};${COMMON_HEADERS}"
+        PUBLIC_HEADER "${HDRFILE};${COMMON_HEADERS}"
     )
 endfunction()
 
@@ -312,38 +330,38 @@ function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
     )
     target_include_directories(${TARGETNAME}
         PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(${TARGETNAME} PUBLIC ${LIBNAME})
     set_target_properties(${TARGETNAME}
         PROPERTIES
-            OUTPUT_NAME ${EXENAME}
+        OUTPUT_NAME ${EXENAME}
     )
 endfunction()
 
-define_lib(artc42   "src/lib/artc42.cc"   "include/mdcomp/artc42.hh")
-define_lib(comper   "src/lib/comper.cc"   "include/mdcomp/comper.hh")
-define_lib(comperx  "src/lib/comperx.cc"  "include/mdcomp/comperx.hh")
-define_lib(enigma   "src/lib/enigma.cc"   "include/mdcomp/enigma.hh")
+define_lib(artc42 "src/lib/artc42.cc" "include/mdcomp/artc42.hh")
+define_lib(comper "src/lib/comper.cc" "include/mdcomp/comper.hh")
+define_lib(comperx "src/lib/comperx.cc" "include/mdcomp/comperx.hh")
+define_lib(enigma "src/lib/enigma.cc" "include/mdcomp/enigma.hh")
 define_lib(kosinski "src/lib/kosinski.cc" "include/mdcomp/kosinski.hh")
-define_lib(kosplus  "src/lib/kosplus.cc"  "include/mdcomp/kosplus.hh")
-define_lib(lzkn1    "src/lib/lzkn1.cc"    "include/mdcomp/lzkn1.hh")
-define_lib(nemesis  "src/lib/nemesis.cc"  "include/mdcomp/nemesis.hh")
-define_lib(rocket   "src/lib/rocket.cc"   "include/mdcomp/rocket.hh")
-define_lib(saxman   "src/lib/saxman.cc"   "include/mdcomp/saxman.hh")
-define_lib(snkrle   "src/lib/snkrle.cc"   "include/mdcomp/snkrle.hh")
+define_lib(kosplus "src/lib/kosplus.cc" "include/mdcomp/kosplus.hh")
+define_lib(lzkn1 "src/lib/lzkn1.cc" "include/mdcomp/lzkn1.hh")
+define_lib(nemesis "src/lib/nemesis.cc" "include/mdcomp/nemesis.hh")
+define_lib(rocket "src/lib/rocket.cc" "include/mdcomp/rocket.hh")
+define_lib(saxman "src/lib/saxman.cc" "include/mdcomp/saxman.hh")
+define_lib(snkrle "src/lib/snkrle.cc" "include/mdcomp/snkrle.hh")
 
-define_exe(compercmp   "src/tools/compcmp.cc"  comper   compcmp)
-define_exe(comperxcmp  "src/tools/comperx.cc"  comperx  comperx)
-define_exe(enigmacmp   "src/tools/enicmp.cc"   enigma   enicmp)
-define_exe(kosinskicmp "src/tools/koscmp.cc"   kosinski koscmp)
-define_exe(kospluscmp  "src/tools/kosplus.cc"  kosplus  kosplus)
-define_exe(lzkn1cmp    "src/tools/lzkn1cmp.cc" lzkn1    lzkn1cmp)
-define_exe(nemesiscmp  "src/tools/nemcmp.cc"   nemesis  nemcmp)
-define_exe(rocketcmp   "src/tools/rockcmp.cc"  rocket   rockcmp)
-define_exe(saxmancmp   "src/tools/saxcmp.cc"   saxman   saxcmp)
-define_exe(snkrlecmp   "src/tools/snkcmp.cc"   snkrle   snkcmp)
+define_exe(compercmp "src/tools/compcmp.cc" comper compcmp)
+define_exe(comperxcmp "src/tools/comperx.cc" comperx comperx)
+define_exe(enigmacmp "src/tools/enicmp.cc" enigma enicmp)
+define_exe(kosinskicmp "src/tools/koscmp.cc" kosinski koscmp)
+define_exe(kospluscmp "src/tools/kosplus.cc" kosplus kosplus)
+define_exe(lzkn1cmp "src/tools/lzkn1cmp.cc" lzkn1 lzkn1cmp)
+define_exe(nemesiscmp "src/tools/nemcmp.cc" nemesis nemcmp)
+define_exe(rocketcmp "src/tools/rockcmp.cc" rocket rockcmp)
+define_exe(saxmancmp "src/tools/saxcmp.cc" saxman saxcmp)
+define_exe(snkrlecmp "src/tools/snkcmp.cc" snkrle snkcmp)
 
 file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
 
@@ -370,82 +388,82 @@ write_basic_package_version_file(
 
 install(
     TARGETS
-        bigendian_io
-        artc42
-        artc42Static
-        comper
-        comperStatic
-        comperx
-        comperxStatic
-        enigma
-        enigmaStatic
-        kosinski
-        kosinskiStatic
-        kosplus
-        kosplusStatic
-        lzkn1
-        lzkn1Static
-        nemesis
-        nemesisStatic
-        rocket
-        rocketStatic
-        saxman
-        saxmanStatic
-        snkrle
-        snkrleStatic
-        compercmp
-        comperxcmp
-        enigmacmp
-        kosinskicmp
-        kospluscmp
-        lzkn1cmp
-        nemesiscmp
-        rocketcmp
-        saxmancmp
-        snkrlecmp
+    bigendian_io
+    artc42
+    artc42Static
+    comper
+    comperStatic
+    comperx
+    comperxStatic
+    enigma
+    enigmaStatic
+    kosinski
+    kosinskiStatic
+    kosplus
+    kosplusStatic
+    lzkn1
+    lzkn1Static
+    nemesis
+    nemesisStatic
+    rocket
+    rocketStatic
+    saxman
+    saxmanStatic
+    snkrle
+    snkrleStatic
+    compercmp
+    comperxcmp
+    enigmacmp
+    kosinskicmp
+    kospluscmp
+    lzkn1cmp
+    nemesiscmp
+    rocketcmp
+    saxmancmp
+    snkrlecmp
     EXPORT
-        mdcompConfig
+    mdcompConfig
     LIBRARY
-        COMPONENT Libraries
-        DESTINATION lib
-        NAMELINK_COMPONENT Development
+    COMPONENT Libraries
+    DESTINATION lib
+    NAMELINK_COMPONENT Development
     RUNTIME
-        COMPONENT Tools
-        DESTINATION bin
+    COMPONENT Tools
+    DESTINATION bin
     PUBLIC_HEADER
-        COMPONENT Development
-        DESTINATION include/mdcomp
+    COMPONENT Development
+    DESTINATION include/mdcomp
 )
 
 export(
     TARGETS
-        bigendian_io
-        artc42
-        artc42Static
-        comper
-        comperStatic
-        comperx
-        comperxStatic
-        enigma
-        enigmaStatic
-        kosinski
-        kosinskiStatic
-        kosplus
-        kosplusStatic
-        lzkn1
-        lzkn1Static
-        nemesis
-        nemesisStatic
-        rocket
-        rocketStatic
-        saxman
-        saxmanStatic
-        snkrle
-        snkrleStatic
+    bigendian_io
+    artc42
+    artc42Static
+    comper
+    comperStatic
+    comperx
+    comperxStatic
+    enigma
+    enigmaStatic
+    kosinski
+    kosinskiStatic
+    kosplus
+    kosplusStatic
+    lzkn1
+    lzkn1Static
+    nemesis
+    nemesisStatic
+    rocket
+    rocketStatic
+    saxman
+    saxmanStatic
+    snkrle
+    snkrleStatic
     NAMESPACE
-        mdcomp::
+    mdcomp::
     FILE
-        mdcompConfig.cmake
+    mdcompConfig.cmake
 )
 
 set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
