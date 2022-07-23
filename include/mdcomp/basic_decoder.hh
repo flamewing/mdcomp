@@ -21,6 +21,7 @@
 #define LIB_BASIC_DECODER_H
 
 #include "mdcomp/bigendian_io.hh"
+#include "mdcomp/stream_utils.hh"
 
 #include <iostream>
 #include <limits>
@@ -47,7 +48,7 @@ bool basic_decoder<Format, Pad, Args...>::encode(
     source.seekg(start);
     std::vector<uint8_t> data;
     if constexpr (Pad == pad_mode::pad_even) {
-        data.resize(full_size + (full_size % 2));
+        data.resize(detail::round_up(full_size, 2U));
     } else {
         data.resize(full_size);
     }
@@ -58,10 +59,7 @@ bool basic_decoder<Format, Pad, Args...>::encode(
         }
     }
     if (Format::encode(dest, data.data(), data.size(), std::forward<Args>(args)...)) {
-        // Pad to even size.
-        if ((dest.tellp() % 2) != 0) {
-            dest.put(0);
-        }
+        detail::pad_to_even(dest);
         return true;
     }
     return false;
@@ -71,10 +69,7 @@ template <typename Format, pad_mode Pad, typename... Args>
 void basic_decoder<Format, Pad, Args...>::extract(
         std::istream& source, std::iostream& dest) {
     dest << source.rdbuf();
-    // Pad to even size.
-    if ((dest.tellp() % 2) != 0) {
-        dest.put(0);
-    }
+    detail::pad_to_even(dest);
     dest.seekg(0);
 }
 

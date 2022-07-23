@@ -234,6 +234,7 @@ set(COMMON_HEADERS
     "include/mdcomp/ignore_unused_variable_warning.hh"
     "include/mdcomp/lzss.hh"
     "include/mdcomp/moduled_adaptor.hh"
+    "include/mdcomp/stream_utils.hh"
 )
 
 # Interface library for a few exported headers.
@@ -263,6 +264,7 @@ add_library(dummy-mdcomp
     "src/lib/ignore_unused_variable_warning.cc"
     "src/lib/lzss.cc"
     "src/lib/moduled_adaptor.cc"
+    "src/lib/stream_utils.cc"
     "${COMMON_HEADERS}"
 )
 target_include_directories(dummy-mdcomp

@@ -21,29 +21,13 @@
 #define LIB_MODULED_ADAPTOR_HH
 
 #include "mdcomp/bigendian_io.hh"
+#include "mdcomp/stream_utils.hh"
 
 #include <ios>
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <vector>
-
-namespace detail {
-    template <typename T1, typename T2>
-
-        requires requires(T1 value1, T2 value2) {
-            value1 + value2;
-            value1 - value2;
-            value1* value2;
-            value1 / value2;
-            value1 % value2;
-        }
-
-    constexpr inline auto round_up(T1 const value, T2 const factor) noexcept {
-        constexpr decltype(factor) const one{1};
-        return ((value + factor - one) / factor) * factor;
-    };
-}    // namespace detail
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
@@ -70,16 +54,10 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_d
     int64_t const     full_size = big_endian::read2(source);
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     input << source.rdbuf();
-
-    // Pad to even length, for safety.
-    if ((input.tellp() % 2) != 0) {
-        input.put(0);
-    }
-
+    detail::pad_to_even(input);
     input.seekg(0);
 
     auto const padding = static_cast<std::streamoff>(module_padding);
-
     while (true) {
         Format::decode(input, dest);
         if (dest.tellp() >= full_size) {
@@ -105,24 +83,19 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     auto pointer = data.cbegin();
     source.read(reinterpret_cast<char*>(data.data()), full_size);
 
-    auto const padding = static_cast<std::streamoff>(module_padding);
-
     big_endian::write2(
             dest, static_cast<size_t>(full_size) & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
 
+    auto const padding = static_cast<std::streamoff>(module_padding);
     while (full_size > MODULE_SIZE) {
         // We want to manage internal padding for all modules but the last.
         pad_mask_bits = 8 * module_padding - 1U;
         Format::encode(buffer, std::to_address(pointer), MODULE_SIZE);
         full_size -= MODULE_SIZE;
         pointer += MODULE_SIZE;
-
         // Padding between modules
-        int64_t const padding_end = detail::round_up(buffer.tellp(), padding);
-        while (buffer.tellp() < padding_end) {
-            buffer.put(0);
-        }
+        detail::pad_to_multiple(buffer, padding);
     }
 
     pad_mask_bits = 7U;
@@ -130,9 +103,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
 
     // Pad to even size.
     dest << buffer.rdbuf();
-    if ((dest.tellp() % 2) != 0) {
-        dest.put(0);
-    }
+    detail::pad_to_even(dest);
     return true;
 }
 
