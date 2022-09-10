@@ -275,16 +275,14 @@ namespace std23 {
     template <class Fp>
     using drop_first_arg_to_invoke_t = typename _drop_first_arg_to_invoke<Fp>::type;
 
-    // clang-format off
     template <class F>
-        requires std::is_function_v<F>
-    function_ref(F*) -> function_ref<F>;
+        requires std::is_function_v<F> function_ref(F*)
+    ->function_ref<F>;
 
     template <auto V>
     function_ref(nontype_t<V>) -> function_ref<adapt_signature_t<decltype(V)>>;
 
     template <auto V>
-    function_ref(nontype_t<V>, auto) -> function_ref<drop_first_arg_to_invoke_t<decltype(V)>>;
-    // clang-format on
-
+    function_ref(nontype_t<V>, auto)
+            -> function_ref<drop_first_arg_to_invoke_t<decltype(V)>>;
 }    // namespace std23
