@@ -80,9 +80,9 @@ int main(int argc, char* argv[]) {
     size_t pointer = 0ULL;
 
     while (true) {
-        int option_index = 0;
-        int option_char  = getopt_long(
-                 argc, argv, "x::mcr:s:p:", long_options.data(), &option_index);
+        int       option_index = 0;
+        int const option_char  = getopt_long(
+                argc, argv, "x::mcr:s:p:", long_options.data(), &option_index);
         if (option_char == -1) {
             break;
         }

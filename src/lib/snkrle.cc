@@ -48,12 +48,12 @@ public:
         write1(dest, curr);
         size--;
         while (size > 0) {
-            uint8_t next = read1(source);
+            uint8_t const next = read1(source);
             write1(dest, next);
             size--;
             if (curr == next) {
                 // RLE marker. Get repeat count.
-                size_t count = read1(source);
+                size_t const count = read1(source);
                 for (size_t ii = 0; ii < count; ii++) {
                     write1(dest, next);
                 }
@@ -72,13 +72,13 @@ public:
     static void encode(istream& source, ostream& dest) {
         auto position = source.tellg();
         source.ignore(numeric_limits<streamsize>::max());
-        std::streampos size = source.gcount();
+        std::streampos const size = source.gcount();
         source.seekg(position);
         big_endian::write2(dest, static_cast<uint16_t>(size));
         uint8_t curr = read1(source);
         while (source.good()) {
             write1(dest, curr);
-            uint8_t next = read1(source);
+            uint8_t const next = read1(source);
             if (!source.good()) {
                 break;
             }

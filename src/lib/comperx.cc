@@ -137,8 +137,8 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                uint8_t raw_dist = source.get_byte();
-                uint8_t raw_len  = source.get_byte();
+                uint8_t const raw_dist = source.get_byte();
+                uint8_t const raw_len  = source.get_byte();
 
                 if (raw_len == 0) { /* Stop processing */
                     break;
