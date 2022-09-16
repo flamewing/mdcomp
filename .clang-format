@@ -94,7 +94,10 @@ IndentCaseBlocks: false
 IndentGotoLabels: true
 IndentPPDirectives: AfterHash
 IndentExternBlock: AfterExternBlock
-IndentRequires: true
+# IndentRequires: true
+IndentRequiresClause: false
+RequiresClausePosition: OwnLine
+InsertBraces: true
 SeparateDefinitionBlocks: Always
 IndentWidth: 4
 IndentWrappedFunctionNames: true
