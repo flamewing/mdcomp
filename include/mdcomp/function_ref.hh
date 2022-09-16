@@ -14,8 +14,7 @@ namespace std23 {
     constexpr inline nontype_t<V> nontype{};
 
     template <class R, class F, class... Args>
-        requires std::is_invocable_r_v<R, F, Args...>
-
+    requires std::is_invocable_r_v<R, F, Args...>
     constexpr R invoke_r(F&& callable, Args&&... args) noexcept(
             std::is_nothrow_invocable_r_v<R, F, Args...>) {
         if constexpr (std::is_void_v<R>) {
@@ -120,19 +119,16 @@ namespace std23 {
             constexpr storage() noexcept = default;
 
             template <class T>
-                requires std::is_object_v<T>
-
+            requires std::is_object_v<T>
             constexpr explicit storage(T* pointer_in) noexcept : pointer(pointer_in) {}
 
             template <class T>
-                requires std::is_object_v<T>
-
+            requires std::is_object_v<T>
             constexpr explicit storage(T const* pointer_in) noexcept
                     : const_pointer(pointer_in) {}
 
             template <class T>
-                requires std::is_function_v<T>
-
+            requires std::is_function_v<T>
             constexpr explicit storage(T* pointer_in) noexcept
                     : fun_pointer(reinterpret_cast<decltype(fun_pointer)>(pointer_in)) {}
         };
@@ -176,8 +172,7 @@ namespace std23 {
     public:
         // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
         template <class F>
-            requires std::is_function_v<F> && is_invocable_using<F>
-
+        requires std::is_function_v<F> && is_invocable_using<F>
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(F* callable) noexcept
                 : object(callable), fun_pointer([](storage func, param_t<Args>... args) {
@@ -186,8 +181,7 @@ namespace std23 {
                   }) {}
 
         template <class F, class T = remove_and_unwrap_reference_t<F>>
-            requires is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
-
+        requires is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
         constexpr function_ref(F&& callable) noexcept
                 : object(std::addressof(static_cast<T&>(callable))),
@@ -197,21 +191,20 @@ namespace std23 {
                   }) {}
 
         template <auto F>
-            requires is_invocable_using<decltype(F)>
-
+        requires is_invocable_using<decltype(F)>
         // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(nontype_t<F>) noexcept
                 : fun_pointer([](storage, param_t<Args>... args) {
                       return std23::invoke_r<R>(F, std::forward<Args>(args)...);
                   }) {}
+
         // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
 
         template <
                 auto F, class U, class Ty = std::unwrap_reference_t<U>,
                 class T = std::remove_reference_t<Ty>>
-            requires std::is_lvalue_reference_v<Ty> && is_invocable_using<
-                    decltype(F), cvref<T>>
-
+        requires std::is_lvalue_reference_v<Ty>
+                         && is_invocable_using<decltype(F), cvref<T>>
         constexpr function_ref(nontype_t<F>, U&& obj) noexcept
                 : object(std::addressof(static_cast<Ty>(obj))),
                   fun_pointer([](storage self, param_t<Args>... args) {
@@ -220,12 +213,12 @@ namespace std23 {
                   }) {}
 
         template <auto F, class T>
-        constexpr function_ref(nontype_t<F>, cv<T>* obj) noexcept requires
-                is_memfn_invocable_using<decltype(F), decltype(obj)>
+        constexpr function_ref(nontype_t<F>, cv<T>* obj) noexcept
+        requires is_memfn_invocable_using<decltype(F), decltype(obj)>
                 : object(obj), fun_pointer([](storage self, param_t<Args>... args) {
-                    return std23::invoke_r<R>(
-                            F, get<cv<T>>(self), std::forward<Args>(args)...);
-                }) {}
+                      return std23::invoke_r<R>(
+                              F, get<cv<T>>(self), std::forward<Args>(args)...);
+                  }) {}
 
         constexpr R operator()(Args... args) const noexcept(signature::is_noexcept) {
             return fun_pointer(object, std::forward<Args>(args)...);
@@ -236,8 +229,7 @@ namespace std23 {
     struct _adapt_signature;
 
     template <class F>
-        requires std::is_function_v<F>
-
+    requires std::is_function_v<F>
     struct _adapt_signature<F*> {
         using type = F;
     };
@@ -259,15 +251,13 @@ namespace std23 {
     };
 
     template <class T, class Cls>
-        requires std::is_object_v<T>
-
+    requires std::is_object_v<T>
     struct _drop_first_arg_to_invoke<T Cls::*> {
         using type = T();
     };
 
     template <class T, class Cls>
-        requires std::is_function_v<T>
-
+    requires std::is_function_v<T>
     struct _drop_first_arg_to_invoke<T Cls::*> {
         using type = T;
     };
@@ -276,8 +266,8 @@ namespace std23 {
     using drop_first_arg_to_invoke_t = typename _drop_first_arg_to_invoke<Fp>::type;
 
     template <class F>
-        requires std::is_function_v<F> function_ref(F*)
-    ->function_ref<F>;
+    requires std::is_function_v<F>
+    function_ref(F*) -> function_ref<F>;
 
     template <auto V>
     function_ref(nontype_t<V>) -> function_ref<adapt_signature_t<decltype(V)>>;

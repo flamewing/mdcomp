@@ -113,8 +113,8 @@ namespace detail {
 
     template <typename F, typename R, typename... Args>
     concept bit_callback = requires(F callable, Args... arguments) {
-        { callable(arguments...) } -> std::same_as<R>;
-    };
+                               { callable(arguments...) } -> std::same_as<R>;
+                           };
 }    // namespace detail
 
 enum class bit_endian {
