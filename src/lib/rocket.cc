@@ -160,8 +160,9 @@ public:
                 offset = ((offset - base - bias) % buffer_size) + base - buffer_size;
 
                 if (offset < 0) {
-                    diff_t count = (offset + length < 0) ? length
-                                                         : (length - (offset + length));
+                    diff_t const count = (offset + length < 0)
+                                                 ? length
+                                                 : (length - (offset + length));
                     fill_n(ostreambuf_iterator<char>(dest), count, 0x20);
                     length -= count;
                     offset += count;

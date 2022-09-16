@@ -183,8 +183,8 @@ public:
 
                     if (long_match) {
                         // Long dictionary match.
-                        uint8_t high = data;
-                        uint8_t low  = source.get_byte();
+                        uint8_t const high = data;
+                        uint8_t const low  = source.get_byte();
 
                         distance = static_cast<std::streamoff>(
                                 ((high * 8U) & 0x300U) | low);

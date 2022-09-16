@@ -192,8 +192,8 @@ public:
                     }
 
                     for (size_t i = 0; i <= count; i++) {
-                        uint16_t flags = get_mask(bits);
-                        uint16_t outv  = bits.read(packet_length);
+                        uint16_t const flags = get_mask(bits);
+                        uint16_t const outv  = bits.read(packet_length);
                         big_endian::write2(dest, outv | flags);
                     }
                     break;
@@ -231,7 +231,7 @@ public:
         source.clear();
         source.seekg(0);
         while (true) {
-            uint16_t value = big_endian::read2(source);
+            uint16_t const value = big_endian::read2(source);
             if (!source.good()) {
                 break;
             }
@@ -241,13 +241,14 @@ public:
             unpack.push_back(value);
         }
 
-        auto         put_mask      = flag_writer::get(mask_val >> 11U);
-        size_t const packet_length = std::bit_width(mask_val & 0x7ffU);
+        auto         put_mask = flag_writer::get(mask_val >> 11U);
+        size_t const packet_length
+                = std::bit_cast<unsigned>(std::bit_width(mask_val & 0x7ffU));
 
         // Find the most common 2-byte value.
-        compare_count  comp;
-        auto           high         = max_element(counts.begin(), counts.end(), comp);
-        uint16_t const common_value = high->first;
+        compare_count const comp;
+        auto const          high = max_element(counts.begin(), counts.end(), comp);
+        uint16_t const      common_value = high->first;
         // No longer needed.
         counts.clear();
 
@@ -301,8 +302,8 @@ public:
                 position += count;
             } else if (value == common_value) {
                 flush_buffer(buffer, bits, put_mask, packet_length);
-                uint16_t next  = value;
-                size_t   count = 0;
+                uint16_t const next  = value;
+                size_t         count = 0;
                 for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
                     if (next != unpack[i]) {
                         break;

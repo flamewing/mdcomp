@@ -167,8 +167,8 @@ public:
 
                 if (source.descriptor_bit() != 0U) {
                     // Separate dictionary match.
-                    uint8_t low  = source.get_byte();
-                    uint8_t high = source.get_byte();
+                    uint8_t const low  = source.get_byte();
+                    uint8_t const high = source.get_byte();
 
                     count = high & 0x07U;
 
@@ -190,8 +190,8 @@ public:
                     distance = std::streamoff{0x2000} - (((0xF8U & high) << 5U) | low);
                 } else {
                     // Inline dictionary match.
-                    size_t high = source.descriptor_bit();
-                    size_t low  = source.descriptor_bit();
+                    size_t const high = source.descriptor_bit();
+                    size_t const low  = source.descriptor_bit();
 
                     count = ((high << 1U) | low) + 2;
 

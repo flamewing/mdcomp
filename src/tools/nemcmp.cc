@@ -74,8 +74,8 @@ int main(int argc, char* argv[]) {
     size_t pointer   = 0;
 
     while (true) {
-        int option_index = 0;
-        int option_char
+        int       option_index = 0;
+        int const option_char
                 = getopt_long(argc, argv, "x::ic", long_options.data(), &option_index);
         if (option_char == -1) {
             break;
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
             input.seekg(static_cast<std::streamsize>(pointer));
             nemesis::decode(input, output);
             if (print_end) {
-                boost::io::ios_all_saver flags(cout);
+                boost::io::ios_all_saver const flags(cout);
                 cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right
                      << input.tellg() << endl;
             }

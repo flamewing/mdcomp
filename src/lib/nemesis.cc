@@ -55,9 +55,7 @@ using std::stringstream;
 using std::vector;
 
 template <typename Enum>
-concept Enumerator = requires() {
-    requires(std::is_enum_v<Enum>);
-};
+concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
 
 template <Enumerator Enum>
 constexpr std::underlying_type_t<Enum> to_underlying(Enum value) {
@@ -78,8 +76,8 @@ public:
             : nibble(nibble_in), count(static_cast<uint8_t>(count_in)) {}
 
     // Sorting operator.
-    [[nodiscard]] std::strong_ordering operator<=>(
-            nibble_run const& other) const noexcept = default;
+    [[nodiscard]] std::strong_ordering operator<=>(nibble_run const& other) const noexcept
+            = default;
 
     // Getters/setters for all properties.
     [[nodiscard]] std::byte get_nibble() const noexcept {
@@ -115,8 +113,8 @@ struct bit_code {
     size_t code;
     size_t length;
 
-    [[nodiscard]] std::strong_ordering operator<=>(
-            bit_code const&) const noexcept = default;
+    [[nodiscard]] std::strong_ordering operator<=>(bit_code const&) const noexcept
+            = default;
 };
 
 using code_size_map   = map<nibble_run, size_t>;
@@ -283,7 +281,7 @@ struct compare_node2 {
 
         auto get_len = [&](shared_ptr<node> const& node, nibble_run nibble) {
             if (auto const iter = code_map->find(nibble); iter != code_map->end()) {
-                size_t bit_count = (iter->second).length;
+                size_t const bit_count = (iter->second).length;
                 return (bit_count & 0x7fU) * node->get_weight() + 16;
             }
             return (6 + 7) * node->get_weight();
@@ -368,8 +366,8 @@ public:
 
         // When to stop decoding: number of tiles * $20 bytes per tile * 8 bits
         // per byte.
-        size_t total_bits   = num_tiles << 8U;
-        size_t bits_written = 0;
+        size_t const total_bits   = num_tiles << 8U;
+        size_t       bits_written = 0;
         while (bits_written < total_bits) {
             if (code == 0x3f && length == 6) {
                 // Bit pattern %111111; inline RLE.
@@ -504,7 +502,7 @@ public:
                     // This case is rather trivial, so we hard-code it.
                     // We can break this up only as 2 consecutive runs of a
                     // nibble run with count == 0.
-                    nibble_run target{run.get_nibble(), 0};
+                    nibble_run const target{run.get_nibble(), 0};
                     found_run = code_map.find(target);
                     if (found_run == code_map.end() || (found_run->second).length > 6) {
                         // The smaller nibble run either does not have its own
@@ -638,8 +636,8 @@ public:
                     // Init vector.
                     for (size_t i = 0; i < count; i++) {
                         // Is this run in the code_map?
-                        nibble_run target(nibble, i);
-                        auto       target_iter = code_map.find(target);
+                        nibble_run const target(nibble, i);
+                        auto             target_iter = code_map.find(target);
                         if (target_iter == code_map.end()) {
                             // It is not.
                             // Put inline length in the vector.
@@ -689,8 +687,8 @@ public:
                                 continue;
                             }
                             // Is this run in the code_map?
-                            nibble_run target(nibble, i);
-                            auto       target_iter = code_map.find(target);
+                            nibble_run const target(nibble, i);
+                            auto             target_iter = code_map.find(target);
                             if (target_iter != code_map.end()) {
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
@@ -760,7 +758,7 @@ public:
         run_count_map      counts;
         nibble_run         curr{unpack[0], 0};
         for (size_t i = 1; i < unpack.size(); i++) {
-            nibble_run next{unpack[i], 0};
+            nibble_run const next{unpack[i], 0};
             if (next.get_nibble() != curr.get_nibble() || curr.get_count() >= 7) {
                 rle_src.push_back(curr);
                 counts[curr] += 1;
@@ -813,7 +811,7 @@ public:
             // Make a copy of the basic coin collection.
             using coin_queue
                     = priority_queue<shared_ptr<node>, node_vector, compare_node>;
-            coin_queue base_coins(nodes.begin(), nodes.end());
+            coin_queue const base_coins(nodes.begin(), nodes.end());
 
             // We now solve the Coin collector's problem using the Package-merge
             // algorithm. The solution goes here.
@@ -824,8 +822,8 @@ public:
             size_t     index  = 0;
             while (target != 0) {
                 // Gets lowest bit set in its proper place:
-                size_t value = (target & -target);
-                size_t cost  = 1U << index;
+                size_t const value = (target & -target);
+                size_t const cost  = 1U << index;
                 // Is the current denomination equal to the least denomination?
                 if (cost == value) {
                     // If yes, take the least valuable node and put it into the
@@ -907,7 +905,7 @@ public:
                 carry = 0;
                 for (size_t j = 0; j < count; j++) {
                     // Sequential binary numbers for codes.
-                    size_t code = base + j;
+                    size_t const code = base + j;
                     // We do not want any codes composed solely of 1's or which
                     // start with 111111, as that sequence is reserved.
                     if ((i <= 6 && code == mask) || (i > 6 && code == mask2)) {
@@ -932,7 +930,7 @@ public:
             }
 
             // We now compute the final file size for this code table.
-            size_t temp_size_est = estimate_file_size(temp_code_map, counts);
+            size_t const temp_size_est = estimate_file_size(temp_code_map, counts);
 
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
@@ -949,8 +947,8 @@ public:
         }
         // Special case.
         if (nodes.size() == 1) {
-            nibble_code_map  temp_code_map;
-            shared_ptr<node> child            = nodes.front();
+            nibble_code_map        temp_code_map;
+            shared_ptr<node> const child      = nodes.front();
             temp_code_map[child->get_value()] = bit_code{0U, 1};
             size_t const temp_size_est        = estimate_file_size(temp_code_map, counts);
 
@@ -1029,7 +1027,7 @@ bool nemesis::decode(istream& source, ostream& dest) {
     code_nibble_map code_map;
     size_t          num_tiles = big_endian::read2(source);
     // sets the output mode based on the value of the first bit
-    bool xor_mode = (num_tiles & 0x8000U) != 0;
+    bool const xor_mode = (num_tiles & 0x8000U) != 0;
     num_tiles &= 0x7fffU;
 
     if (num_tiles > 0) {

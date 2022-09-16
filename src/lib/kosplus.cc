@@ -166,8 +166,8 @@ public:
 
                 if (source.descriptor_bit() != 0U) {
                     // Separate dictionary match.
-                    uint8_t high = source.get_byte();
-                    uint8_t low  = source.get_byte();
+                    uint8_t const high = source.get_byte();
+                    uint8_t const low  = source.get_byte();
 
                     count = high & 0x07U;
 
@@ -188,8 +188,8 @@ public:
                     // Inline dictionary match.
                     distance = std::streamoff{0x100} - source.get_byte();
 
-                    size_t high = source.descriptor_bit();
-                    size_t low  = source.descriptor_bit();
+                    size_t const high = source.descriptor_bit();
+                    size_t const low  = source.descriptor_bit();
 
                     count = ((high << 1U) | low) + 2;
                 }
@@ -234,8 +234,8 @@ public:
             case edge_type::dictionary_long: {
                 size_t const length = edge.get_length();
                 size_t const dist   = 0x2000U - edge.get_distance();
-                size_t       high   = (dist >> 5U) & 0xF8U;
-                size_t       low    = (dist & 0xFFU);
+                size_t const high   = (dist >> 5U) & 0xF8U;
+                size_t const low    = (dist & 0xFFU);
                 output.descriptor_bit(0);
                 output.descriptor_bit(1);
                 if (edge.get_type() == edge_type::dictionary_short) {

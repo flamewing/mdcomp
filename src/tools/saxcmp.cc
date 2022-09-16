@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
     size_t size      = 0;
 
     while (true) {
-        int option_index = 0;
-        int option_char
+        int       option_index = 0;
+        int const option_char
                 = getopt_long(argc, argv, "x::cs:S", long_options.data(), &option_index);
         if (option_char == -1) {
             break;
