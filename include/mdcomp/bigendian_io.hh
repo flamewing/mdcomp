@@ -107,7 +107,7 @@ namespace detail {
     template <typename T>
     concept contiguous_container
             = requires() {
-                  container<T>;
+                  requires container<T>;
                   requires requires(
                           T mut_container, typename T::size_type count,
                           typename T::value_type value) {
