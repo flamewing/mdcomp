@@ -31,8 +31,8 @@
 // #    define PURE_INLINE  __forceinline
 #elif defined(__GNUG__)
 #    define INLINE       [[gnu::always_inline]] inline
-#    define CONST_INLINE [[gnu::const, gnu::always_inline]] inline
-// #    define PURE_INLINE  [[gnu::pure, gnu::always_inline]] inline
+#    define CONST_INLINE [[using gnu: const, always_inline]] inline
+// #    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
 #else
 #    define INLINE       inline
 #    define CONST_INLINE inline
