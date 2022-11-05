@@ -33,6 +33,7 @@
 #include <optional>
 #include <ostream>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -92,8 +93,8 @@ public:
         nibble = value;
     }
 
-    void set_count(size_t const value) noexcept {
-        count = static_cast<uint8_t>(value);
+    void enlarge() noexcept {
+        count++;
     }
 };
 
@@ -742,47 +743,53 @@ public:
         // Seek to start and clear all errors.
         source.clear();
         source.seekg(0);
-        // Unpack source so we don't have to deal with nibble IO after.
-        constexpr const std::byte low_nibble{0xfU};
-        vector<std::byte>         unpack;
-        for (std::streamoff i = 0; i < length; i++) {
-            std::byte const value{read1(source)};
-            unpack.emplace_back((value >> 4U) & low_nibble);
-            unpack.emplace_back(value & low_nibble);
-        }
-        unpack.emplace_back(std::byte{0xff});
 
         // Build RLE nibble runs, RLE-encoding the nibble runs as we go along.
         // Maximum run length is 8, meaning 7 repetitions.
-        vector<nibble_run> rle_src;
-        run_count_map      counts;
-        nibble_run         curr{unpack[0], 0};
-        for (size_t i = 1; i < unpack.size(); i++) {
-            nibble_run const next{unpack[i], 0};
-            if (next.get_nibble() != curr.get_nibble() || curr.get_count() >= 7) {
-                rle_src.push_back(curr);
-                counts[curr] += 1;
-                curr = next;
-            } else {
-                curr.set_count(curr.get_count() + 1);
+        auto [rle_source, count_map] = [&]() {
+            // Unpack source so we don't have to deal with nibble IO after.
+            vector<nibble_run>        rle_src;
+            run_count_map             counts;
+            vector<std::byte>         unpack;
+            constexpr const std::byte low_nibble{0xfU};
+            // TODO: Make this through a lazy smart iterator so it can be
+            // bundled in the loop below.
+            for (std::streamoff i = 0; i < length; i++) {
+                std::byte const value{read1(source)};
+                unpack.emplace_back((value >> 4U) & low_nibble);
+                unpack.emplace_back(value & low_nibble);
             }
-        }
-        // No longer needed.
-        unpack.clear();
+            // Sentinel for simplifying logic
+            unpack.emplace_back(std::byte{0xff});
 
+            nibble_run curr{unpack[0], 0};
+            for (auto const next : unpack | std::ranges::views::drop(1)) {
+                if (next != curr.get_nibble() || curr.get_count() >= 7) {
+                    rle_src.push_back(curr);
+                    counts[curr] += 1;
+                    curr = {next, 0};
+                } else {
+                    curr.enlarge();
+                }
+            }
+            return std::pair(rle_src, counts);
+        }();
         // We will use the Package-merge algorithm to build the optimal
         // length-limited Huffman code for the current file. To do this, we must
         // map the current problem onto the Coin Collector's problem. Build the
         // basic coin collection.
-        node_vector nodes;
-        nodes.reserve(counts.size());
-        for (auto const& [run, frequency] : counts) {
-            // No point in including anything with weight less than 2, as they
-            // would actually increase compressed file size if used.
-            if (frequency > 1) {
-                nodes.push_back(make_shared<node>(run, frequency));
-            }
-        }
+
+        // No point in including anything with weight less than 2, as they
+        // would actually increase compressed file size if used.
+        constexpr auto freq_filter = [](auto&& kv_pair) noexcept {
+            return kv_pair.second > 1;
+        };
+        constexpr auto to_node = [](auto&& kv_pair) {
+            auto const& [run, frequency] = kv_pair;
+            return make_shared<node>(run, frequency);
+        };
+        auto nodes = count_map | std::ranges::views::filter(freq_filter)
+                     | std::ranges::views::transform(to_node) | detail::to<node_vector>();
 
         // The base coin collection for the length-limited Huffman coding has
         // one coin list per character in length of the limitation. Each coin
@@ -882,7 +889,7 @@ public:
             using size_set = multiset<size_freq_nibble, compare_size>;
             size_set sizemap;
             for (auto const& [run, size] : base_size_map) {
-                size_t const count = counts[run];
+                size_t const count = count_map[run];
                 size_counts[size - 1]++;
                 sizemap.emplace(count, run, size);
             }
@@ -930,7 +937,7 @@ public:
             }
 
             // We now compute the final file size for this code table.
-            size_t const temp_size_est = estimate_file_size(temp_code_map, counts);
+            size_t const temp_size_est = estimate_file_size(temp_code_map, count_map);
 
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
@@ -950,7 +957,7 @@ public:
             nibble_code_map        temp_code_map;
             shared_ptr<node> const child      = nodes.front();
             temp_code_map[child->get_value()] = bit_code{0U, 1};
-            size_t const temp_size_est        = estimate_file_size(temp_code_map, counts);
+            size_t const temp_size_est = estimate_file_size(temp_code_map, count_map);
 
             // Is this iteration better than the best?
             if (temp_size_est < size_est) {
@@ -960,7 +967,7 @@ public:
             }
         }
         // This is no longer needed.
-        counts.clear();
+        count_map.clear();
 
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
@@ -994,7 +1001,7 @@ public:
         // use the nibble runs as an index into the map, meaning a quick binary
         // search gives us the code to use (if in the map) or tells us that we
         // need to use inline RLE.
-        for (auto& run : rle_src) {
+        for (auto& run : rle_source) {
             auto value = code_map.find(run);
             if (value != code_map.end()) {
                 size_t const code  = (value->second).code;
