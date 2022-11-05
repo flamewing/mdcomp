@@ -864,7 +864,7 @@ public:
             // current coin collection.
             code_size_map base_size_map;
             for (auto& elem : solution) {
-                (elem)->traverse(base_size_map);
+                elem->traverse(base_size_map);
             }
 
             // With the length-limited Huffman coding problem solved, it is now
