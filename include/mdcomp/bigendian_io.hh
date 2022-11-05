@@ -63,62 +63,56 @@ namespace detail {
     // Meta-programming stuff.
 
     template <typename Iter>
-    concept byte_input_iterator
-            = requires() {
-                  requires std::input_iterator<Iter>;
-                  requires(std::is_same_v<std::iter_value_t<Iter>, char>)
-                                  || (std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
-              };
+    concept byte_input_iterator = requires() {
+        requires std::input_iterator<Iter>;
+        requires(std::is_same_v<std::iter_value_t<Iter>, char>)
+                        || (std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
+    };
 
     template <typename Iter>
     concept byte_output_iterator
             = (std::output_iterator<Iter, uint8_t>) || (std::output_iterator<Iter, char>);
 
     template <typename T>
-    concept container
-            = requires(T mut_container, T const const_container) {
-                  requires std::regular<T>;
-                  requires std::swappable<T>;
-                  requires std::destructible<typename T::value_type>;
-                  requires std::same_as<typename T::reference, typename T::value_type&>;
-                  requires std::same_as<
-                          typename T::const_reference, typename T::value_type const&>;
-                  requires std::forward_iterator<typename T::iterator>;
-                  requires std::forward_iterator<typename T::const_iterator>;
-                  requires std::signed_integral<typename T::difference_type>;
-                  requires std::same_as<
-                          typename T::difference_type,
-                          typename std::iterator_traits<
-                                  typename T::iterator>::difference_type>;
-                  requires std::same_as<
-                          typename T::difference_type,
-                          typename std::iterator_traits<
-                                  typename T::const_iterator>::difference_type>;
-                  { mut_container.begin() } -> std::same_as<typename T::iterator>;
-                  { mut_container.end() } -> std::same_as<typename T::iterator>;
-                  { const_container.begin() } -> std::same_as<typename T::const_iterator>;
-                  { const_container.end() } -> std::same_as<typename T::const_iterator>;
-                  { mut_container.cbegin() } -> std::same_as<typename T::const_iterator>;
-                  { mut_container.cend() } -> std::same_as<typename T::const_iterator>;
-                  { mut_container.size() } -> std::same_as<typename T::size_type>;
-                  { mut_container.max_size() } -> std::same_as<typename T::size_type>;
-                  { mut_container.empty() } -> std::same_as<bool>;
-              };
+    concept container = requires(T mut_container, T const const_container) {
+        requires std::regular<T>;
+        requires std::swappable<T>;
+        requires std::destructible<typename T::value_type>;
+        requires std::same_as<typename T::reference, typename T::value_type&>;
+        requires std::same_as<typename T::const_reference, typename T::value_type const&>;
+        requires std::forward_iterator<typename T::iterator>;
+        requires std::forward_iterator<typename T::const_iterator>;
+        requires std::signed_integral<typename T::difference_type>;
+        requires std::same_as<
+                typename T::difference_type,
+                typename std::iterator_traits<typename T::iterator>::difference_type>;
+        requires std::same_as<
+                typename T::difference_type,
+                typename std::iterator_traits<
+                        typename T::const_iterator>::difference_type>;
+        { mut_container.begin() } -> std::same_as<typename T::iterator>;
+        { mut_container.end() } -> std::same_as<typename T::iterator>;
+        { const_container.begin() } -> std::same_as<typename T::const_iterator>;
+        { const_container.end() } -> std::same_as<typename T::const_iterator>;
+        { mut_container.cbegin() } -> std::same_as<typename T::const_iterator>;
+        { mut_container.cend() } -> std::same_as<typename T::const_iterator>;
+        { mut_container.size() } -> std::same_as<typename T::size_type>;
+        { mut_container.max_size() } -> std::same_as<typename T::size_type>;
+        { mut_container.empty() } -> std::same_as<bool>;
+    };
 
     template <typename T>
-    concept contiguous_container
-            = requires() {
-                  requires container<T>;
-                  requires requires(
-                          T mut_container, typename T::size_type count,
-                          typename T::value_type value) {
-                               requires std::contiguous_iterator<typename T::iterator>;
-                               requires std::contiguous_iterator<
-                                       typename T::const_iterator>;
-                               { mut_container.resize(count) } -> std::same_as<void>;
-                               { *mut_container.data() = value };
-                           };
-              };
+    concept contiguous_container = requires() {
+        requires container<T>;
+        requires requires(
+                T mut_container, typename T::size_type count,
+                typename T::value_type value) {
+            requires std::contiguous_iterator<typename T::iterator>;
+            requires std::contiguous_iterator<typename T::const_iterator>;
+            { mut_container.resize(count) } -> std::same_as<void>;
+            { *mut_container.data() = value };
+        };
+    };
 
     template <size_t Size>
     constexpr inline auto select_unsigned() noexcept {
@@ -163,39 +157,56 @@ namespace detail {
             = (is_reverse_iterator_v<T>)
               && (std::contiguous_iterator<typename T::iterator_type>);
 
+    template <class... Ts>
+    struct overloaded : public Ts... {
+        using Ts::operator()...;
+
+        constexpr explicit overloaded(Ts... callables) : Ts(callables)... {}
+    };
+    template <class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+
     // Mashed together implementation based on libstdc++/libc++/MS STL.
     // GCC/clang both have a 128-bit integer type, which this implementation
     // supports; but MSVC compiler does not support a 128-bit integer, so this
     // is not portable.
     template <std::integral T>
     [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
+#if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
+        return std::byteswap(value);
+#else
         if constexpr (CHAR_BIT == 8) {
             if constexpr (sizeof(T) == 1) {
                 return value;
             }
             if (!std::is_constant_evaluated()) {
-                if constexpr (sizeof(T) == 2) {
-#ifdef __GNUG__
-                    return __builtin_bswap16(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_ushort(value);
-#endif
+                constexpr auto const builtin_bswap = overloaded(
+#    ifdef __GNUG__
+                        [](const uint16_t val) {
+                            return __builtin_bswap16(val);
+                        },
+                        [](const uint32_t val) {
+                            return __builtin_bswap32(val);
+                        },
+                        [](const uint64_t val) {
+                            return __builtin_bswap64(val);
+                        }
+#    elif defined(_MSC_VER)
+                        [](const uint16_t val) {
+                            return _byteswap_ushort(val);
+                        },
+                        [](const uint32_t val) {
+                            return _byteswap_ulong(val);
+                        },
+                        [](const uint64_t val) {
+                            return _byteswap_uint64(val);
+                        },
+#    endif
+                );
+                if constexpr (sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8) {
+                    return builtin_bswap(value);
                 }
-                if constexpr (sizeof(T) == 4) {
-#ifdef __GNUG__
-                    return __builtin_bswap32(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_ulong(value);
-#endif
-                }
-                if constexpr (sizeof(T) == 8) {
-#ifdef __GNUG__
-                    return __builtin_bswap64(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_uint64(value);
-#endif
-                }
-#ifdef __GNUG__
+#    ifdef __GNUG__
                 if constexpr (sizeof(T) == 16) {
                     if constexpr (__has_builtin(__builtin_bswap128)) {
                         return __builtin_bswap128(value);
@@ -203,7 +214,7 @@ namespace detail {
                     return (__builtin_bswap64(value >> 64U)
                             | (static_cast<T>(__builtin_bswap64(value)) << 64U));
                 }
-#endif
+#    endif
             }
         }
 
@@ -225,6 +236,7 @@ namespace detail {
             diff -= 2ULL * nbits;
         }
         return uint_t(new_value & std::numeric_limits<uint_t>::max());
+#endif
     }
 
     template <std::endian endian>
@@ -232,10 +244,8 @@ namespace detail {
     private:
         template <std::unsigned_integral To, typename Stream>
         requires requires(Stream stream, char* pointer, std::streamsize count) {
-                     {
-                         stream.read(pointer, count)
-                         } -> std::common_reference_with<Stream>;
-                 }
+            { stream.read(pointer, count) } -> std::common_reference_with<Stream>;
+        }
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -249,8 +259,8 @@ namespace detail {
 
         template <std::unsigned_integral To, typename Stream>
         requires requires(Stream stream, char* pointer, std::streamsize count) {
-                     { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
-                 }
+            { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
+        }
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -295,8 +305,9 @@ namespace detail {
                     }
                 }
             }();
-            if constexpr ((std::forward_iterator<iterator>)&&(
-                                  !contiguous_reverse_iterator<iterator>)) {
+            if constexpr (
+                    (std::forward_iterator<iterator>)
+                    && (!contiguous_reverse_iterator<iterator>)) {
                 std::advance(input, sizeof(To));
             }
             return value;
@@ -304,10 +315,8 @@ namespace detail {
 
         template <std::unsigned_integral From, typename Stream>
         requires requires(Stream stream, char const* pointer, std::streamsize count) {
-                     {
-                         stream.write(pointer, count)
-                         } -> std::common_reference_with<Stream>;
-                 }
+            { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
+        }
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
@@ -320,8 +329,8 @@ namespace detail {
 
         template <std::unsigned_integral From, typename Stream>
         requires requires(Stream stream, char const* pointer, std::streamsize count) {
-                     { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
-                 }
+            { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
+        }
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
@@ -369,8 +378,9 @@ namespace detail {
             } else {
                 std::copy_n(buffer.data(), sizeof(From), output);
             }
-            if constexpr ((std::forward_iterator<iterator>)&&(
-                                  !contiguous_reverse_iterator<iterator>)) {
+            if constexpr (
+                    (std::forward_iterator<iterator>)
+                    && (!contiguous_reverse_iterator<iterator>)) {
                 std::advance(output, sizeof(From));
             }
         }
