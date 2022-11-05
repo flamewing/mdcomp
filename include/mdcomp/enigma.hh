@@ -32,7 +32,7 @@ using moduled_enigma = moduled_adaptor<enigma, 4096U, 1U>;
 class enigma : public basic_enigma, public moduled_enigma {
     friend basic_enigma;
     friend moduled_enigma;
-    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
+    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
 
 public:
     static bool encode(std::istream& source, std::ostream& dest);

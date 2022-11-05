@@ -160,12 +160,12 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const* data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type    = typename comper_x_adaptor::edge_type;
         using comp_ostream = lzss_ostream<comper_x_adaptor>;
 
         // Compute optimal Comper parsing of input file.
-        auto         list = find_optimal_lzss_parse(data, size, comper_x_adaptor{});
+        auto         list = find_optimal_lzss_parse(data, comper_x_adaptor{});
         comp_ostream output(dest);
 
         // Go through each edge in the optimal path.
@@ -216,7 +216,7 @@ bool comperx::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool comperx::encode(ostream& dest, uint8_t const* data, size_t const size) {
-    comperx_internal::encode(dest, data, size);
+bool comperx::encode(ostream& dest, std::span<uint8_t const> data) {
+    comperx_internal::encode(dest, data);
     return true;
 }

@@ -213,15 +213,16 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const* data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type     = typename lzkn1_adaptor::edge_type;
         using lzkn1_ostream = lzss_ostream<lzkn1_adaptor>;
 
-        big_endian::write2(dest, size & std::numeric_limits<uint16_t>::max());
+        big_endian::write2(dest, data.size() & std::numeric_limits<uint16_t>::max());
 
         // Compute optimal lzkn1 parsing of input file.
-        auto          list = find_optimal_lzss_parse(data, size, lzkn1_adaptor{});
+        auto          list = find_optimal_lzss_parse(data, lzkn1_adaptor{});
         lzkn1_ostream output(dest);
+
         constexpr uint8_t const eof_marker               = 0x1FU;
         constexpr uint8_t const packed_symbolwise_marker = 0xC0U;
 
@@ -291,7 +292,7 @@ bool lzkn1::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool lzkn1::encode(ostream& dest, uint8_t const* data, size_t const size) {
-    lzkn1_internal::encode(dest, data, size);
+bool lzkn1::encode(ostream& dest, std::span<uint8_t const> data) {
+    lzkn1_internal::encode(dest, data);
     return true;
 }
