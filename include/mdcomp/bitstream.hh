@@ -31,8 +31,8 @@
 // #    define PURE_INLINE  __forceinline
 #elif defined(__GNUG__)
 #    define INLINE       [[gnu::always_inline]] inline
-#    define CONST_INLINE [[gnu::const, gnu::always_inline]] inline
-// #    define PURE_INLINE  [[gnu::pure, gnu::always_inline]] inline
+#    define CONST_INLINE [[using gnu: const, always_inline]] inline
+// #    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
 #else
 #    define INLINE       inline
 #    define CONST_INLINE inline
@@ -103,7 +103,7 @@ namespace detail {
 
     template <std::signed_integral int_t>
     [[nodiscard]] CONST_INLINE constexpr auto reverse_bits(int_t value) noexcept {
-        return detail::bit_cast<int_t>(reverse_bits(std::make_unsigned_t<int_t>(value)));
+        return std::bit_cast<int_t>(reverse_bits(std::make_unsigned_t<int_t>(value)));
     }
 
     static_assert(reverse_bits<uint8_t>(0x35U) == 0xacU);

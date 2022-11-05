@@ -50,8 +50,8 @@ namespace std {
 // #    define PURE_INLINE  __forceinline
 #elif defined(__GNUG__)
 #    define INLINE       [[gnu::always_inline]] inline
-#    define CONST_INLINE [[gnu::const, gnu::always_inline]] inline
-// #    define PURE_INLINE  [[gnu::pure, gnu::always_inline]] inline
+#    define CONST_INLINE [[using gnu: const, always_inline]] inline
+// #    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
 #else
 #    define INLINE       inline
 #    define CONST_INLINE inline
@@ -224,21 +224,6 @@ namespace detail {
             diff -= 2ULL * nbits;
         }
         return uint_t(new_value & std::numeric_limits<uint_t>::max());
-    }
-
-    template <typename To, typename From>
-    requires requires() {
-                 sizeof(To) == sizeof(From);
-                 std::is_trivially_copyable_v<To>;
-                 std::is_trivially_copyable_v<From>;
-             }
-    [[nodiscard]] CONST_INLINE constexpr To bit_cast(From const& from) noexcept {
-#if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
-        return std::bit_cast<To>(from);
-#elif __has_builtin(__builtin_bit_cast)
-        return __builtin_bit_cast(To, from);
-#else
-#    error "Compiler supports neither std::bit_cast nor __builtin_bit_cast"
 #endif
     }
 
@@ -256,9 +241,9 @@ namespace detail {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             input.read(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
-                return detail::byteswap(detail::bit_cast<To>(buffer));
+                return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
-                return detail::bit_cast<To>(buffer);
+                return std::bit_cast<To>(buffer);
             }
         }
 
@@ -271,9 +256,9 @@ namespace detail {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
             input.sgetn(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
-                return detail::byteswap(detail::bit_cast<To>(buffer));
+                return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
-                return detail::bit_cast<To>(buffer);
+                return std::bit_cast<To>(buffer);
             }
         }
 
@@ -298,15 +283,15 @@ namespace detail {
             To const value = [&]() {
                 if constexpr (contiguous_reverse_iterator<iterator>) {
                     if constexpr (endian == std::endian::native) {
-                        return detail::byteswap(detail::bit_cast<To>(buffer));
+                        return detail::byteswap(std::bit_cast<To>(buffer));
                     } else {
-                        return detail::bit_cast<To>(buffer);
+                        return std::bit_cast<To>(buffer);
                     }
                 } else {
                     if constexpr (endian != std::endian::native) {
-                        return detail::byteswap(detail::bit_cast<To>(buffer));
+                        return detail::byteswap(std::bit_cast<To>(buffer));
                     } else {
-                        return detail::bit_cast<To>(buffer);
+                        return std::bit_cast<To>(buffer);
                     }
                 }
             }();
@@ -329,7 +314,7 @@ namespace detail {
                 value = detail::byteswap(value);
             }
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = detail::bit_cast<decltype(buffer)>(value);
+                    = std::bit_cast<decltype(buffer)>(value);
             output.write(buffer.data(), sizeof(From));
         }
 
@@ -343,7 +328,7 @@ namespace detail {
                 value = detail::byteswap(value);
             }
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = detail::bit_cast<decltype(buffer)>(value);
+                    = std::bit_cast<decltype(buffer)>(value);
             output.sputn(buffer.data(), sizeof(From));
         }
 
@@ -376,7 +361,7 @@ namespace detail {
                 }
             }
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = detail::bit_cast<decltype(buffer)>(value);
+                    = std::bit_cast<decltype(buffer)>(value);
             if constexpr (
                     (std::contiguous_iterator<iterator>)
                     || (contiguous_reverse_iterator<iterator>)) {
@@ -439,9 +424,9 @@ namespace detail {
 
         template <std::signed_integral To, typename Src>
         [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
-                noexcept(detail::bit_cast<To>(
+                noexcept(std::bit_cast<To>(
                         read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input))))) {
-            return detail::bit_cast<To>(
+            return std::bit_cast<To>(
                     read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input)));
         }
 
@@ -491,10 +476,10 @@ namespace detail {
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(
                         std::forward<Dst>(output),
-                        detail::bit_cast<std::make_unsigned_t<From>>(value)))) {
+                        std::bit_cast<std::make_unsigned_t<From>>(value)))) {
             write_impl(
                     std::forward<Dst>(output),
-                    detail::bit_cast<std::make_unsigned_t<From>>(value));
+                    std::bit_cast<std::make_unsigned_t<From>>(value));
         }
     };
 
