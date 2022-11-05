@@ -31,7 +31,7 @@ using moduled_kosplus = moduled_adaptor<kosplus, 4096U, 1U>;
 class kosplus : public basic_kosplus, public moduled_kosplus {
     friend basic_kosplus;
     friend moduled_kosplus;
-    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
+    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
 
 public:
     using basic_kosplus::encode;

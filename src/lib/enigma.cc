@@ -373,9 +373,9 @@ bool enigma::encode(istream& source, ostream& dest) {
     return true;
 }
 
-bool enigma::encode(std::ostream& dest, uint8_t const* data, size_t const size) {
+bool enigma::encode(std::ostream& dest, std::span<uint8_t const> data) {
     stringstream source(ios::in | ios::out | ios::binary);
-    source.write(reinterpret_cast<char const*>(data), static_cast<std::streamsize>(size));
+    source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     return encode(source, dest);
 }

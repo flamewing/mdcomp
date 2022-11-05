@@ -205,12 +205,12 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const*& data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type   = typename kos_plus_adaptor::edge_type;
         using kos_ostream = lzss_ostream<kos_plus_adaptor>;
 
         // Compute optimal KosPlus parsing of input file.
-        auto        list = find_optimal_lzss_parse(data, size, kos_plus_adaptor{});
+        auto        list = find_optimal_lzss_parse(data, kos_plus_adaptor{});
         kos_ostream output(dest);
 
         // Go through each edge in the optimal path.
@@ -278,7 +278,7 @@ bool kosplus::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool kosplus::encode(ostream& dest, uint8_t const* data, size_t const size) {
-    kosplus_internal::encode(dest, data, size);
+bool kosplus::encode(ostream& dest, std::span<uint8_t const> data) {
+    kosplus_internal::encode(dest, data);
     return true;
 }

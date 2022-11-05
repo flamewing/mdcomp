@@ -31,7 +31,7 @@ using moduled_snkrle = moduled_adaptor<snkrle, 4096U, 1U>;
 class snkrle : public basic_snkrle, public moduled_snkrle {
     friend basic_snkrle;
     friend moduled_snkrle;
-    static bool encode(std::ostream& dest, uint8_t const* data, size_t size);
+    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
 
 public:
     using basic_snkrle::encode;

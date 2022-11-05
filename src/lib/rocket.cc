@@ -178,12 +178,12 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const*& data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type    = typename rocket_adaptor::edge_type;
         using rock_ostream = lzss_ostream<rocket_adaptor>;
 
         // Compute optimal Rocket parsing of input file.
-        auto         list = find_optimal_lzss_parse(data, size, rocket_adaptor{});
+        auto         list = find_optimal_lzss_parse(data, rocket_adaptor{});
         rock_ostream output(dest);
 
         // Go through each edge in the optimal path.
@@ -236,16 +236,17 @@ bool rocket::encode(istream& source, ostream& dest) {
     return basic_rocket::encode(input, dest);
 }
 
-bool rocket::encode(ostream& dest, uint8_t const* data, size_t const size) {
+bool rocket::encode(ostream& dest, std::span<uint8_t const> data) {
     // Internal buffer.
     stringstream outbuff(ios::in | ios::out | ios::binary);
-    rocket_internal::encode(outbuff, data, size);
+    rocket_internal::encode(outbuff, data);
 
     // Fill in header
     // Size of decompressed file
     big_endian::write2(
-            dest, static_cast<uint16_t>(
-                          size - rocket_internal::rocket_adaptor::first_match_position));
+            dest,
+            static_cast<uint16_t>(
+                    data.size() - rocket_internal::rocket_adaptor::first_match_position));
     // Size of compressed file
     big_endian::write2(dest, static_cast<uint16_t>(outbuff.tellp()));
 

@@ -337,8 +337,7 @@ struct lzss_parse_result {
 };
 
 template <lzss_adaptor Adaptor>
-auto find_optimal_lzss_parse(
-        uint8_t const* data_in, size_t const size, Adaptor adaptor) noexcept {
+auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) noexcept {
     ignore_unused_variable_warning(adaptor);
     using edge_type       = typename Adaptor::edge_type;
     using stream_t        = typename Adaptor::stream_t;
@@ -348,25 +347,27 @@ auto find_optimal_lzss_parse(
     using match_vector    = std::vector<node_t>;
     using data_t          = std::span<stream_t const>;
 
-    auto read_stream = [](uint8_t const*& pointer) {
+    auto read_stream = [](data_t data, size_t offset) {
+        auto const* pointer = reinterpret_cast<uint8_t const*>(data.data() + offset);
         return stream_endian_t::template read<stream_t>(pointer);
     };
 
     // Adjacency lists for all the nodes in the graph.
-    stream_t const* const data{reinterpret_cast<stream_t const*>(data_in)};
-    size_t const          nlen{size / sizeof(stream_t)};
+    data_t const data(
+            reinterpret_cast<stream_t const*>(data_in.data()),
+            data_in.size() / sizeof(stream_t));
     static_assert(
             noexcept(Adaptor::desc_bits(edge_type())),
             "Adaptor::desc_bits() is not noexcept");
     static_assert(
             noexcept(Adaptor::get_padding(0)), "Adaptor::get_padding() is not noexcept");
-    auto assume = [](bool result) {
+    constexpr auto assume = [](bool result) {
         if (!result) {
             __builtin_unreachable();
         }
     };
-    assume(nlen >= Adaptor::first_match_position);
-    size_t num_nodes = nlen - Adaptor::first_match_position;
+    assume(data.size() >= Adaptor::first_match_position);
+    size_t num_nodes = data.size() - Adaptor::first_match_position;
     assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
     // Auxiliary data structures:
     // * The parent of a node is the node that reaches that node with the
@@ -389,7 +390,7 @@ auto find_optimal_lzss_parse(
 
     // Extracting distance relax logic from the loop so it can be used more
     // often.
-    auto relax = [last_node = nlen, &costs, &descriptor_costs, &parents, &pedges](
+    auto relax = [last_node = data.size(), &costs, &descriptor_costs, &parents, &pedges](
                          size_t index, size_t const base_descriptor_cost,
                          auto const& elem) {
         // Need destination ID and edge weight.
@@ -430,7 +431,7 @@ auto find_optimal_lzss_parse(
     // Since the LZSS graph is a topologically-sorted DAG by construction,
     // computing the shortest distance is very quick and easy: just go
     // through the nodes in order and update the distances.
-    auto         win_set = Adaptor::create_sliding_window(data_t(data, nlen));
+    auto         win_set = Adaptor::create_sliding_window(data);
     match_vector matches;
     matches.reserve(Adaptor::look_ahead_buf_size);
     for (size_t ii = 0; ii < num_nodes; ii++) {
@@ -438,10 +439,9 @@ auto find_optimal_lzss_parse(
         size_t const base_descriptor_cost = descriptor_costs[ii];
         // Start with the literal/symbolwise encoding of the current node.
         {
-            size_t const    offset  = ii + Adaptor::first_match_position;
-            auto const*     pointer = reinterpret_cast<uint8_t const*>(data + offset);
-            stream_t const  value   = read_stream(pointer);
-            edge_type const type    = edge_type::symbolwise;
+            size_t const    offset = ii + Adaptor::first_match_position;
+            stream_t const  value  = read_stream(data, offset);
+            edge_type const type   = edge_type::symbolwise;
             relax(ii, base_descriptor_cost, node_t(offset, value, type));
         }
         // Get the adjacency list for this node.

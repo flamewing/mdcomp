@@ -209,12 +209,12 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const* data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type   = typename kosinski_adaptor::edge_type;
         using kos_ostream = lzss_ostream<kosinski_adaptor>;
 
         // Compute optimal Kosinski parsing of input file.
-        auto        list = find_optimal_lzss_parse(data, size, kosinski_adaptor{});
+        auto        list = find_optimal_lzss_parse(data, kosinski_adaptor{});
         kos_ostream output(dest);
 
         // Go through each edge in the optimal path.
@@ -282,7 +282,7 @@ bool kosinski::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool kosinski::encode(ostream& dest, uint8_t const* data, size_t const size) {
-    kosinski_internal::encode(dest, data, size);
+bool kosinski::encode(ostream& dest, std::span<uint8_t const> data) {
+    kosinski_internal::encode(dest, data);
     return true;
 }

@@ -215,12 +215,12 @@ public:
         }
     }
 
-    static void encode(ostream& dest, uint8_t const*& data, size_t const size) {
+    static void encode(ostream& dest, std::span<uint8_t const> data) {
         using edge_type   = typename saxman_adaptor::edge_type;
         using sax_ostream = lzss_ostream<saxman_adaptor>;
 
         // Compute optimal Saxman parsing of input file.
-        auto        list = find_optimal_lzss_parse(data, size, saxman_adaptor{});
+        auto        list = find_optimal_lzss_parse(data, saxman_adaptor{});
         sax_ostream output(dest);
 
         // Go through each edge in the optimal path.
@@ -269,11 +269,10 @@ bool saxman::decode(istream& source, iostream& dest, size_t size) {
     return true;
 }
 
-bool saxman::encode(
-        ostream& dest, uint8_t const* data, size_t const size, bool const with_size) {
+bool saxman::encode(ostream& dest, std::span<uint8_t const> data, bool const with_size) {
     stringstream outbuff(ios::in | ios::out | ios::binary);
     auto const   start = outbuff.tellg();
-    saxman_internal::encode(outbuff, data, size);
+    saxman_internal::encode(outbuff, data);
     if (with_size) {
         outbuff.seekg(start);
         outbuff.ignore(numeric_limits<streamsize>::max());
