@@ -162,39 +162,56 @@ namespace detail {
             = (is_reverse_iterator_v<T>)
               && (std::contiguous_iterator<typename T::iterator_type>);
 
+    template <class... Ts>
+    struct overloaded : public Ts... {
+        using Ts::operator()...;
+
+        constexpr explicit overloaded(Ts... callables) : Ts(callables)... {}
+    };
+    template <class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+
     // Mashed together implementation based on libstdc++/libc++/MS STL.
     // GCC/clang both have a 128-bit integer type, which this implementation
     // supports; but MSVC compiler does not support a 128-bit integer, so this
     // is not portable.
     template <std::integral T>
     [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
+#if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
+        return std::byteswap(value);
+#else
         if constexpr (CHAR_BIT == 8) {
             if constexpr (sizeof(T) == 1) {
                 return value;
             }
             if (!std::is_constant_evaluated()) {
-                if constexpr (sizeof(T) == 2) {
-#ifdef __GNUG__
-                    return __builtin_bswap16(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_ushort(value);
-#endif
+                constexpr auto const builtin_bswap = overloaded(
+#    ifdef __GNUG__
+                        [](const uint16_t val) {
+                            return __builtin_bswap16(val);
+                        },
+                        [](const uint32_t val) {
+                            return __builtin_bswap32(val);
+                        },
+                        [](const uint64_t val) {
+                            return __builtin_bswap64(val);
+                        }
+#    elif defined(_MSC_VER)
+                        [](const uint16_t val) {
+                            return _byteswap_ushort(val);
+                        },
+                        [](const uint32_t val) {
+                            return _byteswap_ulong(val);
+                        },
+                        [](const uint64_t val) {
+                            return _byteswap_uint64(val);
+                        },
+#    endif
+                );
+                if constexpr (sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8) {
+                    return builtin_bswap(value);
                 }
-                if constexpr (sizeof(T) == 4) {
-#ifdef __GNUG__
-                    return __builtin_bswap32(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_ulong(value);
-#endif
-                }
-                if constexpr (sizeof(T) == 8) {
-#ifdef __GNUG__
-                    return __builtin_bswap64(value);
-#elif defined(_MSC_VER)
-                    return _byteswap_uint64(value);
-#endif
-                }
-#ifdef __GNUG__
+#    ifdef __GNUG__
                 if constexpr (sizeof(T) == 16) {
                     if constexpr (__has_builtin(__builtin_bswap128)) {
                         return __builtin_bswap128(value);
@@ -202,7 +219,7 @@ namespace detail {
                     return (__builtin_bswap64(value >> 64U)
                             | (static_cast<T>(__builtin_bswap64(value)) << 64U));
                 }
-#endif
+#    endif
             }
         }
 
