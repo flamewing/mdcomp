@@ -763,7 +763,7 @@ public:
             unpack.emplace_back(std::byte{0xff});
 
             nibble_run curr{unpack[0], 0};
-            for (auto const next : unpack | std::ranges::views::drop(1)) {
+            for (auto const next : unpack | std::views::drop(1)) {
                 if (next != curr.get_nibble() || curr.get_count() >= 7) {
                     rle_src.push_back(curr);
                     counts[curr] += 1;
@@ -788,8 +788,8 @@ public:
             auto const& [run, frequency] = kv_pair;
             return make_shared<node>(run, frequency);
         };
-        auto nodes = count_map | std::ranges::views::filter(freq_filter)
-                     | std::ranges::views::transform(to_node) | detail::to<node_vector>();
+        auto nodes = count_map | std::views::filter(freq_filter)
+                     | std::views::transform(to_node) | detail::to<node_vector>();
 
         // The base coin collection for the length-limited Huffman coding has
         // one coin list per character in length of the limitation. Each coin
