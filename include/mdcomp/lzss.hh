@@ -372,13 +372,13 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
     // Auxiliary data structures:
     // * The parent of a node is the node that reaches that node with the
     //   lowest cost from the start of the file.
-    std::vector<size_t> parents(num_nodes + 1);
+    std::vector<size_t> parent_nodes(num_nodes + 1);
     // * This is the edge used to go from the parent of a node to said node.
-    std::vector<node_t> pedges(num_nodes + 1);
+    std::vector<node_t> parent_edges(num_nodes + 1);
     // * This is the total cost to reach the edge. They start as high as
     //   possible for all nodes but the first, which starts at 0.
-    std::vector<size_t> costs(num_nodes + 1, std::numeric_limits<size_t>::max());
-    costs[0] = 0;
+    std::vector<size_t> total_costs(num_nodes + 1, std::numeric_limits<size_t>::max());
+    total_costs[0] = 0;
     // * And this is a vector that tallies up the amount of bits in
     //   the descriptor bitfield for the shortest path up to this node.
     //   After tallying up the ending node, the end-of-file marker may cause
@@ -390,12 +390,13 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
 
     // Extracting distance relax logic from the loop so it can be used more
     // often.
-    auto relax = [last_node = data.size(), &costs, &descriptor_costs, &parents, &pedges](
+    auto relax = [last_node = data.size(), &total_costs, &descriptor_costs, &parent_nodes,
+                  &parent_edges](
                          size_t index, size_t const base_descriptor_cost,
                          auto const& elem) {
         // Need destination ID and edge weight.
         size_t const next_node   = elem.get_destination() - Adaptor::first_match_position;
-        size_t       edge_weight = costs[index] + elem.get_weight();
+        size_t       edge_weight = total_costs[index] + elem.get_weight();
         // Compute descriptor bits from using this edge.
         size_t descriptor_cost
                 = base_descriptor_cost + Adaptor::desc_bits(elem.get_type());
@@ -419,11 +420,11 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
         }
         // Is the cost to reach the target node through this edge less
         // than the current cost?
-        if (costs[next_node] > edge_weight) {
+        if (total_costs[next_node] > edge_weight) {
             // If so, update the data structures with new best edge.
-            costs[next_node]            = edge_weight;
-            parents[next_node]          = index;
-            pedges[next_node]           = elem;
+            total_costs[next_node]      = edge_weight;
+            parent_nodes[next_node]     = index;
+            parent_edges[next_node]     = elem;
             descriptor_costs[next_node] = descriptor_cost;
         }
     };
@@ -460,13 +461,15 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
 
     // This is what we will produce.
     lzss_parse_result<adj_list> result{
-            {node_t{0, 0, edge_type::terminator}}, descriptor_costs.back(), costs.back()};
+            {node_t{0, 0, edge_type::terminator}},
+            descriptor_costs.back(),
+            total_costs.back()};
     adj_list& parse_list = result.parse_list;
     for (size_t ii = num_nodes; ii != 0;) {
         // Insert the edge up front...
-        parse_list.push_front(pedges[ii]);
+        parse_list.push_front(parent_edges[ii]);
         // ... and switch to parent node.
-        ii = parents[ii];
+        ii = parent_nodes[ii];
     }
 
     // We are done: this is the optimal parsing of the input file, giving
