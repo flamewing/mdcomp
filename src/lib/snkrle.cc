@@ -27,19 +27,12 @@
 #include <sstream>
 #include <string>
 
-using std::ios;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::streamsize;
-using std::stringstream;
-
 template <>
 size_t moduled_snkrle::pad_mask_bits = 1U;
 
 class snkrle_internal {
 public:
-    static void decode(istream& source, ostream& dest) {
+    static void decode(std::istream& source, std::ostream& dest) {
         size_t size = big_endian::read2(source);
         if (size == 0) {
             return;
@@ -69,9 +62,9 @@ public:
         }
     }
 
-    static void encode(istream& source, ostream& dest) {
+    static void encode(std::istream& source, std::ostream& dest) {
         auto position = source.tellg();
-        source.ignore(numeric_limits<streamsize>::max());
+        source.ignore(std::numeric_limits<std::streamsize>::max());
         std::streampos const size = source.gcount();
         source.seekg(position);
         big_endian::write2(dest, static_cast<uint16_t>(size));
@@ -98,9 +91,9 @@ public:
     }
 };
 
-bool snkrle::decode(istream& source, ostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool snkrle::decode(std::istream& source, std::ostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     snkrle_internal::decode(input, dest);
@@ -108,8 +101,8 @@ bool snkrle::decode(istream& source, ostream& dest) {
     return true;
 }
 
-bool snkrle::encode(ostream& dest, std::span<uint8_t const> data) {
-    stringstream source(ios::in | ios::out | ios::binary);
+bool snkrle::encode(std::ostream& dest, std::span<uint8_t const> data) {
+    std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
     source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     snkrle_internal::encode(source, dest);

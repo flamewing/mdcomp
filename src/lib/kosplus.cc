@@ -29,14 +29,6 @@
 #include <ostream>
 #include <sstream>
 
-using std::array;
-using std::ios;
-using std::iostream;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::stringstream;
-
 template <>
 size_t moduled_kosplus::pad_mask_bits = 1U;
 
@@ -73,7 +65,7 @@ class kosplus_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array{
+            return std::array{
                     sliding_window_t{data,             256,  2,                   5,edge_type::dictionary_inline                                                                                    },
                     sliding_window_t{
                                      data, search_buf_size,  3,                   9,  edge_type::dictionary_short},
@@ -99,7 +91,7 @@ class kosplus_internal {
                 // 2-bit descriptor.
                 return 2;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -126,7 +118,7 @@ class kosplus_internal {
                 // 24-bit value.
                 return desc_bits(type) + 24;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -149,7 +141,7 @@ class kosplus_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& dest) {
+    static void decode(std::istream& input, std::iostream& dest) {
         using kos_istream = lzss_istream<kos_plus_adaptor>;
 
         kos_istream source(input);
@@ -205,7 +197,7 @@ public:
         }
     }
 
-    static void encode(ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
         using edge_type   = typename kos_plus_adaptor::edge_type;
         using kos_ostream = lzss_ostream<kos_plus_adaptor>;
 
@@ -268,9 +260,9 @@ public:
     }
 };
 
-bool kosplus::decode(istream& source, iostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool kosplus::decode(std::istream& source, std::iostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     kosplus_internal::decode(input, dest);
@@ -278,7 +270,7 @@ bool kosplus::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool kosplus::encode(ostream& dest, std::span<uint8_t const> data) {
+bool kosplus::encode(std::ostream& dest, std::span<uint8_t const> data) {
     kosplus_internal::encode(dest, data);
     return true;
 }

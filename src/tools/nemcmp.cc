@@ -28,37 +28,24 @@
 #include <iostream>
 #include <sstream>
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::hex;
-using std::ifstream;
-using std::ios;
-using std::ofstream;
-using std::right;
-using std::setfill;
-using std::setw;
-using std::stringstream;
-using std::uppercase;
-
 static void usage(char* prog) {
-    cerr << "Usage: " << prog
-         << " [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} "
-            "{output_filename}"
-         << endl;
-    cerr << endl;
-    cerr << "\t-i          \tWhen extracting, print out the position where the "
-            "Nemesis data ends."
-         << endl;
-    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
-    cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and "
-            "recompress to output file."
-         << endl
-         << "\t            \tIf --crunch is in effect, a missing "
-            "output_filename means recompress"
-         << endl
-         << "\t            \tto input_filename." << endl
-         << endl;
+    std::cerr << "Usage: " << prog
+              << " [-i] [-c|--crunch|-x|--extract=[{pointer}]] {input_filename} "
+                 "{output_filename}"
+              << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t-i          \tWhen extracting, print out the position where the "
+                 "Nemesis data ends."
+              << std::endl;
+    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
+    std::cerr << "\t-c,--crunch \tAssume input file is Nemesis-compressed and "
+                 "recompress to output file."
+              << std::endl
+              << "\t            \tIf --crunch is in effect, a missing "
+                 "output_filename means recompress"
+              << std::endl
+              << "\t            \tto input_filename." << std::endl
+              << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -105,43 +92,47 @@ int main(int argc, char* argv[]) {
     }
 
     if (extract && crunch) {
-        cerr << "Error: --extract and --crunch can't be used at the same time." << endl
-             << endl;
+        std::cerr << "Error: --extract and --crunch can't be used at the same time."
+                  << std::endl
+                  << std::endl;
         return 4;
     }
     if (print_end && !extract) {
-        cerr << "Error: -i must be used with --extract." << endl << endl;
+        std::cerr << "Error: -i must be used with --extract." << std::endl << std::endl;
         return 5;
     }
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream input(argv[optind], ios::in | ios::binary);
+    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
     if (!input.good()) {
-        cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
-             << endl;
+        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
+                  << std::endl
+                  << std::endl;
         return 2;
     }
 
     if (crunch) {
-        stringstream buffer(ios::in | ios::out | ios::binary);
+        std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
         input.seekg(static_cast<std::streamsize>(pointer));
         nemesis::decode(input, buffer);
         input.close();
         buffer.seekg(0);
 
-        ofstream output(outfile, ios::out | ios::binary);
+        std::ofstream output(outfile, std::ios::out | std::ios::binary);
         if (!output.good()) {
-            cerr << "Output file '" << outfile << "' could not be opened." << endl
-                 << endl;
+            std::cerr << "Output file '" << outfile << "' could not be opened."
+                      << std::endl
+                      << std::endl;
             return 3;
         }
         nemesis::encode(buffer, output);
     } else {
-        ofstream output(outfile, ios::out | ios::binary);
+        std::ofstream output(outfile, std::ios::out | std::ios::binary);
         if (!output.good()) {
-            cerr << "Output file '" << outfile << "' could not be opened." << endl
-                 << endl;
+            std::cerr << "Output file '" << outfile << "' could not be opened."
+                      << std::endl
+                      << std::endl;
             return 3;
         }
 
@@ -149,9 +140,9 @@ int main(int argc, char* argv[]) {
             input.seekg(static_cast<std::streamsize>(pointer));
             nemesis::decode(input, output);
             if (print_end) {
-                boost::io::ios_all_saver const flags(cout);
-                cout << "0x" << hex << setw(6) << setfill('0') << uppercase << right
-                     << input.tellg() << endl;
+                boost::io::ios_all_saver const flags(std::cout);
+                std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0')
+                          << std::uppercase << std::right << input.tellg() << std::endl;
             }
         } else {
             nemesis::encode(input, output);

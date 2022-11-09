@@ -30,14 +30,6 @@
 #include <ostream>
 #include <sstream>
 
-using std::array;
-using std::ios;
-using std::iostream;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::stringstream;
-
 template <>
 size_t moduled_lzkn1::pad_mask_bits = 1U;
 
@@ -74,7 +66,7 @@ class lzkn1_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array{
+            return std::array{
                     sliding_window_t{data,              15, 2,                   5,edge_type::dictionary_short                                   },
                     sliding_window_t{
                                      data, search_buf_size, 3, look_ahead_buf_size,
@@ -112,7 +104,7 @@ class lzkn1_internal {
                 // length * 8 bits data.
                 return desc_bits(type) + 2 + 6 + length * 8;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -128,7 +120,7 @@ class lzkn1_internal {
             size_t const end = std::min(ubound - base_node, size_t{72});
             for (size_t ii = 8; ii < end; ii++) {
                 matches.emplace_back(
-                        base_node, match_t{numeric_limits<size_t>::max(), ii},
+                        base_node, match_t{std::numeric_limits<size_t>::max(), ii},
                         edge_type::packed_symbolwise);
             }
             // Do normal matches.
@@ -143,7 +135,7 @@ class lzkn1_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& dest) {
+    static void decode(std::istream& input, std::iostream& dest) {
         using lzkn1_istream = lzss_istream<lzkn1_adaptor>;
 
         size_t const uncompressed_size = big_endian::read2(input);
@@ -213,7 +205,7 @@ public:
         }
     }
 
-    static void encode(ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
         using edge_type     = typename lzkn1_adaptor::edge_type;
         using lzkn1_ostream = lzss_ostream<lzkn1_adaptor>;
 
@@ -282,9 +274,9 @@ public:
     }
 };
 
-bool lzkn1::decode(istream& source, iostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool lzkn1::decode(std::istream& source, std::iostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     lzkn1_internal::decode(input, dest);
@@ -292,7 +284,7 @@ bool lzkn1::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool lzkn1::encode(ostream& dest, std::span<uint8_t const> data) {
+bool lzkn1::encode(std::ostream& dest, std::span<uint8_t const> data) {
     lzkn1_internal::encode(dest, data);
     return true;
 }

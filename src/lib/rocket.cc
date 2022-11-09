@@ -30,15 +30,6 @@
 #include <sstream>
 #include <type_traits>
 
-using std::array;
-using std::ios;
-using std::iostream;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::ostreambuf_iterator;
-using std::stringstream;
-
 template <>
 size_t moduled_rocket::pad_mask_bits = 1U;
 
@@ -74,7 +65,7 @@ struct rocket_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array{
+            return std::array{
                     sliding_window_t{
                                      data, search_buf_size, 2, look_ahead_buf_size,
                                      edge_type::dictionary}
@@ -105,7 +96,7 @@ struct rocket_internal {
                 // 10-bit distance, 6-bit length.
                 return desc_bits(type) + 10 + 6;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -128,7 +119,7 @@ struct rocket_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& dest) {
+    static void decode(std::istream& input, std::iostream& dest) {
         using rock_istream = lzss_istream<rocket_adaptor>;
         using diff_t       = std::make_signed_t<size_t>;
 
@@ -163,7 +154,7 @@ public:
                     diff_t const count = (offset + length < 0)
                                                  ? length
                                                  : (length - (offset + length));
-                    fill_n(ostreambuf_iterator<char>(dest), count, 0x20);
+                    fill_n(std::ostreambuf_iterator<char>(dest), count, 0x20);
                     length -= count;
                     offset += count;
                 }
@@ -178,7 +169,7 @@ public:
         }
     }
 
-    static void encode(ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
         using edge_type    = typename rocket_adaptor::edge_type;
         using rock_ostream = lzss_ostream<rocket_adaptor>;
 
@@ -215,9 +206,9 @@ public:
     }
 };
 
-bool rocket::decode(istream& source, iostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool rocket::decode(std::istream& source, std::iostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     rocket_internal::decode(input, dest);
@@ -225,10 +216,10 @@ bool rocket::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool rocket::encode(istream& source, ostream& dest) {
+bool rocket::encode(std::istream& source, std::ostream& dest) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
-    stringstream input(ios::in | ios::out | ios::binary);
-    fill_n(ostreambuf_iterator<char>(input),
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
+    fill_n(std::ostreambuf_iterator<char>(input),
            rocket_internal::rocket_adaptor::first_match_position, 0x20);
     // Copy to buffer.
     input << source.rdbuf();
@@ -236,9 +227,9 @@ bool rocket::encode(istream& source, ostream& dest) {
     return basic_rocket::encode(input, dest);
 }
 
-bool rocket::encode(ostream& dest, std::span<uint8_t const> data) {
+bool rocket::encode(std::ostream& dest, std::span<uint8_t const> data) {
     // Internal buffer.
-    stringstream outbuff(ios::in | ios::out | ios::binary);
+    std::stringstream outbuff(std::ios::in | std::ios::out | std::ios::binary);
     rocket_internal::encode(outbuff, data);
 
     // Fill in header

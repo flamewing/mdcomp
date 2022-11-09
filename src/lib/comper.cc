@@ -29,14 +29,6 @@
 #include <ostream>
 #include <sstream>
 
-using std::array;
-using std::ios;
-using std::iostream;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::stringstream;
-
 template <>
 size_t moduled_comper::pad_mask_bits = 1U;
 
@@ -72,7 +64,7 @@ class comper_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array{
+            return std::array{
                     sliding_window_t{
                                      data, search_buf_size, 2, look_ahead_buf_size,
                                      edge_type::dictionary}
@@ -102,7 +94,7 @@ class comper_internal {
                 // 8-bit distance, 8-bit length.
                 return desc_bits(type) + 8 + 8;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -125,7 +117,7 @@ class comper_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& dest) {
+    static void decode(std::istream& input, std::iostream& dest) {
         using comp_istream = lzss_istream<comper_adaptor>;
 
         comp_istream source(input);
@@ -154,7 +146,7 @@ public:
         }
     }
 
-    static void encode(ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
         using edge_type    = typename comper_adaptor::edge_type;
         using comp_ostream = lzss_ostream<comper_adaptor>;
 
@@ -199,9 +191,9 @@ public:
     }
 };
 
-bool comper::decode(istream& source, iostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool comper::decode(std::istream& source, std::iostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     comper_internal::decode(input, dest);
@@ -209,7 +201,7 @@ bool comper::decode(istream& source, iostream& dest) {
     return true;
 }
 
-bool comper::encode(ostream& dest, std::span<uint8_t const> data) {
+bool comper::encode(std::ostream& dest, std::span<uint8_t const> data) {
     comper_internal::encode(dest, data);
     return true;
 }

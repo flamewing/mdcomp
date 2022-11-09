@@ -40,21 +40,6 @@
 #include <utility>
 #include <vector>
 
-using std::enable_shared_from_this;
-using std::ios;
-using std::istream;
-using std::make_shared;
-using std::map;
-using std::multiset;
-using std::numeric_limits;
-using std::ostream;
-using std::ostreambuf_iterator;
-using std::priority_queue;
-using std::shared_ptr;
-using std::string;
-using std::stringstream;
-using std::vector;
-
 template <typename Enum>
 concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
 
@@ -118,19 +103,19 @@ struct bit_code {
             = default;
 };
 
-using code_size_map   = map<nibble_run, size_t>;
-using run_count_map   = map<nibble_run, size_t>;
-using nibble_code_map = map<nibble_run, bit_code>;
-using code_nibble_map = map<bit_code, nibble_run>;
+using code_size_map   = std::map<nibble_run, size_t>;
+using run_count_map   = std::map<nibble_run, size_t>;
+using nibble_code_map = std::map<nibble_run, bit_code>;
+using code_nibble_map = std::map<bit_code, nibble_run>;
 
 // Slightly based on code by Mark Nelson for Huffman encoding.
 // https://marknelson.us/posts/1996/01/01/priority-queues.html
 // This represents a node (leaf or branch) in the Huffman encoding tree.
-class node : public enable_shared_from_this<node> {
+class node : public std::enable_shared_from_this<node> {
 private:
-    shared_ptr<node> left_child, right_child;
-    size_t           weight;
-    nibble_run       value{std::byte{0}, 0};
+    std::shared_ptr<node> left_child, right_child;
+    size_t                weight;
+    nibble_run            value{std::byte{0}, 0};
 
 public:
     // Construct a new leaf node for character c.
@@ -138,8 +123,8 @@ public:
             : weight(weight_in), value(value_in) {}
 
     // Construct a new internal node that has children c1 and c2.
-    node(shared_ptr<node> const& left_child_in,
-         shared_ptr<node> const& right_child_in) noexcept
+    node(std::shared_ptr<node> const& left_child_in,
+         std::shared_ptr<node> const& right_child_in) noexcept
             : left_child(left_child_in), right_child(right_child_in),
               weight(left_child_in->weight + right_child_in->weight) {}
 
@@ -160,11 +145,11 @@ public:
     }
 
     // Getters/setters for all properties.
-    [[nodiscard]] shared_ptr<node const> get_child0() const noexcept {
+    [[nodiscard]] std::shared_ptr<node const> get_child0() const noexcept {
         return left_child;
     }
 
-    [[nodiscard]] shared_ptr<node const> get_child1() const noexcept {
+    [[nodiscard]] std::shared_ptr<node const> get_child1() const noexcept {
         return right_child;
     }
 
@@ -176,11 +161,11 @@ public:
         return value;
     }
 
-    void set_left_child(shared_ptr<node> left_child_in) noexcept {
+    void set_left_child(std::shared_ptr<node> left_child_in) noexcept {
         left_child = std::move(left_child_in);
     }
 
-    void set_right_child(shared_ptr<node> right_child_in) noexcept {
+    void set_right_child(std::shared_ptr<node> right_child_in) noexcept {
         right_child = std::move(right_child_in);
     }
 
@@ -208,7 +193,7 @@ public:
     }
 };
 
-using node_vector = vector<shared_ptr<node>>;
+using node_vector = std::vector<std::shared_ptr<node>>;
 
 struct compare_size {
     bool operator()(
@@ -236,8 +221,8 @@ struct compare_size {
 };
 
 struct compare_node {
-    bool operator()(
-            shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
+    bool operator()(std::shared_ptr<node> const& left, std::shared_ptr<node> const& right)
+            const noexcept {
 #if 1
         if (*left > *right) {
             return true;
@@ -266,8 +251,8 @@ struct compare_node {
 struct compare_node2 {
     nibble_code_map* code_map = nullptr;
 
-    bool operator()(
-            shared_ptr<node> const& left, shared_ptr<node> const& right) const noexcept {
+    bool operator()(std::shared_ptr<node> const& left, std::shared_ptr<node> const& right)
+            const noexcept {
         if (code_map == nullptr || code_map->empty()) {
             if (*left < *right) {
                 return true;
@@ -280,7 +265,7 @@ struct compare_node2 {
         nibble_run const left_nibble  = left->get_value();
         nibble_run const right_nibble = right->get_value();
 
-        auto get_len = [&](shared_ptr<node> const& node, nibble_run nibble) {
+        auto get_len = [&](std::shared_ptr<node> const& node, nibble_run nibble) {
             if (auto const iter = code_map->find(nibble); iter != code_map->end()) {
                 size_t const bit_count = (iter->second).length;
                 return (bit_count & 0x7fU) * node->get_weight() + 16;
@@ -356,7 +341,7 @@ public:
             std::istream& source, std::ostream& dest, code_nibble_map& code_map,
             size_t const num_tiles, bool const alt_out = false) {
         // This buffer is used for alternating mode decoding.
-        stringstream str_dest(ios::in | ios::out | ios::binary);
+        std::stringstream str_dest(std::ios::in | std::ios::out | std::ios::binary);
 
         // Set bit I/O streams.
         nem_ibitstream bits(source);
@@ -633,7 +618,7 @@ public:
                     std::byte const nibble = run.get_nibble();
                     // Vector containing the code length of each nibble run, or
                     // 13 if the nibble run is not in the code_map.
-                    vector<size_t> run_length;
+                    std::vector<size_t> run_length;
                     // Init vector.
                     for (size_t i = 0; i < count; i++) {
                         // Is this run in the code_map?
@@ -738,7 +723,7 @@ public:
 
     template <typename Compare>
     static std::streamoff encode(
-            istream& source, ostream& dest, nemesis_mode mode,
+            std::istream& source, std::ostream& dest, nemesis_mode mode,
             std::streamoff const length, Compare&& comp) {
         // Seek to start and clear all errors.
         source.clear();
@@ -748,9 +733,9 @@ public:
         // Maximum run length is 8, meaning 7 repetitions.
         auto [rle_source, count_map] = [&]() {
             // Unpack source so we don't have to deal with nibble IO after.
-            vector<nibble_run>        rle_src;
+            std::vector<nibble_run>   rle_src;
             run_count_map             counts;
-            vector<std::byte>         unpack;
+            std::vector<std::byte>    unpack;
             constexpr const std::byte low_nibble{0xfU};
             // TODO: Make this through a lazy smart iterator so it can be
             // bundled in the loop below.
@@ -786,7 +771,7 @@ public:
         };
         constexpr auto to_node = [](auto&& kv_pair) {
             auto const& [run, frequency] = kv_pair;
-            return make_shared<node>(run, frequency);
+            return std::make_shared<node>(run, frequency);
         };
         auto nodes = count_map | std::views::filter(freq_filter)
                      | std::views::transform(to_node) | detail::to<node_vector>();
@@ -816,8 +801,8 @@ public:
         // find *the* lowest file size.
         while (nodes.size() > 1) {
             // Make a copy of the basic coin collection.
-            using coin_queue
-                    = priority_queue<shared_ptr<node>, node_vector, compare_node>;
+            using coin_queue = std::priority_queue<
+                    std::shared_ptr<node>, node_vector, compare_node>;
             coin_queue const base_coins(nodes.begin(), nodes.end());
 
             // We now solve the Coin collector's problem using the Package-merge
@@ -850,9 +835,9 @@ public:
                 // Split the current list into pairs and insert the packages
                 // into the next list.
                 while (current_coins.size() > 1) {
-                    shared_ptr<node> child1 = current_coins.top();
+                    auto child1 = current_coins.top();
                     current_coins.pop();
-                    shared_ptr<node> child0 = current_coins.top();
+                    auto child0 = current_coins.top();
                     current_coins.pop();
                     next_coins.push(make_shared<node>(child0, child1));
                 }
@@ -886,7 +871,7 @@ public:
             // This set contains lots more information, and is used to associate
             // the nibble run with its optimal code. It is sorted by code size,
             // then by frequency of the nibble run, then by the nibble run.
-            using size_set = multiset<size_freq_nibble, compare_size>;
+            using size_set = std::multiset<size_freq_nibble, compare_size>;
             size_set sizemap;
             for (auto const& [run, size] : base_size_map) {
                 size_t const count = count_map[run];
@@ -902,7 +887,7 @@ public:
             size_t base  = 0;
             size_t carry = 0;
             // This vector contains the codes sorted by size.
-            vector<bit_code> codes;
+            std::vector<bit_code> codes;
             for (size_t i = 1; i <= 8; i++) {
                 // How many nibble runs have the desired bit length.
                 size_t       count = size_counts[i - 1] + carry;
@@ -954,8 +939,8 @@ public:
         }
         // Special case.
         if (nodes.size() == 1) {
-            nibble_code_map        temp_code_map;
-            shared_ptr<node> const child      = nodes.front();
+            nibble_code_map             temp_code_map;
+            std::shared_ptr<node> const child = nodes.front();
             temp_code_map[child->get_value()] = bit_code{0U, 1};
             size_t const temp_size_est = estimate_file_size(temp_code_map, count_map);
 
@@ -1030,7 +1015,7 @@ public:
     }
 };
 
-bool nemesis::decode(istream& source, ostream& dest) {
+bool nemesis::decode(std::istream& source, std::ostream& dest) {
     code_nibble_map code_map;
     size_t          num_tiles = big_endian::read2(source);
     // sets the output mode based on the value of the first bit
@@ -1044,10 +1029,10 @@ bool nemesis::decode(istream& source, ostream& dest) {
     return true;
 }
 
-bool nemesis::encode(istream& source, ostream& dest) {
+bool nemesis::encode(std::istream& source, std::ostream& dest) {
     // We will use these as output buffers, as well as an input/output
     // buffers for the padded Nemesis input.
-    stringstream str_source(ios::in | ios::out | ios::binary);
+    std::stringstream str_source(std::ios::in | std::ios::out | std::ios::binary);
 
     // Copy to buffer.
     str_source << source.rdbuf();
@@ -1055,7 +1040,7 @@ bool nemesis::encode(istream& source, ostream& dest) {
     // Pad source with zeroes until it is a multiple of 32 bytes.
     auto const position = str_source.tellp();
     if ((position % 32) != 0) {
-        fill_n(ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
+        fill_n(std::ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
     }
     auto const size = str_source.tellp();
 
@@ -1063,17 +1048,17 @@ bool nemesis::encode(istream& source, ostream& dest) {
     str_source.clear();
     str_source.seekg(0);
 
-    string buffer = str_source.str();
-    auto*  bytes  = reinterpret_cast<uint8_t*>(buffer.data());
+    std::string buffer = str_source.str();
+    auto*       bytes  = reinterpret_cast<uint8_t*>(buffer.data());
     for (size_t i = buffer.size() - 4; i > 0; i -= 4) {
         bytes[i + 0] ^= bytes[i - 4];
         bytes[i + 1] ^= bytes[i - 3];
         bytes[i + 2] ^= bytes[i - 2];
         bytes[i + 3] ^= bytes[i - 1];
     }
-    stringstream source_xor(buffer, ios::in | ios::out | ios::binary);
+    std::stringstream source_xor(buffer, std::ios::in | std::ios::out | std::ios::binary);
 
-    std::array<stringstream, 4> buffers;
+    std::array<std::stringstream, 4> buffers;
     using nemesis_mode = nemesis_internal::nemesis_mode;
     // Four different attempts to encode, for improved file size.
     std::array sizes{
@@ -1089,7 +1074,7 @@ bool nemesis::encode(istream& source, ostream& dest) {
                     compare_node2{})};
 
     // Figure out what was the best encoding.
-    std::streamoff best_size   = numeric_limits<std::streamoff>::max();
+    std::streamoff best_size   = std::numeric_limits<std::streamoff>::max();
     size_t         best_stream = 0;
     for (size_t ii = 0; ii < sizes.size(); ii++) {
         if (sizes[ii] < best_size) {
@@ -1104,7 +1089,7 @@ bool nemesis::encode(istream& source, ostream& dest) {
 }
 
 bool nemesis::encode(std::ostream& dest, std::span<uint8_t const> data) {
-    stringstream source(ios::in | ios::out | ios::binary);
+    std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
     source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     return encode(source, dest);
