@@ -152,66 +152,110 @@ static inline void flush_buffer(
 template <>
 size_t moduled_enigma::pad_mask_bits = 1U;
 
+struct enigma_output_iterator {
+    using reference       = enigma_output_iterator&;
+    using difference_type = ptrdiff_t;
+
+    constexpr enigma_output_iterator()                                         = default;
+    constexpr ~enigma_output_iterator()                                        = default;
+    constexpr enigma_output_iterator(enigma_output_iterator const&)            = default;
+    constexpr enigma_output_iterator(enigma_output_iterator&&)                 = default;
+    constexpr enigma_output_iterator& operator=(enigma_output_iterator const&) = default;
+    constexpr enigma_output_iterator& operator=(enigma_output_iterator&&)      = default;
+
+    constexpr explicit enigma_output_iterator(std::ostream& output) : dest(&output) {}
+
+    constexpr reference operator*() noexcept {
+        return *this;
+    }
+
+    constexpr reference operator++() noexcept {
+        return *this;
+    }
+
+    constexpr reference operator++(int unused) noexcept {
+        ignore_unused_variable_warning(unused);
+        return *this;
+    }
+
+    constexpr reference operator=(uint16_t value) noexcept {
+        big_endian::write2(*dest, value);
+        return *this;
+    }
+
+    std::ostream* dest = nullptr;
+};
+
+static_assert(std::output_iterator<enigma_output_iterator, uint16_t>);
+
 class enigma_internal {
 public:
     static void decode(std::istream& input, std::ostream& dest) {
         // Read header.
         size_t const   packet_length      = read1(input);
-        auto           get_mask           = flag_reader::get(read1(input));
+        auto           read_mask          = flag_reader::get(read1(input));
         uint16_t       incrementing_value = big_endian::read2(input);
         uint16_t const common_value       = big_endian::read2(input);
 
         eni_ibitstream bits(input);
 
-        constexpr static std::array<int, 3> const mode_delta_lut = {0, 1, -1};
+        auto const read_count = [&]() noexcept -> ptrdiff_t {
+            return bits.read(4) + 1;
+        };
+
+        auto const read_value = [&]() noexcept -> uint16_t {
+            uint16_t const flags = read_mask(bits);
+            uint16_t const outv  = bits.read(packet_length);
+            return outv | flags;
+        };
+
+        auto const make_generator = [&](int delta) noexcept {
+            return [delta, value = read_value()]() mutable noexcept {
+                uint16_t current = value;
+                value += delta;
+                return current;
+            };
+        };
+
+        auto const incrementor = [&incrementing_value]() noexcept {
+            return incrementing_value++;
+        };
+
+        enigma_output_iterator output(dest);
 
         // Lets put in a safe termination condition here.
         while (input.good()) {
             if (bits.pop() != 0U) {
-                size_t const mode = bits.read(2);
+                auto const mode  = bits.read(2);
+                auto const count = read_count();
                 switch (mode) {
-                case 2:
-                case 1:
-                case 0: {
-                    size_t const   count = bits.read(4) + 1;
-                    uint16_t const flags = get_mask(bits);
-                    uint16_t       outv  = bits.read(packet_length);
-                    outv |= flags;
-
-                    for (size_t i = 0; i < count; i++) {
-                        big_endian::write2(dest, outv);
-                        outv += mode_delta_lut[mode];
-                    }
+                case 0:
+                    std::ranges::fill_n(output, count, read_value());
                     break;
-                }
+                case 1:
+                    std::ranges::generate_n(output, count, make_generator(1));
+                    break;
+                case 2:
+                    std::ranges::generate_n(output, count, make_generator(-1));
+                    break;
                 case 3: {
-                    size_t const count = bits.read(4);
                     // This marks decompression as being done.
-                    if (count == 0x0F) {
+                    if (count == 0x10) {
                         return;
                     }
-
-                    for (size_t i = 0; i <= count; i++) {
-                        uint16_t const flags = get_mask(bits);
-                        uint16_t const outv  = bits.read(packet_length);
-                        big_endian::write2(dest, outv | flags);
-                    }
+                    std::ranges::generate_n(output, count, read_value);
                     break;
                 }
                 default:
                     __builtin_unreachable();
                 }
             } else {
-                if (bits.pop() == 0U) {
-                    size_t const count = bits.read(4) + 1;
-                    for (size_t i = 0; i < count; i++) {
-                        big_endian::write2(dest, incrementing_value++);
-                    }
+                auto const mode  = bits.pop();
+                auto const count = read_count();
+                if (mode == 0U) {
+                    std::ranges::generate_n(output, count, incrementor);
                 } else {
-                    size_t const count = bits.read(4) + 1;
-                    for (size_t i = 0; i < count; i++) {
-                        big_endian::write2(dest, common_value);
-                    }
+                    std::ranges::fill_n(output, count, common_value);
                 }
             }
         }
@@ -228,13 +272,13 @@ public:
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
         uint16_t mask_val = 0;
-        source.clear();
         source.seekg(0);
-        while (true) {
+        source.ignore(std::numeric_limits<std::streamsize>::max());
+        auto const full_size = source.gcount() / 2;
+        using diff_t         = std::make_signed_t<size_t>;
+        source.seekg(0);
+        for (diff_t loc = 0; loc < full_size; loc++) {
             uint16_t const value = big_endian::read2(source);
-            if (!source.good()) {
-                break;
-            }
             mask_val |= value;
             counts[value] += 1;
             elems.insert(value);
