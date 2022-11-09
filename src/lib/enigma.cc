@@ -38,17 +38,6 @@
 #include <utility>
 #include <vector>
 
-using std::array;
-using std::ios;
-using std::istream;
-using std::make_index_sequence;
-using std::map;
-using std::ostream;
-using std::pair;
-using std::set;
-using std::stringstream;
-using std::vector;
-
 using eni_ibitstream = ibitstream<uint16_t, bit_endian::big, big_endian, true>;
 using eni_obitstream = obitstream<uint16_t, bit_endian::big, big_endian>;
 
@@ -91,7 +80,7 @@ uint16_t read_bitfield(eni_ibitstream& bits) {
         return uint16_t(
                 ((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
     };
-    return read_bit_flags(make_index_sequence<5>());
+    return read_bit_flags(std::make_index_sequence<5>());
 }
 
 template <size_t N>
@@ -105,37 +94,38 @@ void write_bitfield(eni_obitstream& bits, uint16_t const flags) {
         constexpr size_t const count = sizeof...(Is);
         ((write_bit_flag(std::integral_constant<size_t, count - Is>{})), ...);
     };
-    write_bit_flags(make_index_sequence<5>());
+    write_bit_flags(std::make_index_sequence<5>());
 }
 
 template <std::size_t... I>
 constexpr auto create_mask_array(flag_reader::tag, std::index_sequence<I...>) {
-    return array<flag_reader, sizeof...(I)>{flag_reader(read_bitfield<I>)...};
+    return std::array{flag_reader(read_bitfield<I>)...};
 }
 
 template <std::size_t... I>
 constexpr auto create_mask_array(flag_writer::tag, std::index_sequence<I...>) {
-    return array<flag_writer, sizeof...(I)>{flag_writer(write_bitfield<I>)...};
+    return std::array{flag_writer(write_bitfield<I>)...};
 }
 
 template <typename Callback>
 base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
     constexpr static auto const array
-            = create_mask_array(tag{}, make_index_sequence<32>());
+            = create_mask_array(tag{}, std::make_index_sequence<32>());
     return array[flags];
 }
 
 // Comparison functor, see below.
 struct compare_count {
     bool operator()(
-            pair<uint16_t const, size_t>& left, pair<uint16_t const, size_t>& right) {
+            std::pair<uint16_t const, size_t>& left,
+            std::pair<uint16_t const, size_t>& right) {
         return (left.second < right.second);
     }
 };
 
 // This flushes (if needed) the contents of the inlined data buffer.
 static inline void flush_buffer(
-        vector<uint16_t>& buffer, eni_obitstream& bits, flag_writer& put_mask,
+        std::vector<uint16_t>& buffer, eni_obitstream& bits, flag_writer& put_mask,
         size_t const packet_length) {
     if (buffer.empty()) {
         return;
@@ -263,11 +253,11 @@ public:
 
     static void encode(std::istream& source, std::ostream& dest) {
         // To unpack source into 2-byte words.
-        vector<uint16_t> unpack;
+        std::vector<uint16_t> unpack;
         // Frequency map.
-        map<uint16_t, size_t> counts;
+        std::map<uint16_t, size_t> counts;
         // Presence map.
-        set<uint16_t> elems;
+        std::set<uint16_t> elems;
 
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
@@ -299,7 +289,7 @@ public:
         // Find incrementing (not necessarily contiguous) runs.
         // The original algorithm does this for all 65536 2-byte words, while
         // this version only checks the 2-byte words actually in the file.
-        map<uint16_t, size_t> runs;
+        std::map<uint16_t, size_t> runs;
         for (auto next : elems) {
             auto [value, inserted] = runs.emplace(next, 0);
             for (auto& elem : unpack) {
@@ -325,9 +315,9 @@ public:
         big_endian::write2(dest, common_value);
 
         // Time now to compress the file.
-        eni_obitstream   bits(dest);
-        vector<uint16_t> buffer;
-        size_t           position = 0;
+        eni_obitstream        bits(dest);
+        std::vector<uint16_t> buffer;
+        size_t                position = 0;
         while (position < unpack.size()) {
             uint16_t const value = unpack[position];
             if (value == incrementing_value) {
@@ -402,9 +392,9 @@ public:
     }
 };
 
-bool enigma::decode(istream& source, ostream& dest) {
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+bool enigma::decode(std::istream& source, std::ostream& dest) {
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     enigma_internal::decode(input, dest);
@@ -412,13 +402,13 @@ bool enigma::decode(istream& source, ostream& dest) {
     return true;
 }
 
-bool enigma::encode(istream& source, ostream& dest) {
+bool enigma::encode(std::istream& source, std::ostream& dest) {
     enigma_internal::encode(source, dest);
     return true;
 }
 
 bool enigma::encode(std::ostream& dest, std::span<uint8_t const> data) {
-    stringstream source(ios::in | ios::out | ios::binary);
+    std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
     source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     return encode(source, dest);

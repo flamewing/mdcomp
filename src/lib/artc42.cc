@@ -27,26 +27,23 @@
 #include <istream>
 #include <ostream>
 
-using std::istream;
-using std::ostream;
-
 class artc42_internal {
 public:
-    static void decode(istream& source, ostream& dest) {
+    static void decode(std::istream& source, std::ostream& dest) {
         ignore_unused_variable_warning(source, dest);
     }
 
-    static void encode(istream& source, ostream& dest) {
+    static void encode(std::istream& source, std::ostream& dest) {
         ignore_unused_variable_warning(source, dest);
     }
 };
 
-bool artc42::decode(istream& source, ostream& dest) {
+bool artc42::decode(std::istream& source, std::ostream& dest) {
     ignore_unused_variable_warning(source, dest);
     return false;
 }
 
-bool artc42::encode(istream& source, ostream& dest) {
+bool artc42::encode(std::istream& source, std::ostream& dest) {
     ignore_unused_variable_warning(source, dest);
     return false;
 }

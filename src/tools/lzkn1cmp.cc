@@ -25,45 +25,38 @@
 #include <iostream>
 #include <sstream>
 
-using std::cerr;
-using std::endl;
-using std::fstream;
-using std::ifstream;
-using std::ios;
-using std::stringstream;
-
 static void usage(char* prog) {
-    cerr << "Usage: " << prog
-         << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
-            "{input_filename} {output_filename}"
-         << endl;
-    cerr << endl;
-    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl;
-    cerr << "\t-c,--crunch \tAssume input file is Konami LZSS Type 1 and "
-            "recompress to output file."
-         << endl
-         << "\t            \tIf --crunch is in effect, a missing "
-            "output_filename means recompress"
-         << endl
-         << "\t            \tto input_filename. All parameters affect only the "
-            "output file, except"
-         << endl
-         << "\t            \tfor the -m parameter, which makes both input and "
-            "output files moduled"
-         << endl
-         << "\t            \t(but the optional module size affects only the "
-            "output file)."
-         << endl;
-    cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << endl;
-    cerr << "\t-p|--padding\tFor moduled compression only. Changes internal "
-            "module padding to {len}."
-         << endl
-         << "\t            \tEach module will be padded to a multiple of the "
-            "given number; use 1 for"
-         << endl
-         << "\t            \tno padding. Must be a power of 2 (default: "
-         << moduled_lzkn1::MODULE_PADDING << ")." << endl
-         << endl;
+    std::cerr << "Usage: " << prog
+              << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
+                 "{input_filename} {output_filename}"
+              << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
+    std::cerr << "\t-c,--crunch \tAssume input file is Konami LZSS Type 1 and "
+                 "recompress to output file."
+              << std::endl
+              << "\t            \tIf --crunch is in effect, a missing "
+                 "output_filename means recompress"
+              << std::endl
+              << "\t            \tto input_filename. All parameters affect only the "
+                 "output file, except"
+              << std::endl
+              << "\t            \tfor the -m parameter, which makes both input and "
+                 "output files moduled"
+              << std::endl
+              << "\t            \t(but the optional module size affects only the "
+                 "output file)."
+              << std::endl;
+    std::cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << std::endl;
+    std::cerr << "\t-p|--padding\tFor moduled compression only. Changes internal "
+                 "module padding to {len}."
+              << std::endl
+              << "\t            \tEach module will be padded to a multiple of the "
+                 "given number; use 1 for"
+              << std::endl
+              << "\t            \tno padding. Must be a power of 2 (default: "
+              << moduled_lzkn1::MODULE_PADDING << ")." << std::endl
+              << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -111,22 +104,24 @@ int main(int argc, char* argv[]) {
     }
 
     if (extract && crunch) {
-        cerr << "Error: --extract and --crunch can't be used at the same time." << endl
-             << endl;
+        std::cerr << "Error: --extract and --crunch can't be used at the same time."
+                  << std::endl
+                  << std::endl;
         return 4;
     }
 
     char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
 
-    ifstream input(argv[optind], ios::in | ios::binary);
+    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
     if (!input.good()) {
-        cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
-             << endl;
+        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
+                  << std::endl
+                  << std::endl;
         return 2;
     }
 
     if (crunch) {
-        stringstream buffer(ios::in | ios::out | ios::binary);
+        std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
         input.seekg(static_cast<std::streamsize>(pointer));
         if (moduled) {
             lzkn1::moduled_decode(input, buffer);
@@ -136,11 +131,13 @@ int main(int argc, char* argv[]) {
         input.close();
         buffer.seekg(0);
 
-        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        std::fstream output(
+                outfile,
+                std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                 << endl
-                 << endl;
+            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+                      << std::endl
+                      << std::endl;
             return 3;
         }
         if (moduled) {
@@ -149,11 +146,13 @@ int main(int argc, char* argv[]) {
             lzkn1::encode(buffer, output);
         }
     } else {
-        fstream output(outfile, ios::in | ios::out | ios::binary | ios::trunc);
+        std::fstream output(
+                outfile,
+                std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                 << endl
-                 << endl;
+            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+                      << std::endl
+                      << std::endl;
             return 3;
         }
 

@@ -24,17 +24,13 @@
 #include <fstream>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
-using std::ifstream;
-using std::ios;
-using std::ofstream;
-
 static void usage(char* prog) {
-    cerr << "Usage: " << prog
-         << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}" << endl;
-    cerr << endl;
-    cerr << "\t-x,--extract\tExtract from {pointer} address in file." << endl << endl;
+    std::cerr << "Usage: " << prog
+              << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}"
+              << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl
+              << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -67,17 +63,19 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    ifstream input(argv[optind], ios::in | ios::binary);
+    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
     if (!input.good()) {
-        cerr << "Input file '" << argv[optind] << "' could not be opened." << endl
-             << endl;
+        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
+                  << std::endl
+                  << std::endl;
         return 2;
     }
 
-    ofstream output(argv[optind + 1], ios::out | ios::binary);
+    std::ofstream output(argv[optind + 1], std::ios::out | std::ios::binary);
     if (!output.good()) {
-        cerr << "Output file '" << argv[optind + 1] << "' could not be opened." << endl
-             << endl;
+        std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
+                  << std::endl
+                  << std::endl;
         return 3;
     }
 

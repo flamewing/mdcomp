@@ -30,16 +30,6 @@
 #include <ostream>
 #include <sstream>
 
-using std::array;
-using std::ios;
-using std::iostream;
-using std::istream;
-using std::numeric_limits;
-using std::ostream;
-using std::ostreambuf_iterator;
-using std::streamsize;
-using std::stringstream;
-
 template <>
 size_t moduled_saxman::pad_mask_bits = 1U;
 
@@ -76,7 +66,7 @@ class saxman_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return array{
+            return std::array{
                     sliding_window_t{
                                      data, search_buf_size, 3, look_ahead_buf_size,
                                      edge_type::dictionary}
@@ -109,7 +99,7 @@ class saxman_internal {
                 // 12-bit offset, 4-bit length.
                 return desc_bits(type) + 12 + 4;
             case edge_type::invalid:
-                return numeric_limits<size_t>::max();
+                return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
         }
@@ -140,7 +130,8 @@ class saxman_internal {
                 // Got them, so add them to the list.
                 for (size_t length = 3; length <= offset; length++) {
                     matches.emplace_back(
-                            base_node, match_t{numeric_limits<size_t>::max(), length},
+                            base_node,
+                            match_t{std::numeric_limits<size_t>::max(), length},
                             edge_type::zerofill);
                 }
             }
@@ -155,7 +146,7 @@ class saxman_internal {
     };
 
 public:
-    static void decode(istream& input, iostream& dest, size_t const size) {
+    static void decode(std::istream& input, std::iostream& dest, size_t const size) {
         using sax_istream = lzss_istream<saxman_adaptor>;
         using diff_t      = std::make_signed_t<size_t>;
 
@@ -209,13 +200,13 @@ public:
                     }
                 } else {
                     // Otherwise, it is a zero fill.
-                    fill_n(ostreambuf_iterator<char>(dest), length, 0);
+                    fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
                 }
             }
         }
     }
 
-    static void encode(ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
         using edge_type   = typename saxman_adaptor::edge_type;
         using sax_ostream = lzss_ostream<saxman_adaptor>;
 
@@ -255,13 +246,13 @@ public:
     }
 };
 
-bool saxman::decode(istream& source, iostream& dest, size_t size) {
+bool saxman::decode(std::istream& source, std::iostream& dest, size_t size) {
     if (size == 0) {
         size = little_endian::read2(source);
     }
 
-    auto const   location = source.tellg();
-    stringstream input(ios::in | ios::out | ios::binary);
+    auto const        location = source.tellg();
+    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
 
     saxman_internal::decode(input, dest, size);
@@ -269,13 +260,14 @@ bool saxman::decode(istream& source, iostream& dest, size_t size) {
     return true;
 }
 
-bool saxman::encode(ostream& dest, std::span<uint8_t const> data, bool const with_size) {
-    stringstream outbuff(ios::in | ios::out | ios::binary);
-    auto const   start = outbuff.tellg();
+bool saxman::encode(
+        std::ostream& dest, std::span<uint8_t const> data, bool const with_size) {
+    std::stringstream outbuff(std::ios::in | std::ios::out | std::ios::binary);
+    auto const        start = outbuff.tellg();
     saxman_internal::encode(outbuff, data);
     if (with_size) {
         outbuff.seekg(start);
-        outbuff.ignore(numeric_limits<streamsize>::max());
+        outbuff.ignore(std::numeric_limits<std::streamsize>::max());
         auto full_size = outbuff.gcount();
         little_endian::write2(dest, static_cast<uint16_t>(full_size));
     }
