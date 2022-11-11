@@ -18,6 +18,8 @@
 #ifndef LIB_BIGENDIAN_IO_HH
 #define LIB_BIGENDIAN_IO_HH
 
+#include "ignore_unused_variable_warning.hh"
+
 #include <boost/mp11.hpp>
 #include <boost/mpl/has_xxx.hpp>
 
@@ -29,6 +31,7 @@
 #include <cstring>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <type_traits>
 
 #ifdef _LIBCPP_VERSION
@@ -524,6 +527,104 @@ using source_endian  = detail::endian_base<std::endian::native>;
 using reverse_endian = detail::endian_base<detail::reverse(std::endian::native)>;
 using big_endian     = detail::endian_base<std::endian::big>;
 using little_endian  = detail::endian_base<std::endian::little>;
+
+template <typename endian_t, std::unsigned_integral stream_t>
+struct endian_input_iterator {
+    using pointer          = stream_t const*;
+    using reference        = stream_t const&;
+    using rvalue_reference = stream_t&&;
+    using difference_type  = ptrdiff_t;
+    using value_type       = stream_t;
+
+    constexpr endian_input_iterator() noexcept                             = default;
+    constexpr ~endian_input_iterator() noexcept                            = default;
+    constexpr endian_input_iterator(endian_input_iterator const&) noexcept = default;
+    constexpr endian_input_iterator(endian_input_iterator&&) noexcept      = default;
+    constexpr endian_input_iterator& operator=(endian_input_iterator const&) noexcept
+            = default;
+    constexpr endian_input_iterator& operator=(endian_input_iterator&&) noexcept
+            = default;
+
+    constexpr explicit endian_input_iterator(std::istream& input)
+            : source(std::addressof(input)) {}
+
+    [[nodiscard]] constexpr stream_t const& operator*() const noexcept {
+        return value;
+    }
+
+    [[nodiscard]] constexpr stream_t const* operator->() const noexcept {
+        return std::addressof(operator*());
+    }
+
+    constexpr endian_input_iterator& operator++() noexcept {
+        value = endian_t::template read<stream_t>(*source);
+        return *this;
+    }
+
+    constexpr endian_input_iterator& operator++(int unused) noexcept {
+        ignore_unused_variable_warning(unused);
+        endian_input_iterator tmp = *this;
+        value                     = endian_t::template read<stream_t>(*source);
+        return tmp;
+        return *this;
+    }
+
+    [[nodiscard]] friend constexpr bool operator==(
+            endian_input_iterator const& left,
+            endian_input_iterator const& right) noexcept {
+        return left.source == right.source;
+    }
+
+    [[nodiscard]] friend bool operator==(
+            endian_input_iterator const& iter, std::default_sentinel_t) noexcept {
+        return iter.source != nullptr;
+    }
+
+    std::istream* source = nullptr;
+    stream_t      value{};
+};
+
+static_assert(std::input_iterator<endian_input_iterator<big_endian, uint8_t>>);
+
+template <typename endian_t, std::unsigned_integral stream_t>
+struct endian_output_iterator {
+    using reference       = endian_output_iterator&;
+    using difference_type = ptrdiff_t;
+
+    constexpr endian_output_iterator() noexcept                              = default;
+    constexpr ~endian_output_iterator() noexcept                             = default;
+    constexpr endian_output_iterator(endian_output_iterator const&) noexcept = default;
+    constexpr endian_output_iterator(endian_output_iterator&&) noexcept      = default;
+    constexpr endian_output_iterator& operator=(endian_output_iterator const&) noexcept
+            = default;
+    constexpr endian_output_iterator& operator=(endian_output_iterator&&) noexcept
+            = default;
+
+    constexpr explicit endian_output_iterator(std::ostream& output)
+            : dest(std::addressof(output)) {}
+
+    constexpr endian_output_iterator& operator*() noexcept {
+        return *this;
+    }
+
+    constexpr endian_output_iterator& operator++() noexcept {
+        return *this;
+    }
+
+    constexpr endian_output_iterator& operator++(int unused) noexcept {
+        ignore_unused_variable_warning(unused);
+        return *this;
+    }
+
+    constexpr endian_output_iterator& operator=(stream_t value) noexcept {
+        endian_t::write(*dest, value);
+        return *this;
+    }
+
+    std::ostream* dest = nullptr;
+};
+
+static_assert(std::output_iterator<endian_output_iterator<big_endian, uint8_t>, uint8_t>);
 
 #undef INLINE
 #undef CONST_INLINE
