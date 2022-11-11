@@ -154,7 +154,8 @@ public:
                     diff_t const count = (offset + length < 0)
                                                  ? length
                                                  : (length - (offset + length));
-                    fill_n(std::ostreambuf_iterator<char>(dest), count, 0x20);
+                    std::ranges::fill_n(
+                            std::ostreambuf_iterator<char>(dest), count, 0x20);
                     length -= count;
                     offset += count;
                 }
@@ -219,8 +220,9 @@ bool rocket::decode(std::istream& source, std::iostream& dest) {
 bool rocket::encode(std::istream& source, std::ostream& dest) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
-    fill_n(std::ostreambuf_iterator<char>(input),
-           rocket_internal::rocket_adaptor::first_match_position, 0x20);
+    std::ranges::fill_n(
+            std::ostreambuf_iterator<char>(input),
+            rocket_internal::rocket_adaptor::first_match_position, 0x20);
     // Copy to buffer.
     input << source.rdbuf();
     input.seekg(0);
