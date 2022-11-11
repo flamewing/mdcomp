@@ -31,9 +31,11 @@ template <>
 size_t moduled_snkrle::pad_mask_bits = 1U;
 
 class snkrle_internal {
+    using snkrle_output_iterator = endian_output_iterator<source_endian, uint8_t>;
+
 public:
     static void decode(std::istream& source, std::ostream& dest) {
-        size_t size = big_endian::read2(source);
+        ptrdiff_t size = big_endian::read2(source);
         if (size == 0) {
             return;
         }
@@ -46,10 +48,8 @@ public:
             size--;
             if (curr == next) {
                 // RLE marker. Get repeat count.
-                size_t const count = read1(source);
-                for (size_t ii = 0; ii < count; ii++) {
-                    write1(dest, next);
-                }
+                ptrdiff_t const count = read1(source);
+                std::ranges::fill_n(snkrle_output_iterator(dest), count, next);
                 size -= count;
                 if (count == 255 && size > 0) {
                     curr = read1(source);

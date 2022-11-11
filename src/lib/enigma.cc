@@ -142,39 +142,7 @@ static inline void flush_buffer(
 template <>
 size_t moduled_enigma::pad_mask_bits = 1U;
 
-struct enigma_output_iterator {
-    using reference       = enigma_output_iterator&;
-    using difference_type = ptrdiff_t;
-
-    constexpr enigma_output_iterator()                                         = default;
-    constexpr ~enigma_output_iterator()                                        = default;
-    constexpr enigma_output_iterator(enigma_output_iterator const&)            = default;
-    constexpr enigma_output_iterator(enigma_output_iterator&&)                 = default;
-    constexpr enigma_output_iterator& operator=(enigma_output_iterator const&) = default;
-    constexpr enigma_output_iterator& operator=(enigma_output_iterator&&)      = default;
-
-    constexpr explicit enigma_output_iterator(std::ostream& output) : dest(&output) {}
-
-    constexpr reference operator*() noexcept {
-        return *this;
-    }
-
-    constexpr reference operator++() noexcept {
-        return *this;
-    }
-
-    constexpr reference operator++(int unused) noexcept {
-        ignore_unused_variable_warning(unused);
-        return *this;
-    }
-
-    constexpr reference operator=(uint16_t value) noexcept {
-        big_endian::write2(*dest, value);
-        return *this;
-    }
-
-    std::ostream* dest = nullptr;
-};
+using enigma_output_iterator = endian_output_iterator<big_endian, uint16_t>;
 
 static_assert(std::output_iterator<enigma_output_iterator, uint16_t>);
 
