@@ -118,7 +118,7 @@ base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
 struct compare_count {
     bool operator()(
             std::pair<uint16_t const, size_t>& left,
-            std::pair<uint16_t const, size_t>& right) {
+            std::pair<uint16_t const, size_t>& right) const {
         return (left.second < right.second);
     }
 };
@@ -248,9 +248,8 @@ public:
                 = std::bit_cast<unsigned>(std::bit_width(mask_val & 0x7ffU));
 
         // Find the most common 2-byte value.
-        compare_count const comp;
-        auto const          high = max_element(counts.begin(), counts.end(), comp);
-        uint16_t const      common_value = high->first;
+        auto const high = std::max_element(counts.begin(), counts.end(), compare_count{});
+        uint16_t const common_value = high->first;
         // No longer needed.
         counts.clear();
 
@@ -271,7 +270,7 @@ public:
         elems.clear();
 
         // Find the starting 2-byte value with the longest incrementing run.
-        auto     incr               = max_element(runs.begin(), runs.end(), comp);
+        auto     incr = std::max_element(runs.begin(), runs.end(), compare_count{});
         uint16_t incrementing_value = incr->first;
         // No longer needed.
         runs.clear();

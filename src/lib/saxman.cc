@@ -200,7 +200,7 @@ public:
                     }
                 } else {
                     // Otherwise, it is a zero fill.
-                    fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
+                    std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
                 }
             }
         }

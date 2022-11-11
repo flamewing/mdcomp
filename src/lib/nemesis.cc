@@ -1040,7 +1040,8 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     // Pad source with zeroes until it is a multiple of 32 bytes.
     auto const position = str_source.tellp();
     if ((position % 32) != 0) {
-        fill_n(std::ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
+        std::ranges::fill_n(
+                std::ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
     }
     auto const size = str_source.tellp();
 
