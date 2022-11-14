@@ -16,75 +16,28 @@
  */
 
 #include "mdcomp/enigma.hh"
+#include "mdcomp/options_lib.hh"
 
-#include <getopt.h>
+struct options_t {
+    explicit options_t(std::span<char*> args) : arguments(args) {}
 
-#include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-
-static void usage(char* prog) {
-    std::cerr << "Usage: " << prog
-              << " [-x|--extract=[{pointer}]] {input_filename} {output_filename}"
-              << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl
-              << std::endl;
-}
-
-int main(int argc, char* argv[]) {
-    constexpr static std::array const long_options{
+    constexpr static inline std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    bool   extract = false;
-    size_t pointer = 0;
+    constexpr static inline auto short_options = make_short_options<&long_options>();
 
-    while (true) {
-        int       option_index = 0;
-        int const option_char
-                = getopt_long(argc, argv, "x::", long_options.data(), &option_index);
-        if (option_char == -1) {
-            break;
-        }
+    std::filesystem::path program;
+    std::span<char*>      arguments;
+    std::span<char*>      positional;
+    std::streamsize       pointer = 0;
 
-        if (option_char == 'x') {
-            extract = true;
-            if (optarg != nullptr) {
-                pointer = strtoul(optarg, nullptr, 0);
-            }
-        }
-    }
+    bool extract = false;
 
-    if (argc - optind < 2) {
-        usage(argv[0]);
-        return 1;
-    }
+    using format_t = enigma;
+};
 
-    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
-    if (!input.good()) {
-        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
-                  << std::endl
-                  << std::endl;
-        return 2;
-    }
-
-    std::ofstream output(argv[optind + 1], std::ios::out | std::ios::binary);
-    if (!output.good()) {
-        std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                  << std::endl
-                  << std::endl;
-        return 3;
-    }
-
-    if (extract) {
-        input.seekg(static_cast<std::streamsize>(pointer));
-        enigma::decode(input, output);
-    } else {
-        enigma::encode(input, output);
-    }
-
-    return 0;
+int main(int argc, char* argv[]) {
+    return auto_compressor_decompressor(options_t({argv, static_cast<size_t>(argc)}));
 }

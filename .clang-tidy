@@ -32,6 +32,7 @@ Checks: >
   google-runtime-int,
   google-runtime-operator,
   hicpp-*,
+  -hicpp-exception-baseclass,
   -hicpp-named-parameter,
   misc-*,
   -misc-no-recursion,
