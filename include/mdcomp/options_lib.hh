@@ -51,7 +51,12 @@ consteval inline auto make_short_options() {
                 break;
             }
             ++length;
-            *iter++ = static_cast<char>(opt.val);
+            char const val = static_cast<char>(opt.val);
+            if (val == '\0') {
+                // Allow options without a short form.
+                continue;
+            }
+            *iter++ = val;
             switch (opt.has_arg) {
             case no_argument:
                 break;
