@@ -296,9 +296,9 @@ namespace detail {
             if constexpr (
                     (std::contiguous_iterator<iterator>)
                     || (contiguous_reverse_iterator<iterator>)) {
-                std::copy_n(std::to_address(input), sizeof(To), buffer.data());
+                std::ranges::copy_n(std::to_address(input), sizeof(To), buffer.data());
             } else {
-                std::copy_n(input, sizeof(To), std::begin(buffer));
+                std::ranges::copy_n(input, sizeof(To), std::ranges::begin(buffer));
             }
             To const value = [&]() {
                 if constexpr (contiguous_reverse_iterator<iterator>) {
@@ -385,9 +385,9 @@ namespace detail {
             if constexpr (
                     (std::contiguous_iterator<iterator>)
                     || (contiguous_reverse_iterator<iterator>)) {
-                std::copy_n(buffer.data(), sizeof(From), std::to_address(output));
+                std::ranges::copy(buffer, std::to_address(output));
             } else {
-                std::copy_n(buffer.data(), sizeof(From), output);
+                std::ranges::copy(buffer, output);
             }
             if constexpr ((std::forward_iterator<iterator>)&&(
                                   !contiguous_reverse_iterator<iterator>)) {
