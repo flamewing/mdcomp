@@ -15,145 +15,55 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mdcomp/options_lib.hh"
 #include "mdcomp/saxman.hh"
 
-#include <getopt.h>
+struct options_t {
+    explicit options_t(std::span<char*> args) : arguments(args) {}
 
-#include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
+    template <typename instream, typename outstream>
+    [[nodiscard]] auto get_decode_args(instream& input, outstream& output) const {
+        return gen_argument_tuple(input, output, size);
+    }
 
-static void usage(char* prog) {
-    std::cerr << "Usage: " << prog
-              << " [-s size|-S] [-c|--crunch|-x|--extract=[{pointer}]] "
-                 "{input_filename} {output_filename}"
-              << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-    std::cerr << "\t-c,--crunch \tAssume input file is Saxman-compressed and "
-                 "recompress to output file."
-              << std::endl
-              << "\t            \tIf --crunch is in effect, a missing "
-                 "output_filename means recompress"
-              << std::endl
-              << "\t            \tto input_filename." << std::endl
-              << "\t-s size     \tAssume input file does not have a file size and "
-                 "use value given instead."
-              << std::endl
-              << "\t            \tOnly affects decompression." << std::endl
-              << "\t-S          \tCauses the compressor to not output a file size. "
-                 "Only affects compression."
-              << std::endl
-              << std::endl;
-}
+    template <typename instream, typename outstream>
+    [[nodiscard]] auto get_moduled_decode_args(instream& input, outstream& output) const {
+        return gen_argument_tuple(input, output, size);
+    }
 
-int main(int argc, char* argv[]) {
-    constexpr static std::array const long_options{
+    template <typename instream, typename outstream>
+    [[nodiscard]] auto get_encode_args(instream& input, outstream& output) const {
+        return gen_argument_tuple(input, output, with_size);
+    }
+
+    template <typename instream, typename outstream>
+    [[nodiscard]] auto get_moduled_encode_args(instream& input, outstream& output) const {
+        return gen_argument_tuple(input, output, with_size);
+    }
+
+    constexpr static inline std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{ "crunch",       no_argument, nullptr, 'c'},
+            option{   "size", required_argument, nullptr, 's'},
+            option{"no-size",       no_argument, nullptr, 'S'},
             option{  nullptr,                 0, nullptr,   0}
     };
 
+    constexpr static inline auto short_options = make_short_options<&long_options>();
+
+    std::filesystem::path program;
+    std::span<char*>      arguments;
+    std::span<char*>      positional;
+    std::streamsize       pointer = 0;
+
+    size_t size      = 0;
     bool   extract   = false;
     bool   crunch    = false;
     bool   with_size = true;
-    size_t pointer   = 0;
-    size_t size      = 0;
 
-    while (true) {
-        int       option_index = 0;
-        int const option_char
-                = getopt_long(argc, argv, "x::cs:S", long_options.data(), &option_index);
-        if (option_char == -1) {
-            break;
-        }
+    using format_t = saxman;
+};
 
-        switch (option_char) {
-        case 'x':
-            extract = true;
-            if (optarg != nullptr) {
-                pointer = strtoul(optarg, nullptr, 0);
-            }
-            break;
-        case 'c':
-            crunch = true;
-            break;
-        case 's':
-            if (optarg != nullptr) {
-                size = strtoul(optarg, nullptr, 0);
-            }
-            if (size == 0) {
-                std::cerr << "Error: specified size must be a positive number."
-                          << std::endl
-                          << std::endl;
-                return 4;
-            }
-            break;
-        case 'S':
-            with_size = false;
-            break;
-        default:
-            break;
-        }
-    }
-
-    if ((!crunch && argc - optind < 2) || (crunch && argc - optind < 1)) {
-        usage(argv[0]);
-        return 1;
-    }
-
-    if (extract && crunch) {
-        std::cerr << "Error: --extract and --crunch can't be used at the same time."
-                  << std::endl
-                  << std::endl;
-        return 4;
-    }
-
-    char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
-
-    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
-    if (!input.good()) {
-        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
-                  << std::endl
-                  << std::endl;
-        return 2;
-    }
-
-    if (crunch) {
-        std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-        input.seekg(static_cast<std::streamsize>(pointer));
-        saxman::decode(input, buffer, size);
-        input.close();
-        buffer.seekg(0);
-
-        std::ofstream output(outfile, std::ios::out | std::ios::binary);
-        if (!output.good()) {
-            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                      << std::endl
-                      << std::endl;
-            return 3;
-        }
-        saxman::encode(buffer, output, with_size);
-    } else {
-        std::fstream output(
-                outfile,
-                std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-        if (!output.good()) {
-            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                      << std::endl
-                      << std::endl;
-            return 3;
-        }
-
-        if (extract) {
-            input.seekg(static_cast<std::streamsize>(pointer));
-            saxman::decode(input, output, size);
-        } else {
-            saxman::encode(input, output, with_size);
-        }
-    }
-
-    return 0;
+int main(int argc, char* argv[]) {
+    return auto_compressor_decompressor(options_t({argv, static_cast<size_t>(argc)}));
 }

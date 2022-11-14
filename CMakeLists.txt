@@ -28,6 +28,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 if(APPLE)
     set(UseLibCxxDefault TRUE)
+elseif(WIN32)
+    set(CMAKE_WIN32_EXECUTABLE FALSE)
+    set(UseLibCxxDefault FALSE)
 else()
     set(UseLibCxxDefault FALSE)
 endif()
@@ -178,7 +181,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Waligned-new=all)
         add_compile_options(-Warray-bounds=2)
         add_compile_options(-Wattribute-alias=2)
-        add_compile_options(-Wcatch-value=3)
+        add_compile_options(-Wcatch-value=2)
         add_compile_options(-Wformat-overflow=2 -Wformat-truncation=2 -Wformat=2)
         add_compile_options(-Wimplicit-fallthrough=3)
         add_compile_options(-Wplacement-new=2)
@@ -235,6 +238,7 @@ set(COMMON_HEADERS
     "include/mdcomp/lzss.hh"
     "include/mdcomp/moduled_adaptor.hh"
     "include/mdcomp/stream_utils.hh"
+    "include/mdcomp/options_lib.hh"
 )
 
 # Interface library for a few exported headers.
@@ -265,6 +269,7 @@ add_library(dummy-mdcomp
     "src/lib/lzss.cc"
     "src/lib/moduled_adaptor.cc"
     "src/lib/stream_utils.cc"
+    "src/lib/options_lib.cc"
     "${COMMON_HEADERS}"
 )
 target_include_directories(dummy-mdcomp

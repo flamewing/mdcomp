@@ -17,151 +17,32 @@
 
 #include "mdcomp/kosplus.hh"
 
-#include <getopt.h>
+#include "mdcomp/options_lib.hh"
 
-#include <array>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
+struct options_t {
+    explicit options_t(std::span<char*> args) : arguments(args) {}
 
-static void usage(char* prog) {
-    std::cerr << "Usage: " << prog
-              << " [-c|--crunch|-x|--extract=[{pointer}]] [-m|--moduled] "
-                 "{input_filename} {output_filename}"
-              << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t-x,--extract\tExtract from {pointer} address in file." << std::endl;
-    std::cerr << "\t-c,--crunch \tAssume input file is KosPlus-compressed and "
-                 "recompress to output file."
-              << std::endl
-              << "\t            \tIf --crunch is in effect, a missing "
-                 "output_filename means recompress"
-              << std::endl
-              << "\t            \tto input_filename. All parameters affect only the "
-                 "output file, except"
-              << std::endl
-              << "\t            \tfor the -m parameter, which makes both input and "
-                 "output files moduled"
-              << std::endl
-              << "\t            \t(but the optional module size affects only the "
-                 "output file)."
-              << std::endl;
-    std::cerr << "\t-m,--moduled\tUse compression in modules of 4096 bytes." << std::endl;
-}
-
-int main(int argc, char* argv[]) {
-    constexpr static std::array const long_options{
+    constexpr static inline std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{"moduled",       no_argument, nullptr, 'm'},
             option{ "crunch",       no_argument, nullptr, 'c'},
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    bool   extract = false;
-    bool   moduled = false;
-    bool   crunch  = false;
-    size_t pointer = 0;
+    constexpr static inline auto short_options = make_short_options<&long_options>();
 
-    while (true) {
-        int       option_index = 0;
-        int const option_char
-                = getopt_long(argc, argv, "x::mc", long_options.data(), &option_index);
-        if (option_char == -1) {
-            break;
-        }
+    std::filesystem::path program;
+    std::span<char*>      arguments;
+    std::span<char*>      positional;
+    std::streamsize       pointer = 0;
 
-        switch (option_char) {
-        case 'x':
-            extract = true;
-            if (optarg != nullptr) {
-                pointer = strtoul(optarg, nullptr, 0);
-            }
-            break;
-        case 'c':
-            crunch = true;
-            break;
-        case 'm':
-            moduled = true;
-            break;
-        default:
-            break;
-        }
-    }
+    bool extract = false;
+    bool moduled = false;
+    bool crunch  = false;
 
-    if ((!crunch && argc - optind < 2) || (crunch && argc - optind < 1)) {
-        usage(argv[0]);
-        return 1;
-    }
+    using format_t = kosplus;
+};
 
-    if (extract && crunch) {
-        std::cerr << "Error: --extract and --crunch can't be used at the same time."
-                  << std::endl
-                  << std::endl;
-        return 4;
-    }
-
-    char const* outfile = crunch && argc - optind < 2 ? argv[optind] : argv[optind + 1];
-
-    std::ifstream input(argv[optind], std::ios::in | std::ios::binary);
-    if (!input.good()) {
-        std::cerr << "Input file '" << argv[optind] << "' could not be opened."
-                  << std::endl
-                  << std::endl;
-        return 2;
-    }
-
-    if (crunch) {
-        std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-        input.seekg(static_cast<std::streamsize>(pointer));
-        if (moduled) {
-            kosplus::moduled_decode(input, buffer);
-        } else {
-            kosplus::decode(input, buffer);
-        }
-        input.close();
-        buffer.seekg(0);
-
-        std::fstream output(
-                outfile,
-                std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-        if (!output.good()) {
-            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                      << std::endl
-                      << std::endl;
-            return 3;
-        }
-        if (moduled) {
-            kosplus::moduled_encode(buffer, output);
-        } else {
-            kosplus::encode(buffer, output);
-        }
-    } else {
-        std::fstream output(
-                outfile,
-                std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
-        if (!output.good()) {
-            std::cerr << "Output file '" << argv[optind + 1] << "' could not be opened."
-                      << std::endl
-                      << std::endl;
-            return 3;
-        }
-
-        if (extract) {
-            input.seekg(static_cast<std::streamsize>(pointer));
-            if (moduled) {
-                kosplus::moduled_decode(input, output);
-            } else {
-                kosplus::decode(input, output);
-            }
-        } else {
-            if (moduled) {
-                kosplus::moduled_encode(input, output);
-            } else {
-                kosplus::encode(input, output);
-            }
-        }
-    }
-
-    return 0;
+int main(int argc, char* argv[]) {
+    return auto_compressor_decompressor(options_t({argv, static_cast<size_t>(argc)}));
 }

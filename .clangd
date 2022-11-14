@@ -21,6 +21,7 @@ CompileFlags:
       -Wno-c++17-compat-pedantic,
       -Wno-c++20-compat,
       -Wno-c++20-compat-pedantic,
+      -Wno-padded,
       -D_LIBCPP_ENABLE_EXPERIMENTAL,
     ]
   Remove: -W*
