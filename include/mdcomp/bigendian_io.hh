@@ -561,12 +561,11 @@ struct endian_input_iterator {
         return *this;
     }
 
-    constexpr endian_input_iterator& operator++(int unused) noexcept {
+    constexpr endian_input_iterator operator++(int unused) noexcept {
         ignore_unused_variable_warning(unused);
         endian_input_iterator tmp = *this;
         value                     = endian_t::template read<stream_t>(*source);
         return tmp;
-        return *this;
     }
 
     [[nodiscard]] friend constexpr bool operator==(
