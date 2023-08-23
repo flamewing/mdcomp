@@ -28,7 +28,6 @@
 _zKosPlus_ReadBit macro
 	dec	c								; Have all 8 bits been used up?
 	jr	nz, .skip						; Branch if not.
-	dbra	d2,.skip
 	ld	b, (hl)							; Get desc field byte.
 	inc	hl
 	ld	c, 8							; Set repeat count to 8.
