@@ -134,6 +134,10 @@ public:
     [[nodiscard]] constexpr edge_type get_type() const noexcept {
         return type;
     }
+
+    [[nodiscard]] constexpr bool is_valid() const noexcept {
+        return get_type() != edge_type::invalid;
+    }
 };
 
 template <typename Adaptor>
@@ -193,7 +197,9 @@ public:
         static_assert(
                 noexcept(Adaptor::edge_weight(edge_type(), size_t())),
                 "Adaptor::edge_weight() is not noexcept");
-        size_t const end = get_lookahead_buffer_size();
+        if (find_extra_matches(matches)) {
+            return;
+        }
         // This is what we produce.
         matches.clear();
         // First node is special.
@@ -203,17 +209,19 @@ public:
         size_t base     = base_node - 1;
         size_t best_pos = 0;
         size_t best_len = 0;
+
+        size_t const end = get_lookahead_buffer_size();
         do {
             // Keep looking for dictionary matches.
-            size_t offset = 0;
-            while (offset < end && data[base + offset] == data[base_node + offset]) {
-                ++offset;
+            size_t length = 0;
+            while (length < end && data[base + length] == data[base_node + length]) {
+                ++length;
             }
-            if (best_len < offset) {
+            if (best_len < length) {
                 best_pos = base;
-                best_len = offset;
+                best_len = length;
             }
-            if (offset == end) {
+            if (length == end) {
                 break;
             }
         } while (base-- > lower_bound);
@@ -230,6 +238,7 @@ public:
         }
     }
 
+private:
     [[nodiscard]] bool find_extra_matches(match_vector& matches) const noexcept {
         static_assert(
                 noexcept(Adaptor::extra_matches(
@@ -381,7 +390,7 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
     auto relax = [last_node = data.size(), &total_costs, &descriptor_costs, &parent_nodes,
                   &parent_edges](
                          size_t index, size_t const base_descriptor_cost,
-                         auto const& elem) {
+                         auto const& elem) noexcept {
         // Need destination ID and edge weight.
         size_t const next_node   = elem.get_destination() - Adaptor::first_match_position;
         size_t       edge_weight = total_costs[index] + elem.get_weight();
@@ -433,16 +442,16 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
             edge_type const type   = edge_type::symbolwise;
             relax(ii, base_descriptor_cost, node_t(offset, value, type));
         }
+        auto const relax_elem
+                = [&relax, ii, base_descriptor_cost](auto const& elem) noexcept {
+                      if (elem.is_valid()) {
+                          relax(ii, base_descriptor_cost, elem);
+                      }
+                  };
         // Get the adjacency list for this node.
         for (auto& window : win_set) {
-            if (!window.find_extra_matches(matches)) {
-                window.find_matches(matches);
-            }
-            for (auto const& elem : matches) {
-                if (elem.get_type() != edge_type::invalid) {
-                    relax(ii, base_descriptor_cost, elem);
-                }
-            }
+            window.find_matches(matches);
+            std::ranges::for_each(matches, relax_elem);
             window.slide_window();
         }
     }
