@@ -36,9 +36,9 @@
 
 template <auto* long_options>
 requires requires(decltype(long_options) opt) {
-             { opt->size() } -> std::same_as<size_t>;
-             { opt->data() } -> std::same_as<const option*>;
-         }
+    { opt->size() } -> std::same_as<size_t>;
+    { opt->data() } -> std::same_as<const option*>;
+}
 consteval inline auto make_short_options() {
     static_assert(long_options->back().name == nullptr);
     constexpr auto const result = [&]() consteval noexcept {
@@ -72,8 +72,7 @@ consteval inline auto make_short_options() {
             }
         }
         return std::pair{intermediate, length};
-    }
-    ();
+    }();
     auto const to_init = [&]<size_t... Is>(std::index_sequence<Is...>) {
         return std::array{result.first[Is]..., '\0'};
     };
@@ -86,8 +85,10 @@ inline auto gen_argument_tuple(instream& input, outstream& output, Args&&... arg
 }
 
 #define FWD(x) static_cast<decltype(x)&&>(x)
-#define RETURNS(expr) \
-    noexcept(noexcept(expr))->decltype(expr) { return expr; }
+#define RETURNS(expr)                          \
+    noexcept(noexcept(expr))->decltype(expr) { \
+        return expr;                           \
+    }
 #define OVERLOADS_OF(name) [&](auto&&... args) RETURNS(name(FWD(args)...))
 
 namespace detail {
@@ -108,32 +109,32 @@ namespace detail {
 
     template <typename options_t>
     concept has_crunch = requires(options_t opt) {
-                             { opt.crunch } -> std::same_as<bool&>;
-                         };
+        { opt.crunch } -> std::same_as<bool&>;
+    };
     template <typename options_t>
     concept has_moduled = requires(options_t opt) {
-                              { opt.moduled } -> std::same_as<bool&>;
-                          };
+        { opt.moduled } -> std::same_as<bool&>;
+    };
     template <typename options_t>
     concept has_print_end = requires(options_t opt) {
-                                { opt.print_end } -> std::same_as<bool&>;
-                            };
+        { opt.print_end } -> std::same_as<bool&>;
+    };
     template <typename options_t>
     concept has_pointer = requires(options_t opt) {
-                              { opt.pointer } -> std::same_as<std::streamsize&>;
-                          };
+        { opt.pointer } -> std::same_as<std::streamsize&>;
+    };
     template <typename options_t>
     concept has_padding = requires(options_t opt) {
-                              { opt.padding } -> std::same_as<size_t&>;
-                          };
+        { opt.padding } -> std::same_as<size_t&>;
+    };
     template <typename options_t>
     concept has_size = requires(options_t opt) {
-                           { opt.size } -> std::same_as<size_t&>;
-                       };
+        { opt.size } -> std::same_as<size_t&>;
+    };
     template <typename options_t>
     concept has_with_size = requires(options_t opt) {
-                                { opt.with_size } -> std::same_as<bool&>;
-                            };
+        { opt.with_size } -> std::same_as<bool&>;
+    };
     template <typename options_t>
     concept has_get_decode_args
             = requires(options_t opt, std::istream& instream, std::ostream& outstream) {

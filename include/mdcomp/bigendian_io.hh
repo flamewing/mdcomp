@@ -157,8 +157,8 @@ namespace detail {
 
     template <typename T>
     concept contiguous_reverse_iterator
-            = (is_reverse_iterator_v<T>)
-              && (std::contiguous_iterator<typename T::iterator_type>);
+            = is_reverse_iterator_v<T>
+              && std::contiguous_iterator<typename T::iterator_type>;
 
     template <class... Ts>
     struct overloaded : public Ts... {
@@ -185,23 +185,23 @@ namespace detail {
             if (!std::is_constant_evaluated()) {
                 constexpr auto const builtin_bswap = overloaded(
 #    ifdef __GNUG__
-                        [](const uint16_t val) {
+                        [](uint16_t const val) {
                             return __builtin_bswap16(val);
                         },
-                        [](const uint32_t val) {
+                        [](uint32_t const val) {
                             return __builtin_bswap32(val);
                         },
-                        [](const uint64_t val) {
+                        [](uint64_t const val) {
                             return __builtin_bswap64(val);
                         }
 #    elif defined(_MSC_VER)
-                        [](const uint16_t val) {
+                        [](uint16_t const val) {
                             return _byteswap_ushort(val);
                         },
-                        [](const uint32_t val) {
+                        [](uint32_t const val) {
                             return _byteswap_ulong(val);
                         },
-                        [](const uint64_t val) {
+                        [](uint64_t const val) {
                             return _byteswap_uint64(val);
                         },
 #    endif

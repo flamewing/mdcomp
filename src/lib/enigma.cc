@@ -317,7 +317,7 @@ public:
                 uint16_t next  = unpack[position + 1];
                 uint16_t delta = next - value;
 
-                constexpr const uint16_t minus_one = std::numeric_limits<uint16_t>::max();
+                constexpr uint16_t const minus_one = std::numeric_limits<uint16_t>::max();
                 if (position + 1 < unpack.size() && next != incrementing_value
                     && (delta == minus_one || delta == 0 || delta == 1)) {
                     flush_buffer(buffer, bits, put_mask, packet_length);

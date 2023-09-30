@@ -26,12 +26,12 @@
 namespace detail {
     template <typename T1, typename T2>
     requires requires(T1 value1, T2 value2) {
-                 value1 + value2;
-                 value1 - value2;
-                 value1* value2;
-                 value1 / value2;
-                 value1 % value2;
-             }
+        value1 + value2;
+        value1 - value2;
+        value1* value2;
+        value1 / value2;
+        value1 % value2;
+    }
     constexpr inline auto round_up(T1 const value, T2 const factor) noexcept {
         constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
@@ -70,10 +70,10 @@ namespace detail {
 
     template <typename It>
     concept cpp17_iterator = requires(It iter) {
-                                 { *iter } -> can_reference;
-                                 { ++iter } -> std::same_as<It&>;
-                                 { *iter++ } -> can_reference;
-                             } && std::copyable<It>;
+        { *iter } -> can_reference;
+        { ++iter } -> std::same_as<It&>;
+        { *iter++ } -> can_reference;
+    } && std::copyable<It>;
 
     template <typename Ty>
     concept has_member_difference_type = requires { typename Ty::difference_type; };
@@ -89,13 +89,13 @@ namespace detail {
         Ty* derived_from_range_adaptor_closure(base<Ty>&);    // not defined
 
         template <typename Ty>
-        concept range_adaptor_closure_object = !
-        std::ranges::range<std::remove_cvref_t<
-                Ty>>&& requires(std::remove_cvref_t<Ty>& inst) {
-                           {
-                               pipe::derived_from_range_adaptor_closure(inst)
-                               } -> std::same_as<std::remove_cvref_t<Ty>*>;
-                       };
+        concept range_adaptor_closure_object
+                = !std::ranges::range<std::remove_cvref_t<Ty>>
+                  && requires(std::remove_cvref_t<Ty>& inst) {
+                         {
+                             pipe::derived_from_range_adaptor_closure(inst)
+                         } -> std::same_as<std::remove_cvref_t<Ty>*>;
+                     };
 
         template <typename ClosureLeft, typename ClosureRight>
         struct pipeline : base<pipeline<ClosureLeft, ClosureRight>> {
@@ -107,8 +107,8 @@ namespace detail {
 
             template <typename Ty1, typename Ty2>
             constexpr explicit pipeline(Ty1&& val1, Ty2&& val2) noexcept(
-                    std::is_nothrow_constructible_v<Ty1, ClosureLeft>&&
-                            std::is_nothrow_constructible_v<Ty2, ClosureRight>)
+                    std::is_nothrow_constructible_v<Ty1, ClosureLeft>
+                    && std::is_nothrow_constructible_v<Ty2, ClosureRight>)
                     : left(std::forward<Ty1>(val1)), right(std::forward<Ty2>(val2)) {}
 
             template <typename Ty>
@@ -131,8 +131,8 @@ namespace detail {
             [[nodiscard]] constexpr auto operator()(Ty&& val) && noexcept(
                     noexcept(std::move(right)(std::move(left)(std::forward<Ty>(val)))))
             requires requires {
-                         std::move(right)(std::move(left)(std::forward<Ty>(val)));
-                     }
+                std::move(right)(std::move(left)(std::forward<Ty>(val)));
+            }
             {
                 return std::move(right)(std::move(left)(std::forward<Ty>(val)));
             }
@@ -141,8 +141,8 @@ namespace detail {
             [[nodiscard]] constexpr auto operator()(Ty&& val) const&& noexcept(
                     noexcept(std::move(right)(std::move(left)(std::forward<Ty>(val)))))
             requires requires {
-                         std::move(right)(std::move(left)(std::forward<Ty>(val)));
-                     }
+                std::move(right)(std::move(left)(std::forward<Ty>(val)));
+            }
             {
                 return std::move(right)(std::move(left)(std::forward<Ty>(val)));
             }
@@ -204,28 +204,28 @@ namespace detail {
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types&...>
-        constexpr decltype(auto) operator()(Ty&& arg) & noexcept(
+        constexpr decltype(auto) operator()(Ty && arg) & noexcept(
                 noexcept(call(*this, std::forward<Ty>(arg), indices{}))) {
             return call(*this, std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types const&...>
-        constexpr decltype(auto) operator()(Ty&& arg) const& noexcept(
+        constexpr decltype(auto) operator()(Ty && arg) const& noexcept(
                 noexcept(call(*this, std::forward<Ty>(arg), indices{}))) {
             return call(*this, std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types...>
-        constexpr decltype(auto) operator()(Ty&& arg) && noexcept(
+        constexpr decltype(auto) operator()(Ty && arg) && noexcept(
                 noexcept(call(std::move(*this), std::forward<Ty>(arg), indices{}))) {
             return call(std::move(*this), std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
-        requires std::invocable<Fn, Ty, const Types...>
-        constexpr decltype(auto) operator()(Ty&& arg) const&& noexcept(
+        requires std::invocable<Fn, Ty, Types const...>
+        constexpr decltype(auto) operator()(Ty && arg) const&& noexcept(
                 noexcept(call(std::move(*this), std::forward<Ty>(arg), indices{}))) {
             return call(std::move(*this), std::forward<Ty>(arg), indices{});
         }
@@ -271,10 +271,10 @@ namespace detail {
                      cont.reserve(count);
                      {
                          cont.capacity()
-                         } -> std::same_as<std::ranges::range_size_t<container_t>>;
+                     } -> std::same_as<std::ranges::range_size_t<container_t>>;
                      {
                          cont.max_size()
-                         } -> std::same_as<std::ranges::range_size_t<container_t>>;
+                     } -> std::same_as<std::ranges::range_size_t<container_t>>;
                  };
 
     template <typename range_t, typename container_t>
@@ -309,8 +309,8 @@ namespace detail {
 
     template <typename container_t, typename reference>
     concept can_insert_end = requires(container_t& cont) {
-                                 cont.insert(cont.end(), std::declval<reference>());
-                             };
+        cont.insert(cont.end(), std::declval<reference>());
+    };
 
     template <typename range_t, typename container_t, typename... types_t>
     concept converts_constructible_insertable
@@ -377,10 +377,8 @@ namespace detail {
         template <std::ranges::input_range range_t, typename... types_t>
         [[nodiscard]] constexpr auto operator()(range_t&& range, types_t&&... args) const
         requires requires {
-                     to<container_t>(
-                             std::forward<range_t>(range),
-                             std::forward<types_t>(args)...);
-                 }
+            to<container_t>(std::forward<range_t>(range), std::forward<types_t>(args)...);
+        }
         {
             return to<container_t>(
                     std::forward<range_t>(range), std::forward<types_t>(args)...);
