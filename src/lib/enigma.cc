@@ -21,15 +21,14 @@
 
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
-#include "mdcomp/ignore_unused_variable_warning.hh"
 
 #include <algorithm>
 #include <array>
-#include <functional>
 #include <iostream>
 #include <istream>
 #include <limits>
 #include <map>
+#include <numeric>
 #include <ostream>
 #include <set>
 #include <sstream>

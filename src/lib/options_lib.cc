@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mdcomp/options_lib.hh"
+#include "mdcomp/options_lib.hh"    // IWYU pragma: keep

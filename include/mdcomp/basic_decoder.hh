@@ -20,7 +20,6 @@
 #ifndef LIB_BASIC_DECODER_H
 #define LIB_BASIC_DECODER_H
 
-#include "mdcomp/bigendian_io.hh"
 #include "mdcomp/stream_utils.hh"
 
 #include <iostream>

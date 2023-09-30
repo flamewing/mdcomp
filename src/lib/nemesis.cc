@@ -22,6 +22,7 @@
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
+#include "mdcomp/stream_utils.hh"
 
 #include <algorithm>
 #include <array>

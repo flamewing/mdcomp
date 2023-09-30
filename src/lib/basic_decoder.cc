@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mdcomp/basic_decoder.hh"
+#include "mdcomp/basic_decoder.hh"    // IWYU pragma: keep
