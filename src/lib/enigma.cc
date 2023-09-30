@@ -113,31 +113,6 @@ base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
     return array[flags];
 }
 
-// Comparison functor, see below.
-struct compare_count {
-    bool operator()(
-            std::pair<uint16_t const, size_t>& left,
-            std::pair<uint16_t const, size_t>& right) const {
-        return (left.second < right.second);
-    }
-};
-
-// This flushes (if needed) the contents of the inlined data buffer.
-static inline void flush_buffer(
-        std::vector<uint16_t>& buffer, eni_obitstream& bits, flag_writer& put_mask,
-        size_t const packet_length) {
-    if (buffer.empty()) {
-        return;
-    }
-
-    bits.write(0x70U | ((buffer.size() - 1) & 0xfU), 7);
-    for (auto const value : buffer) {
-        put_mask(bits, value);
-        bits.write(value & 0x7ffU, packet_length);
-    }
-    buffer.clear();
-}
-
 template <>
 size_t moduled_enigma::pad_mask_bits = 1U;
 
@@ -219,12 +194,13 @@ public:
     }
 
     static void encode(std::istream& source, std::ostream& dest) {
+        using diff_t = std::make_signed_t<size_t>;
         // To unpack source into 2-byte words.
         std::vector<uint16_t> unpack;
         // Frequency map.
-        std::map<uint16_t, size_t> counts;
+        std::map<uint16_t, diff_t> counts;
         // Presence map.
-        std::set<uint16_t> elems;
+        std::set<uint16_t> unique_elems;
 
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
@@ -232,13 +208,12 @@ public:
         source.seekg(0);
         source.ignore(std::numeric_limits<std::streamsize>::max());
         auto const full_size = source.gcount() / 2;
-        using diff_t         = std::make_signed_t<size_t>;
         source.seekg(0);
         for (diff_t loc = 0; loc < full_size; loc++) {
             uint16_t const value = big_endian::read2(source);
             mask_val |= value;
             counts[value] += 1;
-            elems.insert(value);
+            unique_elems.insert(value);
             unpack.push_back(value);
         }
 
@@ -247,7 +222,8 @@ public:
                 = std::bit_cast<unsigned>(std::bit_width(mask_val & 0x7ffU));
 
         // Find the most common 2-byte value.
-        auto const high = std::max_element(counts.begin(), counts.end(), compare_count{});
+        auto const high = std::ranges::max_element(
+                counts, {}, &decltype(counts)::value_type::second);
         uint16_t const common_value = high->first;
         // No longer needed.
         counts.clear();
@@ -255,24 +231,27 @@ public:
         // Find incrementing (not necessarily contiguous) runs.
         // The original algorithm does this for all 65536 2-byte words, while
         // this version only checks the 2-byte words actually in the file.
-        std::map<uint16_t, size_t> runs;
-        for (auto next : elems) {
-            auto [value, inserted] = runs.emplace(next, 0);
-            for (auto& elem : unpack) {
-                if (elem == next) {
-                    next++;
-                    value->second += 1;
-                }
-            }
-        }
-        // No longer needed.
-        elems.clear();
-
+        using kv_pair     = std::pair<uint16_t, diff_t>;
+        auto transform_fn = [&](uint16_t elem) noexcept -> kv_pair {
+            auto const predicate = [next = elem](uint16_t value) mutable noexcept {
+                const bool result = value == next;
+                next += static_cast<uint16_t>(result);
+                return result;
+            };
+            return {elem, std::ranges::count_if(unpack, predicate)};
+        };
+        auto reduce_fn = [](auto const& left, auto const& right) {
+            return std::ranges::max(left, right, {}, &kv_pair::second);
+        };
         // Find the starting 2-byte value with the longest incrementing run.
-        auto     incr = std::max_element(runs.begin(), runs.end(), compare_count{});
-        uint16_t incrementing_value = incr->first;
-        // No longer needed.
-        runs.clear();
+        // I'd love to use std::views::transform, but there is no ranges version
+        // of std::reduce. Composing std::reduce with std::views::transform
+        // generates the same assembly as std::transform_reduce, so this is
+        // fine because it needs one less temporary.
+        uint16_t incrementing_value = std::transform_reduce(
+                                              unique_elems.cbegin(), unique_elems.cend(),
+                                              kv_pair{}, reduce_fn, transform_fn)
+                                              .first;
 
         // Output header.
         write1(dest, packet_length & std::numeric_limits<uint8_t>::max());
@@ -283,77 +262,95 @@ public:
         // Time now to compress the file.
         eni_obitstream        bits(dest);
         std::vector<uint16_t> buffer;
-        size_t                position = 0;
-        while (position < unpack.size()) {
+
+        // Writes a mask and a value to the output stream.
+        auto const write_value = [&](uint16_t const value) {
+            put_mask(bits, value);
+            bits.write(value & 0x7ffU, packet_length);
+        };
+        // This flushes (if needed) the contents of the inlined data buffer.
+        auto const flush_buffer = [&]() {
+            if (buffer.empty()) {
+                return;
+            }
+            bits.write(0b111'0000U | ((buffer.size() - 1U) & 0b000'1111U), 7);
+            std::ranges::for_each(buffer, write_value);
+            buffer.clear();
+        };
+        // This pushes a value into the buffer, flushing it before if the buffer
+        // was full before pushing.
+        auto const push_into_buffer = [&](uint16_t const value) {
+            if (buffer.size() >= 0xf) {
+                flush_buffer();
+            }
+            buffer.push_back(value);
+        };
+        constexpr static std::array<uint16_t, 3> const delta_to_code{
+                0b110'0000U, 0b100'0000U, 0b101'0000U};
+        for (size_t position = 0; position < unpack.size(); position++) {
             uint16_t const value = unpack[position];
             if (value == incrementing_value) {
-                flush_buffer(buffer, bits, put_mask, packet_length);
-                uint16_t next  = value + 1;
-                size_t   count = 0;
-                for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
+                flush_buffer();
+                size_t const last  = std::min(unpack.size(), position + 15);
+                uint16_t     next  = value + 1;
+                size_t       count = 0;
+                for (size_t i = position + 1; i < last; i++) {
                     if (next != unpack[i]) {
                         break;
                     }
                     next++;
                     count++;
                 }
-                bits.write(0b00'0000U | (count & 0xffU), 6);
+                bits.write(0b00'0000U | (count & 0b00'1111U), 6);
                 incrementing_value = next;
                 position += count;
-            } else if (value == common_value) {
-                flush_buffer(buffer, bits, put_mask, packet_length);
+                continue;
+            }
+            if (value == common_value) {
+                flush_buffer();
+                size_t const   last  = std::min(unpack.size(), position + 15);
                 uint16_t const next  = value;
                 size_t         count = 0;
-                for (size_t i = position + 1; i < unpack.size() && count < 0xf; i++) {
+                for (size_t i = position + 1; i < last; i++) {
                     if (next != unpack[i]) {
                         break;
                     }
                     count++;
                 }
-                bits.write(0b01'0000U | (count & 0xffU), 6);
+                bits.write(0b01'0000U | (count & 0b00'1111U), 6);
                 position += count;
-            } else {
-                uint16_t next  = unpack[position + 1];
-                uint16_t delta = next - value;
-
-                constexpr uint16_t const minus_one = std::numeric_limits<uint16_t>::max();
-                if (position + 1 < unpack.size() && next != incrementing_value
-                    && (delta == minus_one || delta == 0 || delta == 1)) {
-                    flush_buffer(buffer, bits, put_mask, packet_length);
-                    size_t count = 1;
+                continue;
+            }
+            if (position + 1 < unpack.size()) {
+                uint16_t       next  = unpack[position + 1];
+                uint16_t const delta = next - value;
+                uint16_t const index = delta + 1U;
+                if (next != incrementing_value && index <= 2U) {
+                    flush_buffer();
+                    size_t const last  = std::min(unpack.size(), position + 15);
+                    size_t       count = 1;
                     next += delta;
-                    for (size_t i = position + 2; i < unpack.size() && count < 0xf; i++) {
+                    for (size_t i = position + 2; i < last; i++) {
                         if (next != unpack[i] || next == incrementing_value) {
                             break;
                         }
                         next += delta;
                         count++;
                     }
-
-                    if (delta == minus_one) {
-                        delta = 2;
-                    }
-
-                    delta = (((delta | 4U)) << 4U) & 0xffffU;
-                    bits.write((delta | count) & 0xffU, 7);
-                    put_mask(bits, value);
-                    bits.write(value & 0x7ffU, packet_length);
+                    uint16_t const code = delta_to_code[index];
+                    bits.write((code | count) & 0b111'1111U, 7);
+                    write_value(value);
                     position += count;
-                } else {
-                    if (buffer.size() >= 0xf) {
-                        flush_buffer(buffer, bits, put_mask, packet_length);
-                    }
-
-                    buffer.push_back(value);
+                    continue;
                 }
             }
-            position++;
+            push_into_buffer(value);
         }
 
-        flush_buffer(buffer, bits, put_mask, packet_length);
+        flush_buffer();
 
         // Terminator.
-        bits.write(0x7f, 7);
+        bits.write(0b111'1111U, 7);
         bits.flush();
     }
 };
