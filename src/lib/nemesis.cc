@@ -433,11 +433,11 @@ public:
             // output the lines.
             str_dest.seekg(0);
             str_dest.clear();
-            uint32_t value = little_endian::read4(str_dest);
-            little_endian::write4(dest, value);
+            uint32_t value = source_endian::read4(str_dest);
+            source_endian::write4(dest, value);
             while (str_dest.tellg() < final_size) {
-                value ^= little_endian::read4(str_dest);
-                little_endian::write4(dest, value);
+                value ^= source_endian::read4(str_dest);
+                source_endian::write4(dest, value);
             }
         } else {
             dest.write(str_dest.str().c_str(), final_size);
@@ -519,8 +519,7 @@ public:
                     size_t const count = run.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
-                    auto const [linear_coefficients, rows]
-                            = [&]() -> std::pair<size_t const*, size_t> {
+                    auto const linear_coefficients = [&]() {
                         // This is a linear optimization problem subjected to 2
                         // constraints. If the number of repeats of the current
                         // nibble run is N, then we have N dimensions.
@@ -597,23 +596,29 @@ public:
                         // Get correct coefficient table:
                         switch (count) {
                         case 2:
-                            return {linear_coefficients2[0].data(),
+                            return std::span{
+                                    linear_coefficients2[0].data(),
                                     linear_coefficients2.size()};
                         case 3:
-                            return {linear_coefficients3[0].data(),
+                            return std::span{
+                                    linear_coefficients3[0].data(),
                                     linear_coefficients3.size()};
                         case 4:
-                            return {linear_coefficients4[0].data(),
+                            return std::span{
+                                    linear_coefficients4[0].data(),
                                     linear_coefficients4.size()};
                         case 5:
-                            return {linear_coefficients5[0].data(),
+                            return std::span{
+                                    linear_coefficients5[0].data(),
                                     linear_coefficients5.size()};
                         case 6:
-                            return {linear_coefficients6[0].data(),
+                            return std::span{
+                                    linear_coefficients6[0].data(),
                                     linear_coefficients6.size()};
                         case 7:
                         default:
-                            return {linear_coefficients7[0].data(),
+                            return std::span{
+                                    linear_coefficients7[0].data(),
                                     linear_coefficients7.size()};
                         }
                     }();
@@ -646,7 +651,8 @@ public:
 
                     std::optional<size_t> best_line;
 
-                    for (size_t i = 0; i < rows; i++, base += count) {
+                    for (size_t i = 0; i < linear_coefficients.size();
+                         i++, base += count) {
                         // Tally up the code length for this coefficient line.
                         size_t length = 0;
                         for (size_t j = 0; j < count; j++) {
@@ -1050,18 +1056,16 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     auto const size = str_source.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
+    std::stringstream source_xor(std::ios::in | std::ios::out | std::ios::binary);
     str_source.clear();
     str_source.seekg(0);
 
-    std::string buffer = str_source.str();
-    auto*       bytes  = reinterpret_cast<uint8_t*>(buffer.data());
-    for (size_t i = buffer.size() - 4; i > 0; i -= 4) {
-        bytes[i + 0] ^= bytes[i - 4];
-        bytes[i + 1] ^= bytes[i - 3];
-        bytes[i + 2] ^= bytes[i - 2];
-        bytes[i + 3] ^= bytes[i - 1];
+    uint32_t value = 0;
+    while (source_xor.tellp() < size) {
+        uint32_t new_value = source_endian::read4(str_source);
+        source_endian::write4(source_xor, value ^ new_value);
+        value = new_value;
     }
-    std::stringstream source_xor(buffer, std::ios::in | std::ios::out | std::ios::binary);
 
     std::array<std::stringstream, 4> buffers;
     using nemesis_mode = nemesis_internal::nemesis_mode;
