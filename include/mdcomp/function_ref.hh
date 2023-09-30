@@ -170,10 +170,9 @@ namespace std23 {
                 = (is_invocable_using<F, T...>)&&(std::is_member_pointer_v<F>);
 
     public:
-        // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
+        // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload,cppcoreguidelines-missing-std-forward)
         template <class F>
         requires std::is_function_v<F> && is_invocable_using<F>
-        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(F* callable) noexcept
                 : object(callable), fun_pointer([](storage func, param_t<Args>... args) {
                       return std23::invoke_r<R>(
@@ -182,7 +181,6 @@ namespace std23 {
 
         template <class F, class T = remove_and_unwrap_reference_t<F>>
         requires is_not_self<F, function_ref> && is_invocable_using<cvref<T>>
-        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
         constexpr function_ref(F&& callable) noexcept
                 : object(std::addressof(static_cast<T&>(callable))),
                   fun_pointer([](storage func, param_t<Args>... args) {
@@ -192,13 +190,10 @@ namespace std23 {
 
         template <auto F>
         requires is_invocable_using<decltype(F)>
-        // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
         constexpr function_ref(nontype_t<F>) noexcept
                 : fun_pointer([](storage, param_t<Args>... args) {
                       return std23::invoke_r<R>(F, std::forward<Args>(args)...);
                   }) {}
-
-        // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload)
 
         template <
                 auto F, class U, class Ty = std::unwrap_reference_t<U>,
@@ -211,6 +206,8 @@ namespace std23 {
                       cvref<T> real_obj = *get<T>(self);
                       return std23::invoke_r<R>(F, real_obj, std::forward<Args>(args)...);
                   }) {}
+
+        // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload,cppcoreguidelines-missing-std-forward)
 
         template <auto F, class T>
         constexpr function_ref(nontype_t<F>, cv<T>* obj) noexcept

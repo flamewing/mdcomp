@@ -157,8 +157,8 @@ namespace detail {
                  && std::constructible_from<std::remove_cvref_t<Right>, Right>
         [[nodiscard]] constexpr auto operator|(Left&& left, Right&& right) noexcept(
                 noexcept(pipeline{
-                        static_cast<Left&&>(left), static_cast<Right&&>(right)})) {
-            return pipeline{static_cast<Left&&>(left), static_cast<Right&&>(right)};
+                        std::forward<Left>(left), std::forward<Right>(right)})) {
+            return pipeline{std::forward<Left>(left), std::forward<Right>(right)};
         }
 
         template <typename Left, typename Right>

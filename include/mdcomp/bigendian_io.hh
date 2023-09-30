@@ -251,7 +251,7 @@ namespace detail {
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
-            input.read(buffer.data(), sizeof(To));
+            std::forward<Stream>(input).read(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
                 return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
@@ -266,7 +266,7 @@ namespace detail {
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
-            input.sgetn(buffer.data(), sizeof(To));
+            std::forward<Stream>(input).sgetn(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
                 return detail::byteswap(std::bit_cast<To>(buffer));
             } else {
@@ -276,6 +276,7 @@ namespace detail {
 
         template <std::unsigned_integral To, typename IterRef>
         requires(byte_input_iterator<std::remove_cvref_t<IterRef>>)
+        // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
         [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept {
             using iterator = std::remove_cvref_t<IterRef>;
             if constexpr (contiguous_reverse_iterator<iterator>) {
@@ -325,7 +326,7 @@ namespace detail {
             }
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
                     = std::bit_cast<decltype(buffer)>(value);
-            output.write(buffer.data(), sizeof(From));
+            std::forward<Stream>(output).write(buffer.data(), sizeof(From));
         }
 
         template <std::unsigned_integral From, typename Stream>
@@ -339,7 +340,7 @@ namespace detail {
             }
             alignas(alignof(From)) std::array<char, sizeof(From)> buffer
                     = std::bit_cast<decltype(buffer)>(value);
-            output.sputn(buffer.data(), sizeof(From));
+            std::forward<Stream>(output).sputn(buffer.data(), sizeof(From));
         }
 
         template <contiguous_container Cont, std::unsigned_integral From>
@@ -355,6 +356,7 @@ namespace detail {
 
         template <typename IterRef, std::unsigned_integral From>
         requires(byte_output_iterator<std::remove_cvref_t<IterRef>>)
+        // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
         INLINE constexpr static void write_impl(IterRef&& output, From value) noexcept {
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does

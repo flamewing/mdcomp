@@ -726,6 +726,7 @@ public:
     static std::streamoff encode(
             std::istream& source, std::ostream& dest, nemesis_mode mode,
             std::streamoff const length, Compare&& comp) {
+        auto compare = std::forward<Compare>(comp);
         // Seek to start and clear all errors.
         source.clear();
         source.seekg(0);
@@ -792,7 +793,7 @@ public:
 
         // This may seem useless, but my tests all indicate that this reduces
         // the average file size. I haven't the foggiest idea why.
-        comp.initialize(nodes, code_map);
+        compare.initialize(nodes, code_map);
 
         // Size estimate. This is used to build the optimal compressed file.
         size_t size_est = 0xffffffff;
@@ -927,8 +928,8 @@ public:
 
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
-            comp.update(nodes, temp_code_map);
-            pop_heap(nodes.begin(), nodes.end(), comp);
+            compare.update(nodes, temp_code_map);
+            pop_heap(nodes.begin(), nodes.end(), compare);
             nodes.pop_back();
 
             // Is this iteration better than the best?

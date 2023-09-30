@@ -19,6 +19,7 @@
 #define LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH
 
 template <typename... T>
+// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
 constexpr inline void ignore_unused_variable_warning(T&&...) {}
 
 #endif    // LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH
