@@ -16,4 +16,4 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mdcomp/stream_utils.hh"
+#include "mdcomp/stream_utils.hh"    // IWYU pragma: keep

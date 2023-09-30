@@ -19,7 +19,6 @@
 #include "mdcomp/snkrle.hh"
 
 #include "mdcomp/bigendian_io.hh"
-#include "mdcomp/ignore_unused_variable_warning.hh"
 
 #include <istream>
 #include <limits>

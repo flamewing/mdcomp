@@ -23,7 +23,6 @@
 #include "mdcomp/bitstream.hh"
 
 #include <algorithm>
-#include <array>
 #include <iostream>
 #include <limits>
 #include <list>

@@ -18,15 +18,12 @@
 #ifndef LIB_OPTIONS_LIB_HH
 #define LIB_OPTIONS_LIB_HH
 
-#include "mdcomp/ignore_unused_variable_warning.hh"
-
 #include <getopt.h>
 
 #include <boost/io/ios_state.hpp>
 
 #include <array>
 #include <charconv>
-#include <concepts>
 #include <cstring>
 #include <filesystem>
 #include <fstream>

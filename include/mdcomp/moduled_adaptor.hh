@@ -26,7 +26,6 @@
 #include <ios>
 #include <limits>
 #include <memory>
-#include <span>
 #include <sstream>
 #include <vector>
 
