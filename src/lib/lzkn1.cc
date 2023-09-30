@@ -200,8 +200,7 @@ public:
         }
         if (bytes_written != uncompressed_size) {
             std::cerr << "Something went wrong; expected " << uncompressed_size
-                      << " bytes, got " << bytes_written << " bytes instead."
-                      << std::endl;
+                      << " bytes, got " << bytes_written << " bytes instead.\n";
         }
     }
 
@@ -267,7 +266,7 @@ public:
             case edge_type::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
-                          << static_cast<size_t>(edge.get_type()) << std::endl;
+                          << static_cast<size_t>(edge.get_type()) << '\n';
                 __builtin_unreachable();
             }
         }
