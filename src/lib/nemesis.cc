@@ -221,10 +221,12 @@ struct compare_size {
     }
 };
 
+#define CUSTOM_COMPARE 1
+
 struct compare_node {
     bool operator()(std::shared_ptr<node> const& left, std::shared_ptr<node> const& right)
             const noexcept {
-#if 1
+#if CUSTOM_COMPARE
         if (*left > *right) {
             return true;
         }
