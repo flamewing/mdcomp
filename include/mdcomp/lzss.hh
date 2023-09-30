@@ -555,13 +555,13 @@ private:
             descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
             Adaptor::need_early_descriptor>;
     // Where we will input to.
-    std::istream& in;
+    std::istream* in;
     // Internal bitstream input buffer.
     bit_buffer_t bits;
 
 public:
     // Constructor.
-    explicit lzss_istream(std::istream& source) noexcept : in(source), bits(in) {}
+    explicit lzss_istream(std::istream& source) noexcept : in(&source), bits(*in) {}
 
     // Writes a bit to the descriptor bitfield. When the descriptor field is
     // full, it is written out.
@@ -571,7 +571,7 @@ public:
 
     // Puts a byte in the input buffer.
     uint8_t get_byte() noexcept {
-        return read1(in);
+        return read1(*in);
     }
 };
 
