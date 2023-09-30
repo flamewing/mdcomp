@@ -146,6 +146,7 @@ public:
     using match_vector = std::vector<node_t>;
     using data_t       = std::span<stream_t const>;
 
+    // NOLINTBEGIN(bugprone-easily-swappable-parameters)
     constexpr sliding_window(
             data_t data_in, size_t const search_buffer_size_in,
             size_t const minimal_match_length_in, size_t const lookahead_buffer_length,
@@ -154,10 +155,10 @@ public:
               minimal_match_length(minimal_match_length_in),
               base_node(Adaptor::first_match_position),
               upper_bound(std::min(lookahead_buffer_length + base_node, data.size())),
-              lower_bound(
-                      base_node > search_buffer_size ? base_node - search_buffer_size
-                                                     : 0),
+              lower_bound(base_node - std::min(base_node, search_buffer_size)),
               type(type_in) {}
+
+    // NOLINTEND(bugprone-easily-swappable-parameters)
 
     [[nodiscard]] size_t get_data_size() const {
         return data.size();
