@@ -1048,11 +1048,7 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     str_source << source.rdbuf();
 
     // Pad source with zeroes until it is a multiple of 32 bytes.
-    auto const position = str_source.tellp();
-    if ((position % 32) != 0) {
-        std::ranges::fill_n(
-                std::ostreambuf_iterator<char>(str_source), 32 - (position % 32), 0);
-    }
+    detail::pad_to_multiple(str_source, 32);
     auto const size = str_source.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
