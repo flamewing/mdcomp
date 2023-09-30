@@ -301,10 +301,10 @@ private:
 
     struct bit_reader {
         auto operator()() noexcept(is_noexcept) {
-            return Endian::template read<uint_t>(source);
+            return Endian::template read<uint_t>(*source);
         }
 
-        std::istream& source;
+        std::istream* source;
     };
 
     using callback   = std23::function_ref<uint_t(void) noexcept(is_noexcept)>;
@@ -314,7 +314,7 @@ private:
 
 public:
     explicit ibitstream(std::istream& source) noexcept(noexcept(bit_buffer(reader)))
-            : reader{source}, buffer(reader) {}
+            : reader{&source}, buffer(reader) {}
 
     // Gets a single bit from the stream. Remembers previously read bits, and
     // gets a new T from the actual stream once all bits in the current T has
@@ -346,10 +346,10 @@ private:
 
     struct bit_writer {
         auto operator()(uint_t count) noexcept(is_noexcept) {
-            return Endian::write(dest, count);
+            return Endian::write(*dest, count);
         }
 
-        std::ostream& dest;
+        std::ostream* dest;
     };
 
     using callback   = std23::function_ref<void(uint_t) noexcept(is_noexcept)>;
@@ -359,7 +359,7 @@ private:
 
 public:
     explicit obitstream(std::ostream& dest) noexcept(noexcept(bit_buffer(writer)))
-            : writer{dest}, buffer(writer) {}
+            : writer{&dest}, buffer(writer) {}
 
     // Puts a single bit into the stream. Remembers previously written bits, and
     // outputs a T to the actual stream once there are at least sizeof(T) *
