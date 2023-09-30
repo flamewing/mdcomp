@@ -242,15 +242,14 @@ public:
         return Adaptor::extra_matches(data, base_node, upper_bound, lower_bound, matches);
     }
 
-private:
     // Source file data and its size; one node per character in source file.
-    data_t          data;
-    size_t const    search_buffer_size;
-    size_t const    minimal_match_length;
-    size_t          base_node;
-    size_t          upper_bound;
-    size_t          lower_bound;
-    edge_type const type;
+    data_t    data;
+    size_t    search_buffer_size;
+    size_t    minimal_match_length;
+    size_t    base_node;
+    size_t    upper_bound;
+    size_t    lower_bound;
+    edge_type type;
 };
 
 template <typename T>
