@@ -93,13 +93,13 @@ namespace detail {
             std::errc error, std::string const& parameter, char const* value) {
         if (error == std::errc::invalid_argument) {
             std::cerr << "Invalid value '" << value << "' given for '" << parameter
-                      << "' parameter!" << std::endl;
+                      << "' parameter!\n";
         } else if (error == std::errc::result_out_of_range) {
             std::cerr << "The value '" << value << "' given for '" << parameter
-                      << "' parameter is out of range!" << std::endl;
+                      << "' parameter is out of range!\n";
         } else {
             std::cerr << "Unknown error happened when parsing value '" << value
-                      << "' given for '" << parameter << "' parameter!" << std::endl;
+                      << "' given for '" << parameter << "' parameter!\n";
         }
         throw 5;
     }
@@ -249,9 +249,7 @@ namespace detail {
                 options.size = strtoul(parameter, nullptr, 0);
             }
             if (options.size == 0) {
-                std::cerr << "Error: specified size must be a positive number."
-                          << std::endl
-                          << std::endl;
+                std::cerr << "Error: specified size must be a positive number.\n\n";
                 throw 4;
             }
         }
@@ -309,8 +307,7 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened." << std::endl
-                      << std::endl;
+            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
             return 2;
         }
         std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
@@ -325,9 +322,7 @@ namespace detail {
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened."
-                      << std::endl
-                      << std::endl;
+            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
             return 3;
         }
         detail::do_encode(buffer, output, options);
@@ -340,17 +335,14 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened." << std::endl
-                      << std::endl;
+            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
             return 2;
         }
         std::fstream output(
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened."
-                      << std::endl
-                      << std::endl;
+            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
             return 3;
         }
         std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
@@ -368,17 +360,14 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened." << std::endl
-                      << std::endl;
+            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
             return 2;
         }
         std::fstream output(
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened."
-                      << std::endl
-                      << std::endl;
+            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
             return 3;
         }
         detail::do_encode(input, output, options);
@@ -539,9 +528,7 @@ inline int auto_compressor_decompressor(options_t options) {
             }
             if (options.extract && options.crunch) {
                 std::cerr << "Error: --extract and --crunch can't be used at the "
-                             "same time."
-                          << std::endl
-                          << std::endl;
+                             "same time.\n\n";
                 return 4;
             }
         } else {

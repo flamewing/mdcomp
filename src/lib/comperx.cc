@@ -191,7 +191,7 @@ public:
             case edge_type::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
-                          << static_cast<size_t>(edge.get_type()) << std::endl;
+                          << static_cast<size_t>(edge.get_type()) << '\n';
                 __builtin_unreachable();
             }
         }
