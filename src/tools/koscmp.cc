@@ -22,14 +22,12 @@ struct options_t {
     explicit options_t(std::span<char*> args) : arguments(args) {}
 
     template <typename instream, typename outstream>
-    [[nodiscard]] auto get_moduled_decode_args(
-            instream& input, outstream& output) const {
+    [[nodiscard]] auto get_moduled_decode_args(instream& input, outstream& output) const {
         return gen_argument_tuple(input, output, padding);
     }
 
     template <typename instream, typename outstream>
-    [[nodiscard]] auto get_moduled_encode_args(
-            instream& input, outstream& output) const {
+    [[nodiscard]] auto get_moduled_encode_args(instream& input, outstream& output) const {
         return gen_argument_tuple(input, output, padding);
     }
 

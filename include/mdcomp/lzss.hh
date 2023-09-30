@@ -254,76 +254,65 @@ private:
 };
 
 template <typename T>
-concept lzss_adaptor
-        = requires() {
-              std::is_unsigned_v<typename T::stream_t>;
-              !std::is_same_v<typename T::stream_t, bool>;
-              std::is_class_v<typename T::stream_endian_t>;
-              std::is_unsigned_v<typename T::descriptor_t>;
-              !std::is_same_v<typename T::descriptor_t, bool>;
-              std::is_class_v<typename T::descriptor_endian_t>;
-              std::is_enum_v<typename T::edge_type>;
-              { T::edge_type::invalid } -> std::same_as<typename T::edge_type>;
-              { T::edge_type::terminator } -> std::same_as<typename T::edge_type>;
-              { T::edge_type::symbolwise } -> std::same_as<typename T::edge_type>;
-              std::is_same_v<decltype(T::num_desc_bits), size_t const>;
-              std::is_same_v<decltype(T::need_early_descriptor), bool const>;
-              std::is_same_v<decltype(T::descriptor_bit_order), bit_endian const>;
-              std::is_same_v<decltype(T::first_match_position), size_t const>;
-              std::is_same_v<decltype(T::search_buf_size), size_t const>;
-              std::is_same_v<decltype(T::look_ahead_buf_size), size_t const>;
-              requires requires(
-                      uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
-                      std::ostream& output, typename T::stream_t stream_val,
-                      typename T::stream_endian_t     stream_endian,
-                      typename T::descriptor_t        descriptor_val,
-                      typename T::descriptor_endian_t descriptor_endian) {
-                           {
-                               decltype(stream_endian)::template read<
-                                       decltype(stream_val)>(rptr)
-                               } -> std::same_as<decltype(stream_val)>;
-                           {
-                               decltype(stream_endian)::template read<
-                                       decltype(stream_val)>(input)
-                               } -> std::same_as<decltype(stream_val)>;
-                           {
-                               decltype(stream_endian)::write(wptr, stream_val)
-                               } -> std::same_as<void>;
-                           {
-                               decltype(stream_endian)::write(output, stream_val)
-                               } -> std::same_as<void>;
-                           {
-                               decltype(descriptor_endian)::template read<
-                                       decltype(descriptor_val)>(rptr)
-                               } -> std::same_as<decltype(descriptor_val)>;
-                           {
-                               decltype(descriptor_endian)::template read<
-                                       decltype(descriptor_val)>(input)
-                               } -> std::same_as<decltype(descriptor_val)>;
-                           {
-                               decltype(descriptor_endian)::write(wptr, descriptor_val)
-                               } -> std::same_as<void>;
-                           {
-                               decltype(descriptor_endian)::write(output, descriptor_val)
-                               } -> std::same_as<void>;
-                       };
-              requires requires(
-                      typename T::edge_type type, size_t value, size_t lbound,
-                      std::vector<adj_list_node<T>>         nodes,
-                      std::span<typename T::stream_t const> data) {
-                           { T::create_sliding_window(data) };
-                           { T::desc_bits(type) } -> std::same_as<size_t>;
-                           { T::edge_weight(type, value) } -> std::same_as<size_t>;
-                           {
-                               T::extra_matches(data, value, value, value, nodes)
-                               } -> std::same_as<bool>;
-                           { T::get_padding(value) } -> std::same_as<size_t>;
-                           noexcept(T::desc_bits(type));
-                           noexcept(T::edge_weight(type, value));
-                           noexcept(T::get_padding(value));
-                           noexcept(T::extra_matches(data, value, value, value, nodes));
-                       };
-          };
+concept lzss_adaptor = requires() {
+    std::is_unsigned_v<typename T::stream_t>;
+    !std::is_same_v<typename T::stream_t, bool>;
+    std::is_class_v<typename T::stream_endian_t>;
+    std::is_unsigned_v<typename T::descriptor_t>;
+    !std::is_same_v<typename T::descriptor_t, bool>;
+    std::is_class_v<typename T::descriptor_endian_t>;
+    std::is_enum_v<typename T::edge_type>;
+    { T::edge_type::invalid } -> std::same_as<typename T::edge_type>;
+    { T::edge_type::terminator } -> std::same_as<typename T::edge_type>;
+    { T::edge_type::symbolwise } -> std::same_as<typename T::edge_type>;
+    std::is_same_v<decltype(T::num_desc_bits), size_t const>;
+    std::is_same_v<decltype(T::need_early_descriptor), bool const>;
+    std::is_same_v<decltype(T::descriptor_bit_order), bit_endian const>;
+    std::is_same_v<decltype(T::first_match_position), size_t const>;
+    std::is_same_v<decltype(T::search_buf_size), size_t const>;
+    std::is_same_v<decltype(T::look_ahead_buf_size), size_t const>;
+    requires requires(
+            uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
+            std::ostream& output, typename T::stream_t stream_val,
+            typename T::stream_endian_t     stream_endian,
+            typename T::descriptor_t        descriptor_val,
+            typename T::descriptor_endian_t descriptor_endian) {
+        {
+            decltype(stream_endian)::template read<decltype(stream_val)>(rptr)
+        } -> std::same_as<decltype(stream_val)>;
+        {
+            decltype(stream_endian)::template read<decltype(stream_val)>(input)
+        } -> std::same_as<decltype(stream_val)>;
+        { decltype(stream_endian)::write(wptr, stream_val) } -> std::same_as<void>;
+        { decltype(stream_endian)::write(output, stream_val) } -> std::same_as<void>;
+        {
+            decltype(descriptor_endian)::template read<decltype(descriptor_val)>(rptr)
+        } -> std::same_as<decltype(descriptor_val)>;
+        {
+            decltype(descriptor_endian)::template read<decltype(descriptor_val)>(input)
+        } -> std::same_as<decltype(descriptor_val)>;
+        {
+            decltype(descriptor_endian)::write(wptr, descriptor_val)
+        } -> std::same_as<void>;
+        {
+            decltype(descriptor_endian)::write(output, descriptor_val)
+        } -> std::same_as<void>;
+    };
+    requires requires(
+            typename T::edge_type type, size_t value, size_t lbound,
+            std::vector<adj_list_node<T>>         nodes,
+            std::span<typename T::stream_t const> data) {
+        { T::create_sliding_window(data) };
+        { T::desc_bits(type) } -> std::same_as<size_t>;
+        { T::edge_weight(type, value) } -> std::same_as<size_t>;
+        { T::extra_matches(data, value, value, value, nodes) } -> std::same_as<bool>;
+        { T::get_padding(value) } -> std::same_as<size_t>;
+        noexcept(T::desc_bits(type));
+        noexcept(T::edge_weight(type, value));
+        noexcept(T::get_padding(value));
+        noexcept(T::extra_matches(data, value, value, value, nodes));
+    };
+};
 
 /*
  * Function which creates a LZSS structure and finds the optimal parse.
