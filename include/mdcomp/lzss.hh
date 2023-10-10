@@ -198,25 +198,26 @@ public:
         if (get_search_buffer_size() == 0) {
             return;
         }
-        size_t base     = base_node - 1;
-        size_t best_pos = 0;
-        size_t best_len = 0;
+        // Find the longest match in the search buffer.
+        size_t const lookahead_length = get_lookahead_buffer_size();
+        // Best match information.
+        size_t     best_pos = 0;
+        size_t     best_len = 0;
+        auto const haystack = data.subspan(base_node, lookahead_length);
 
-        size_t const end = get_lookahead_buffer_size();
-        do {
+        for (size_t base = base_node; base > lower_bound; --base) {
             // Keep looking for dictionary matches.
-            size_t length = 0;
-            while (length < end && data[base + length] == data[base_node + length]) {
-                ++length;
+            auto const needle             = data.subspan(base - 1, lookahead_length);
+            auto [it_needle, it_haystack] = std::ranges::mismatch(needle, haystack);
+            size_t const match_length = std::ranges::distance(needle.begin(), it_needle);
+            if (best_len < match_length) {
+                best_pos = base - 1;
+                best_len = match_length;
             }
-            if (best_len < length) {
-                best_pos = base;
-                best_len = length;
-            }
-            if (length == end) {
+            if (match_length == lookahead_length) {
                 break;
             }
-        } while (base-- > lower_bound);
+        }
 
         if (best_len >= minimal_match_length) {
             // We have found a match that links (base_node) with
