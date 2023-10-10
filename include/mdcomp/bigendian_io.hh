@@ -173,7 +173,7 @@ namespace detail {
     // supports; but MSVC compiler does not support a 128-bit integer, so this
     // is not portable.
     template <std::integral T>
-    [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
+    [[nodiscard]] CONST_INLINE constexpr T byteswap_impl(T value) noexcept {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
         return std::byteswap(value);
 #else
@@ -239,6 +239,15 @@ namespace detail {
         }
         return uint_t(new_value & std::numeric_limits<uint_t>::max());
 #endif
+    }
+
+    template <std::integral T>
+    [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
+        // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
+        // They can be both 64-bit depending on platform, and which one is used
+        // in the definition of uint64_t, the other will not match.
+        return static_cast<T>(
+                byteswap_impl(static_cast<select_unsigned_t<sizeof(T)>>(value)));
     }
 
     template <std::endian endian>
