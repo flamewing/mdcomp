@@ -209,7 +209,8 @@ public:
             // Keep looking for dictionary matches.
             auto const needle             = data.subspan(base - 1, lookahead_length);
             auto [it_needle, it_haystack] = std::ranges::mismatch(needle, haystack);
-            size_t const match_length = std::ranges::distance(needle.begin(), it_needle);
+            auto const match_length       = static_cast<size_t>(
+                    std::ranges::distance(needle.begin(), it_needle));
             if (best_len < match_length) {
                 best_pos = base - 1;
                 best_len = match_length;
@@ -338,7 +339,8 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
     using data_t          = std::span<stream_t const>;
 
     auto read_stream = [](data_t data, size_t offset) {
-        auto const* pointer = reinterpret_cast<uint8_t const*>(data.data() + offset);
+        auto const* pointer
+                = reinterpret_cast<uint8_t const*>(std::addressof(data[offset]));
         return stream_endian_t::template read<stream_t>(pointer);
     };
 
