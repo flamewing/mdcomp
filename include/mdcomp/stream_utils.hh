@@ -177,6 +177,19 @@ namespace detail {
 
     template <typename Fn, typename... Types>
     class range_closure : public pipe::base<range_closure<Fn, Types...>> {
+    private:
+        template <typename SelfTy, typename Ty, size_t... Idx>
+        constexpr static decltype(auto)
+                call(SelfTy&& self, Ty&& arg, std::index_sequence<Idx...>) noexcept(
+                        noexcept(Fn{}(
+                                std::forward<Ty>(arg),
+                                std::get<Idx>(std::forward<SelfTy>(self).captures)...))) {
+            static_assert(std::same_as<std::index_sequence<Idx...>, indices>);
+            return Fn{}(
+                    std::forward<Ty>(arg),
+                    std::get<Idx>(std::forward<SelfTy>(self).captures)...);
+        }
+
     public:
         // We assume that Fn is the type of a customization point object. That means
         // 1. The behavior of operator() is independent of cvref qualifiers, so we can use
@@ -231,18 +244,6 @@ namespace detail {
         }
 
     private:
-        template <typename SelfTy, typename Ty, size_t... Idx>
-        constexpr static decltype(auto)
-                call(SelfTy&& self, Ty&& arg, std::index_sequence<Idx...>) noexcept(
-                        noexcept(Fn{}(
-                                std::forward<Ty>(arg),
-                                std::get<Idx>(std::forward<SelfTy>(self).captures)...))) {
-            static_assert(std::same_as<std::index_sequence<Idx...>, indices>);
-            return Fn{}(
-                    std::forward<Ty>(arg),
-                    std::get<Idx>(std::forward<SelfTy>(self).captures)...);
-        }
-
         std::tuple<Types...> captures;
     };
 
