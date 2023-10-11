@@ -358,12 +358,13 @@ namespace detail {
             return cont;
         } else if constexpr (std::ranges::input_range<
                                      std::ranges::range_reference_t<range_t>>) {
-            auto const xform = [](auto&& elem) {
+            auto const operation = [](auto&& elem) {
                 return to<std::ranges::range_value_t<container_t>>(
                         std::forward<decltype(elem)>(elem));
             };
             return to<container_t>(
-                    std::ranges::transform(range, xform), std::forward<types_t>(args)...);
+                    std::ranges::transform(range, operation),
+                    std::forward<types_t>(args)...);
         } else {
             static_assert(
                     always_false<container_t>,

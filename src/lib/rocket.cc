@@ -231,8 +231,8 @@ bool rocket::encode(std::istream& source, std::ostream& dest) {
 
 bool rocket::encode(std::ostream& dest, std::span<uint8_t const> data) {
     // Internal buffer.
-    std::stringstream outbuff(std::ios::in | std::ios::out | std::ios::binary);
-    rocket_internal::encode(outbuff, data);
+    std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
+    rocket_internal::encode(out_buff, data);
 
     // Fill in header
     // Size of decompressed file
@@ -241,9 +241,9 @@ bool rocket::encode(std::ostream& dest, std::span<uint8_t const> data) {
             static_cast<uint16_t>(
                     data.size() - rocket_internal::rocket_adaptor::first_match_position));
     // Size of compressed file
-    big_endian::write2(dest, static_cast<uint16_t>(outbuff.tellp()));
+    big_endian::write2(dest, static_cast<uint16_t>(out_buff.tellp()));
 
-    outbuff.seekg(0);
-    dest << outbuff.rdbuf();
+    out_buff.seekg(0);
+    dest << out_buff.rdbuf();
     return true;
 }
