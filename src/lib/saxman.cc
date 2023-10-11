@@ -262,16 +262,16 @@ bool saxman::decode(std::istream& source, std::iostream& dest, size_t size) {
 
 bool saxman::encode(
         std::ostream& dest, std::span<uint8_t const> data, bool const with_size) {
-    std::stringstream outbuff(std::ios::in | std::ios::out | std::ios::binary);
-    auto const        start = outbuff.tellg();
-    saxman_internal::encode(outbuff, data);
+    std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
+    auto const        start = out_buff.tellg();
+    saxman_internal::encode(out_buff, data);
     if (with_size) {
-        outbuff.seekg(start);
-        outbuff.ignore(std::numeric_limits<std::streamsize>::max());
-        auto full_size = outbuff.gcount();
+        out_buff.seekg(start);
+        out_buff.ignore(std::numeric_limits<std::streamsize>::max());
+        auto full_size = out_buff.gcount();
         little_endian::write2(dest, static_cast<uint16_t>(full_size));
     }
-    outbuff.seekg(start);
-    dest << outbuff.rdbuf();
+    out_buff.seekg(start);
+    dest << out_buff.rdbuf();
     return true;
 }
