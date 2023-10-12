@@ -585,4 +585,20 @@ public:
     }
 };
 
+template <lzss_adaptor Adaptor>
+inline void lzss_copy(
+        std::iostream& dest, std::make_signed_t<size_t> offset,
+        std::make_signed_t<size_t> length) {
+    constexpr static size_t const num_bytes = sizeof(Adaptor::stream_t);
+    offset *= num_bytes;
+    length *= num_bytes;
+    for (auto csrc = offset; csrc < offset + length; csrc++) {
+        auto const pointer = dest.tellp();
+        dest.seekg(csrc);
+        uint8_t const byte = source_endian::template read_n<num_bytes>(dest);
+        dest.seekp(pointer);
+        source_endian::template write_n<num_bytes>(dest, byte);
+    }
+}
+
 #endif    // LIB_LZSS_HH

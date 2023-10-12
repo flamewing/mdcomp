@@ -191,13 +191,7 @@ public:
                 if (offset < base) {
                     // If the offset is before the current output position, we
                     // copy bytes from the given location.
-                    for (auto csrc = offset; csrc < offset + length; csrc++) {
-                        auto const pointer = dest.tellp();
-                        dest.seekg(csrc);
-                        uint8_t const byte = read1(dest);
-                        dest.seekp(pointer);
-                        write1(dest, byte);
-                    }
+                    lzss_copy<saxman_adaptor>(dest, offset, length);
                 } else {
                     // Otherwise, it is a zero fill.
                     std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);

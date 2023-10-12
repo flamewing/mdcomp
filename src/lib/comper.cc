@@ -119,6 +119,7 @@ class comper_internal {
 public:
     static void decode(std::istream& input, std::iostream& dest) {
         using comp_istream = lzss_istream<comper_adaptor>;
+        using diff_t       = std::make_signed_t<size_t>;
 
         comp_istream source(input);
 
@@ -129,19 +130,14 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                auto const   distance = (std::streamoff{0x100} - source.get_byte()) * 2;
-                size_t const length   = source.get_byte();
+                std::streamoff const distance = 0x100 - source.get_byte();
+                diff_t const         length   = source.get_byte();
                 if (length == 0) {
                     break;
                 }
 
-                for (size_t i = 0; i <= length; i++) {
-                    std::streamsize const pointer = dest.tellp();
-                    dest.seekg(pointer - distance);
-                    uint16_t const word = big_endian::read2(dest);
-                    dest.seekp(pointer);
-                    big_endian::write2(dest, word);
-                }
+                diff_t const offset = dest.tellp() - distance;
+                lzss_copy<comper_adaptor>(dest, offset, length);
             }
         }
     }
