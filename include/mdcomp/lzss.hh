@@ -585,6 +585,7 @@ public:
     }
 };
 
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
 template <lzss_adaptor Adaptor>
 inline void lzss_copy(
         std::iostream& dest, std::make_signed_t<size_t> offset,
@@ -592,13 +593,25 @@ inline void lzss_copy(
     constexpr static size_t const num_bytes = sizeof(Adaptor::stream_t);
     offset *= num_bytes;
     length *= num_bytes;
-    for (auto csrc = offset; csrc < offset + length; csrc++) {
-        auto const pointer = dest.tellp();
-        dest.seekg(csrc);
-        uint8_t const byte = source_endian::template read_n<num_bytes>(dest);
-        dest.seekp(pointer);
-        source_endian::template write_n<num_bytes>(dest, byte);
+    using diff_t        = std::make_signed_t<size_t>;
+    diff_t     distance = dest.tellp() - offset;
+    auto const pointer  = dest.tellp();
+    dest.seekg(offset);
+    std::vector<char> buffer(static_cast<size_t>(length));
+    dest.read(buffer.data(), std::min(distance, length));
+    if (length > distance) {
+        auto count = length - distance;
+        while (count > distance) {
+            std::ranges::copy_n(buffer.cbegin(), distance, buffer.begin() + distance);
+            count -= distance;
+            distance *= 2;
+        }
+        std::ranges::copy_n(buffer.cbegin(), count, buffer.begin() + distance);
     }
+    dest.seekp(pointer);
+    dest.write(buffer.data(), length);
 }
+
+// NOLINTEND(bugprone-easily-swappable-parameters)
 
 #endif    // LIB_LZSS_HH
