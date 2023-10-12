@@ -119,6 +119,7 @@ class comperx_internal {
 public:
     static void decode(std::istream& input, std::iostream& dest) {
         using comp_istream = lzss_istream<comper_x_adaptor>;
+        using diff_t       = std::make_signed_t<size_t>;
 
         comp_istream source(input);
 
@@ -137,17 +138,11 @@ public:
                 }
 
                 std::streamoff const distance
-                        = raw_dist != 0U ? (0x100 - raw_dist + 1) * 2 : 2;
-                size_t const length
+                        = raw_dist != 0U ? (0x100 - raw_dist + 1) : 1;
+                diff_t const length
                         = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
-
-                for (size_t i = 0; i < length; i++) {
-                    std::streamsize const pointer = dest.tellp();
-                    dest.seekg(pointer - distance);
-                    uint16_t const word = big_endian::read2(dest);
-                    dest.seekp(pointer);
-                    big_endian::write2(dest, word);
-                }
+                diff_t const offset = dest.tellp() - distance;
+                lzss_copy<comper_x_adaptor>(dest, offset, length);
             }
         }
     }

@@ -137,6 +137,7 @@ class lzkn1_internal {
 public:
     static void decode(std::istream& input, std::iostream& dest) {
         using lzkn1_istream = lzss_istream<lzkn1_adaptor>;
+        using diff_t        = std::make_signed_t<size_t>;
 
         size_t const uncompressed_size = big_endian::read2(input);
 
@@ -187,13 +188,9 @@ public:
                         count    = (data >> 4U) - 6U;
                     }
 
-                    for (size_t i = 0; i < count; i++) {
-                        std::streamsize const pointer = dest.tellp();
-                        dest.seekg(pointer - distance);
-                        uint8_t const byte = read1(dest);
-                        dest.seekp(pointer);
-                        write1(dest, byte);
-                    }
+                    auto const   length = static_cast<diff_t>(count);
+                    diff_t const offset = dest.tellp() - distance;
+                    lzss_copy<lzkn1_adaptor>(dest, offset, length);
                     bytes_written += count;
                 }
             }

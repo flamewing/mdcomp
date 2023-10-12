@@ -143,6 +143,7 @@ class kosplus_internal {
 public:
     static void decode(std::istream& input, std::iostream& dest) {
         using kos_istream = lzss_istream<kos_plus_adaptor>;
+        using diff_t      = std::make_signed_t<size_t>;
 
         kos_istream source(input);
 
@@ -186,13 +187,9 @@ public:
                     count = ((high << 1U) | low) + 2;
                 }
 
-                for (size_t i = 0; i < count; i++) {
-                    std::streamsize const pointer = dest.tellp();
-                    dest.seekg(pointer - distance);
-                    uint8_t const byte = read1(dest);
-                    dest.seekp(pointer);
-                    write1(dest, byte);
-                }
+                auto const   length = static_cast<diff_t>(count);
+                diff_t const offset = dest.tellp() - distance;
+                lzss_copy<kos_plus_adaptor>(dest, offset, length);
             }
         }
     }

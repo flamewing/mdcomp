@@ -159,13 +159,7 @@ public:
                     length -= count;
                     offset += count;
                 }
-                for (diff_t csrc = offset; csrc < offset + length; csrc++) {
-                    diff_t const pointer = dest.tellp();
-                    dest.seekg(csrc);
-                    uint8_t const byte = read1(dest);
-                    dest.seekp(pointer);
-                    write1(dest, byte);
-                }
+                lzss_copy<rocket_adaptor>(dest, offset, length);
             }
         }
     }
