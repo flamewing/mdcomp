@@ -593,7 +593,7 @@ template <lzss_adaptor Adaptor>
 inline void lzss_copy(
         std::iostream& dest, std::make_signed_t<size_t> offset,
         std::make_signed_t<size_t> length) {
-    constexpr static size_t const num_bytes = sizeof(Adaptor::stream_t);
+    constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
     offset *= num_bytes;
     length *= num_bytes;
     using diff_t        = std::make_signed_t<size_t>;

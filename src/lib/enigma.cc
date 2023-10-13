@@ -147,7 +147,7 @@ public:
 
         auto const make_generator = [&](int delta) noexcept {
             return [delta, value = read_value()]() mutable noexcept {
-                uint16_t current = value;
+                uint16_t const current = value;
                 value += delta;
                 return current;
             };
@@ -157,7 +157,7 @@ public:
             return incrementing_value++;
         };
 
-        enigma_output_iterator output(dest);
+        enigma_output_iterator const output(dest);
 
         // Lets put in a safe termination condition here.
         while (input.good()) {
