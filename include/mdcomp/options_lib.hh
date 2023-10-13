@@ -272,7 +272,7 @@ namespace detail {
 
     template <typename instream, typename outstream, typename options_t>
     inline void do_decode(instream& input, outstream& output, options_t const& options) {
-        auto const do_print_end = [&input]() noexcept {
+        auto const do_print_end = [&]() noexcept {
             if constexpr (has_print_end<options_t>) {
                 boost::io::ios_all_saver const flags(std::cout);
                 std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0')
@@ -353,8 +353,6 @@ namespace detail {
             std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
             return 3;
         }
-        std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-
         if constexpr (has_pointer<options_t>) {
             input.seekg(options.pointer);
         }
@@ -562,6 +560,8 @@ inline int auto_compressor_decompressor(options_t options) {
         return detail::encode_file(infile, outfile, options);
     } catch (int error) {
         return error;
+    } catch (...) {
+        return -1;
     }
 }
 
