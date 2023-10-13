@@ -596,20 +596,24 @@ inline void lzss_copy(
     constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
     offset *= num_bytes;
     length *= num_bytes;
-    using diff_t        = std::make_signed_t<size_t>;
-    diff_t     distance = dest.tellp() - offset;
-    auto const pointer  = dest.tellp();
-    dest.seekg(offset);
+    auto const        pointer = dest.tellp();
     std::vector<char> buffer(static_cast<size_t>(length));
-    dest.read(buffer.data(), std::min(distance, length));
+    dest.seekg(offset);
+    using diff_t    = std::make_signed_t<size_t>;
+    diff_t distance = dest.tellp() - offset;
     if (length > distance) {
-        auto count = length - distance;
+        dest.read(buffer.data(), distance);
+        auto count  = length - distance;
+        auto output = buffer.begin() + distance;
         while (count > distance) {
-            std::ranges::copy_n(buffer.cbegin(), distance, buffer.begin() + distance);
+            auto [it_in, it_out] = std::ranges::copy(buffer.cbegin(), output, output);
             count -= distance;
             distance *= 2;
+            output = it_out;
         }
-        std::ranges::copy_n(buffer.cbegin(), count, buffer.begin() + distance);
+        std::ranges::copy(buffer.cbegin(), buffer.cbegin() + count, output);
+    } else {
+        dest.read(buffer.data(), length);
     }
     dest.seekp(pointer);
     dest.write(buffer.data(), length);
