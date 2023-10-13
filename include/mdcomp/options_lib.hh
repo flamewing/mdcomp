@@ -49,30 +49,26 @@ consteval inline auto make_short_options() {
     constexpr auto const result = [&]() consteval noexcept {
         std::array<char, 3U * (long_options->size() - 1U)> intermediate{};
 
-        auto*  iter   = intermediate.data();
         size_t length = 0;
         for (auto const& opt : *long_options) {
             if (opt.name == nullptr) {
                 break;
             }
-            ++length;
             char const val = static_cast<char>(opt.val);
             if (val == '\0') {
                 // Allow options without a short form.
                 continue;
             }
-            *iter++ = val;
+            intermediate[length++] = val;
             switch (opt.has_arg) {
             case no_argument:
                 break;
             case optional_argument:
-                length += 2;
-                *iter++ = ':';
-                *iter++ = ':';
+                intermediate[length++] = ':';
+                intermediate[length++] = ':';
                 break;
             case required_argument:
-                ++length;
-                *iter++ = ':';
+                intermediate[length++] = ':';
                 break;
             }
         }
@@ -202,13 +198,14 @@ namespace detail {
     }
 
     template <typename options_t>
-    inline void parse_extract(options_t& options, char const* parameter) {
+    inline void parse_extract(options_t& options, char const* parameter_in) {
         options.extract = true;
-        if (parameter != nullptr) {
+        if (parameter_in != nullptr) {
+            std::string_view const parameter(parameter_in);
             auto [ptr, ec] = std::from_chars(
-                    parameter, parameter + strlen(parameter), options.pointer);
+                    parameter.cbegin(), parameter.cend(), options.pointer);
             if (ec != std::errc{}) {
-                print_error(ec, "pointer", parameter);
+                print_error(ec, "pointer", parameter_in);
             }
         }
     }
@@ -228,11 +225,12 @@ namespace detail {
     }
 
     template <typename options_t>
-    inline void parse_padding(options_t& options, char const* parameter) {
+    inline void parse_padding(options_t& options, char const* parameter_in) {
         if constexpr (has_padding<options_t>) {
-            if (parameter != nullptr) {
+            if (parameter_in != nullptr) {
+                std::string_view const parameter(parameter_in);
                 auto [ptr, ec] = std::from_chars(
-                        parameter, parameter + strlen(parameter), options.padding);
+                        parameter.cbegin(), parameter.cend(), options.padding);
                 if (ec != std::errc{}) {
                     print_error(ec, "padding", optarg);
                 }
