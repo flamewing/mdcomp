@@ -246,8 +246,8 @@ namespace detail {
         // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
         // They can be both 64-bit depending on platform, and which one is used
         // in the definition of uint64_t, the other will not match.
-        return static_cast<T>(
-                byteswap_impl(static_cast<select_unsigned_t<sizeof(T)>>(value)));
+        return std::bit_cast<T>(
+                byteswap_impl(std::bit_cast<select_unsigned_t<sizeof(T)>>(value)));
     }
 
     template <std::endian endian>
