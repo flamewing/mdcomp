@@ -23,7 +23,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class nemesis;
 using basic_nemesis   = basic_decoder<nemesis, pad_mode::dont_pad>;

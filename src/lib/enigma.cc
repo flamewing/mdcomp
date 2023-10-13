@@ -24,6 +24,9 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -31,6 +34,7 @@
 #include <numeric>
 #include <ostream>
 #include <set>
+#include <span>
 #include <sstream>
 #include <string>
 #include <type_traits>

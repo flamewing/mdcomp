@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class lzkn1;
 using basic_lzkn1   = basic_decoder<lzkn1, pad_mode::dont_pad>;

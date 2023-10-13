@@ -23,7 +23,10 @@
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/stream_utils.hh"
 
+#include <cstddef>
+#include <cstdint>
 #include <ios>
+#include <iosfwd>
 #include <limits>
 #include <memory>
 #include <sstream>

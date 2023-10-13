@@ -19,6 +19,12 @@
 
 #include "mdcomp/options_lib.hh"
 
+#include <array>
+#include <cstddef>
+#include <filesystem>
+#include <iostream>
+#include <span>
+
 struct options_t {
     explicit options_t(std::span<char*> args) : arguments(args) {}
 

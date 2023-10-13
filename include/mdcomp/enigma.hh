@@ -23,7 +23,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class enigma;
 using basic_enigma   = basic_decoder<enigma, pad_mode::dont_pad>;

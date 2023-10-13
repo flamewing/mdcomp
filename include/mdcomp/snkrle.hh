@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class snkrle;
 using basic_snkrle   = basic_decoder<snkrle, pad_mode::pad_even>;
