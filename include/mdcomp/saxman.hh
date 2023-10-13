@@ -22,7 +22,10 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstddef>
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class saxman;
 using basic_saxman   = basic_decoder<saxman, pad_mode::dont_pad, bool>;

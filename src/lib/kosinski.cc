@@ -23,11 +23,17 @@
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <istream>
+#include <limits>
 #include <ostream>
+#include <span>
 #include <sstream>
+#include <type_traits>
+#include <vector>
 
 template <>
 size_t moduled_kosinski::pad_mask_bits = 1U;

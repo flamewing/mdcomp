@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class rocket;
 using basic_rocket   = basic_decoder<rocket, pad_mode::dont_pad>;

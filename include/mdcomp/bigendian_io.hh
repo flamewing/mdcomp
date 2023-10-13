@@ -20,25 +20,22 @@
 
 #include "ignore_unused_variable_warning.hh"
 
-#include <boost/mp11.hpp>
-#include <boost/mpl/has_xxx.hpp>
-
 #include <algorithm>
 #include <array>
 #include <bit>
 #include <climits>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <ranges>
 #include <type_traits>
 #include <utility>
 
-#ifdef _LIBCPP_VERSION
-namespace std {
-    using streamsize = ptrdiff_t;
-}
-#elif defined(_MSC_VER)
+#ifdef _MSC_VER
 #    include <stdlib.h>
 #    pragma intrinsic(_byteswap_ushort)
 #    pragma intrinsic(_byteswap_ulong)

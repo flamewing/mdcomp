@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class kosplus;
 using basic_kosplus   = basic_decoder<kosplus, pad_mode::dont_pad>;

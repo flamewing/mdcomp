@@ -24,12 +24,20 @@
 
 #include <array>
 #include <charconv>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <ios>
 #include <iostream>
 #include <span>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <tuple>
+#include <utility>
 
 template <auto* long_options>
 requires requires(decltype(long_options) opt) {

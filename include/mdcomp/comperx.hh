@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class comperx;
 using basic_comperx   = basic_decoder<comperx, pad_mode::pad_even>;

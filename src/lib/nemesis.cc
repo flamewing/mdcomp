@@ -26,9 +26,12 @@
 
 #include <algorithm>
 #include <array>
+#include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <ios>
 #include <istream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -36,8 +39,10 @@
 #include <queue>
 #include <ranges>
 #include <set>
+#include <span>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -1058,7 +1063,7 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
 
     uint32_t value = 0;
     while (source_xor.tellp() < size) {
-        uint32_t new_value = source_endian::read4(str_source);
+        uint32_t const new_value = source_endian::read4(str_source);
         source_endian::write4(source_xor, value ^ new_value);
         value = new_value;
     }

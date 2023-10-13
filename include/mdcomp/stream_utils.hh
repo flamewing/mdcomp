@@ -19,9 +19,15 @@
 #define LIB_STREAM_UTILS_HH
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <ios>
+#include <iterator>
 #include <ostream>
+#include <ranges>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 namespace detail {
     template <typename T1, typename T2>

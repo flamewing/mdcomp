@@ -22,6 +22,8 @@
 
 #include "mdcomp/stream_utils.hh"
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <span>

@@ -22,8 +22,12 @@
 #include "mdcomp/function_ref.hh"
 
 #include <climits>
+#include <cstddef>
+#include <cstdint>
 #include <iosfwd>
 #include <limits>
+#include <type_traits>
+#include <utility>
 
 #if defined(_MSC_VER)
 #    define INLINE       __forceinline

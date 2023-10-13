@@ -20,9 +20,16 @@
 
 #include "mdcomp/bigendian_io.hh"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <ios>
+#include <iosfwd>
 #include <istream>
+#include <iterator>
 #include <limits>
 #include <ostream>
+#include <span>
 #include <sstream>
 #include <string>
 

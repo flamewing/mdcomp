@@ -22,7 +22,9 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
+#include <cstdint>
 #include <iosfwd>
+#include <span>
 
 class kosinski;
 using basic_kosinski   = basic_decoder<kosinski, pad_mode::dont_pad>;
