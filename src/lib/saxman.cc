@@ -168,12 +168,12 @@ public:
         while (input.good() && input.tellg() < ssize) {
             if (source.descriptor_bit() != 0U) {
                 // Symbolwise match.
-                if (input.peek() == EOF) {
+                if (input.peek() == std::istream::traits_type::eof()) {
                     break;
                 }
                 write1(dest, source.get_byte());
             } else {
-                if (input.peek() == EOF) {
+                if (input.peek() == std::istream::traits_type::eof()) {
                     break;
                 }
 
