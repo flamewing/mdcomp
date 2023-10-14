@@ -608,7 +608,7 @@ struct endian_output_iterator {
         return *this;
     }
 
-    constexpr endian_output_iterator& operator++(int unused) noexcept {
+    constexpr endian_output_iterator operator++(int unused) noexcept {
         ignore_unused_variable_warning(unused);
         return *this;
     }
