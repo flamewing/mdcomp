@@ -213,7 +213,7 @@ public:
             auto const needle             = data.subspan(base - 1, lookahead_length);
             auto [it_needle, it_haystack] = std::ranges::mismatch(needle, haystack);
             auto const match_length       = static_cast<size_t>(
-                    std::ranges::distance(needle.begin(), it_needle));
+                    std::ranges::distance(std::ranges::begin(needle), it_needle));
             if (best_len < match_length) {
                 best_pos = base - 1;
                 best_len = match_length;
@@ -603,15 +603,16 @@ inline void lzss_copy(
     diff_t distance = dest.tellp() - offset;
     if (length > distance) {
         dest.read(buffer.data(), distance);
-        auto count  = length - distance;
-        auto output = buffer.begin() + distance;
+        auto       count  = length - distance;
+        auto const start  = std::ranges::cbegin(buffer);
+        auto       output = std::ranges::begin(buffer) + distance;
         while (count > distance) {
-            auto [it_in, it_out] = std::ranges::copy(buffer.cbegin(), output, output);
+            auto [it_in, it_out] = std::ranges::copy(start, output, output);
             count -= distance;
             distance *= 2;
             output = it_out;
         }
-        std::ranges::copy(buffer.cbegin(), buffer.cbegin() + count, output);
+        std::ranges::copy(start, start + count, output);
     } else {
         dest.read(buffer.data(), length);
     }
