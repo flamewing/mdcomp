@@ -23,6 +23,7 @@
 #include "mdcomp/bitstream.hh"
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -358,11 +359,11 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
     // This is fine in this case because I am manually over-aligning the memory
     // that gets passed in by using an aligned allocator for std::vector, see
     // basic_decoder::encode.
-    auto const*  unaligned_ptr = static_cast<void const*>(data_in.data());
-    auto const*  aligned_ptr   = std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
+    auto const* unaligned_ptr = static_cast<void const*>(data_in.data());
+    auto const* aligned_ptr   = std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
+    assert(aligned_ptr == unaligned_ptr);
     data_t const data(
-            static_cast<stream_t const*>(aligned_ptr),
-            data_in.size() / sizeof(stream_t));
+            static_cast<stream_t const*>(aligned_ptr), data_in.size() / sizeof(stream_t));
     static_assert(
             noexcept(Adaptor::desc_bits(edge_type())),
             "Adaptor::desc_bits() is not noexcept");
