@@ -73,45 +73,22 @@ namespace detail {
             = (std::output_iterator<Iter, uint8_t>) || (std::output_iterator<Iter, char>);
 
     template <typename T>
-    concept container = requires(T mut_container, T const const_container) {
-        requires std::regular<T>;
-        requires std::swappable<T>;
-        requires std::destructible<typename T::value_type>;
-        requires std::same_as<typename T::reference, typename T::value_type&>;
-        requires std::same_as<typename T::const_reference, typename T::value_type const&>;
-        requires std::forward_iterator<typename T::iterator>;
-        requires std::forward_iterator<typename T::const_iterator>;
-        requires std::signed_integral<typename T::difference_type>;
-        requires std::same_as<
-                typename T::difference_type,
-                typename std::iterator_traits<typename T::iterator>::difference_type>;
-        requires std::same_as<
-                typename T::difference_type,
-                typename std::iterator_traits<
-                        typename T::const_iterator>::difference_type>;
-        { mut_container.begin() } -> std::same_as<typename T::iterator>;
-        { mut_container.end() } -> std::same_as<typename T::iterator>;
-        { const_container.begin() } -> std::same_as<typename T::const_iterator>;
-        { const_container.end() } -> std::same_as<typename T::const_iterator>;
-        { mut_container.cbegin() } -> std::same_as<typename T::const_iterator>;
-        { mut_container.cend() } -> std::same_as<typename T::const_iterator>;
-        { mut_container.size() } -> std::same_as<typename T::size_type>;
-        { mut_container.max_size() } -> std::same_as<typename T::size_type>;
-        { mut_container.empty() } -> std::same_as<bool>;
-    };
+    concept container = std::regular<T> && std::swappable<T>
+                        && std::destructible<typename T::value_type>
+                        && std::ranges::forward_range<T>;
+    ;
 
     template <typename T>
-    concept contiguous_container = requires() {
-        requires container<T>;
-        requires requires(
-                T mut_container, typename T::size_type count,
-                typename T::value_type value) {
-            requires std::contiguous_iterator<typename T::iterator>;
-            requires std::contiguous_iterator<typename T::const_iterator>;
-            { mut_container.resize(count) } -> std::same_as<void>;
-            { *mut_container.data() = value };
-        };
-    };
+    concept contiguous_container = container<T> && std::ranges::contiguous_range<T>
+                                   && std::ranges::sized_range<T>
+                                   && requires(
+                                           T mut_container, typename T::size_type count,
+                                           typename T::value_type value) {
+                                          {
+                                              mut_container.resize(count)
+                                          } -> std::same_as<void>;
+                                          { *mut_container.data() = value };
+                                      };
 
     template <size_t Size>
     constexpr inline auto select_unsigned() noexcept {
