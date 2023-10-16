@@ -353,9 +353,15 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
         return stream_endian_t::template read<stream_t>(pointer);
     };
 
-    // Adjacency lists for all the nodes in the graph.
+    // TODO: we should be allocating a std::vector<stream_t const> to begin with.
+    // For the time being, I am doing this for now to suppress the GCC warning.
+    // This is fine in this case because I am manually over-aligning the memory
+    // that gets passed in by using an aligned allocator for std::vector, see
+    // basic_decoder::encode.
+    auto const*  unaligned_ptr = static_cast<void const*>(data_in.data());
+    auto const*  aligned_ptr   = std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
     data_t const data(
-            reinterpret_cast<stream_t const*>(data_in.data()),
+            static_cast<stream_t const*>(aligned_ptr),
             data_in.size() / sizeof(stream_t));
     static_assert(
             noexcept(Adaptor::desc_bits(edge_type())),
