@@ -252,7 +252,7 @@ struct compare_node {
     // Initialize
     void initialize(node_vector& nodes, nibble_code_map& codes) const noexcept {
         ignore_unused_variable_warning(codes);
-        make_heap(nodes.begin(), nodes.end(), *this);
+        std::ranges::make_heap(nodes, *this);
     }
 };
 
@@ -274,7 +274,7 @@ struct compare_node2 {
         nibble_run const right_nibble = right->get_value();
 
         auto get_len = [&](std::shared_ptr<node> const& node, nibble_run nibble) {
-            if (auto const iter = code_map->find(nibble); iter != code_map->end()) {
+            if (auto const iter = code_map->find(nibble); iter != code_map->cend()) {
                 size_t const bit_count = (iter->second).length;
                 return (bit_count & 0x7fU) * node->get_weight() + 16;
             }
@@ -307,7 +307,7 @@ struct compare_node2 {
     // the lowest weighted item.
     void update(node_vector& nodes, nibble_code_map& codes) noexcept {
         *code_map = codes;
-        make_heap(nodes.begin(), nodes.end(), *this);
+        std::ranges::make_heap(nodes, *this);
     }
 
     void initialize(node_vector& nodes, nibble_code_map& codes) noexcept {
@@ -393,7 +393,7 @@ public:
             } else {
                 // Find out if the data so far is a nibble code.
                 if (auto const iter = code_map.find(bit_code{code, length});
-                    iter != code_map.end()) {
+                    iter != code_map.cend()) {
                     // If it is, then it is time to output the encoded nibble
                     // run.
                     nibble_run const& run = iter->second;
@@ -482,7 +482,7 @@ public:
         for (auto const& [run, frequency] : counts) {
             // Find out if this nibble run has a code for it.
             auto found_run = code_map.find(run);
-            if (found_run == code_map.end()) {
+            if (found_run == code_map.cend()) {
                 // Nibble run does not have its own code. We need to find out if
                 // we can break it up into smaller nibble runs with total code
                 // size less than 13 bits or if we need to inline it (13 bits).
@@ -498,7 +498,7 @@ public:
                     // nibble run with count == 0.
                     nibble_run const target{run.get_nibble(), 0};
                     found_run = code_map.find(target);
-                    if (found_run == code_map.end() || (found_run->second).length > 6) {
+                    if (found_run == code_map.cend() || (found_run->second).length > 6) {
                         // The smaller nibble run either does not have its own
                         // code or it results in a longer bit code when doubled
                         // up than would result from inlining the run. In either
@@ -637,7 +637,7 @@ public:
                         // Is this run in the code_map?
                         nibble_run const target(nibble, i);
                         auto             target_iter = code_map.find(target);
-                        if (target_iter == code_map.end()) {
+                        if (target_iter == code_map.cend()) {
                             // It is not.
                             // Put inline length in the vector.
                             run_length.push_back(6 + 7);
@@ -689,7 +689,7 @@ public:
                             // Is this run in the code_map?
                             nibble_run const target(nibble, i);
                             auto             target_iter = code_map.find(target);
-                            if (target_iter != code_map.end()) {
+                            if (target_iter != code_map.cend()) {
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
                                 for (size_t j = 0; j < coeff; j++) {
@@ -718,7 +718,8 @@ public:
                 }
             }
         }
-        code_map.insert(extra_code_map.begin(), extra_code_map.end());
+        code_map.insert(
+                std::ranges::cbegin(extra_code_map), std::ranges::cend(extra_code_map));
 
         // Round up to a full byte.
         size_estimate = (size_estimate + 7) & ~7U;
@@ -818,7 +819,8 @@ public:
             // Make a copy of the basic coin collection.
             using coin_queue = std::priority_queue<
                     std::shared_ptr<node>, node_vector, compare_node>;
-            coin_queue const base_coins(nodes.begin(), nodes.end());
+            coin_queue const base_coins(
+                    std::ranges::cbegin(nodes), std::ranges::cend(nodes));
 
             // We now solve the Coin collector's problem using the Package-merge
             // algorithm. The solution goes here.
@@ -931,8 +933,9 @@ public:
             // With the canonical table build, the code_map can finally be built.
             nibble_code_map temp_code_map;
             size_t          position = 0;
-            for (auto it = sizemap.begin();
-                 it != sizemap.end() && position < codes.size(); ++it, position++) {
+            for (auto it = std::ranges::cbegin(sizemap);
+                 it != std::ranges::cend(sizemap) && position < codes.size();
+                 ++it, position++) {
                 temp_code_map[it->nibble] = codes[position];
             }
 
@@ -942,7 +945,7 @@ public:
             // This may resort the items. After that, it will discard the lowest
             // weighted item.
             compare.update(nodes, temp_code_map);
-            pop_heap(nodes.begin(), nodes.end(), compare);
+            std::ranges::pop_heap(nodes, compare);
             nodes.pop_back();
 
             // Is this iteration better than the best?
@@ -1003,7 +1006,7 @@ public:
         // need to use inline RLE.
         for (auto& run : rle_source) {
             auto value = code_map.find(run);
-            if (value != code_map.end()) {
+            if (value != code_map.cend()) {
                 size_t const code  = (value->second).code;
                 size_t       count = (value->second).length;
                 // length with bit 7 set is a device to bypass the code table at

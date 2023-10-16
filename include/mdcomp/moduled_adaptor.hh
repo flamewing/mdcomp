@@ -83,7 +83,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     source.seekg(location);
     std::vector<uint8_t> data;
     data.resize(static_cast<size_t>(full_size));
-    auto pointer = data.cbegin();
+    auto pointer = std::ranges::cbegin(data);
     source.read(reinterpret_cast<char*>(data.data()), full_size);
 
     big_endian::write2(

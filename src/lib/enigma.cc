@@ -253,8 +253,9 @@ public:
         // generates the same assembly as std::transform_reduce, so this is
         // fine because it needs one less temporary.
         uint16_t incrementing_value = std::transform_reduce(
-                                              unique_elems.cbegin(), unique_elems.cend(),
-                                              kv_pair{}, reduce_fn, transform_fn)
+                                              std::ranges::cbegin(unique_elems),
+                                              std::ranges::cend(unique_elems), kv_pair{},
+                                              reduce_fn, transform_fn)
                                               .first;
 
         // Output header.

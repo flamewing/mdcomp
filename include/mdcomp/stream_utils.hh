@@ -316,7 +316,7 @@ namespace detail {
 
     template <typename container_t, typename reference>
     concept can_insert_end = requires(container_t& cont) {
-        cont.insert(cont.end(), std::declval<reference>());
+        cont.insert(std::ranges::end(cont), std::declval<reference>());
     };
 
     template <typename range_t, typename container_t, typename... types_t>
@@ -332,7 +332,7 @@ namespace detail {
         if constexpr (can_push_back<container_t, reference>) {
             return std::back_insert_iterator{cont};
         } else {
-            return std::insert_iterator{cont, cont.end()};
+            return std::insert_iterator{cont, std::ranges::end(cont)};
         }
     }
 

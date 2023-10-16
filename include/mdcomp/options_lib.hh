@@ -203,7 +203,8 @@ namespace detail {
         if (parameter_in != nullptr) {
             std::string_view const parameter(parameter_in);
             auto [ptr, ec] = std::from_chars(
-                    parameter.cbegin(), parameter.cend(), options.pointer);
+                    std::ranges::cbegin(parameter), std::ranges::cend(parameter),
+                    options.pointer);
             if (ec != std::errc{}) {
                 print_error(ec, "pointer", parameter_in);
             }
@@ -230,7 +231,8 @@ namespace detail {
             if (parameter_in != nullptr) {
                 std::string_view const parameter(parameter_in);
                 auto [ptr, ec] = std::from_chars(
-                        parameter.cbegin(), parameter.cend(), options.padding);
+                        std::ranges::cbegin(parameter), std::ranges::cend(parameter),
+                        options.padding);
                 if (ec != std::errc{}) {
                     print_error(ec, "padding", optarg);
                 }
