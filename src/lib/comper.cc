@@ -46,7 +46,7 @@ class comper_internal {
         using descriptor_t        = uint16_t;
         using descriptor_endian_t = big_endian;
         using sliding_window_t    = sliding_window<comper_adaptor>;
-        enum class edge_type : size_t {
+        enum class edge_type : uint8_t {
             invalid,
             terminator,
             symbolwise,
