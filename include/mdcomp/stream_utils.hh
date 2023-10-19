@@ -69,24 +69,8 @@ namespace detail {
 
     constexpr inline from_range_t from_range;
 
-    template <typename Ty>
-    using with_reference = Ty&;
-
-    template <typename Ty>
-    concept can_reference = requires { typename with_reference<Ty>; };
-
     template <typename It>
-    concept cpp17_iterator = requires(It iter) {
-        { *iter } -> can_reference;
-        { ++iter } -> std::same_as<It&>;
-        { *iter++ } -> can_reference;
-    } && std::copyable<It>;
-
-    template <typename Ty>
-    concept has_member_difference_type = requires { typename Ty::difference_type; };
-
-    template <typename Ty>
-    concept has_member_value_type = requires { typename Ty::value_type; };
+    concept cpp17_iterator = std::input_or_output_iterator<It> && std::copyable<It>;
 
     namespace pipe {
         template <typename derived>
@@ -255,20 +239,8 @@ namespace detail {
     };
 
     template <typename It>
-    concept cpp17_input_iterator
-            = cpp17_iterator<It> && std::equality_comparable<It>
-              && has_member_difference_type<std::incrementable_traits<It>>
-              && has_member_value_type<std::indirectly_readable_traits<It>>
-              && requires(It iter) {
-                     typename std::common_reference_t<
-                             std::iter_reference_t<It>&&,
-                             typename std::indirectly_readable_traits<It>::value_type&>;
-                     typename std::common_reference_t<
-                             decltype(*iter++)&&,
-                             typename std::indirectly_readable_traits<It>::value_type&>;
-                     requires std::signed_integral<
-                             typename std::incrementable_traits<It>::difference_type>;
-                 };
+    concept cpp17_input_iterator = cpp17_iterator<It> && std::equality_comparable<It>
+                                   && std::indirectly_readable<It>;
 
     template <typename range_t, typename container_t>
     concept sized_and_reservable
