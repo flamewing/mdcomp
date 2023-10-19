@@ -122,7 +122,7 @@ namespace detail {
     };
 }    // namespace detail
 
-enum class bit_endian {
+enum class bit_endian : uint8_t {
     little,
     big
 };

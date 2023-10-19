@@ -32,7 +32,7 @@
 #include <span>
 #include <vector>
 
-enum class pad_mode {
+enum class pad_mode : uint8_t {
     dont_pad,
     pad_even
 };

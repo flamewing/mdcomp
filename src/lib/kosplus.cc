@@ -46,7 +46,7 @@ class kosplus_internal {
         using descriptor_t        = uint8_t;
         using descriptor_endian_t = little_endian;
         using sliding_window_t    = sliding_window<kos_plus_adaptor>;
-        enum class edge_type : size_t {
+        enum class edge_type : uint8_t {
             invalid,
             terminator,
             symbolwise,
