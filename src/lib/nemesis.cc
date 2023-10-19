@@ -677,12 +677,13 @@ public:
                     }
                     // Have we found a better code than inlining?
                     if (best_line) {
+                        auto const best_base = *best_line;
                         // We have; use it. To do so, we have to build the code
                         // and add it to the supplementary code table.
                         size_t code   = 0;
                         size_t length = 0;
                         for (size_t i = 0; i < count; i++) {
-                            size_t const coeff = linear_coefficients[*best_line + i];
+                            size_t const coeff = linear_coefficients[best_base + i];
                             if (coeff == 0U) {
                                 continue;
                             }
