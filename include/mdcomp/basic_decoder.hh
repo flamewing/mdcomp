@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <memory>
+#include <new>
 #include <span>
 #include <vector>
 
@@ -43,7 +45,7 @@ public:
 };
 
 template <typename T, size_t Align = alignof(std::max_align_t)>
-class aligned_allocator {
+struct aligned_allocator : std::allocator<T> {
 private:
     static_assert(
             Align >= alignof(T),
@@ -51,20 +53,12 @@ private:
             "or access will result in crashes.");
 
 public:
-    using value_type = T;
+    using std::allocator<T>::allocator;
 
     template <typename U>
     struct rebind {
         using other = aligned_allocator<U, Align>;
     };
-
-    constexpr aligned_allocator() noexcept                         = default;
-    constexpr aligned_allocator(aligned_allocator const&) noexcept = default;
-    constexpr aligned_allocator(aligned_allocator&&) noexcept      = default;
-    constexpr ~aligned_allocator() noexcept                        = default;
-
-    constexpr aligned_allocator& operator=(aligned_allocator const&) noexcept = default;
-    constexpr aligned_allocator& operator=(aligned_allocator&&) noexcept      = default;
 
     template <typename U>
     explicit constexpr aligned_allocator(aligned_allocator<U, Align> const&) noexcept {}
