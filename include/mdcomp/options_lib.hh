@@ -20,10 +20,12 @@
 
 #include <getopt.h>
 
+#include <boost/io_fwd.hpp>
 #include <boost/io/ios_state.hpp>
 
 #include <array>
 #include <charconv>
+#include <concepts>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -31,6 +33,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <ranges>
 #include <span>
 #include <sstream>
 #include <string>

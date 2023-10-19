@@ -18,6 +18,8 @@
 #include "mdcomp/options_lib.hh"
 #include "mdcomp/snkrle.hh"
 
+#include <getopt.h>
+
 #include <array>
 #include <cstddef>
 #include <filesystem>

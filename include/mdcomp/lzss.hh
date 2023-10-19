@@ -24,12 +24,14 @@
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <iterator>
 #include <limits>
 #include <list>
+#include <ranges>
 #include <span>
 #include <string>
 #include <type_traits>

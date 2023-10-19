@@ -18,6 +18,8 @@
 #include "mdcomp/comper.hh"
 #include "mdcomp/options_lib.hh"
 
+#include <getopt.h>
+
 #include <array>
 #include <cstddef>
 #include <filesystem>
