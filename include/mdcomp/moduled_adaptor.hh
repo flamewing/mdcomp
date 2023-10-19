@@ -29,6 +29,7 @@
 #include <iosfwd>
 #include <limits>
 #include <memory>
+#include <ranges>
 #include <sstream>
 #include <vector>
 

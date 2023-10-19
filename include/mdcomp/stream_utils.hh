@@ -19,6 +19,7 @@
 #define LIB_STREAM_UTILS_HH
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <ios>

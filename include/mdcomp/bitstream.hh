@@ -22,6 +22,7 @@
 #include "mdcomp/function_ref.hh"
 
 #include <climits>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>

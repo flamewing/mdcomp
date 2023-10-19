@@ -29,10 +29,12 @@
 #include <cstdint>
 #include <iostream>
 #include <istream>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <numeric>
 #include <ostream>
+#include <ranges>
 #include <set>
 #include <span>
 #include <sstream>
