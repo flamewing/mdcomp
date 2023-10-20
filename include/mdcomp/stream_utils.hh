@@ -19,7 +19,7 @@
 #define LIB_STREAM_UTILS_HH
 
 #include <algorithm>
-#include <concepts>
+#include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <ios>

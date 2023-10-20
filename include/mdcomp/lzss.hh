@@ -24,7 +24,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <concepts>
+#include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <iostream>

@@ -24,7 +24,7 @@
 #include <array>
 #include <bit>
 #include <climits>
-#include <concepts>
+#include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
