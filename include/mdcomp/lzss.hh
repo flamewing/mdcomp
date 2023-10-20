@@ -609,7 +609,7 @@ inline void lzss_copy(
     std::vector<char> buffer(static_cast<size_t>(length));
     dest.seekg(offset);
     using diff_t    = std::make_signed_t<size_t>;
-    diff_t distance = dest.tellp() - offset;
+    diff_t distance = static_cast<diff_t>(dest.tellp()) - offset;
     if (length > distance) {
         dest.read(buffer.data(), distance);
         auto       count  = length - distance;
