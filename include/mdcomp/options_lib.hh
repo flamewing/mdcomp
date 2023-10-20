@@ -25,7 +25,7 @@
 
 #include <array>
 #include <charconv>
-#include <concepts>
+#include <concepts>    // IWYU pragma: keep
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>

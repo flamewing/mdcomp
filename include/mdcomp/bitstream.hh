@@ -22,7 +22,7 @@
 #include "mdcomp/function_ref.hh"
 
 #include <climits>
-#include <concepts>
+#include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>
