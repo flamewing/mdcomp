@@ -20,17 +20,14 @@
 
 #include <getopt.h>
 
-#include <boost/io_fwd.hpp>
-#include <boost/io/ios_state.hpp>
-
 #include <array>
 #include <charconv>
 #include <concepts>    // IWYU pragma: keep
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
-#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <ranges>
@@ -99,14 +96,17 @@ namespace detail {
     [[noreturn]] inline void print_error(
             std::errc error, std::string const& parameter, char const* value) {
         if (error == std::errc::invalid_argument) {
-            std::cerr << "Invalid value '" << value << "' given for '" << parameter
-                      << "' parameter!\n";
+            std::cerr << std::format(
+                    "Invalid value '{}' given for '{}' parameter!\n", value, parameter);
         } else if (error == std::errc::result_out_of_range) {
-            std::cerr << "The value '" << value << "' given for '" << parameter
-                      << "' parameter is out of range!\n";
+            std::cerr << std::format(
+                    "The value '{}' given for '{}' parameter is out of range!\n", value,
+                    parameter);
         } else {
-            std::cerr << "Unknown error happened when parsing value '" << value
-                      << "' given for '" << parameter << "' parameter!\n";
+            std::cerr << std::format(
+                    "Unknown error happened when parsing value '{}' given for '{}' "
+                    "parameter!\n",
+                    value, parameter);
         }
         throw 5;
     }
@@ -277,9 +277,8 @@ namespace detail {
     inline void do_decode(instream& input, outstream& output, options_t const& options) {
         auto const do_print_end = [&]() noexcept {
             if constexpr (has_print_end<options_t>) {
-                boost::io::ios_all_saver const flags(std::cout);
-                std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0')
-                          << std::uppercase << std::right << input.tellg() << std::endl;
+                std::cout << std::format(
+                        "0x{:06X}\n", static_cast<std::streamoff>(input.tellg()));
             }
         };
         if constexpr (has_moduled<options_t>) {
