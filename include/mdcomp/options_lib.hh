@@ -20,8 +20,8 @@
 
 #include <getopt.h>
 
-#include <boost/io_fwd.hpp>
 #include <boost/io/ios_state.hpp>
+#include <boost/io_fwd.hpp>
 
 #include <array>
 #include <charconv>
@@ -45,7 +45,7 @@
 template <auto* long_options>
 requires requires(decltype(long_options) opt) {
     { opt->size() } -> std::same_as<size_t>;
-    { opt->data() } -> std::same_as<const option*>;
+    { opt->data() } -> std::same_as<option const*>;
 }
 consteval inline auto make_short_options() {
     static_assert(long_options->back().name == nullptr);

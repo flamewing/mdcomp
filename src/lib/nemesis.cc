@@ -753,7 +753,7 @@ public:
             std::vector<nibble_run>   rle_src;
             run_count_map             counts;
             std::vector<std::byte>    unpack;
-            constexpr const std::byte low_nibble{0xfU};
+            constexpr std::byte const low_nibble{0xfU};
             // TODO: Make this through a lazy smart iterator so it can be
             // bundled in the loop below.
             for (std::streamoff i = 0; i < length; i++) {
