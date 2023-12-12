@@ -115,7 +115,7 @@ namespace std23 {
         union storage {
             void*       pointer = nullptr;
             void const* const_pointer;
-            void        (*fun_pointer)();
+            void (*fun_pointer)();
 
             constexpr storage() noexcept = default;
 

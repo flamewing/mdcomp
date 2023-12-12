@@ -208,28 +208,28 @@ namespace detail {
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types&...>
-        constexpr decltype(auto) operator()(Ty && arg) & noexcept(
+        constexpr decltype(auto) operator()(Ty&& arg) & noexcept(
                 noexcept(call(*this, std::forward<Ty>(arg), indices{}))) {
             return call(*this, std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types const&...>
-        constexpr decltype(auto) operator()(Ty && arg) const& noexcept(
+        constexpr decltype(auto) operator()(Ty&& arg) const& noexcept(
                 noexcept(call(*this, std::forward<Ty>(arg), indices{}))) {
             return call(*this, std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types...>
-        constexpr decltype(auto) operator()(Ty && arg) && noexcept(
+        constexpr decltype(auto) operator()(Ty&& arg) && noexcept(
                 noexcept(call(std::move(*this), std::forward<Ty>(arg), indices{}))) {
             return call(std::move(*this), std::forward<Ty>(arg), indices{});
         }
 
         template <typename Ty>
         requires std::invocable<Fn, Ty, Types const...>
-        constexpr decltype(auto) operator()(Ty && arg) const&& noexcept(
+        constexpr decltype(auto) operator()(Ty&& arg) const&& noexcept(
                 noexcept(call(std::move(*this), std::forward<Ty>(arg), indices{}))) {
             return call(std::move(*this), std::forward<Ty>(arg), indices{});
         }

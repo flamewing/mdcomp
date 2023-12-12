@@ -240,7 +240,7 @@ public:
         using kv_pair     = std::pair<uint16_t, diff_t>;
         auto transform_fn = [&](uint16_t elem) noexcept -> kv_pair {
             auto const predicate = [next = elem](uint16_t value) mutable noexcept {
-                const bool result = value == next;
+                bool const result = value == next;
                 next += static_cast<uint16_t>(result);
                 return result;
             };

@@ -331,8 +331,8 @@ public:
     // Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
-    [[nodiscard]] INLINE uint_t
-            read(size_t const count) noexcept(noexcept(buffer.read(count))) {
+    [[nodiscard]] INLINE uint_t read(size_t const count) noexcept(
+            noexcept(buffer.read(count))) {
         return buffer.read(count);
     }
 
