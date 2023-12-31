@@ -12,16 +12,16 @@ AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortEnumsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
-AllowShortLambdasOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
 AttributeMacros:
   - __capability
@@ -94,12 +94,12 @@ IndentCaseBlocks: false
 IndentGotoLabels: true
 IndentPPDirectives: AfterHash
 IndentExternBlock: AfterExternBlock
-# IndentRequires: true
+IndentWidth: '4'
+IndentRequires: true
 IndentRequiresClause: false
 RequiresClausePosition: OwnLine
 InsertBraces: true
 SeparateDefinitionBlocks: Always
-IndentWidth: 4
 IndentWrappedFunctionNames: true
 InsertTrailingCommas: None
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -114,9 +114,9 @@ QualifierAlignment: Custom
 QualifierOrder: ["constexpr", "static", "inline", "type", "const", "volatile"]
 ReferenceAlignment: Pointer
 ReflowComments: true
+SortIncludes: true
 CommentPragmas: '^\\.+'
 ShortNamespaceLines: 1
-SortIncludes: CaseSensitive
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
@@ -133,9 +133,9 @@ SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 4
 SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
 SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
-SpacesInCStyleCastParentheses: false
 SpacesInLineCommentPrefix:
   Minimum: 1
   Maximum: -1
