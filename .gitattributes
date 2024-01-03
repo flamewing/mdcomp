@@ -1,14 +1,63 @@
+*.bin		binary
+*.flx		binary
+*.pal		binary
+*.shp		binary
+*.vga		binary
+*.xpm		text
+
+*.bmp		binary
+*.gif		binary
+*.ico		binary
+*.jpeg		binary
+*.jpg		binary
+*.png		binary
+
+*.mid		binary
+*.wav		binary
+
+*.xls		binary
+
+*.tar.gz	binary
+*.tar.bz2	binary
+*.zip		binary
+
+*.exe		binary
+*.dmg		binary
+*.zip		binary
+
+*.dat		binary
+
+*.sln		eol=crlf
+*.vcproj	eol=crlf
+*.vcxproj	eol=crlf
+*.vsprops	eol=crlf
+*.manifest	eol=crlf
+
+*.glade		text diff=html
+*.htm		text diff=html
+*.html		text diff=html
+*.shtml		text diff=html
+*.ui		text diff=html
+*.xml		text diff=html
+
+*.inc		text diff=php
+*.php		text diff=php
+*.php3		text diff=php
+*.tpl		text diff=php
+
 *.ac		text
 *.am		text
 *.in		text
-*.m4		eol=lf
+*.m4		text
 
+*.bat		text
 *.sh		text
 
 *.cfg		text
 *.txt		text
 
-*.asm		text diff=cpp
+*.iss		text
+
 *.c			text diff=cpp
 *.cc		text diff=cpp
 *.cpp		text diff=cpp
@@ -17,11 +66,16 @@
 *.h			text diff=cpp
 *.hh 		text diff=cpp
 *.hpp		text diff=cpp
+*.m			text diff=objc
+*.mm		text diff=objc
 *.ll		text diff=cpp
 *.rc		text
 *.uc		text
 *.yy		text diff=cpp
 
+*.java		test diff=java
+
+Changelog	text
 Makefile*	text
 
 AUTHORS		text
@@ -31,3 +85,6 @@ INSTALL		text
 NEWS		text
 README*		text
 
+*.pbxproj	text
+*.xcscheme	text diff=xml
+*.vcxproj.filters	text diff=xml
