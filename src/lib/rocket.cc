@@ -93,16 +93,17 @@ struct rocket_internal {
                 edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
-            case edge_type::terminator:
+                using enum edge_type;
+            case terminator:
                 // Does not have a terminator.
                 return 0;
-            case edge_type::symbolwise:
+            case symbolwise:
                 // 8-bit value.
                 return desc_bits(type) + 8;
-            case edge_type::dictionary:
+            case dictionary:
                 // 10-bit distance, 6-bit length.
                 return desc_bits(type) + 10 + 6;
-            case edge_type::invalid:
+            case invalid:
                 return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
@@ -182,11 +183,12 @@ public:
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
-            case edge_type::symbolwise:
+                using enum rocket_adaptor::edge_type;
+            case symbolwise:
                 output.descriptor_bit(1);
                 output.put_byte(edge.get_symbol());
                 break;
-            case edge_type::dictionary: {
+            case dictionary: {
                 size_t const length = edge.get_length();
                 size_t const dist   = edge.get_distance();
                 size_t const position
@@ -196,9 +198,9 @@ public:
                 output.put_byte(position);
                 break;
             }
-            case edge_type::terminator:
+            case terminator:
                 break;
-            case edge_type::invalid:
+            case invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';

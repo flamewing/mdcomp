@@ -92,14 +92,15 @@ class comper_internal {
                 edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
-            case edge_type::symbolwise:
-            case edge_type::terminator:
+                using enum edge_type;
+            case symbolwise:
+            case terminator:
                 // 16-bit value.
                 return desc_bits(type) + 16;
-            case edge_type::dictionary:
+            case dictionary:
                 // 8-bit distance, 8-bit length.
                 return desc_bits(type) + 8 + 8;
-            case edge_type::invalid:
+            case invalid:
                 return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
