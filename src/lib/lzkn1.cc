@@ -93,23 +93,24 @@ class lzkn1_internal {
         constexpr static size_t edge_weight(
                 edge_type const type, size_t length) noexcept {
             switch (type) {
-            case edge_type::symbolwise:
-            case edge_type::terminator:
+                using enum edge_type;
+            case symbolwise:
+            case terminator:
                 // 8-bit value.
                 return desc_bits(type) + 8;
-            case edge_type::dictionary_short:
+            case dictionary_short:
                 // 4-bit distance, 2-bit marker (%10),
                 // 2-bit length.
                 return desc_bits(type) + 4 + 2 + 2;
-            case edge_type::dictionary_long:
+            case dictionary_long:
                 // 10-bit distance, 1-bit marker (%0),
                 // 5-bit length.
                 return desc_bits(type) + 10 + 1 + 5;
-            case edge_type::packed_symbolwise:
+            case packed_symbolwise:
                 // 2-bit marker (%11), 6-bit length,
                 // length * 8 bits data.
                 return desc_bits(type) + 2 + 6 + length * 8;
-            case edge_type::invalid:
+            case invalid:
                 return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();

@@ -480,10 +480,11 @@ namespace detail {
     };
 
     CONST_INLINE constexpr auto reverse(std::endian endian) noexcept {
-        if (endian == std::endian::big) {
-            return std::endian::little;
+        using enum std::endian;
+        if (endian == big) {
+            return little;
         }
-        return std::endian::big;
+        return big;
     }
 }    // namespace detail
 

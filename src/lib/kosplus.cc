@@ -71,13 +71,13 @@ class kosplus_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
+            using enum edge_type;
             return std::array{
-                    sliding_window_t{data,             256,  2,                   5,edge_type::dictionary_inline                                                                                    },
-                    sliding_window_t{
-                                     data, search_buf_size,  3,                   9,  edge_type::dictionary_short},
+                    sliding_window_t{data,             256,  2,                   5,dictionary_inline                                                                                    },
+                    sliding_window_t{data, search_buf_size,  3,                   9,  dictionary_short},
                     sliding_window_t{
                                      data, search_buf_size, 10, look_ahead_buf_size,
-                                     edge_type::dictionary_long                                                  }
+                                     dictionary_long                                                  }
             };
         }
 
@@ -85,18 +85,19 @@ class kosplus_internal {
         // field.
         constexpr static size_t desc_bits(edge_type const type) noexcept {
             switch (type) {
-            case edge_type::symbolwise:
+                using enum edge_type;
+            case symbolwise:
                 // 1-bit descriptor.
                 return 1;
-            case edge_type::dictionary_inline:
+            case dictionary_inline:
                 // 2-bit descriptor, 2-bit count.
                 return 2 + 2;
-            case edge_type::dictionary_short:
-            case edge_type::dictionary_long:
-            case edge_type::terminator:
+            case dictionary_short:
+            case dictionary_long:
+            case terminator:
                 // 2-bit descriptor.
                 return 2;
-            case edge_type::invalid:
+            case invalid:
                 return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
@@ -109,21 +110,22 @@ class kosplus_internal {
                 edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
             switch (type) {
-            case edge_type::symbolwise:
-            case edge_type::dictionary_inline:
+                using enum edge_type;
+            case symbolwise:
+            case dictionary_inline:
                 // 8-bit value/distance.
                 return desc_bits(type) + 8;
-            case edge_type::dictionary_short:
+            case dictionary_short:
                 // 13-bit distance, 3-bit length.
                 return desc_bits(type) + 13 + 3;
-            case edge_type::dictionary_long:
+            case dictionary_long:
                 // 13-bit distance, 3-bit marker (zero),
                 // 8-bit length.
                 return desc_bits(type) + 13 + 8 + 3;
-            case edge_type::terminator:
+            case terminator:
                 // 24-bit value.
                 return desc_bits(type) + 24;
-            case edge_type::invalid:
+            case invalid:
                 return std::numeric_limits<size_t>::max();
             }
             __builtin_unreachable();
