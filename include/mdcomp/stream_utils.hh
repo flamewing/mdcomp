@@ -337,9 +337,9 @@ namespace detail {
             return cont;
         } else if constexpr (std::ranges::input_range<
                                      std::ranges::range_reference_t<range_t>>) {
-            auto const operation = [](auto&& elem) {
+            auto const operation = []<typename elem_t>(elem_t&& elem) {
                 return to<std::ranges::range_value_t<container_t>>(
-                        std::forward<decltype(elem)>(elem));
+                        std::forward<elem_t>(elem));
             };
             return to<container_t>(
                     std::ranges::transform(range, operation),
