@@ -324,7 +324,7 @@ namespace detail {
                                      range_t, container_t, types_t...>) {
             return container_t(
                     std::ranges::begin(range), std::ranges::end(range),
-                    std::forward<types_t...>(args)...);
+                    std::forward<types_t>(args)...);
         } else if constexpr (converts_constructible_insertable<
                                      range_t, container_t, types_t...>) {
             container_t cont(std::forward<types_t>(args)...);

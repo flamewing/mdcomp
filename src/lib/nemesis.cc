@@ -783,11 +783,11 @@ public:
 
         // No point in including anything with weight less than 2, as they
         // would actually increase compressed file size if used.
-        constexpr auto freq_filter = [](auto&& kv_pair) noexcept {
-            return kv_pair.second > 1;
+        constexpr auto freq_filter = []<typename Arg>(Arg&& kv_pair) noexcept {
+            return std::forward<Arg>(kv_pair).second > 1;
         };
-        constexpr auto to_node = [](auto&& kv_pair) {
-            auto const& [run, frequency] = kv_pair;
+        constexpr auto to_node = []<typename Arg>(Arg&& kv_pair) {
+            auto const& [run, frequency] = std::forward<Arg>(kv_pair);
             return std::make_shared<node>(run, frequency);
         };
         auto nodes = count_map | std::views::filter(freq_filter)

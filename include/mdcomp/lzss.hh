@@ -100,10 +100,10 @@ public:
 
     [[nodiscard]] constexpr size_t get_distance() const noexcept {
         return std::visit(
-                [](auto&& arg) noexcept {
-                    using info_t = std::decay_t<decltype(arg)>;
+                []<typename Arg>(Arg&& arg) noexcept {
+                    using info_t = std::remove_cvref_t<Arg>;
                     if constexpr (std::is_same_v<info_t, match_info>) {
-                        return arg.distance;
+                        return std::forward<Arg>(arg).distance;
                     } else {
                         return size_t{0};
                     }
@@ -113,10 +113,10 @@ public:
 
     [[nodiscard]] constexpr size_t get_length() const noexcept {
         return std::visit(
-                [](auto&& arg) noexcept {
-                    using info_t = std::decay_t<decltype(arg)>;
+                []<typename Arg>(Arg&& arg) noexcept {
+                    using info_t = std::remove_cvref_t<Arg>;
                     if constexpr (std::is_same_v<info_t, match_info>) {
-                        return arg.length;
+                        return std::forward<Arg>(arg).length;
                     } else {
                         return size_t{0};
                     }
@@ -126,10 +126,10 @@ public:
 
     [[nodiscard]] constexpr stream_t get_symbol() const noexcept {
         return std::visit(
-                [](auto&& arg) noexcept {
-                    using info_t = std::decay_t<decltype(arg)>;
+                []<typename Arg>(Arg&& arg) noexcept {
+                    using info_t = std::remove_cvref_t<Arg>;
                     if constexpr (std::is_same_v<info_t, stream_t>) {
-                        return arg;
+                        return std::forward<Arg>(arg);
                     } else {
                         return std::numeric_limits<stream_t>::max();
                     }
