@@ -39,7 +39,7 @@ namespace detail {
         value1 / value2;
         value1 % value2;
     }
-    constexpr inline auto round_up(T1 const value, T2 const factor) noexcept {
+    constexpr auto round_up(T1 const value, T2 const factor) noexcept {
         constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
     };

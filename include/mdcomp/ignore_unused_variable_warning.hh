@@ -20,6 +20,8 @@
 
 template <typename... T>
 // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-constexpr inline void ignore_unused_variable_warning(T&&...) {}
+constexpr void ignore_unused_variable_warning(T&&...) {
+    // This function is only meant to silence unused variable warnings.
+}
 
 #endif    // LIB_IGNORE_UNUSED_VARIABLE_WARNING_HH

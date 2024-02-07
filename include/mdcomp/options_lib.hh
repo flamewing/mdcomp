@@ -47,7 +47,7 @@ requires requires(decltype(long_options) opt) {
     { opt->size() } -> std::same_as<size_t>;
     { opt->data() } -> std::same_as<option const*>;
 }
-consteval inline auto make_short_options() {
+consteval auto make_short_options() {
     static_assert(long_options->back().name == nullptr);
     constexpr auto const result = [&]() consteval noexcept {
         std::array<char, 3U * (long_options->size() - 1U)> intermediate{};
