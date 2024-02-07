@@ -57,7 +57,7 @@ consteval auto make_short_options() {
             if (opt.name == nullptr) {
                 break;
             }
-            char const val = static_cast<char>(opt.val);
+            auto const val = static_cast<char>(opt.val);
             if (val == '\0') {
                 // Allow options without a short form.
                 continue;
@@ -314,7 +314,7 @@ namespace detail {
 
     template <typename options_t>
     inline int crunch_file(
-            std::filesystem::path& infile, std::filesystem::path& outfile,
+            std::filesystem::path const& infile, std::filesystem::path const& outfile,
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
@@ -342,7 +342,7 @@ namespace detail {
 
     template <typename options_t>
     inline int decode_file(
-            std::filesystem::path& infile, std::filesystem::path& outfile,
+            std::filesystem::path const& infile, std::filesystem::path const& outfile,
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
@@ -365,7 +365,7 @@ namespace detail {
 
     template <typename options_t>
     inline int encode_file(
-            std::filesystem::path& infile, std::filesystem::path& outfile,
+            std::filesystem::path const& infile, std::filesystem::path const& outfile,
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
@@ -385,8 +385,8 @@ namespace detail {
 
     template <typename options_t>
     inline void command_argument_parser(options_t& options) {
-        options.program = options.arguments.front();
-        int const count = static_cast<int>(std::ssize(options.arguments));
+        options.program  = options.arguments.front();
+        auto const count = static_cast<int>(std::ssize(options.arguments));
         while (true) {
             int       option_index = 0;
             int const option_char  = getopt_long(

@@ -303,7 +303,7 @@ struct compare_node2 {
 
     // Resort the heap using weights from the previous iteration, then discards
     // the lowest weighted item.
-    void update(node_vector& nodes, nibble_code_map& codes) noexcept {
+    void update(node_vector& nodes, nibble_code_map const& codes) noexcept {
         *code_map = codes;
         std::ranges::make_heap(nodes, *this);
     }
@@ -871,7 +871,7 @@ public:
             // this number is the optimal bit length for the nibble run for the
             // current coin collection.
             code_size_map base_size_map;
-            for (auto& elem : solution) {
+            for (auto const& elem : solution) {
                 elem->traverse(base_size_map);
             }
 
