@@ -119,7 +119,8 @@ using code_nibble_map = std::map<bit_code, nibble_run>;
 // This represents a node (leaf or branch) in the Huffman encoding tree.
 class node : public std::enable_shared_from_this<node> {
 private:
-    std::shared_ptr<node> left_child, right_child;
+    std::shared_ptr<node> left_child;
+    std::shared_ptr<node> right_child;
     size_t                weight;
     nibble_run            value{std::byte{0}, 0};
 
@@ -308,7 +309,7 @@ struct compare_node2 {
         std::ranges::make_heap(nodes, *this);
     }
 
-    void initialize(node_vector& nodes, nibble_code_map& codes) noexcept {
+    void initialize(node_vector& nodes, nibble_code_map const& codes) noexcept {
         update(nodes, codes);
     }
 };
