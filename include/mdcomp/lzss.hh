@@ -267,23 +267,23 @@ private:
 };
 
 template <typename T>
-concept lzss_adaptor = requires() {
-    std::is_unsigned_v<typename T::stream_t>;
-    !std::is_same_v<typename T::stream_t, bool>;
-    std::is_class_v<typename T::stream_endian_t>;
-    std::is_unsigned_v<typename T::descriptor_t>;
-    !std::is_same_v<typename T::descriptor_t, bool>;
-    std::is_class_v<typename T::descriptor_endian_t>;
-    std::is_enum_v<typename T::edge_type>;
+concept lzss_adaptor = requires {
+    requires std::unsigned_integral<typename T::stream_t>;
+    requires !std::same_as<typename T::stream_t, bool>;
+    requires std::is_class_v<typename T::stream_endian_t>;
+    requires std::unsigned_integral<typename T::descriptor_t>;
+    requires !std::same_as<typename T::descriptor_t, bool>;
+    requires std::is_class_v<typename T::descriptor_endian_t>;
+    requires std::is_enum_v<typename T::edge_type>;
     { T::edge_type::invalid } -> std::same_as<typename T::edge_type>;
     { T::edge_type::terminator } -> std::same_as<typename T::edge_type>;
     { T::edge_type::symbolwise } -> std::same_as<typename T::edge_type>;
-    std::is_same_v<decltype(T::num_desc_bits), size_t const>;
-    std::is_same_v<decltype(T::need_early_descriptor), bool const>;
-    std::is_same_v<decltype(T::descriptor_bit_order), bit_endian const>;
-    std::is_same_v<decltype(T::first_match_position), size_t const>;
-    std::is_same_v<decltype(T::search_buf_size), size_t const>;
-    std::is_same_v<decltype(T::look_ahead_buf_size), size_t const>;
+    requires std::same_as<decltype(T::num_desc_bits), size_t const>;
+    requires std::same_as<decltype(T::need_early_descriptor), bool const>;
+    requires std::same_as<decltype(T::descriptor_bit_order), bit_endian const>;
+    requires std::same_as<decltype(T::first_match_position), size_t const>;
+    requires std::same_as<decltype(T::search_buf_size), size_t const>;
+    requires std::same_as<decltype(T::look_ahead_buf_size), size_t const>;
     requires requires(
             uint8_t const*& rptr, uint8_t*& wptr, std::istream& input,
             std::ostream& output, typename T::stream_t stream_val,
