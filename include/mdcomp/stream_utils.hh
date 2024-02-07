@@ -285,11 +285,11 @@ namespace detail {
 
     template <typename container_t, typename reference>
     concept can_push_back
-            = requires(container_t& cont) { cont.push_back(std::declval<reference>()); };
+            = requires(container_t& cont, reference& ref) { cont.push_back(ref); };
 
     template <typename container_t, typename reference>
-    concept can_insert_end = requires(container_t& cont) {
-        cont.insert(std::ranges::end(cont), std::declval<reference>());
+    concept can_insert_end = requires(container_t& cont, reference& ref) {
+        cont.insert(std::ranges::end(cont), ref);
     };
 
     template <typename range_t, typename container_t, typename... types_t>
@@ -392,22 +392,20 @@ namespace detail {
 
     template <template <typename...> typename count, typename range_t, typename... args_t>
     auto to_helper() {
-        if constexpr (requires {
-                          count(std::declval<range_t>(), std::declval<args_t>()...);
+        if constexpr (requires(range_t range, args_t... args) {
+                          count(range, args...);
                       }) {
             return static_cast<decltype(count(
                     std::declval<range_t>(), std::declval<args_t>()...))*>(nullptr);
-        } else if constexpr (requires {
-                                 count(from_range, std::declval<range_t>(),
-                                       std::declval<args_t>()...);
+        } else if constexpr (requires(range_t range, args_t... args) {
+                                 count(from_range, range, args...);
                              }) {
             return static_cast<decltype(count(
                     from_range, std::declval<range_t>(), std::declval<args_t>()...))*>(
                     nullptr);
-        } else if constexpr (requires {
-                                 count(std::declval<phony_input_iterator<range_t>>(),
-                                       std::declval<phony_input_iterator<range_t>>(),
-                                       std::declval<args_t>()...);
+        } else if constexpr (requires(
+                                     phony_input_iterator<range_t> iter, args_t... args) {
+                                 count(iter, iter, args...);
                              }) {
             return static_cast<decltype(count(
                     std::declval<phony_input_iterator<range_t>>(),
