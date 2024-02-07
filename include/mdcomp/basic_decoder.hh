@@ -46,7 +46,6 @@ public:
 
 template <typename T, size_t Align = alignof(std::max_align_t)>
 struct aligned_allocator : std::allocator<T> {
-private:
     static_assert(
             Align >= alignof(T),
             "Beware that types like int have minimum alignment requirements "

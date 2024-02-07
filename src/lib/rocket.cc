@@ -126,7 +126,6 @@ struct rocket_internal {
         }
     };
 
-public:
     static void decode(std::istream& input, std::iostream& dest) {
         using rock_istream = lzss_istream<rocket_adaptor>;
         using diff_t       = std::make_signed_t<size_t>;
