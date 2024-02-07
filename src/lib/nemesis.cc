@@ -210,14 +210,12 @@ struct compare_size {
         if (left.code_length > right.code_length) {
             return false;
         }
-        // rhs.code_length == lhs.code_length
         if (left.count > right.count) {
             return true;
         }
         if (left.count < right.count) {
             return false;
         }
-        // rhs.count == lhs.count
         nibble_run const& left_nibble  = left.nibble;
         nibble_run const  right_nibble = right.nibble;
         return (left_nibble.get_nibble() < right_nibble.get_nibble()
