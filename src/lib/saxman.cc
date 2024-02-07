@@ -219,7 +219,7 @@ public:
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
-                using enum saxman_adaptor::edge_type;
+                using enum edge_type;
             case symbolwise:
                 output.descriptor_bit(1);
                 output.put_byte(edge.get_symbol());

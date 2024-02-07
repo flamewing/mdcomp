@@ -48,15 +48,15 @@
 #if defined(_MSC_VER)
 #    define INLINE       __forceinline
 #    define CONST_INLINE __forceinline
-// #    define PURE_INLINE  __forceinline
+#    define PURE_INLINE  __forceinline
 #elif defined(__GNUG__)
-#    define INLINE       [[gnu::always_inline]] inline
-#    define CONST_INLINE [[using gnu: const, always_inline]] inline
-// #    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
+#    define INLINE       [[gnu::always_inline]]
+#    define CONST_INLINE [[using gnu: const, always_inline]]
+#    define PURE_INLINE  [[using gnu: pure, always_inline]]
 #else
-#    define INLINE       inline
-#    define CONST_INLINE inline
-// #    define PURE_INLINE  inline
+#    define INLINE
+#    define CONST_INLINE
+#    define PURE_INLINE
 #endif
 
 namespace detail {
@@ -92,7 +92,7 @@ namespace detail {
                                       };
 
     template <size_t Size>
-    constexpr inline auto select_unsigned() noexcept {
+    CONST_INLINE constexpr auto select_unsigned() noexcept {
         static_assert(std::has_single_bit(Size), "Size must be a power of 2");
         static_assert(
                 Size > 0 && Size <= sizeof(uint64_t),
@@ -604,6 +604,6 @@ static_assert(std::output_iterator<endian_output_iterator<big_endian, uint8_t>, 
 
 #undef INLINE
 #undef CONST_INLINE
-// #undef PURE_INLINE
+#undef PURE_INLINE
 
 #endif    // LIB_BIGENDIAN_IO_HH

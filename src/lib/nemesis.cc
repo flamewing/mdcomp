@@ -226,22 +226,22 @@ struct compare_size {
     }
 };
 
-#define CUSTOM_COMPARE 1
+constexpr static bool custom_nemesis_compare = true;
 
 struct compare_node {
     bool operator()(std::shared_ptr<node> const& left, std::shared_ptr<node> const& right)
             const noexcept {
-#if CUSTOM_COMPARE
-        if (*left > *right) {
-            return true;
+        if constexpr (custom_nemesis_compare) {
+            if (*left > *right) {
+                return true;
+            }
+            if (*left < *right) {
+                return false;
+            }
+            return left->get_value().get_count() < right->get_value().get_count();
+        } else {
+            return *left > *right;
         }
-        if (*left < *right) {
-            return false;
-        }
-        return left->get_value().get_count() < right->get_value().get_count();
-#else
-        return *left > *right;
-#endif
     }
 
     // Just discard the lowest weighted item.

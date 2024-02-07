@@ -33,15 +33,15 @@
 #if defined(_MSC_VER)
 #    define INLINE       __forceinline
 #    define CONST_INLINE __forceinline
-// #    define PURE_INLINE  __forceinline
+#    define PURE_INLINE  __forceinline
 #elif defined(__GNUG__)
-#    define INLINE       [[gnu::always_inline]] inline
-#    define CONST_INLINE [[using gnu: const, always_inline]] inline
-// #    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
+#    define INLINE       [[gnu::always_inline]]
+#    define CONST_INLINE [[using gnu: const, always_inline]]
+#    define PURE_INLINE  [[using gnu: pure, always_inline]]
 #else
-#    define INLINE       inline
-#    define CONST_INLINE inline
-// #    define PURE_INLINE  inline
+#    define INLINE
+#    define CONST_INLINE
+#    define PURE_INLINE
 #endif
 
 namespace detail {
@@ -139,7 +139,7 @@ private:
     size_t num_read_bits;
     uint_t bit_buffer;
 
-    constexpr static inline size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
+    constexpr static size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
 
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
@@ -225,8 +225,8 @@ private:
     size_t waiting_bits;
     uint_t bit_buffer;
 
-    constexpr static inline size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
-    constexpr static inline uint_t const all_ones  = std::numeric_limits<uint_t>::max();
+    constexpr static size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
+    constexpr static uint_t const all_ones  = std::numeric_limits<uint_t>::max();
 
     INLINE void write_bits(uint_t const bits) noexcept(noexcept(writer(bits))) {
         if constexpr (bit_order == bit_endian::little) {
@@ -301,7 +301,7 @@ template <
         bool EarlyRead>
 class ibitstream {
 private:
-    constexpr static inline bool const is_noexcept
+    constexpr static bool const is_noexcept
             = noexcept(Endian::template read<uint_t>(std::declval<std::istream&>()));
 
     struct bit_reader {
@@ -331,8 +331,8 @@ public:
     // Reads up to sizeof(T) * CHAR_BIT bits from the stream. This remembers
     // previously read bits, and gets another T from the actual stream once all
     // bits in the current T have been read.
-    [[nodiscard]] INLINE uint_t read(size_t const count) noexcept(
-            noexcept(buffer.read(count))) {
+    [[nodiscard]] INLINE uint_t
+            read(size_t const count) noexcept(noexcept(buffer.read(count))) {
         return buffer.read(count);
     }
 
@@ -346,7 +346,7 @@ public:
 template <std::unsigned_integral uint_t, bit_endian bit_order, typename Endian>
 class obitstream {
 private:
-    constexpr static inline bool const is_noexcept = noexcept(
+    constexpr static bool const is_noexcept = noexcept(
             Endian::write(std::declval<std::ostream&>(), std::declval<uint_t>()));
 
     struct bit_writer {
@@ -395,6 +395,6 @@ public:
 
 #undef INLINE
 #undef CONST_INLINE
-// #undef PURE_INLINE
+#undef PURE_INLINE
 
 #endif    // LIB_BITSTREAM_HH

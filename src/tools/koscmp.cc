@@ -39,7 +39,7 @@ struct options_t {
         return gen_argument_tuple(input, output, padding);
     }
 
-    constexpr static inline std::array const long_options{
+    constexpr static std::array const long_options{
             option{"extract", optional_argument, nullptr, 'x'},
             option{"moduled",       no_argument, nullptr, 'm'},
             option{ "crunch",       no_argument, nullptr, 'c'},
@@ -47,7 +47,7 @@ struct options_t {
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    constexpr static inline auto short_options = make_short_options<&long_options>();
+    constexpr static auto short_options = make_short_options<&long_options>();
 
     std::filesystem::path program;
     std::span<char*>      arguments;
