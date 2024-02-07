@@ -182,12 +182,11 @@ struct rocket_internal {
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
             switch (edge.get_type()) {
-                using enum edge_type;
-            case symbolwise:
+            case edge_type::symbolwise:
                 output.descriptor_bit(1);
                 output.put_byte(edge.get_symbol());
                 break;
-            case dictionary: {
+            case edge_type::dictionary: {
                 size_t const length = edge.get_length();
                 size_t const dist   = edge.get_distance();
                 size_t const position
@@ -197,9 +196,9 @@ struct rocket_internal {
                 output.put_byte(position);
                 break;
             }
-            case terminator:
+            case edge_type::terminator:
                 break;
-            case invalid:
+            case edge_type::invalid:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';
