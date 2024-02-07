@@ -135,11 +135,11 @@ template <
         bit_endian bit_order, bool EarlyRead>
 class ibitbuffer {
 private:
-    Reader reader;
-    size_t num_read_bits;
-    uint_t bit_buffer;
-
     constexpr static size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
+
+    Reader reader;
+    size_t num_read_bits{bit_count};
+    uint_t bit_buffer;
 
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
@@ -161,11 +161,10 @@ private:
 
 public:
     explicit ibitbuffer(Reader const& reader_in) noexcept(noexcept(read_bits()))
-            : reader(reader_in), num_read_bits(bit_count), bit_buffer(read_bits()) {}
+            : reader(reader_in), bit_buffer(read_bits()) {}
 
     explicit ibitbuffer(Reader&& reader_in) noexcept(noexcept(read_bits()))
-            : reader(std::move(reader_in)), num_read_bits(bit_count),
-              bit_buffer(read_bits()) {}
+            : reader(std::move(reader_in)), bit_buffer(read_bits()) {}
 
     // Gets a single bit from the buffer. Remembers previously read bits, and
     // gets a new T from the actual buffer once all bits in the current T has
@@ -222,8 +221,8 @@ template <
 class obitbuffer {
 private:
     Writer writer;
-    size_t waiting_bits;
-    uint_t bit_buffer;
+    size_t waiting_bits{0};
+    uint_t bit_buffer{0};
 
     constexpr static size_t const bit_count = sizeof(uint_t) * CHAR_BIT;
     constexpr static uint_t const all_ones  = std::numeric_limits<uint_t>::max();
@@ -237,11 +236,9 @@ private:
     }
 
 public:
-    explicit obitbuffer(Writer const& writer_in) noexcept
-            : writer(writer_in), waiting_bits(0), bit_buffer(0) {}
+    explicit obitbuffer(Writer const& writer_in) noexcept : writer(writer_in) {}
 
-    explicit obitbuffer(Writer&& writer_in) noexcept
-            : writer(std::move(writer_in)), waiting_bits(0), bit_buffer(0) {}
+    explicit obitbuffer(Writer&& writer_in) noexcept : writer(std::move(writer_in)) {}
 
     // Puts a single bit into the buffer. Remembers previously written bits, and
     // outputs a T to the actual buffer once there are at least sizeof(T) *

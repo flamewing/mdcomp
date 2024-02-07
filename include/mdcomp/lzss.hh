@@ -163,7 +163,6 @@ public:
             edge_type const type_in) noexcept
             : data(data_in), search_buffer_size(search_buffer_size_in),
               minimal_match_length(minimal_match_length_in),
-              base_node(Adaptor::first_match_position),
               upper_bound(std::min(lookahead_buffer_length + base_node, data.size())),
               lower_bound(base_node - std::min(base_node, search_buffer_size)),
               type(type_in) {}
@@ -261,7 +260,7 @@ private:
     data_t    data;
     size_t    search_buffer_size;
     size_t    minimal_match_length;
-    size_t    base_node;
+    size_t    base_node{Adaptor::first_match_position};
     size_t    upper_bound;
     size_t    lower_bound;
     edge_type type;
@@ -499,7 +498,7 @@ private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
     using bit_buffer_t        = obitstream<
-                   descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
+            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
     // Where we will output to.
     std::ostream& out;
     // Internal bitstream output buffer.
@@ -574,8 +573,8 @@ private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
     using bit_buffer_t        = ibitstream<
-                   descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
-                   Adaptor::need_early_descriptor>;
+            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
+            Adaptor::need_early_descriptor>;
     // Where we will input to.
     std::istream* in;
     // Internal bitstream input buffer.
