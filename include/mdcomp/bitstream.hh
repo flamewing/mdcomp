@@ -277,7 +277,7 @@ public:
     // padding with zeroes.
     INLINE bool flush() noexcept(noexcept(write_bits(bit_buffer))) {
         if (waiting_bits != 0U) {
-            bit_buffer <<= ((bit_count)-waiting_bits);
+            bit_buffer <<= (bit_count - waiting_bits);
             write_bits(bit_buffer);
             waiting_bits = 0;
             return true;
