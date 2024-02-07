@@ -170,7 +170,6 @@ namespace std23 {
         constexpr static bool is_memfn_invocable_using
                 = (is_invocable_using<F, T...>)&&(std::is_member_pointer_v<F>);
 
-    public:
         // NOLINTBEGIN(google-explicit-constructor,hicpp-explicit-conversions,bugprone-forwarding-reference-overload,cppcoreguidelines-missing-std-forward)
         template <class F>
         requires std::is_function_v<F> && is_invocable_using<F>
