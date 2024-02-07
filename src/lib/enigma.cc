@@ -72,8 +72,7 @@ using flag_writer = base_flag_io<void(eni_obitstream&, uint16_t)>;
 
 template <size_t N>
 uint16_t read_bitfield(eni_ibitstream& bits) {
-    auto const read_bit_flag
-            = [&]<size_t I>(std::integral_constant<size_t, I>) -> uint32_t {
+    auto const read_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
         if constexpr ((N & (1U << (I - 1))) != 0) {
             return static_cast<uint32_t>(bits.pop() << (I + 10U));
         } else {
