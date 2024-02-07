@@ -101,14 +101,14 @@ void write_bitfield(eni_obitstream& bits, uint16_t const flags) {
     write_bit_flags(std::make_index_sequence<5>());
 }
 
-template <std::size_t... I>
-constexpr auto create_mask_array(flag_reader::tag, std::index_sequence<I...>) {
-    return std::array{flag_reader(read_bitfield<I>)...};
-}
-
-template <std::size_t... I>
-constexpr auto create_mask_array(flag_writer::tag, std::index_sequence<I...>) {
-    return std::array{flag_writer(write_bitfield<I>)...};
+template <typename Tag, std::size_t... I>
+constexpr auto create_mask_array(Tag, std::index_sequence<I...>) {
+    if constexpr (std::is_same_v<Tag, flag_reader::tag>) {
+        return std::array{flag_reader(read_bitfield<I>)...};
+    }
+    if constexpr (std::is_same_v<Tag, flag_writer::tag>) {
+        return std::array{flag_writer(write_bitfield<I>)...};
+    }
 }
 
 template <typename Callback>
@@ -361,7 +361,7 @@ public:
     }
 };
 
-bool enigma::decode(std::istream& source, std::ostream& dest) {
+bool enigma::decode(std::istream & source, std::ostream & dest) {
     auto const        location = source.tellg();
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     extract(source, input);
@@ -371,12 +371,12 @@ bool enigma::decode(std::istream& source, std::ostream& dest) {
     return true;
 }
 
-bool enigma::encode(std::istream& source, std::ostream& dest) {
+bool enigma::encode(std::istream & source, std::ostream & dest) {
     enigma_internal::encode(source, dest);
     return true;
 }
 
-bool enigma::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool enigma::encode(std::ostream & dest, std::span<uint8_t const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
     source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
