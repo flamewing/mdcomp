@@ -179,7 +179,7 @@ public:
                 size_t const dist   = edge.get_distance();
 
                 output.descriptor_bit(1);
-                output.put_byte(-dist + 1);
+                output.put_byte(1 - dist);
                 output.put_byte((0x7FU - ((length - 2U) >> 1U)) | ((length & 1U) << 7U));
                 break;
             }
