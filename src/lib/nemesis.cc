@@ -830,7 +830,7 @@ public:
             size_t     index  = 0;
             while (target != 0) {
                 // Gets lowest bit set in its proper place:
-                size_t const value = (target & -target);
+                size_t const value = (target & (0 - target));
                 size_t const cost  = 1U << index;
                 // Is the current denomination equal to the least denomination?
                 if (cost == value) {
