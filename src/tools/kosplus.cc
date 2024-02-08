@@ -37,7 +37,7 @@ struct options_t {
             option{  nullptr,                 0, nullptr,   0}
     };
 
-    constexpr static auto short_options = make_short_options<&long_options>();
+    constexpr static auto short_options = make_short_options<long_options>();
 
     std::filesystem::path program;
     std::span<char*>      arguments;
