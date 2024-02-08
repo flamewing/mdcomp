@@ -134,6 +134,30 @@ namespace detail {
             = is_reverse_iterator_v<T>
               && std::contiguous_iterator<typename T::iterator_type>;
 
+    template <typename Stream>
+    concept has_read_bytes_function
+            = requires(Stream stream, char* pointer, std::streamsize count) {
+                  { stream.read(pointer, count) } -> std::common_reference_with<Stream>;
+              };
+
+    template <typename Stream>
+    concept is_input_streambuf
+            = requires(Stream stream, char* pointer, std::streamsize count) {
+                  { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
+              };
+
+    template <typename Stream>
+    concept has_write_bytes_function
+            = requires(Stream stream, char* pointer, std::streamsize count) {
+                  { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
+              };
+
+    template <typename Stream>
+    concept is_output_streambuf
+            = requires(Stream stream, char const* pointer, std::streamsize count) {
+                  { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
+              };
+
     template <class... Ts>
     struct overloaded : public Ts... {
         using Ts::operator()...;
@@ -229,9 +253,7 @@ namespace detail {
     struct endian_base {
     private:
         template <std::unsigned_integral To, typename Stream>
-        requires requires(Stream stream, char* pointer, std::streamsize count) {
-            { stream.read(pointer, count) } -> std::common_reference_with<Stream>;
-        }
+        requires has_read_bytes_function<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -244,9 +266,7 @@ namespace detail {
         }
 
         template <std::unsigned_integral To, typename Stream>
-        requires requires(Stream stream, char* pointer, std::streamsize count) {
-            { stream.sgetn(pointer, count) } -> std::same_as<std::streamsize>;
-        }
+        requires is_input_streambuf<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
@@ -300,9 +320,7 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
-        requires requires(Stream stream, char const* pointer, std::streamsize count) {
-            { stream.write(pointer, count) } -> std::common_reference_with<Stream>;
-        }
+        requires has_write_bytes_function<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
@@ -314,9 +332,7 @@ namespace detail {
         }
 
         template <std::unsigned_integral From, typename Stream>
-        requires requires(Stream stream, char const* pointer, std::streamsize count) {
-            { stream.sputn(pointer, count) } -> std::same_as<std::streamsize>;
-        }
+        requires is_output_streambuf<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
             if constexpr (endian != std::endian::native) {
