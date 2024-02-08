@@ -48,7 +48,8 @@ Checks: >
   portability-std-allocator-const,
   readability-*,
   -readability-magic-numbers,
-  -readability-named-parameter
+  -readability-named-parameter,
+  -readability-function-cognitive-complexity
 CheckOptions:
   - key: bugprone-argument-comment.StrictMode
     value: 1
