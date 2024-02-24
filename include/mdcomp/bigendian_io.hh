@@ -201,7 +201,7 @@ namespace detail {
                         },
                         [](uint64_t const val) {
                             return _byteswap_uint64(val);
-                        },
+                        }
 #    endif
                 );
                 if constexpr (sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8) {
