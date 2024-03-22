@@ -84,6 +84,7 @@ class kosinski_internal {
         // Given an edge type, computes how many bits are used in the descriptor
         // field.
         constexpr static size_t desc_bits(edge_type const type) noexcept {
+            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
             switch (type) {
                 using enum edge_type;
             case symbolwise:
@@ -109,6 +110,7 @@ class kosinski_internal {
         constexpr static size_t edge_weight(
                 edge_type const type, size_t length) noexcept {
             ignore_unused_variable_warning(length);
+            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
             switch (type) {
                 using enum edge_type;
             case symbolwise:
@@ -216,6 +218,7 @@ public:
 
         // Go through each edge in the optimal path.
         for (auto const& edge : list.parse_list) {
+            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
             switch (edge.get_type()) {
             case edge_type::symbolwise:
                 output.descriptor_bit(1);
