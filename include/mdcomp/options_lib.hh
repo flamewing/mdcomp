@@ -60,6 +60,7 @@ consteval auto make_short_options() {
                 continue;
             }
             intermediate[length++] = val;
+            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
             switch (opt.has_arg) {
             case no_argument:
                 break;
@@ -70,6 +71,8 @@ consteval auto make_short_options() {
             case required_argument:
                 intermediate[length++] = ':';
                 break;
+            default:
+                __builtin_unreachable();
             }
         }
         return std::pair{intermediate, length};
