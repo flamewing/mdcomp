@@ -350,8 +350,7 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
     using data_t          = std::span<stream_t const>;
 
     auto read_stream = [](data_t data, size_t offset) {
-        auto const* pointer
-                = reinterpret_cast<uint8_t const*>(std::addressof(data[offset]));
+        auto const* pointer = std::bit_cast<uint8_t const*>(std::addressof(data[offset]));
         return stream_endian_t::template read<stream_t>(pointer);
     };
 
@@ -498,7 +497,7 @@ private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
     using bit_buffer_t        = obitstream<
-            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
+                   descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
     // Where we will output to.
     std::ostream& out;
     // Internal bitstream output buffer.
@@ -573,8 +572,8 @@ private:
     using descriptor_t        = typename Adaptor::descriptor_t;
     using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
     using bit_buffer_t        = ibitstream<
-            descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
-            Adaptor::need_early_descriptor>;
+                   descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
+                   Adaptor::need_early_descriptor>;
     // Where we will input to.
     std::istream* in;
     // Internal bitstream input buffer.

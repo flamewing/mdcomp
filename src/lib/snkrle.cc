@@ -109,7 +109,7 @@ bool snkrle::decode(std::istream& source, std::ostream& dest) {
 
 bool snkrle::encode(std::ostream& dest, std::span<uint8_t const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
+    source.write(std::bit_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     snkrle_internal::encode(source, dest);
     return true;
