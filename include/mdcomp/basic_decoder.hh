@@ -68,7 +68,7 @@ public:
         }
 
         auto const size_bytes = count * sizeof(T);
-        return reinterpret_cast<T*>(
+        return std::bit_cast<T*>(
                 ::operator new[](size_bytes, std::align_val_t{Align}));
     }
 
@@ -91,7 +91,7 @@ bool basic_decoder<Format, Pad, Args...>::encode(
     } else {
         data.resize(full_size);
     }
-    source.read(reinterpret_cast<char*>(data.data()), std::ssize(data));
+    source.read(std::bit_cast<char*>(data.data()), std::ssize(data));
     if constexpr (Pad == pad_mode::pad_even) {
         if (data.size() > full_size) {
             data.back() = 0;

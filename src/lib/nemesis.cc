@@ -1103,7 +1103,7 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
 
 bool nemesis::encode(std::ostream& dest, std::span<uint8_t const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(reinterpret_cast<char const*>(data.data()), std::ssize(data));
+    source.write(std::bit_cast<char const*>(data.data()), std::ssize(data));
     source.seekg(0);
     return encode(source, dest);
 }
