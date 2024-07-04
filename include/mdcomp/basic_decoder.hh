@@ -68,8 +68,7 @@ public:
         }
 
         auto const size_bytes = count * sizeof(T);
-        return std::bit_cast<T*>(
-                ::operator new[](size_bytes, std::align_val_t{Align}));
+        return std::bit_cast<T*>(::operator new[](size_bytes, std::align_val_t{Align}));
     }
 
     void deallocate(T* pointer, [[maybe_unused]] std::size_t count_bytes) {
