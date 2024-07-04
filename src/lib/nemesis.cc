@@ -526,8 +526,9 @@ public:
                     // columns for each line.
                     auto const integer_partitions
                             = [&]() -> std::vector<std::vector<size_t>> {
-                        // These are the integer partitions of the count, but
-                        // without the count itself.
+                        // These are the integer partitions of (count + 1),
+                        // the element with index i being the multiplicity
+                        // of the integer (i + 1).
                         switch (count) {
                         case 2:
                             return {
