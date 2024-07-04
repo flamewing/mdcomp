@@ -59,6 +59,14 @@
 #    define PURE_INLINE
 #endif
 
+#ifdef _MSC_VER
+#    ifndef __clang__
+[[noreturn]] inline void __builtin_unreachable() {
+    __assume(false);
+}
+#    endif
+#endif
+
 namespace detail {
     // Meta-programming stuff.
 

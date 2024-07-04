@@ -38,14 +38,6 @@
 #include <variant>
 #include <vector>
 
-#ifdef _MSC_VER
-#    ifndef __clang__
-[[noreturn]] inline void __builtin_unreachable() {
-    __assume(false);
-}
-#    endif
-#endif
-
 /*
  * Class representing an edge in the LZSS-compression graph. An edge (u, v)
  * indicates that there is a sliding window match that covers all the characters
@@ -275,9 +267,9 @@ concept lzss_adaptor = requires {
     requires !std::same_as<typename T::descriptor_t, bool>;
     requires std::is_class_v<typename T::descriptor_endian_t>;
     requires std::is_enum_v<typename T::edge_type>;
-    { T::edge_type::invalid } -> std::same_as<typename T::edge_type>;
-    { T::edge_type::terminator } -> std::same_as<typename T::edge_type>;
-    { T::edge_type::symbolwise } -> std::same_as<typename T::edge_type>;
+    { T::edge_type::invalid };
+    { T::edge_type::terminator };
+    { T::edge_type::symbolwise };
     requires std::same_as<decltype(T::num_desc_bits), size_t const>;
     requires std::same_as<decltype(T::need_early_descriptor), bool const>;
     requires std::same_as<decltype(T::descriptor_bit_order), bit_endian const>;
