@@ -91,42 +91,18 @@ public:
     }
 
     [[nodiscard]] constexpr size_t get_distance() const noexcept {
-        return std::visit(
-                []<typename Arg>(Arg&& arg) noexcept {
-                    using info_t = std::remove_cvref_t<Arg>;
-                    if constexpr (std::is_same_v<info_t, match_info>) {
-                        return std::forward<Arg>(arg).distance;
-                    } else {
-                        return size_t{0};
-                    }
-                },
-                match);
+        auto* ptr = std::get_if<match_info>(&match);
+        return ptr != nullptr ? ptr->distance : 0;
     }
 
     [[nodiscard]] constexpr size_t get_length() const noexcept {
-        return std::visit(
-                []<typename Arg>(Arg&& arg) noexcept {
-                    using info_t = std::remove_cvref_t<Arg>;
-                    if constexpr (std::is_same_v<info_t, match_info>) {
-                        return std::forward<Arg>(arg).length;
-                    } else {
-                        return size_t{1};
-                    }
-                },
-                match);
+        auto* ptr = std::get_if<match_info>(&match);
+        return ptr != nullptr ? ptr->length : 1;
     }
 
     [[nodiscard]] constexpr stream_t get_symbol() const noexcept {
-        return std::visit(
-                []<typename Arg>(Arg&& arg) noexcept {
-                    using info_t = std::remove_cvref_t<Arg>;
-                    if constexpr (std::is_same_v<info_t, stream_t>) {
-                        return std::forward<Arg>(arg);
-                    } else {
-                        return std::numeric_limits<stream_t>::max();
-                    }
-                },
-                match);
+        auto* ptr = std::get_if<stream_t>(&match);
+        return ptr != nullptr ? *ptr : std::numeric_limits<stream_t>::max();
     }
 
     [[nodiscard]] constexpr edge_type get_type() const noexcept {
