@@ -320,8 +320,9 @@ namespace detail {
                     }
                 }
             }();
-            if constexpr ((std::forward_iterator<iterator>)&&(
-                                  !contiguous_reverse_iterator<iterator>)) {
+            if constexpr (
+                    (std::forward_iterator<iterator>)
+                    && (!contiguous_reverse_iterator<iterator>)) {
                 std::advance(input, sizeof(To));
             }
             return value;
@@ -389,8 +390,9 @@ namespace detail {
             } else {
                 std::ranges::copy(buffer, output);
             }
-            if constexpr ((std::forward_iterator<iterator>)&&(
-                                  !contiguous_reverse_iterator<iterator>)) {
+            if constexpr (
+                    (std::forward_iterator<iterator>)
+                    && (!contiguous_reverse_iterator<iterator>)) {
                 std::advance(output, sizeof(From));
             }
         }

@@ -302,13 +302,14 @@ namespace std23 {
         explicit(false) function_ref(F* callable) noexcept
         requires std::is_function_v<F> && is_invocable_using<F>
                 : fun_pointer(
-                        [](storage func, param_t<Args>... args) noexcept(noex) -> R {
-                            if constexpr (std::is_void_v<R>) {
-                                get<F>(func)(static_cast<decltype(args)>(args)...);
-                            } else {
-                                return get<F>(func)(static_cast<decltype(args)>(args)...);
-                            }
-                        }),
+                          [](storage func, param_t<Args>... args) noexcept(noex) -> R {
+                              if constexpr (std::is_void_v<R>) {
+                                  get<F>(func)(static_cast<decltype(args)>(args)...);
+                              } else {
+                                  return get<F>(func)(
+                                          static_cast<decltype(args)>(args)...);
+                              }
+                          }),
                   object(callable) {
             assert(callable != nullptr && "must reference a function");
         }
@@ -318,14 +319,14 @@ namespace std23 {
         requires(!std::is_same_v<std::remove_cvref_t<F>, function_ref>
                  && !std::is_member_pointer_v<T> && is_invocable_using<cvref<T>>)
                 : fun_pointer(
-                        [](storage func, param_t<Args>... args) noexcept(noex) -> R {
-                            cvref<T> obj = *get<T>(func);
-                            if constexpr (std::is_void_v<R>) {
-                                obj(static_cast<decltype(args)>(args)...);
-                            } else {
-                                return obj(static_cast<decltype(args)>(args)...);
-                            }
-                        }),
+                          [](storage func, param_t<Args>... args) noexcept(noex) -> R {
+                              cvref<T> obj = *get<T>(func);
+                              if constexpr (std::is_void_v<R>) {
+                                  obj(static_cast<decltype(args)>(args)...);
+                              } else {
+                                  return obj(static_cast<decltype(args)>(args)...);
+                              }
+                          }),
                   object(std::addressof(callable)) {}
 
         template <class T>
@@ -351,11 +352,11 @@ namespace std23 {
         requires(!std::is_rvalue_reference_v<U &&>
                  && is_invocable_using<decltype(f), cvref<T>>)
                 : fun_pointer(
-                        [](storage self, param_t<Args>... args) noexcept(noex) -> R {
-                            cvref<T> cobj = *get<T>(self);
-                            return std23::invoke_r<R>(
-                                    f, cobj, static_cast<decltype(args)>(args)...);
-                        }),
+                          [](storage self, param_t<Args>... args) noexcept(noex) -> R {
+                              cvref<T> cobj = *get<T>(self);
+                              return std23::invoke_r<R>(
+                                      f, cobj, static_cast<decltype(args)>(args)...);
+                          }),
                   object(std::addressof(obj)) {
             using func_t = decltype(f);
             if constexpr (std::is_pointer_v<func_t> || std::is_member_pointer_v<func_t>) {
@@ -369,11 +370,11 @@ namespace std23 {
         constexpr function_ref(nontype_t<f>, cv<T>* obj) noexcept
         requires is_invocable_using<decltype(f), decltype(obj)>
                 : fun_pointer(
-                        [](storage self, param_t<Args>... args) noexcept(noex) -> R {
-                            return std23::invoke_r<R>(
-                                    f, get<cv<T>>(self),
-                                    static_cast<decltype(args)>(args)...);
-                        }),
+                          [](storage self, param_t<Args>... args) noexcept(noex) -> R {
+                              return std23::invoke_r<R>(
+                                      f, get<cv<T>>(self),
+                                      static_cast<decltype(args)>(args)...);
+                          }),
                   object(obj) {
             using func_t = decltype(f);
             if constexpr (std::is_pointer_v<func_t> || std::is_member_pointer_v<func_t>) {
