@@ -34,6 +34,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <ostream>
 #include <queue>
@@ -523,173 +524,146 @@ public:
                     size_t const count = run.get_count();
                     // Pointer to table of linear coefficients. This table has N
                     // columns for each line.
-                    auto const linear_coefficients = [&]() {
-                        // This is a linear optimization problem subjected to 2
-                        // constraints. If the number of repeats of the current
-                        // nibble run is N, then we have N dimensions.
-                        // Here are some hard-coded tables, obtained by brute-force:
-                        constexpr static matrix_t<2, 2> const linear_coefficients2{
-                                row_t<2>{3, 0},
-                                row_t<2>{1, 1}
-                        };
-                        constexpr static matrix_t<4, 3> const linear_coefficients3{
-                                row_t<3>{4, 0, 0},
-                                row_t<3>{2, 1, 0},
-                                row_t<3>{1, 0, 1},
-                                row_t<3>{0, 2, 0}
-                        };
-                        constexpr static matrix_t<6, 4> const linear_coefficients4{
-                                row_t<4>{5, 0, 0, 0},
-                                row_t<4>{3, 1, 0, 0},
-                                row_t<4>{2, 0, 1, 0},
-                                row_t<4>{1, 2, 0, 0},
-                                row_t<4>{1, 0, 0, 1},
-                                row_t<4>{0, 1, 1, 0}
-                        };
-                        constexpr static matrix_t<10, 5> const linear_coefficients5{
-                                row_t<5>{6, 0, 0, 0, 0},
-                                row_t<5>{4, 1, 0, 0, 0},
-                                row_t<5>{3, 0, 1, 0, 0},
-                                row_t<5>{2, 2, 0, 0, 0},
-                                row_t<5>{2, 0, 0, 1, 0},
-                                row_t<5>{1, 1, 1, 0, 0},
-                                row_t<5>{1, 0, 0, 0, 1},
-                                row_t<5>{0, 3, 0, 0, 0},
-                                row_t<5>{0, 1, 0, 1, 0},
-                                row_t<5>{0, 0, 2, 0, 0}
-                        };
-                        constexpr static matrix_t<14, 6> const linear_coefficients6{
-                                row_t<6>{7, 0, 0, 0, 0, 0},
-                                row_t<6>{5, 1, 0, 0, 0, 0},
-                                row_t<6>{4, 0, 1, 0, 0, 0},
-                                row_t<6>{3, 2, 0, 0, 0, 0},
-                                row_t<6>{3, 0, 0, 1, 0, 0},
-                                row_t<6>{2, 1, 1, 0, 0, 0},
-                                row_t<6>{2, 0, 0, 0, 1, 0},
-                                row_t<6>{1, 3, 0, 0, 0, 0},
-                                row_t<6>{1, 1, 0, 1, 0, 0},
-                                row_t<6>{1, 0, 2, 0, 0, 0},
-                                row_t<6>{1, 0, 0, 0, 0, 1},
-                                row_t<6>{0, 2, 1, 0, 0, 0},
-                                row_t<6>{0, 1, 0, 0, 1, 0},
-                                row_t<6>{0, 0, 1, 1, 0, 0}
-                        };
-                        constexpr static matrix_t<21, 7> const linear_coefficients7{
-                                row_t<7>{8, 0, 0, 0, 0, 0, 0},
-                                row_t<7>{6, 1, 0, 0, 0, 0, 0},
-                                row_t<7>{5, 0, 1, 0, 0, 0, 0},
-                                row_t<7>{4, 2, 0, 0, 0, 0, 0},
-                                row_t<7>{4, 0, 0, 1, 0, 0, 0},
-                                row_t<7>{3, 1, 1, 0, 0, 0, 0},
-                                row_t<7>{3, 0, 0, 0, 1, 0, 0},
-                                row_t<7>{2, 3, 0, 0, 0, 0, 0},
-                                row_t<7>{2, 1, 0, 1, 0, 0, 0},
-                                row_t<7>{2, 0, 2, 0, 0, 0, 0},
-                                row_t<7>{2, 0, 0, 0, 0, 1, 0},
-                                row_t<7>{1, 2, 1, 0, 0, 0, 0},
-                                row_t<7>{1, 1, 0, 0, 1, 0, 0},
-                                row_t<7>{1, 0, 1, 1, 0, 0, 0},
-                                row_t<7>{1, 0, 0, 0, 0, 0, 1},
-                                row_t<7>{0, 4, 0, 0, 0, 0, 0},
-                                row_t<7>{0, 2, 0, 1, 0, 0, 0},
-                                row_t<7>{0, 1, 2, 0, 0, 0, 0},
-                                row_t<7>{0, 1, 0, 0, 0, 1, 0},
-                                row_t<7>{0, 0, 1, 0, 1, 0, 0},
-                                row_t<7>{0, 0, 0, 2, 0, 0, 0}
-                        };
-                        // Get correct coefficient table:
+                    auto const integer_partitions
+                            = [&]() -> std::vector<std::vector<size_t>> {
+                        // These are the integer partitions of the count, but
+                        // without the count itself.
                         switch (count) {
                         case 2:
-                            return std::span{
-                                    linear_coefficients2[0].data(),
-                                    linear_coefficients2.size()};
+                            return {
+                                    {3, 0},
+                                    {1, 1}
+                            };
                         case 3:
-                            return std::span{
-                                    linear_coefficients3[0].data(),
-                                    linear_coefficients3.size()};
+                            return {
+                                    {4, 0, 0},
+                                    {2, 1, 0},
+                                    {1, 0, 1},
+                                    {0, 2, 0}
+                            };
                         case 4:
-                            return std::span{
-                                    linear_coefficients4[0].data(),
-                                    linear_coefficients4.size()};
+                            return {
+                                    {5, 0, 0, 0},
+                                    {3, 1, 0, 0},
+                                    {2, 0, 1, 0},
+                                    {1, 2, 0, 0},
+                                    {1, 0, 0, 1},
+                                    {0, 1, 1, 0}
+                            };
                         case 5:
-                            return std::span{
-                                    linear_coefficients5[0].data(),
-                                    linear_coefficients5.size()};
+                            return {
+                                    {6, 0, 0, 0, 0},
+                                    {4, 1, 0, 0, 0},
+                                    {3, 0, 1, 0, 0},
+                                    {2, 2, 0, 0, 0},
+                                    {2, 0, 0, 1, 0},
+                                    {1, 1, 1, 0, 0},
+                                    {1, 0, 0, 0, 1},
+                                    {0, 3, 0, 0, 0},
+                                    {0, 1, 0, 1, 0},
+                                    {0, 0, 2, 0, 0}
+                            };
                         case 6:
-                            return std::span{
-                                    linear_coefficients6[0].data(),
-                                    linear_coefficients6.size()};
+                            return {
+                                    {7, 0, 0, 0, 0, 0},
+                                    {5, 1, 0, 0, 0, 0},
+                                    {4, 0, 1, 0, 0, 0},
+                                    {3, 2, 0, 0, 0, 0},
+                                    {3, 0, 0, 1, 0, 0},
+                                    {2, 1, 1, 0, 0, 0},
+                                    {2, 0, 0, 0, 1, 0},
+                                    {1, 3, 0, 0, 0, 0},
+                                    {1, 1, 0, 1, 0, 0},
+                                    {1, 0, 2, 0, 0, 0},
+                                    {1, 0, 0, 0, 0, 1},
+                                    {0, 2, 1, 0, 0, 0},
+                                    {0, 1, 0, 0, 1, 0},
+                                    {0, 0, 1, 1, 0, 0}
+                            };
                         case 7:
                         default:
-                            return std::span{
-                                    linear_coefficients7[0].data(),
-                                    linear_coefficients7.size()};
+                            return {
+                                    {8, 0, 0, 0, 0, 0, 0},
+                                    {6, 1, 0, 0, 0, 0, 0},
+                                    {5, 0, 1, 0, 0, 0, 0},
+                                    {4, 2, 0, 0, 0, 0, 0},
+                                    {4, 0, 0, 1, 0, 0, 0},
+                                    {3, 1, 1, 0, 0, 0, 0},
+                                    {3, 0, 0, 0, 1, 0, 0},
+                                    {2, 3, 0, 0, 0, 0, 0},
+                                    {2, 1, 0, 1, 0, 0, 0},
+                                    {2, 0, 2, 0, 0, 0, 0},
+                                    {2, 0, 0, 0, 0, 1, 0},
+                                    {1, 2, 1, 0, 0, 0, 0},
+                                    {1, 1, 0, 0, 1, 0, 0},
+                                    {1, 0, 1, 1, 0, 0, 0},
+                                    {1, 0, 0, 0, 0, 0, 1},
+                                    {0, 4, 0, 0, 0, 0, 0},
+                                    {0, 2, 0, 1, 0, 0, 0},
+                                    {0, 1, 2, 0, 0, 0, 0},
+                                    {0, 1, 0, 0, 0, 1, 0},
+                                    {0, 0, 1, 0, 1, 0, 0},
+                                    {0, 0, 0, 2, 0, 0, 0}
+                            };
                         }
                     }();
 
                     std::byte const nibble = run.get_nibble();
                     // Vector containing the code length of each nibble run, or
                     // 13 if the nibble run is not in the code_map.
-                    std::vector<size_t> run_length;
-                    // Init vector.
-                    for (size_t i = 0; i < count; i++) {
-                        // Is this run in the code_map?
-                        nibble_run const target(nibble, i);
-                        auto             target_iter = code_map.find(target);
-                        if (target_iter == code_map.cend()) {
-                            // It is not.
-                            // Put inline length in the vector.
-                            run_length.push_back(6 + 7);
-                        } else {
-                            // It is.
-                            // Put code length in the vector.
-                            run_length.push_back((target_iter->second).length);
-                        }
-                    }
+                    auto run_length
+                            = std::views::iota(size_t{0}) | std::views::take(count)
+                              | std::views::transform(
+                                      [nibble, &code_map](size_t value) -> size_t {
+                                          nibble_run const target(nibble, value);
+                                          // Is this run in the code_map?
+                                          if (auto target_iter = code_map.find(target);
+                                              target_iter != code_map.cend()) {
+                                              // It is.
+                                              // Put code length in the vector.
+                                              return (target_iter->second).length;
+                                          }
+                                          // It is not.
+                                          // Put inline length in the vector.
+                                          return 6 + 7;
+                                      })
+                              | detail::to<std::vector<size_t>>();
 
                     // Now go through the linear coefficient table and tally up
                     // the total code size, looking for the best case.
                     // The best size is initialized to be the inlined case.
                     size_t best_size = 6 + 7;
-                    size_t base      = 0;
 
-                    std::optional<size_t> best_line;
+                    std::vector<size_t> const* best_line = nullptr;
 
-                    for (size_t i = 0; i < linear_coefficients.size();
-                         i++, base += count) {
+                    for (auto const& partition : integer_partitions) {
                         // Tally up the code length for this coefficient line.
-                        size_t length = 0;
-                        for (size_t j = 0; j < count; j++) {
-                            size_t const coeff = linear_coefficients[base + j];
-                            if (coeff == 0U) {
-                                continue;
-                            }
-
-                            length += coeff * run_length[j];
-                        }
+                        size_t length = std::inner_product(
+                                partition.cbegin(), partition.cend(), run_length.cbegin(),
+                                size_t{0});
                         // Is the length better than the best yet?
                         if (length < best_size) {
                             // If yes, store it as the best.
                             best_size = length;
-                            best_line = base;
+                            best_line = &partition;
                         }
                     }
                     // Have we found a better code than inlining?
-                    if (best_line) {
+                    if (best_line != nullptr) {
                         auto const best_base = *best_line;
                         // We have; use it. To do so, we have to build the code
                         // and add it to the supplementary code table.
                         size_t code   = 0;
                         size_t length = 0;
                         for (size_t i = 0; i < count; i++) {
-                            size_t const coeff = linear_coefficients[best_base + i];
+                            size_t const coeff = (*best_line)[i];
                             if (coeff == 0U) {
                                 continue;
                             }
                             // Is this run in the code_map?
                             nibble_run const target(nibble, i);
-                            auto             target_iter = code_map.find(target);
-                            if (target_iter != code_map.cend()) {
+                            if (auto target_iter = code_map.find(target);
+                                target_iter != code_map.cend()) {
                                 // It is; it MUST be, as the other case is
                                 // impossible by construction.
                                 for (size_t j = 0; j < coeff; j++) {
