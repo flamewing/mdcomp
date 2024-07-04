@@ -6,6 +6,17 @@ project(mdcomp
     LANGUAGES CXX ASM
 )
 
+# Joins arguments and places the results in ${result_var}.
+function(join result_var)
+    set(result "")
+    foreach (arg ${ARGN})
+        set(result "${result}${arg}")
+    endforeach ()
+    set(${result_var} "${result}" PARENT_SCOPE)
+endfunction()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/support/cmake")
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
@@ -228,10 +239,10 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     endif()
 
     # Set FrameworkPathOverride to get rid of MSB3644 warnings.
-    set(netfxpath "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
+    join(netfxpath "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
     file(WRITE run-msbuild.bat "
-    ${MSBUILD_SETUP}
-    ${CMAKE_MAKE_PROGRAM} -p:FrameworkPathOverride=\"${netfxpath}\" %*")
+        ${MSBUILD_SETUP}
+        ${CMAKE_MAKE_PROGRAM} -p:FrameworkPathOverride=\"${netfxpath}\" %*")
 endif()
 
 set(COMMON_HEADERS
