@@ -63,29 +63,30 @@ private:
 
 public:
     // Constructors.
-    nibble_run() noexcept = default;
+    constexpr nibble_run() noexcept = default;
 
-    nibble_run(std::byte nibble_in, size_t count_in) noexcept
+    constexpr nibble_run(std::byte nibble_in, size_t count_in) noexcept
             : nibble(nibble_in), count(static_cast<uint8_t>(count_in)) {}
 
     // Sorting operator.
-    [[nodiscard]] std::strong_ordering operator<=>(nibble_run const& other) const noexcept
+    [[nodiscard]] constexpr std::strong_ordering operator<=>(
+            nibble_run const& other) const noexcept
             = default;
 
     // Getters/setters for all properties.
-    [[nodiscard]] std::byte get_nibble() const noexcept {
+    [[nodiscard]] constexpr std::byte get_nibble() const noexcept {
         return nibble;
     }
 
-    [[nodiscard]] size_t get_count() const noexcept {
+    [[nodiscard]] constexpr size_t get_count() const noexcept {
         return count;
     }
 
-    void set_nibble(std::byte const value) noexcept {
+    constexpr void set_nibble(std::byte const value) noexcept {
         nibble = value;
     }
 
-    void enlarge() noexcept {
+    constexpr void enlarge() noexcept {
         count++;
     }
 };
@@ -612,33 +613,36 @@ public:
                     std::byte const nibble = run.get_nibble();
                     // Vector containing the code length of each nibble run, or
                     // 13 if the nibble run is not in the code_map.
-                    auto run_length
-                            = std::views::iota(size_t{0}) | std::views::take(count)
-                              | std::views::transform(
-                                      [nibble, &code_map](size_t value) -> size_t {
-                                          nibble_run const target(nibble, value);
-                                          // Is this run in the code_map?
-                                          if (auto target_iter = code_map.find(target);
-                                              target_iter != code_map.cend()) {
-                                              // It is.
-                                              // Put code length in the vector.
-                                              return (target_iter->second).length;
-                                          }
-                                          // It is not.
-                                          // Put inline length in the vector.
-                                          return 6 + 7;
-                                      })
-                              | detail::to<std::vector<size_t>>();
+                    auto get_nibble_run_code_length
+                            = [nibble, &code_map](size_t length) -> size_t {
+                        nibble_run const target(nibble, length);
+                        // Is this run in the code_map?
+                        if (auto target_iter = code_map.find(target);
+                            target_iter != code_map.cend()) {
+                            // It is.
+                            // Put code length in the vector.
+                            return (target_iter->second).length;
+                        }
+                        // It is not.
+                        // Put inline length in the vector.
+                        return 6 + 7;
+                    };
+                    auto run_length = std::views::iota(size_t{0})
+                                      | std::views::take(count)
+                                      | std::views::transform(get_nibble_run_code_length)
+                                      | detail::to<std::vector<size_t>>();
 
-                    // Now go through the linear coefficient table and tally up
-                    // the total code size, looking for the best case.
-                    // The best size is initialized to be the inlined case.
+                    // Now go through the linear coefficient table and
+                    // tally up the total code size, looking for the
+                    // best case. The best size is initialized to be the
+                    // inlined case.
                     size_t best_size = 6 + 7;
 
                     std::vector<size_t> const* best_line = nullptr;
 
                     for (auto const& partition : integer_partitions) {
-                        // Tally up the code length for this coefficient line.
+                        // Tally up the code length for this coefficient
+                        // line.
                         size_t length = std::inner_product(
                                 partition.cbegin(), partition.cend(), run_length.cbegin(),
                                 size_t{0});
@@ -652,8 +656,9 @@ public:
                     // Have we found a better code than inlining?
                     if (best_line != nullptr) {
                         auto const best_base = *best_line;
-                        // We have; use it. To do so, we have to build the code
-                        // and add it to the supplementary code table.
+                        // We have; use it. To do so, we have to build
+                        // the code and add it to the supplementary code
+                        // table.
                         size_t code   = 0;
                         size_t length = 0;
                         for (size_t i = 0; i < count; i++) {
@@ -665,8 +670,8 @@ public:
                             nibble_run const target(nibble, i);
                             if (auto target_iter = code_map.find(target);
                                 target_iter != code_map.cend()) {
-                                // It is; it MUST be, as the other case is
-                                // impossible by construction.
+                                // It is; it MUST be, as the other case
+                                // is impossible by construction.
                                 for (size_t j = 0; j < coeff; j++) {
                                     length += (target_iter->second).length;
                                     code <<= (target_iter->second).length;
