@@ -56,7 +56,8 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 include(GNUInstallDirs)
 
-find_package(Boost 1.54 REQUIRED)
+cmake_policy(SET CMP0167 NEW)
+find_package(Boost REQUIRED)
 
 include(CheckCXXCompilerFlag)
 
