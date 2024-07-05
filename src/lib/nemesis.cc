@@ -46,6 +46,104 @@
 #include <utility>
 #include <vector>
 
+namespace detail {
+    // Convert an array of arrays to a span of spans.
+    template <typename T, size_t N, size_t M>
+    constexpr auto to_array_of_spans(std::array<std::array<T, M>, N> const& array) {
+        auto expander
+                = []<typename Ts, size_t K, size_t... outer>(
+                          std::array<std::array<Ts, K>, sizeof...(outer)> const& arr,
+                          std::index_sequence<outer...>) {
+                      return std::array{
+                              std::span<Ts const, std::dynamic_extent>{arr[outer]}...};
+                  };
+        return expander(array, std::make_index_sequence<N>());
+    }
+
+    // This function computes the number of partitions of a number.
+    constexpr size_t count_partitions(size_t number) {
+        std::vector<size_t> vals{1};
+        for (size_t num = 0; num < number; ++num) {
+            size_t sum = 0;
+            size_t pos = 1;
+            for (size_t i = 0; pos <= vals.size(); ++i) {
+                size_t val = vals[vals.size() - pos];
+                if (i % 4 < 2) {
+                    sum += val;
+                } else {
+                    sum -= val;
+                }
+                pos += (((i % 2) != 0U) ? i + 2 : (i + 2) / 2);
+            }
+            vals.push_back(sum);
+        }
+        return vals.back();
+    }
+
+    // This function computes the integer partitions of a number.
+    template <size_t number>
+    constexpr auto compute_integer_partitions() {
+        constexpr size_t num_partitions = count_partitions(number);
+        std::array<std::array<size_t, number - 1>, num_partitions - 1> partitions{};
+        // This stores the current partition.
+        std::array<size_t, number> partition{};
+
+        // Points to the end of the meaningful part of the partition.
+        auto end = partition.begin();
+        // Initialize first partition as number itself
+        *end = number;
+
+        for (auto& row : partitions) {
+            // Generate next partition
+
+            // Find the rightmost non-one value in p. Also, update the
+            // rem_val so that we know how much value can be accommodated
+            size_t rem_val = 0;
+            while (end != partition.begin() && *end == 1) {
+                rem_val += *end;
+                std::advance(end, -1);
+            }
+
+            // if end reached the beginning, all the values are 1 so there are no more
+            // partitions
+            if (end == partition.begin() && *end == 1) {
+                break;
+            }
+
+            // Decrease the value found above and adjust the rem_val
+            (*end)--;
+            rem_val++;
+
+            // If rem_val is more, then the sorted order is violated. Divide
+            // rem_val in different values of size *end and copy these values at
+            // different positions after *end
+            auto current = end;
+            while (rem_val > *current) {
+                std::advance(current, 1);
+                *current = *end;
+                rem_val -= *end;
+            }
+
+            // Copy rem_val to next position and increment position
+            std::advance(current, 1);
+            *current = rem_val;
+            end      = current;
+
+            // The output array has the multiplicity of integer i at index i - 1
+            for (auto const& val :
+                 std::ranges::subrange(partition.begin(), std::next(end))) {
+                row[val - 1]++;
+            }
+        }
+
+        std::ranges::sort(partitions, [](auto const& lhs, auto const& rhs) {
+            return std::ranges::lexicographical_compare(rhs, lhs);
+        });
+        return partitions;
+    }
+
+}    // namespace detail
+
 template <typename Enum>
 concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
 
@@ -522,90 +620,66 @@ public:
                     // We stand a chance of breaking it the nibble run.
 
                     size_t const count = run.get_count();
-                    // Pointer to table of linear coefficients. This table has N
-                    // columns for each line.
+                    // Pointer to table of integer partitions.
                     auto const integer_partitions
-                            = [&]() -> std::vector<std::vector<size_t>> {
-                        // These are the integer partitions of (count + 1),
-                        // the element with index i being the multiplicity
-                        // of the integer (i + 1).
-                        switch (count) {
-                        case 2:
-                            return {
-                                    {3, 0},
-                                    {1, 1}
-                            };
-                        case 3:
-                            return {
-                                    {4, 0, 0},
-                                    {2, 1, 0},
-                                    {1, 0, 1},
-                                    {0, 2, 0}
-                            };
-                        case 4:
-                            return {
-                                    {5, 0, 0, 0},
-                                    {3, 1, 0, 0},
-                                    {2, 0, 1, 0},
-                                    {1, 2, 0, 0},
-                                    {1, 0, 0, 1},
-                                    {0, 1, 1, 0}
-                            };
-                        case 5:
-                            return {
-                                    {6, 0, 0, 0, 0},
-                                    {4, 1, 0, 0, 0},
-                                    {3, 0, 1, 0, 0},
-                                    {2, 2, 0, 0, 0},
-                                    {2, 0, 0, 1, 0},
-                                    {1, 1, 1, 0, 0},
-                                    {1, 0, 0, 0, 1},
-                                    {0, 3, 0, 0, 0},
-                                    {0, 1, 0, 1, 0},
-                                    {0, 0, 2, 0, 0}
-                            };
-                        case 6:
-                            return {
-                                    {7, 0, 0, 0, 0, 0},
-                                    {5, 1, 0, 0, 0, 0},
-                                    {4, 0, 1, 0, 0, 0},
-                                    {3, 2, 0, 0, 0, 0},
-                                    {3, 0, 0, 1, 0, 0},
-                                    {2, 1, 1, 0, 0, 0},
-                                    {2, 0, 0, 0, 1, 0},
-                                    {1, 3, 0, 0, 0, 0},
-                                    {1, 1, 0, 1, 0, 0},
-                                    {1, 0, 2, 0, 0, 0},
-                                    {1, 0, 0, 0, 0, 1},
-                                    {0, 2, 1, 0, 0, 0},
-                                    {0, 1, 0, 0, 1, 0},
-                                    {0, 0, 1, 1, 0, 0}
-                            };
-                        case 7:
-                        default:
-                            return {
-                                    {8, 0, 0, 0, 0, 0, 0},
-                                    {6, 1, 0, 0, 0, 0, 0},
-                                    {5, 0, 1, 0, 0, 0, 0},
-                                    {4, 2, 0, 0, 0, 0, 0},
-                                    {4, 0, 0, 1, 0, 0, 0},
-                                    {3, 1, 1, 0, 0, 0, 0},
-                                    {3, 0, 0, 0, 1, 0, 0},
-                                    {2, 3, 0, 0, 0, 0, 0},
-                                    {2, 1, 0, 1, 0, 0, 0},
-                                    {2, 0, 2, 0, 0, 0, 0},
-                                    {2, 0, 0, 0, 0, 1, 0},
-                                    {1, 2, 1, 0, 0, 0, 0},
-                                    {1, 1, 0, 0, 1, 0, 0},
-                                    {1, 0, 1, 1, 0, 0, 0},
-                                    {1, 0, 0, 0, 0, 0, 1},
-                                    {0, 4, 0, 0, 0, 0, 0},
-                                    {0, 2, 0, 1, 0, 0, 0},
-                                    {0, 1, 2, 0, 0, 0, 0},
-                                    {0, 1, 0, 0, 0, 1, 0},
-                                    {0, 0, 1, 0, 1, 0, 0},
-                                    {0, 0, 0, 2, 0, 0, 0}
-                            };
+                            = [&]() -> std::span<std::span<size_t const> const> {
+                        // These are the integer partitions of (count + 1).
+                        // Each row corresponds to a partition, and the element
+                        // with index i is the multiplicity of the integer
+                        // (i + 1) in the partition.
+                        switch (count + 1) {
+                        case 2: {
+                            // Note: technically unreachable, but we include it
+                            // for completeness.
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<2>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 3: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<3>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 4: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<4>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 5: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<5>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 6: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<6>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 7: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<7>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
+                        case 8:
+                        default: {
+                            constexpr static auto partition
+                                    = detail::compute_integer_partitions<8>();
+                            constexpr static auto span_array
+                                    = detail::to_array_of_spans(partition);
+                            return {span_array};
+                        }
                         }
                     }();
 
@@ -637,13 +711,13 @@ public:
                     // inlined case.
                     size_t best_size = 6 + 7;
 
-                    std::vector<size_t> const* best_line = nullptr;
+                    std::span<size_t const> const* best_line = nullptr;
 
                     for (auto const& partition : integer_partitions) {
                         // Tally up the code length for this coefficient
                         // line.
                         size_t length = std::inner_product(
-                                partition.cbegin(), partition.cend(), run_length.cbegin(),
+                                partition.begin(), partition.end(), run_length.cbegin(),
                                 size_t{0});
                         // Is the length better than the best yet?
                         if (length < best_size) {
@@ -654,7 +728,6 @@ public:
                     }
                     // Have we found a better code than inlining?
                     if (best_line != nullptr) {
-                        auto const best_base = *best_line;
                         // We have; use it. To do so, we have to build
                         // the code and add it to the supplementary code
                         // table.
