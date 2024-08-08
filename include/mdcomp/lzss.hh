@@ -20,6 +20,7 @@
 #define LIB_LZSS_HH
 
 #include "ignore_unused_variable_warning.hh"
+#include "unreachable.hh"
 
 #include <mdcomp/bigendian_io.hh>
 #include <mdcomp/bitstream.hh>
@@ -31,14 +32,6 @@
 #include <list>
 #include <string>
 #include <vector>
-
-#ifdef _MSC_VER
-#    ifndef __clang__
-[[noreturn]] inline void __builtin_unreachable() {
-    __assume(false);
-}
-#    endif
-#endif
 
 /*
  * Class representing an edge in the LZSS-compression graph. An edge (u, v)

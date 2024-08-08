@@ -299,15 +299,15 @@ namespace detail {
         template <typename T>
         static inline void Read(std::istream& in, T& val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
-            in.read(std::begin(buffer), sizeof(T));
-            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
+            in.read(std::data(buffer), sizeof(T));
+            std::memcpy(&val, std::data(buffer), sizeof(T));
         }
 
         template <typename T>
         static inline void Read(std::streambuf& in, T& val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             in.sgetn(std::begin(buffer), sizeof(T));
-            std::memcpy(&val, std::cbegin(buffer), sizeof(T));
+            std::memcpy(&val, std::data(buffer), sizeof(T));
         }
 
         template <typename Iter, typename T>
@@ -321,15 +321,15 @@ namespace detail {
         template <typename T>
         static inline void Write(std::ostream& out, T val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
-            std::memcpy(std::begin(buffer), &val, sizeof(T));
-            out.write(std::cbegin(buffer), sizeof(T));
+            std::memcpy(std::data(buffer), &val, sizeof(T));
+            out.write(std::data(buffer), sizeof(T));
         }
 
         template <typename T>
         static inline void Write(std::streambuf& out, T val) noexcept {
             alignas(alignof(T)) std::array<char, sizeof(T)> buffer;
             std::memcpy(std::begin(buffer), &val, sizeof(T));
-            out.sputn(std::cbegin(buffer), sizeof(T));
+            out.sputn(std::data(buffer), sizeof(T));
         }
 
         template <typename Cont, typename T>

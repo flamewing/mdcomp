@@ -40,6 +40,7 @@
 #include <mdcomp/bitstream.hh>
 #include <mdcomp/enigma.hh>
 #include <mdcomp/ignore_unused_variable_warning.hh>
+#include <mdcomp/unreachable.hh>
 
 using std::array;
 using std::forward;
