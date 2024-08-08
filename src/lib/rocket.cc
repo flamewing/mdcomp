@@ -127,11 +127,11 @@ public:
         using RockIStream = LZSSIStream<RocketAdaptor>;
         using diff_t      = make_signed_t<size_t>;
 
-        in.ignore(2);
-        size_t const Size = BigEndian::Read2(in) + 4;
+        size_t const OutSize = BigEndian::Read2(in);
+        size_t const InSize = BigEndian::Read2(in) + 4;
         RockIStream  src(in);
 
-        while (in.good() && size_t(in.tellg()) < Size) {
+        while (in.good() && size_t(in.tellg()) < InSize && size_t(Dst.tellp()) < OutSize) {
             if (src.descbit() != 0U) {
                 // Symbolwise match.
                 uint8_t const Byte = Read1(in);
