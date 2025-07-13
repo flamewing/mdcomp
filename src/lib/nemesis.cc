@@ -151,7 +151,7 @@ concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
 template <Enumerator Enum>
 constexpr std::underlying_type_t<Enum> to_underlying(Enum value) {
     return static_cast<std::underlying_type_t<Enum>>(value);
-};
+}
 
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {

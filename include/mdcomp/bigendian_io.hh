@@ -85,7 +85,6 @@ namespace detail {
     concept container = std::regular<T> && std::swappable<T>
                         && std::destructible<typename T::value_type>
                         && std::ranges::forward_range<T>;
-    ;
 
     template <typename T>
     concept contiguous_container = container<T> && std::ranges::contiguous_range<T>

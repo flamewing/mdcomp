@@ -45,7 +45,7 @@ namespace detail {
     constexpr auto round_up(T1 const value, T2 const factor) noexcept {
         constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
-    };
+    }
 
     inline void pad_to_even(std::ostream& dest) {
         if ((dest.tellp() % 2) != 0) {
