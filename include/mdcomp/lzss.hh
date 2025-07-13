@@ -180,20 +180,23 @@ public:
             return;
         }
         // Find the longest match in the search buffer.
-        size_t const lookahead_length = get_lookahead_buffer_size();
+        size_t const      lookahead_length = get_lookahead_buffer_size();
         // Best match information.
-        size_t     best_pos = 0;
-        size_t     best_len = 0;
-        auto const haystack = data.subspan(base_node, lookahead_length);
-
-        for (size_t base = base_node; base > lower_bound; --base) {
+        size_t best_pos = 0;
+        size_t best_len = 0;
+        // This is what we are looking to match ("needle").
+        auto const* const needle           = data.data() + base_node;
+        for (size_t match_base = base_node; match_base > lower_bound; --match_base) {
+            // This is where we are looking for matches ("haystack").
+            auto const* haystack = data.data() + match_base - 1;
             // Keep looking for dictionary matches.
-            auto const needle             = data.subspan(base - 1, lookahead_length);
-            auto [it_needle, it_haystack] = std::ranges::mismatch(needle, haystack);
-            auto const match_length       = static_cast<size_t>(
-                    std::ranges::distance(std::ranges::begin(needle), it_needle));
+            size_t match_length = 0;
+            while (match_length < lookahead_length
+                   && haystack[match_length] == needle[match_length]) {
+                ++match_length;
+            }
             if (best_len < match_length) {
-                best_pos = base - 1;
+                best_pos = match_base - 1;
                 best_len = match_length;
             }
             if (match_length == lookahead_length) {
