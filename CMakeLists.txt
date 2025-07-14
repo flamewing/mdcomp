@@ -9,9 +9,11 @@ project(mdcomp
 # Joins arguments and places the results in ${result_var}.
 function(join result_var)
     set(result "")
-    foreach (arg ${ARGN})
+
+    foreach(arg ${ARGN})
         set(result "${result}${arg}")
-    endforeach ()
+    endforeach()
+
     set(${result_var} "${result}" PARENT_SCOPE)
 endfunction()
 
@@ -25,18 +27,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
 # include(CheckIPOSupported)
 # check_ipo_supported(RESULT iposupported OUTPUT ipoerror)
 
 # if(iposupported)
-#     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 # elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#     add_link_options(-fuse-ld=lld)
-#     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+# add_link_options(-fuse-ld=lld)
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 # else()
-#     message(WARNING "IPO is not supported: ${ipoerror}")
+# message(WARNING "IPO is not supported: ${ipoerror}")
 # endif()
-
 if(APPLE)
     set(UseLibCxxDefault TRUE)
 elseif(WIN32)
@@ -136,6 +138,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options_safe(-Wbidi-chars=any)
         add_compile_options(-Wcast-align -Wcast-align=strict -Wcast-qual)
         add_compile_options(-Wchar-subscripts -Wcomma-subscript)
+
         # add_compile_options(-Wconversion)
         add_compile_options(-Wcomment)
         add_compile_options(-Wconditionally-supported)
@@ -164,6 +167,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wold-style-cast)
         add_compile_options(-Woverloaded-virtual)
         add_compile_options(-Wpacked)
+
         # add_compile_options(-Wpadded)
         add_compile_options(-Wredundant-decls -Wredundant-tags)
         add_compile_options(-Wregister)
