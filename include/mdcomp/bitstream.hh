@@ -68,7 +68,7 @@ namespace detail {
         if constexpr (size > 1) {
             uint_t const val1    = value & new_mask;
             uint_t const val2    = value ^ val1;
-            uint_t const new_val = factor * val1 + val2 / factor;
+            uint_t const new_val = (factor * val1) + (val2 / factor);
             return reverse_byte_bits<new_size, new_mask>(new_val);
         }
         return value;

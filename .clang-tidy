@@ -44,6 +44,7 @@ Checks: >
   -misc-no-recursion,
   modernize-*,
   -modernize-use-trailing-return-type,
+  -modernize-use-designated-initializers,
   performance-*,
   portability-std-allocator-const,
   readability-*,

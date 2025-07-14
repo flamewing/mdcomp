@@ -70,46 +70,49 @@ private:
 using flag_reader = base_flag_io<uint16_t(eni_ibitstream&)>;
 using flag_writer = base_flag_io<void(eni_obitstream&, uint16_t)>;
 
-template <size_t N>
-uint16_t read_bitfield(eni_ibitstream& bits) {
-    auto const read_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
-        if constexpr ((N & (1U << (I - 1))) != 0) {
-            return static_cast<uint32_t>(bits.pop() << (I + 10U));
-        } else {
-            return 0U;
-        }
-    };
-    auto const read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
-        constexpr size_t const count = sizeof...(Is);
-        return uint16_t(
-                ((read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
-    };
-    return read_bit_flags(std::make_index_sequence<5>());
-}
-
-template <size_t N>
-void write_bitfield(eni_obitstream& bits, uint16_t const flags) {
-    auto const write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
-        if constexpr ((N & (1U << (I - 1))) != 0) {
-            bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
-        }
-    };
-    auto const write_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
-        constexpr size_t const count = sizeof...(Is);
-        ((write_bit_flag(std::integral_constant<size_t, count - Is>{})), ...);
-    };
-    write_bit_flags(std::make_index_sequence<5>());
-}
-
-template <typename Tag, std::size_t... I>
-constexpr auto create_mask_array(Tag, std::index_sequence<I...>) {
-    if constexpr (std::is_same_v<Tag, flag_reader::tag>) {
-        return std::array{flag_reader(read_bitfield<I>)...};
+namespace {
+    template <size_t N>
+    constexpr uint16_t read_bitfield(eni_ibitstream& bits) {
+        auto const read_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
+            if constexpr ((N & (1U << (I - 1))) != 0) {
+                return static_cast<uint32_t>(bits.pop() << (I + 10U));
+            } else {
+                return 0U;
+            }
+        };
+        auto const read_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+            constexpr size_t const count = sizeof...(Is);
+            return uint16_t((
+                    (read_bit_flag(std::integral_constant<size_t, count - Is>{})) | ...));
+        };
+        return read_bit_flags(std::make_index_sequence<5>());
     }
-    if constexpr (std::is_same_v<Tag, flag_writer::tag>) {
-        return std::array{flag_writer(write_bitfield<I>)...};
+
+    template <size_t N>
+    constexpr void write_bitfield(eni_obitstream& bits, uint16_t const flags) {
+        auto const write_bit_flag = [&]<size_t I>(std::integral_constant<size_t, I>) {
+            if constexpr ((N & (1U << (I - 1))) != 0) {
+                bits.push(static_cast<uint16_t>((flags & (1U << (I + 10U))) != 0));
+            }
+        };
+        auto const write_bit_flags = [&]<size_t... Is>(std::index_sequence<Is...>) {
+            constexpr size_t const count = sizeof...(Is);
+            ((write_bit_flag(std::integral_constant<size_t, count - Is>{})), ...);
+        };
+        write_bit_flags(std::make_index_sequence<5>());
     }
-}
+
+    template <typename Tag, std::size_t... I>
+    constexpr auto create_mask_array(Tag, std::index_sequence<I...>) {
+        if constexpr (std::is_same_v<Tag, flag_reader::tag>) {
+            return std::array{flag_reader(read_bitfield<I>)...};
+        }
+        if constexpr (std::is_same_v<Tag, flag_writer::tag>) {
+            return std::array{flag_writer(write_bitfield<I>)...};
+        }
+    }
+
+}    // namespace
 
 template <typename Callback>
 base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {

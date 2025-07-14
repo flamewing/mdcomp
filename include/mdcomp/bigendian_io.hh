@@ -183,6 +183,7 @@ namespace detail {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
         return std::byteswap(value);
 #else
+        // NOLINTNEXTLINE(misc-redundant-expression)
         if constexpr (CHAR_BIT == 8) {
             if constexpr (sizeof(T) == 1) {
                 return value;

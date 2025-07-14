@@ -47,10 +47,13 @@
 #include <utility>
 #include <vector>
 
-namespace detail {
+template <typename Enum>
+concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
+
+namespace {
     // Convert an array of arrays to a span of spans.
     template <typename T, size_t N, size_t M>
-    constexpr auto to_array_of_spans(std::array<std::array<T, M>, N> const& array) {
+    consteval auto to_array_of_spans(std::array<std::array<T, M>, N> const& array) {
         auto expander
                 = []<typename Ts, size_t K, size_t... outer>(
                           std::array<std::array<Ts, K>, sizeof...(outer)> const& arr,
@@ -62,7 +65,7 @@ namespace detail {
     }
 
     // This function computes the number of partitions of a number.
-    constexpr size_t count_partitions(size_t number) {
+    consteval size_t count_partitions(size_t number) {
         std::vector<size_t> vals{1};
         for (size_t num = 0; num < number; ++num) {
             size_t sum = 0;
@@ -83,7 +86,7 @@ namespace detail {
 
     // This function computes the integer partitions of a number.
     template <size_t number>
-    constexpr auto compute_integer_partitions() {
+    consteval auto compute_integer_partitions() {
         constexpr size_t num_partitions = count_partitions(number);
         std::array<std::array<size_t, number - 1>, num_partitions - 1> partitions{};
         // This stores the current partition.
@@ -143,15 +146,11 @@ namespace detail {
         return partitions;
     }
 
-}    // namespace detail
-
-template <typename Enum>
-concept Enumerator = requires() { requires(std::is_enum_v<Enum>); };
-
-template <Enumerator Enum>
-constexpr std::underlying_type_t<Enum> to_underlying(Enum value) {
-    return static_cast<std::underlying_type_t<Enum>>(value);
-}
+    template <Enumerator Enum>
+    constexpr std::underlying_type_t<Enum> to_underlying(Enum value) {
+        return static_cast<std::underlying_type_t<Enum>>(value);
+    }
+}    // namespace
 
 // This represents a nibble run of up to 7 repetitions of the starting nibble.
 class nibble_run {
@@ -375,7 +374,7 @@ struct compare_node2 {
         auto get_len = [&](std::shared_ptr<node> const& node, nibble_run nibble) {
             if (auto const iter = code_map->find(nibble); iter != code_map->cend()) {
                 size_t const bit_count = (iter->second).length;
-                return (bit_count & 0x7fU) * node->get_weight() + 16;
+                return ((bit_count & 0x7fU) * node->get_weight()) + 16;
             }
             return (6 + 7) * node->get_weight();
         };
@@ -633,52 +632,52 @@ public:
                             // Note: technically unreachable, but we include it
                             // for completeness.
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<2>();
+                                    = compute_integer_partitions<2>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 3: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<3>();
+                                    = compute_integer_partitions<3>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 4: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<4>();
+                                    = compute_integer_partitions<4>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 5: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<5>();
+                                    = compute_integer_partitions<5>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 6: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<6>();
+                                    = compute_integer_partitions<6>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 7: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<7>();
+                                    = compute_integer_partitions<7>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         case 8:
                         default: {
                             constexpr static auto partition
-                                    = detail::compute_integer_partitions<8>();
+                                    = compute_integer_partitions<8>();
                             constexpr static auto span_array
-                                    = detail::to_array_of_spans(partition);
+                                    = to_array_of_spans(partition);
                             return {span_array};
                         }
                         }
@@ -1010,9 +1009,9 @@ public:
         }
         // Special case.
         if (nodes.size() == 1) {
-            nibble_code_map             temp_code_map;
-            std::shared_ptr<node> const child = nodes.front();
-            temp_code_map[child->get_value()] = bit_code{0U, 1};
+            nibble_code_map              temp_code_map;
+            std::shared_ptr<node> const& child = nodes.front();
+            temp_code_map[child->get_value()]  = bit_code{0U, 1};
             size_t const temp_size_est = estimate_file_size(temp_code_map, count_map);
 
             // Is this iteration better than the best?

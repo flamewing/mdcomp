@@ -42,6 +42,19 @@
 #include <tuple>
 #include <utility>
 
+enum class argument : uint8_t {
+    none     = no_argument,          // option never takes an argument
+    required = required_argument,    // option always requires an argument
+    optional = optional_argument     // option may take an argument
+};
+
+struct option_t : option {
+    constexpr option_t(char const* m_name, argument m_has_arg, int m_val)
+            : option{m_name, static_cast<int>(m_has_arg), nullptr, m_val} {}
+
+    constexpr option_t() : option{} {}
+};
+
 template <auto& long_options>
 requires std::ranges::range<decltype(long_options)>
 consteval auto make_short_options() {

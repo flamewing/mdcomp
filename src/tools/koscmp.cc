@@ -18,8 +18,6 @@
 #include "mdcomp/kosinski.hh"
 #include "mdcomp/options_lib.hh"
 
-#include <getopt.h>
-
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -40,11 +38,11 @@ struct options_t {
     }
 
     constexpr static std::array const long_options{
-            option{"extract", optional_argument, nullptr, 'x'},
-            option{"moduled",       no_argument, nullptr, 'm'},
-            option{ "crunch",       no_argument, nullptr, 'c'},
-            option{"padding", required_argument, nullptr, 'p'},
-            option{  nullptr,                 0, nullptr,   0}
+            option_t{"extract", argument::optional, 'x'},
+            option_t{"moduled", argument::none, 'm'},
+            option_t{"crunch", argument::none, 'c'},
+            option_t{"padding", argument::required, 'p'},
+            option_t{}
     };
 
     constexpr static auto short_options = make_short_options<long_options>();

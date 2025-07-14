@@ -22,6 +22,7 @@ CompileFlags:
       -Wno-c++20-compat,
       -Wno-c++20-compat-pedantic,
       -Wno-padded,
+      -Wno-unsafe-buffer-usage-in-container,
       -D_LIBCPP_ENABLE_EXPERIMENTAL,
     ]
   Remove: -W*

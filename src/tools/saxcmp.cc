@@ -18,8 +18,6 @@
 #include "mdcomp/options_lib.hh"
 #include "mdcomp/saxman.hh"
 
-#include <getopt.h>
-
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -50,11 +48,11 @@ struct options_t {
     }
 
     constexpr static std::array const long_options{
-            option{"extract", optional_argument, nullptr, 'x'},
-            option{ "crunch",       no_argument, nullptr, 'c'},
-            option{   "size", required_argument, nullptr, 's'},
-            option{"no-size",       no_argument, nullptr, 'S'},
-            option{  nullptr,                 0, nullptr,   0}
+            option_t{"extract", argument::optional, 'x'},
+            option_t{"crunch", argument::none, 'c'},
+            option_t{"size", argument::required, 's'},
+            option_t{"no-size", argument::none, 'S'},
+            option_t{}
     };
 
     constexpr static auto short_options = make_short_options<long_options>();

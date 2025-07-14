@@ -18,8 +18,6 @@
 #include "mdcomp/nemesis.hh"
 #include "mdcomp/options_lib.hh"
 
-#include <getopt.h>
-
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -30,10 +28,10 @@ struct options_t {
     explicit options_t(std::span<char*> args) : arguments(args) {}
 
     constexpr static std::array const long_options{
-            option{"extract", optional_argument, nullptr, 'x'},
-            option{ "crunch",       no_argument, nullptr, 'c'},
-            option{   "info",       no_argument, nullptr, 'i'},
-            option{  nullptr,                 0, nullptr,   0}
+            option_t{"extract", argument::optional, 'x'},
+            option_t{"crunch", argument::none, 'c'},
+            option_t{"info", argument::none, 'i'},
+            option_t{}
     };
 
     constexpr static auto short_options = make_short_options<long_options>();

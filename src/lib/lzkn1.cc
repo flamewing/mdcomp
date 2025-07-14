@@ -110,7 +110,7 @@ class lzkn1_internal {
             case packed_symbolwise:
                 // 2-bit marker (%11), 6-bit length,
                 // length * 8 bits data.
-                return desc_bits(type) + 2 + 6 + length * 8;
+                return desc_bits(type) + 2 + 6 + (length * 8);
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
