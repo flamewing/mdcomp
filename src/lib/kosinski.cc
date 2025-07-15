@@ -73,12 +73,11 @@ class kosinski_internal {
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
             using enum edge_type;
             return std::array{
-                    sliding_window_t{data,             256,  2,                   5,dictionary_inline                                                                                    },
-                    sliding_window_t{data, search_buf_size,  3,                   9,  dictionary_short},
-                    sliding_window_t{
-                                     data, search_buf_size, 10, look_ahead_buf_size,
-                                     dictionary_long                                                  }
-            };
+                    sliding_window_t(data, 256, 2, 5, dictionary_inline),
+                    sliding_window_t(data, search_buf_size, 3, 9, dictionary_short),
+                    sliding_window_t(
+                            data, search_buf_size, 10, look_ahead_buf_size,
+                            dictionary_long)};
         }
 
         // Given an edge type, computes how many bits are used in the descriptor

@@ -70,11 +70,9 @@ class comper_internal {
 
         // Creates the (multilayer) sliding window structure.
         static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return std::array{
-                    sliding_window_t{
-                                     data, search_buf_size, 2, look_ahead_buf_size,
-                                     edge_type::dictionary}
-            };
+            return std::array{sliding_window_t(
+                    data, search_buf_size, 2, look_ahead_buf_size,
+                    edge_type::dictionary)};
         }
 
         // Given an edge type, computes how many bits are used in the descriptor
