@@ -147,8 +147,7 @@ public:
                         = raw_dist != 0U ? (0x100 - raw_dist + 1) : 1;
                 diff_t const length
                         = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
-                diff_t const offset = dest.tellp() - distance;
-                lzss_copy<comper_x_adaptor>(dest, offset, length);
+                lzss_copy<comper_x_adaptor>(dest, distance, length);
             }
         }
     }

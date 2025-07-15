@@ -571,33 +571,42 @@ public:
 // NOLINTBEGIN(bugprone-easily-swappable-parameters)
 template <lzss_adaptor Adaptor>
 inline void lzss_copy(
-        std::iostream& dest, std::make_signed_t<size_t> offset,
-        std::make_signed_t<size_t> length) {
+        std::iostream& dest, std::make_signed_t<size_t> const distance,
+        std::make_signed_t<size_t> const length) {
     constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
-    offset *= num_bytes;
-    length *= num_bytes;
-    auto const        pointer = dest.tellp();
-    std::vector<char> buffer(static_cast<size_t>(length));
-    dest.seekg(offset);
-    using diff_t    = std::make_signed_t<size_t>;
-    diff_t distance = static_cast<diff_t>(dest.tellp()) - offset;
-    if (length > distance) {
-        dest.read(buffer.data(), distance);
-        auto       count  = length - distance;
+
+    using diff_t             = std::make_signed_t<size_t>;
+    using stream_t           = typename Adaptor::stream_t;
+    diff_t     byte_distance = distance * num_bytes;
+    diff_t     byte_length   = length * num_bytes;
+    auto const pointer       = dest.tellp();
+    if (distance == 1) {
+        dest.seekg(pointer - byte_distance);
+        stream_t const        value = source_endian::template read<stream_t>(dest);
+        std::vector<stream_t> buffer(static_cast<size_t>(length), value);
+        dest.seekp(pointer);
+        dest.write(reinterpret_cast<char*>(buffer.data()), byte_length);
+        return;
+    }
+    std::vector<char> buffer(static_cast<size_t>(byte_length));
+    dest.seekg(pointer - byte_distance);
+    if (byte_length > byte_distance) {
+        dest.read(buffer.data(), byte_distance);
+        auto       count  = byte_length - byte_distance;
         auto const start  = std::ranges::cbegin(buffer);
-        auto       output = std::ranges::begin(buffer) + distance;
-        while (count > distance) {
+        auto       output = std::ranges::begin(buffer) + byte_distance;
+        while (count > byte_distance) {
             auto [it_in, it_out] = std::ranges::copy(start, output, output);
-            count -= distance;
-            distance *= 2;
+            count -= byte_distance;
+            byte_distance *= 2;
             output = it_out;
         }
         std::ranges::copy(start, start + count, output);
     } else {
-        dest.read(buffer.data(), length);
+        dest.read(buffer.data(), byte_length);
     }
     dest.seekp(pointer);
-    dest.write(buffer.data(), length);
+    dest.write(buffer.data(), byte_length);
 }
 
 // NOLINTEND(bugprone-easily-swappable-parameters)

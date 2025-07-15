@@ -194,11 +194,12 @@ public:
                 auto const base = dest.tellp();
                 auto const offset
                         = ((base_offset - base) % buffer_size) + base - buffer_size;
+                auto distance = base - offset;
 
-                if (offset < base) {
+                if (distance > 0) {
                     // If the offset is before the current output position, we
                     // copy bytes from the given location.
-                    lzss_copy<saxman_adaptor>(dest, offset, length);
+                    lzss_copy<saxman_adaptor>(dest, distance, length);
                 } else {
                     // Otherwise, it is a zero fill.
                     std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);

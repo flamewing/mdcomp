@@ -142,8 +142,7 @@ public:
                     break;
                 }
 
-                diff_t const offset = dest.tellp() - distance;
-                lzss_copy<comper_adaptor>(dest, offset, length);
+                lzss_copy<comper_adaptor>(dest, distance, length);
             }
         }
     }

@@ -165,7 +165,7 @@ struct rocket_internal {
                     length -= count;
                     offset += count;
                 }
-                lzss_copy<rocket_adaptor>(dest, offset, length);
+                lzss_copy<rocket_adaptor>(dest, dest.tellp() - offset, length);
             }
         }
     }

@@ -196,8 +196,7 @@ public:
                     }
 
                     auto const   length = static_cast<diff_t>(count);
-                    diff_t const offset = dest.tellp() - distance;
-                    lzss_copy<lzkn1_adaptor>(dest, offset, length);
+                    lzss_copy<lzkn1_adaptor>(dest, distance, length);
                     bytes_written += count;
                 }
             }

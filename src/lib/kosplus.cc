@@ -197,8 +197,7 @@ public:
                 }
 
                 auto const   length = static_cast<diff_t>(count);
-                diff_t const offset = dest.tellp() - distance;
-                lzss_copy<kos_plus_adaptor>(dest, offset, length);
+                lzss_copy<kos_plus_adaptor>(dest, distance, length);
             }
         }
     }
