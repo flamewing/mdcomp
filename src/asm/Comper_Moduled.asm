@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; Original version written by vladikcomper, with improvements by Flamewing
+; Moduled Comper decompression queue.
 ; ---------------------------------------------------------------------------
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted.
@@ -12,32 +12,21 @@
 ; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
-; FUNCTION:
-; 	CompDec
-;
-; DESCRIPTION
-; 	Comper Decompressor
-;
-; INPUT:
-; 	a0	Source address
-; 	a1	Destination address
-; ---------------------------------------------------------------------------
-_Comp_LoopUnroll = 3
+	set module_remap_A000_to_8000 0			; 0 for anything but Kosinski
+	set module_padding 0					; 0 for anything but Kosinski
 
-_Comp_RunBitStream macro
-	dbra	d3,.mainloop	; if bits counter remains, parse the next word
-	bra.ATTRIBUTE	.newblock		; start a new block
+KosMRestoreRegs macro addrW,addrL
+	movem.w	addrW,d0-d4
+	movem.l	addrL,a0-a2
+	moveq	#(1<<_Comp_LoopUnroll)-1,d7		; Set d7 to the maximum number of loop unrolls.
 	endm
 
-_Comp_ReadBit macro
-	add.w	d0,d0			; roll description field
+KosMSaveRegs macro addrW,addrL
+	movem.w	d0-d4,addrW
+	movem.l	a0-a2,addrL
+	; d7 and a4 have fixed, known, values, so no need to save them
 	endm
-; ===========================================================================
 
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; ---------------------------------------------------------------------------
-CompDec:
+	include "Moduled_common_header.asm"		; The common header file (this file)
 	include "Comper_internal.asm"			; The internal file for your compression algorithm
-	rts
-; ===========================================================================
+	include "Moduled_common_footer.asm"		; The common footer file
