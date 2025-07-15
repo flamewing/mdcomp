@@ -63,11 +63,13 @@ private:
     // Cost, in bits, of "covering" all of the characters in the match.
     edge_type type;
     // Data about the match.
-    std::variant<stream_t, match_info> match;
+    std::variant<stream_t, match_info> match{stream_t{0}};
 
 public:
     // Constructors.
-    constexpr adj_list_node() noexcept : type(edge_type::invalid), match(stream_t(0)) {}
+    constexpr adj_list_node() noexcept : type(edge_type::invalid) {}
+
+    explicit constexpr adj_list_node(edge_type type_in) noexcept : type(type_in) {}
 
     constexpr adj_list_node(
             size_t position_in, stream_t symbol, edge_type type_in) noexcept
@@ -180,12 +182,12 @@ public:
             return;
         }
         // Find the longest match in the search buffer.
-        size_t const      lookahead_length = get_lookahead_buffer_size();
+        size_t const lookahead_length = get_lookahead_buffer_size();
         // Best match information.
         size_t best_pos = 0;
         size_t best_len = 0;
         // This is what we are looking to match ("needle").
-        auto const* const needle           = data.data() + base_node;
+        auto const* const needle = data.data() + base_node;
         for (size_t match_base = base_node; match_base > lower_bound; --match_base) {
             // This is where we are looking for matches ("haystack").
             auto const* haystack = data.data() + match_base - 1;
@@ -442,9 +444,7 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
 
     // This is what we will produce.
     lzss_parse_result<adj_list> result{
-            {node_t{0, 0, edge_type::terminator}},
-            descriptor_costs.back(),
-            total_costs.back()};
+            {node_t{edge_type::terminator}}, descriptor_costs.back(), total_costs.back()};
     adj_list& parse_list = result.parse_list;
     for (size_t ii = num_nodes; ii != 0;) {
         // Insert the edge up front...
