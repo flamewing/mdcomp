@@ -575,11 +575,11 @@ inline void lzss_copy(
         std::make_signed_t<size_t> const length) {
     constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
 
-    using diff_t             = std::make_signed_t<size_t>;
-    using stream_t           = typename Adaptor::stream_t;
-    diff_t     byte_distance = distance * num_bytes;
-    diff_t     byte_length   = length * num_bytes;
-    auto const pointer       = dest.tellp();
+    using diff_t               = std::make_signed_t<size_t>;
+    using stream_t             = typename Adaptor::stream_t;
+    diff_t       byte_distance = distance * num_bytes;
+    diff_t       byte_length   = length * num_bytes;
+    diff_t const pointer       = dest.tellp();
     if (distance == 1) {
         dest.seekg(pointer - byte_distance);
         stream_t const        value = source_endian::template read<stream_t>(dest);
