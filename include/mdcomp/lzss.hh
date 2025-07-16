@@ -576,8 +576,8 @@ inline void lzss_copy(
     diff_t       byte_distance = distance * num_bytes;
     diff_t       byte_length   = length * num_bytes;
     diff_t const pointer       = dest.tellp();
+    dest.seekg(pointer - byte_distance);
     if (distance == 1) {
-        dest.seekg(pointer - byte_distance);
         stream_t const        value = source_endian::template read<stream_t>(dest);
         std::vector<stream_t> buffer(static_cast<size_t>(length), value);
         dest.seekp(pointer);
@@ -585,7 +585,6 @@ inline void lzss_copy(
         return;
     }
     std::vector<char> buffer(static_cast<size_t>(byte_length));
-    dest.seekg(pointer - byte_distance);
     if (byte_length > byte_distance) {
         dest.read(buffer.data(), byte_distance);
         auto       count  = byte_length - byte_distance;
