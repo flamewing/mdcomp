@@ -145,8 +145,7 @@ public:
 
                 std::streamoff const distance
                         = raw_dist != 0U ? (0x100 - raw_dist + 1) : 1;
-                diff_t const length
-                        = (0x100 - ((raw_len & 0x7FU) << 1U)) + ((raw_len & 0x80U) >> 7U);
+                diff_t const length = std::rotl<uint8_t>(raw_len ^ 0x7FU, 1) + 2U;
                 lzss_copy<comper_x_adaptor>(dest, distance, length);
             }
         }
@@ -176,10 +175,9 @@ public:
             case edge_type::dictionary: {
                 size_t const length = edge.get_length();
                 size_t const dist   = edge.get_distance();
-
                 output.descriptor_bit(1);
                 output.put_byte(1 - dist);
-                output.put_byte((0x7FU - ((length - 2U) >> 1U)) | ((length & 1U) << 7U));
+                output.put_byte(std::rotr(static_cast<uint8_t>(length - 2U), 1) ^ 0x7FU);
                 break;
             }
             case edge_type::terminator: {
