@@ -22,6 +22,7 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <array>
 #include <cstddef>
@@ -102,7 +103,7 @@ class comperx_internal {
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
-            __builtin_unreachable();
+            utils::unreachable();
         }
 
         // ComperX finds no additional matches over normal LZSS.
@@ -191,7 +192,7 @@ public:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';
-                __builtin_unreachable();
+                utils::unreachable();
             }
         }
     }

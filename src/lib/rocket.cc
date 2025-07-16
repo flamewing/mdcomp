@@ -22,6 +22,7 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <algorithm>
 #include <array>
@@ -105,7 +106,7 @@ struct rocket_internal {
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
-            __builtin_unreachable();
+            utils::unreachable();
         }
 
         // Rocket finds no additional matches over normal LZSS.
@@ -129,8 +130,8 @@ struct rocket_internal {
         using rock_istream = lzss_istream<rocket_adaptor>;
         using diff_t       = std::make_signed_t<size_t>;
 
-        auto const  out_size = static_cast<std::streamsize>(big_endian::read2(input));
-        auto const  in_size  = static_cast<std::streamsize>(big_endian::read2(input)) + 4;
+        auto const   out_size = static_cast<std::streamsize>(big_endian::read2(input));
+        auto const   in_size = static_cast<std::streamsize>(big_endian::read2(input)) + 4;
         rock_istream source(input);
 
         while (input.good() && input.tellg() < in_size && dest.tellp() < out_size) {
@@ -165,7 +166,8 @@ struct rocket_internal {
                     length -= count;
                     offset += count;
                 }
-                lzss_copy<rocket_adaptor>(dest, static_cast<diff_t>(dest.tellp()) - offset, length);
+                lzss_copy<rocket_adaptor>(
+                        dest, static_cast<diff_t>(dest.tellp()) - offset, length);
             }
         }
     }
@@ -202,7 +204,7 @@ struct rocket_internal {
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';
-                __builtin_unreachable();
+                utils::unreachable();
             }
         }
     }

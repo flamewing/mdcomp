@@ -21,6 +21,7 @@
 
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -344,14 +345,9 @@ auto find_optimal_lzss_parse(std::span<uint8_t const> data_in, Adaptor adaptor) 
             "Adaptor::desc_bits() is not noexcept");
     static_assert(
             noexcept(Adaptor::get_padding(0)), "Adaptor::get_padding() is not noexcept");
-    constexpr auto assume = [](bool result) {
-        if (!result) {
-            __builtin_unreachable();
-        }
-    };
-    assume(data.size() >= Adaptor::first_match_position);
+    utils::assume(data.size() >= Adaptor::first_match_position);
     size_t num_nodes = data.size() - Adaptor::first_match_position;
-    assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
+    utils::assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
     // Auxiliary data structures:
     // * The parent of a node is the node that reaches that node with the
     //   lowest cost from the start of the file.

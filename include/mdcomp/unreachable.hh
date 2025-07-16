@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Flamewing 2016 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2025 <flamewing.sonic@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
@@ -18,12 +18,44 @@
 #ifndef LIB_UNREACHABLE_HH
 #define LIB_UNREACHABLE_HH
 
-#ifdef _MSC_VER
-#    ifndef __clang__
-[[noreturn]] inline void __builtin_unreachable() {
-    __assume(false);
-}
-#    endif
+namespace utils {
+#if defined(_MSC_VER)
+#    define INLINE [[msvc::forceinline]]
+#elif defined(__GNUG__)
+#    define INLINE [[gnu::always_inline]] inline
+#else
+#    define INLINE inline
 #endif
+#if defined(__cpp_lib_unreachable) && __cpp_lib_unreachable >= 202202L
+#    include <utility>
+    using std::unreachable;
+#else
+    [[noreturn]] INLINE void unreachable() {
+        // Uses compiler specific extensions if possible.
+        // Even if no extension is used, undefined behavior is still raised by
+        // an empty function body and the noreturn attribute.
+#    if defined(_MSC_VER) && !defined(__clang__)    // MSVC
+        __assume(false);
+#    else                                           // GCC, Clang
+        __builtin_unreachable();
+#    endif
+    }
+#endif
+
+    INLINE void assume(bool condition) {
+        // Uses compiler specific extensions if possible.
+        // Even if no extension is used, undefined behavior is still raised by
+        // an empty function body and the noreturn attribute.
+#if defined(_MSC_VER) && !defined(__clang__)    // MSVC
+        __assume(condition);
+#else    // GCC, Clang
+        if (!condition) {
+            __builtin_unreachable();
+        }
+#endif
+    }
+
+#undef INLINE
+}    // namespace utils
 
 #endif    // LIB_UNREACHABLE_HH

@@ -18,6 +18,8 @@
 #ifndef LIB_OPTIONS_LIB_HH
 #define LIB_OPTIONS_LIB_HH
 
+#include "mdcomp/unreachable.hh"
+
 #include <getopt.h>
 
 #include <boost/io/ios_state.hpp>
@@ -85,7 +87,7 @@ consteval auto make_short_options() {
                 intermediate[length++] = ':';
                 break;
             default:
-                __builtin_unreachable();
+                utils::unreachable();
             }
         }
         return std::pair{intermediate, length};

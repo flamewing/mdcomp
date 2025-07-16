@@ -22,6 +22,7 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <array>
 #include <cstddef>
@@ -100,7 +101,7 @@ class kosinski_internal {
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
-            __builtin_unreachable();
+            utils::unreachable();
         }
 
         // Given an edge type, computes how many bits are used in total by this
@@ -129,7 +130,7 @@ class kosinski_internal {
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
-            __builtin_unreachable();
+            utils::unreachable();
         }
 
         // Kosinski finds no additional matches over normal LZSS.
@@ -200,7 +201,7 @@ public:
                     distance = std::streamoff{0x100} - source.get_byte();
                 }
 
-                auto const   length = static_cast<diff_t>(count);
+                auto const length = static_cast<diff_t>(count);
                 lzss_copy<kosinski_adaptor>(dest, distance, length);
             }
         }
@@ -264,7 +265,7 @@ public:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';
-                __builtin_unreachable();
+                utils::unreachable();
             }
         }
     }

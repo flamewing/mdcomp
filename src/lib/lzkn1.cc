@@ -22,6 +22,7 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <algorithm>
 #include <array>
@@ -113,7 +114,7 @@ class lzkn1_internal {
             case invalid:
                 return std::numeric_limits<size_t>::max();
             }
-            __builtin_unreachable();
+            utils::unreachable();
         }
 
         // lzkn1 finds no additional matches over normal LZSS.
@@ -195,7 +196,7 @@ public:
                         count    = (data >> 4U) - 6U;
                     }
 
-                    auto const   length = static_cast<diff_t>(count);
+                    auto const length = static_cast<diff_t>(count);
                     lzss_copy<lzkn1_adaptor>(dest, distance, length);
                     bytes_written += count;
                 }
@@ -271,7 +272,7 @@ public:
                 // This should be unreachable.
                 std::cerr << "Compression produced invalid edge type "
                           << static_cast<size_t>(edge.get_type()) << '\n';
-                __builtin_unreachable();
+                utils::unreachable();
             }
         }
     }

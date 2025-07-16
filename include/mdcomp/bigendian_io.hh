@@ -46,9 +46,9 @@
 #endif
 
 #if defined(_MSC_VER)
-#    define INLINE       __forceinline
-#    define CONST_INLINE __forceinline
-#    define PURE_INLINE  __forceinline
+#    define INLINE       [[msvc::forceinline]]
+#    define CONST_INLINE [[msvc::forceinline]]
+#    define PURE_INLINE  [[msvc::forceinline]]
 #elif defined(__GNUG__)
 #    define INLINE       [[gnu::always_inline]]
 #    define CONST_INLINE [[using gnu: const, always_inline]]
@@ -57,14 +57,6 @@
 #    define INLINE
 #    define CONST_INLINE
 #    define PURE_INLINE
-#endif
-
-#ifdef _MSC_VER
-#    ifndef __clang__
-[[noreturn]] inline void __builtin_unreachable() {
-    __assume(false);
-}
-#    endif
 #endif
 
 namespace detail {

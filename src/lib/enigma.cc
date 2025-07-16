@@ -21,6 +21,7 @@
 
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
+#include "mdcomp/unreachable.hh"
 
 #include <algorithm>
 #include <array>
@@ -187,7 +188,7 @@ public:
                     break;
                 }
                 default:
-                    __builtin_unreachable();
+                    utils::unreachable();
                 }
             } else {
                 auto const mode  = bits.pop();
