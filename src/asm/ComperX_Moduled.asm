@@ -16,6 +16,7 @@
 	set module_padding 0					; 0 for anything but Kosinski
 
 	reg comperx_return_reg,a5				; Return here at the end of the ComperX decompression.
+	set comperx_jump_to_reg_on_end,1		; Jump to (comperx_return_reg) on end
 
 KosMRestoreRegs macro addrW,addrL
 	movem.w	addrW,d0-d4
@@ -30,7 +31,6 @@ KosMSaveRegs macro addrW,addrL
 	endm
 
 	include "Moduled_common_header.asm"		; The common header file (this file)
-	comperx_jump_to_reg_on_end,1				; Jump to (comperx_return_reg) on end
 	lea ComperX_done(pc),comperx_return_reg	; Set comperx_return_reg to the end of the ComperX code
 	include "ComperX_internal.asm"			; The internal file for your compression algorithm
 ComperX_done:

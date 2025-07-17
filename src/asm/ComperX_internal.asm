@@ -61,7 +61,7 @@ ComperXDec:
 
 .CopyDevice:
 	; copy length = 0 stops decompression
-	if comperx_return_reg<>0
+	if comperx_jump_to_reg_on_end<>0
 	jmp	(comperx_return_reg)
 	else
 	rts
@@ -79,7 +79,7 @@ ComperXDec:
 ; -----------------------------------------------------------------------------
 
 	; copy length = 0 stops decompression
-	if comperx_return_reg<>0
+	if comperx_jump_to_reg_on_end<>0
 	jmp	(comperx_return_reg)
 	else
 	rts
