@@ -137,8 +137,8 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                std::streamoff const distance = 0x100 - source.get_byte();
-                diff_t const         length   = source.get_byte();
+                diff_t const distance = 0x100U - source.get_byte();
+                diff_t const length   = source.get_byte();
                 if (length == 0) {
                     break;
                 }
@@ -170,10 +170,10 @@ public:
                 break;
             }
             case edge_type::dictionary: {
-                size_t const length = edge.get_length();
-                size_t const dist   = edge.get_distance();
+                size_t const length   = edge.get_length();
+                size_t const distance = edge.get_distance();
                 output.descriptor_bit(1);
-                output.put_byte(0 - dist);
+                output.put_byte(0x100U - distance);
                 output.put_byte(length - 1);
                 break;
             }

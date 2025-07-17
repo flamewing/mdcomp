@@ -137,17 +137,16 @@ public:
             } else {
                 // Dictionary match.
                 // Distance and length of match.
-                uint8_t const raw_dist = source.get_byte();
-                uint8_t const raw_len  = source.get_byte();
+                diff_t const  distance = 0x101U - source.get_byte();
+                uint8_t const length   = source.get_byte();
 
-                if (raw_len == 0) { /* Stop processing */
+                if (length == 0) { /* Stop processing */
                     break;
                 }
 
-                std::streamoff const distance
-                        = raw_dist != 0U ? (0x100 - raw_dist + 1) : 1;
-                diff_t const length = std::rotl<uint8_t>(raw_len ^ 0x7FU, 1) + 2U;
-                lzss_copy<comper_x_adaptor>(dest, distance, length);
+                lzss_copy<comper_x_adaptor>(
+                        dest, distance,
+                        std::rotl(static_cast<uint8_t>(length ^ 0x7FU), 1) + 2U);
             }
         }
     }
@@ -174,10 +173,10 @@ public:
                 break;
             }
             case edge_type::dictionary: {
-                size_t const length = edge.get_length();
-                size_t const dist   = edge.get_distance();
+                size_t const length   = 0x101U - edge.get_length();
+                size_t const distance = edge.get_distance();
                 output.descriptor_bit(1);
-                output.put_byte(1 - dist);
+                output.put_byte(distance);
                 output.put_byte(std::rotr(static_cast<uint8_t>(length - 2U), 1) ^ 0x7FU);
                 break;
             }
@@ -197,6 +196,37 @@ public:
         }
     }
 };
+
+consteval uint8_t decode_distance1(uint8_t const raw_distance) noexcept {
+    return static_cast<uint8_t>(raw_distance != 0U ? (0x100U - raw_distance + 1) : 1U);
+}
+
+consteval uint8_t decode_distance2(uint8_t const raw_distance) noexcept {
+    return static_cast<uint8_t>(1U - raw_distance);
+}
+
+consteval uint8_t encode_distance1(uint8_t const distance) noexcept {
+    return static_cast<uint8_t>(1U - distance);
+}
+
+consteval size_t verify_distance(
+        uint8_t (*encode)(uint8_t const), uint8_t (*decode)(uint8_t const)) noexcept {
+    size_t count = 0;
+    for (size_t i = 0; i < 0x100U; ++i) {
+        if (decode(encode(static_cast<uint8_t>(i))) != static_cast<uint8_t>(i)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+static_assert(
+        verify_distance(encode_distance1, decode_distance1) == 0U,
+        "Distance encoding/decoding is not reversible");
+
+static_assert(
+        verify_distance(encode_distance1, decode_distance2) == 0U,
+        "Distance encoding/decoding is not reversible");
 
 bool comperx::decode(std::istream& source, std::iostream& dest) {
     auto const        location = source.tellg();
