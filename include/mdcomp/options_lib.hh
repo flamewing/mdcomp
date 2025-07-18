@@ -31,8 +31,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
-#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <ranges>
@@ -114,14 +114,17 @@ namespace detail {
     [[noreturn]] inline void print_error(
             std::errc error, std::string const& parameter, char const* value) {
         if (error == std::errc::invalid_argument) {
-            std::cerr << "Invalid value '" << value << "' given for '" << parameter
-                      << "' parameter!\n";
+            std::cerr << std::format(
+                    "Invalid value '{}' given for '{}' parameter!\n", value, parameter);
         } else if (error == std::errc::result_out_of_range) {
-            std::cerr << "The value '" << value << "' given for '" << parameter
-                      << "' parameter is out of range!\n";
+            std::cerr << std::format(
+                    "The value '{}' given for '{}' parameter is out of range!\n", value,
+                    parameter);
         } else {
-            std::cerr << "Unknown error happened when parsing value '" << value
-                      << "' given for '" << parameter << "' parameter!\n";
+            std::cerr << std::format(
+                    "Unknown error happened when parsing value '{}' given for '{}' "
+                    "parameter!\n",
+                    value, parameter);
         }
         throw 5;
     }
@@ -275,7 +278,7 @@ namespace detail {
                 options.size = strtoul(parameter, nullptr, 0);
             }
             if (options.size == 0) {
-                std::cerr << "Error: specified size must be a positive number.\n\n";
+                std::cerr << "Error: specified size must be a positive number.\n";
                 throw 4;
             }
         }
@@ -293,8 +296,7 @@ namespace detail {
         auto const do_print_end = [&]() noexcept {
             if constexpr (has_print_end<options_t>) {
                 boost::io::ios_all_saver const flags(std::cout);
-                std::cout << "0x" << std::hex << std::setw(6) << std::setfill('0')
-                          << std::uppercase << std::right << input.tellg() << std::endl;
+                std::cout << std::format("0x{:06x}", input.tellg());
             }
         };
         if constexpr (has_moduled<options_t>) {
@@ -333,7 +335,8 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Input file '{}' could not be opened.\n", infile.string());
             return 2;
         }
         std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
@@ -348,7 +351,8 @@ namespace detail {
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Output file '{}' could not be opened.\n", outfile.string());
             return 3;
         }
         detail::do_encode(buffer, output, options);
@@ -361,14 +365,16 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Input file '{}' could not be opened.\n", infile.string());
             return 2;
         }
         std::fstream output(
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Output file '{}' could not be opened.\n", outfile.string());
             return 3;
         }
         if constexpr (has_pointer<options_t>) {
@@ -384,14 +390,16 @@ namespace detail {
             options_t const& options) {
         std::ifstream input(infile, std::ios::in | std::ios::binary);
         if (!input.good()) {
-            std::cerr << "Input file '" << infile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Input file '{}' could not be opened.\n", infile.string());
             return 2;
         }
         std::fstream output(
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output.good()) {
-            std::cerr << "Output file '" << outfile << "' could not be opened.\n\n";
+            std::cerr << std::format(
+                    "Output file '{}' could not be opened.\n", outfile.string());
             return 3;
         }
         detail::do_encode(input, output, options);
@@ -496,7 +504,7 @@ namespace detail {
             }
         }();
         auto const program = options.program.filename().string();
-        out << "Usage: " << program;
+        out << std::format("Usage: {}", program);
         out << moduled_opt;
         out << padding_opt;
         out << size_opt;
@@ -505,7 +513,7 @@ namespace detail {
         out << moduled_arg[0];
         out << padding_arg;
         out << size_arg;
-        out << "\nUsage: " << program << " -x|--extract[={pointer}]"sv;
+        out << std::format("\nUsage: {} -x|--extract[={{pointer}}]", program);
         out << info_opt;
         out << moduled_opt;
         out << padding_opt;
@@ -518,7 +526,7 @@ namespace detail {
         out << padding_arg;
         out << with_size_arg;
         if constexpr (has_crunch<options_t>) {
-            out << "\nUsage: " << program << " -c|--crunch"sv;
+            out << std::format("\nUsage: {} -c|--crunch", program);
             out << moduled_opt;
             out << padding_opt;
             out << size_opt;
@@ -552,7 +560,7 @@ inline int auto_compressor_decompressor(options_t options) {
             }
             if (options.extract && options.crunch) {
                 std::cerr << "Error: --extract and --crunch can't be used at the "
-                             "same time.\n\n";
+                             "same time.\n";
                 return 4;
             }
         } else {
