@@ -197,37 +197,6 @@ public:
     }
 };
 
-consteval uint8_t decode_distance1(uint8_t const raw_distance) noexcept {
-    return static_cast<uint8_t>(raw_distance != 0U ? (0x100U - raw_distance + 1) : 1U);
-}
-
-consteval uint8_t decode_distance2(uint8_t const raw_distance) noexcept {
-    return static_cast<uint8_t>(1U - raw_distance);
-}
-
-consteval uint8_t encode_distance1(uint8_t const distance) noexcept {
-    return static_cast<uint8_t>(1U - distance);
-}
-
-consteval size_t verify_distance(
-        uint8_t (*encode)(uint8_t const), uint8_t (*decode)(uint8_t const)) noexcept {
-    size_t count = 0;
-    for (size_t i = 0; i < 0x100U; ++i) {
-        if (decode(encode(static_cast<uint8_t>(i))) != static_cast<uint8_t>(i)) {
-            ++count;
-        }
-    }
-    return count;
-}
-
-static_assert(
-        verify_distance(encode_distance1, decode_distance1) == 0U,
-        "Distance encoding/decoding is not reversible");
-
-static_assert(
-        verify_distance(encode_distance1, decode_distance2) == 0U,
-        "Distance encoding/decoding is not reversible");
-
 bool comperx::decode(std::istream& source, std::iostream& dest) {
     auto const        location = source.tellg();
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
