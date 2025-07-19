@@ -28,6 +28,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <iostream>
 #include <istream>
 #include <iterator>
@@ -41,212 +42,277 @@
 template <>
 size_t moduled_saxman::pad_mask_bits = 1U;
 
-class saxman_internal {
-    // NOTE: This has to be changed for other LZSS-based compression schemes.
-    struct saxman_adaptor {
-        using stream_t            = uint8_t;
-        using stream_endian_t     = big_endian;
-        using descriptor_t        = uint8_t;
-        using descriptor_endian_t = little_endian;
-        using sliding_window_t    = sliding_window<saxman_adaptor>;
-        enum class edge_type : uint8_t {
-            invalid,
-            terminator,
-            symbolwise,
-            dictionary,
-            zerofill
-        };
-        // Number of bits on descriptor bitfield.
-        constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
-        // Flag that tells the compressor that new descriptor fields is needed
-        // when a new bit is needed and all bits in the previous one have been
-        // used up.
-        constexpr static bool const need_early_descriptor = false;
-        // Ordering of bits on descriptor field. Big bit endian order means high
-        // order bits come out first.
-        constexpr static bit_endian const descriptor_bit_order = bit_endian::little;
-        // How many characters to skip looking for matches for at the start.
-        constexpr static size_t const first_match_position = 0;
-        // Size of the search buffer.
-        constexpr static size_t const search_buf_size = 4096;
-        // Size of the look-ahead buffer.
-        constexpr static size_t const look_ahead_buf_size = 18;
-
-        // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return std::array{sliding_window_t(
-                    data, search_buf_size, 3, look_ahead_buf_size,
-                    edge_type::dictionary)};
-        }
-
-        // Given an edge type, computes how many bits are used in the descriptor
-        // field.
-        constexpr static size_t desc_bits(edge_type const type) noexcept {
-            // Saxman always uses a single bit descriptor.
-            ignore_unused_variable_warning(type);
-            return type == edge_type::terminator ? 0 : 1;
-        }
-
-        // Given an edge type, computes how many bits are used in total by this
-        // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
-        // or "no edge".
-        constexpr static size_t edge_weight(
-                edge_type const type, size_t length) noexcept {
-            ignore_unused_variable_warning(length);
-            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
-            switch (type) {
-                using enum edge_type;
-            case terminator:
-                // Does not have a terminator.
-                return 0;
-            case symbolwise:
-                // 8-bit value.
-                return desc_bits(type) + 8;
-            case dictionary:
-            case zerofill:
-                // 12-bit offset, 4-bit length.
-                return desc_bits(type) + 12 + 4;
-            case invalid:
-                return std::numeric_limits<size_t>::max();
-            }
-            utils::unreachable();
-        }
-
-        // Saxman allows encoding of a sequence of zeroes with no previous
-        // match.
-        static bool extra_matches(
-                std::span<stream_t const> data, size_t const base_node,
-                size_t const ubound, size_t const lbound,
-                std::vector<adj_list_node<saxman_adaptor>>& matches) noexcept {
-            using match_t = adj_list_node<saxman_adaptor>::match_info;
-            ignore_unused_variable_warning(lbound);
-            // Can't encode zero match after this point.
-            if (base_node >= search_buf_size - 1) {
-                // Do normal matches.
-                return false;
-            }
-            // Try matching zeroes.
-            size_t       offset = 0;
-            size_t const end    = ubound - base_node;
-            while (data[base_node + offset] == 0) {
-                if (++offset >= end) {
-                    break;
-                }
-            }
-            // Need at least 3 zeroes in sequence.
-            if (offset >= 3) {
-                // Got them, so add them to the list.
-                for (size_t length = 3; length <= offset; length++) {
-                    matches.emplace_back(
-                            base_node,
-                            match_t{std::numeric_limits<size_t>::max(), length},
-                            edge_type::zerofill);
-                }
-            }
-            return !matches.empty();
-        }
-
-        // Saxman needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const total_length) noexcept {
-            ignore_unused_variable_warning(total_length);
-            return 0;
-        }
+// NOTE: This has to be changed for other LZSS-based compression schemes.
+struct saxman_adaptor {
+    enum class edge_type : uint8_t {
+        invalid,
+        terminator,
+        symbolwise,
+        dictionary,
+        zerofill
     };
 
-public:
-    static void decode(std::istream& input, std::iostream& dest, size_t const size) {
-        using sax_istream = lzss_istream<saxman_adaptor>;
-        using diff_t      = std::make_signed_t<size_t>;
+    // Flag that tells the compressor that new descriptor fields is needed
+    // when a new bit is needed and all bits in the previous one have been
+    // used up.
+    constexpr static bool const need_early_descriptor = false;
+    // Ordering of bits on descriptor field. Big bit endian order means high
+    // order bits come out first.
+    constexpr static bit_endian const descriptor_bit_order = bit_endian::little;
+    // How many characters to skip looking for matches for at the start.
+    constexpr static size_t const first_match_position = 0;
+    // Size of the search buffer.
+    constexpr static size_t const search_buf_size = 4096;
+    // Size of the look-ahead buffer.
+    constexpr static size_t const look_ahead_buf_size = 18;
 
-        sax_istream source(input);
-        auto const  ssize = static_cast<diff_t>(size);
+    using stream_t            = uint8_t;
+    using stream_endian_t     = big_endian;
+    using descriptor_t        = uint8_t;
+    using descriptor_endian_t = little_endian;
+    using sliding_window_t    = lzss::sliding_window<saxman_adaptor>;
+    using adj_list_node       = lzss::adj_list_node<saxman_adaptor>;
+    using adj_list            = std::list<adj_list_node>;
+    using istream_t           = lzss::istream<saxman_adaptor>;
+    using ostream_t           = lzss::ostream<saxman_adaptor>;
 
-        constexpr auto const buffer_size
-                = static_cast<diff_t>(saxman_adaptor::search_buf_size);
+    // Number of bits on descriptor bitfield.
+    constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
 
-        // Loop while the file is good and we haven't gone over the declared
-        // length.
-        while (input.good() && input.tellg() < ssize) {
-            if (source.descriptor_bit() != 0U) {
-                // Symbolwise match.
-                if (input.peek() == std::istream::traits_type::eof()) {
-                    break;
-                }
-                write1(dest, source.get_byte());
-            } else {
-                if (input.peek() == std::istream::traits_type::eof()) {
-                    break;
-                }
+    // Creates the (multilayer) sliding window structure.
+    static auto create_sliding_window(std::span<stream_t const> data) noexcept {
+        return std::array{sliding_window_t(
+                data, search_buf_size, 3, look_ahead_buf_size, edge_type::dictionary)};
+    }
 
-                // Dictionary match.
-                // Offset and length of match.
-                size_t const high = source.get_byte();
-                size_t const low  = source.get_byte();
+    // Given an edge type, computes how many bits are used in the descriptor
+    // field.
+    constexpr static size_t desc_bits(edge_type const type) noexcept {
+        // Saxman always uses a single bit descriptor.
+        ignore_unused_variable_warning(type);
+        return type == edge_type::terminator ? 0 : 1;
+    }
 
-                auto const base_offset
-                        = static_cast<diff_t>((high | ((low & 0xF0U) << 4U)) + 18)
-                          % buffer_size;
-                auto const length = static_cast<diff_t>((low & 0xFU) + 3);
+    // Given an edge type, computes how many bits are used in total by this
+    // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
+    // or "no edge".
+    constexpr static size_t edge_weight(edge_type const type, size_t length) noexcept {
+        ignore_unused_variable_warning(length);
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (type) {
+            using enum edge_type;
+        case terminator:
+            // Does not have a terminator.
+            return 0;
+        case symbolwise:
+            // 8-bit value.
+            return desc_bits(type) + 8;
+        case dictionary:
+        case zerofill:
+            // 12-bit offset, 4-bit length.
+            return desc_bits(type) + 12 + 4;
+        case invalid:
+            return std::numeric_limits<size_t>::max();
+        }
+        utils::unreachable();
+    }
 
-                // The offset is stored as being absolute within current
-                // 0x1000-byte block, with part of it being remapped to the end
-                // of the previous 0x1000-byte block. We just rebase it around
-                // base.
-                auto const base = dest.tellp();
-                auto const offset
-                        = ((base_offset - base) % buffer_size) + base - buffer_size;
-                auto distance = base - offset;
-
-                if (distance > 0) {
-                    // If the offset is before the current output position, we
-                    // copy bytes from the given location.
-                    lzss_copy<saxman_adaptor>(dest, distance, length);
-                } else {
-                    // Otherwise, it is a zero fill.
-                    std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
-                }
+    // Saxman allows encoding of a sequence of zeroes with no previous
+    // match.
+    static bool extra_matches(
+            std::span<stream_t const> data, size_t const base_node, size_t const ubound,
+            size_t const lbound, std::vector<adj_list_node>& matches) noexcept {
+        using match_t = adj_list_node::dictionary_info;
+        ignore_unused_variable_warning(lbound);
+        // Can't encode zero match after this point.
+        if (base_node >= search_buf_size - 1) {
+            // Do normal matches.
+            return false;
+        }
+        // Try matching zeroes.
+        size_t       offset = 0;
+        size_t const end    = ubound - base_node;
+        while (data[base_node + offset] == 0) {
+            if (++offset >= end) {
+                break;
             }
+        }
+        // Need at least 3 zeroes in sequence.
+        if (offset >= 3) {
+            // Got them, so add them to the list.
+            for (size_t length = 3; length <= offset; length++) {
+                matches.emplace_back(
+                        base_node, match_t{std::numeric_limits<size_t>::max(), length},
+                        edge_type::zerofill);
+            }
+        }
+        return !matches.empty();
+    }
+
+    // Saxman needs no additional padding at the end-of-file.
+    constexpr static size_t get_padding(size_t const total_length) noexcept {
+        ignore_unused_variable_warning(total_length);
+        return 0;
+    }
+
+    constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise:
+            output.descriptor_bit(1);
+            output.put_byte(edge.get_symbol());
+            break;
+        case dictionary:
+        case zerofill: {
+            size_t const length   = edge.get_length();
+            size_t const dist     = edge.get_distance();
+            size_t const position = edge.get_position();
+            size_t const base     = (position - dist - 0x12U) & 0xFFFU;
+            size_t const low      = base & 0xFFU;
+            size_t const high     = ((length - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
+            output.descriptor_bit(0);
+            output.put_byte(low);
+            output.put_byte(high);
+            break;
+        }
+        case terminator:
+            break;
+        case invalid:
+            // This should be unreachable.
+            std::cerr << std::format(
+                    "Compression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+    }
+
+    constexpr static bool decode_edge(
+            istream_t& source, adj_list& nodes, size_t& output_size) {
+        if (source.eof()) {
+            // If we reach the end of the stream, we should not decode any more edges.
+            return lzss::terminate<saxman_adaptor>(nodes, output_size);
+        }
+        bool const is_symbolwise = source.descriptor_bit() != 0U;
+        if (source.peek_eof()) {
+            return lzss::terminate<saxman_adaptor>(nodes, output_size);
+        }
+
+        if (is_symbolwise) {
+            // Symbolwise match.
+            return lzss::symbolwise_match<saxman_adaptor>(
+                    nodes, output_size, source.tellg(),
+                    stream_endian_t::read<stream_t>(source));
+        }
+
+        // Dictionary match or zero fill.
+        constexpr auto const buffer_size = saxman_adaptor::search_buf_size;
+
+        // Offset and length of match.
+        size_t const high = source.get_byte();
+        size_t const low  = source.get_byte();
+
+        // The offset is stored as being absolute within current 0x1000-byte block, with
+        // part of it being remapped to the end of the previous 0x1000-byte block. We just
+        // rebase it around the current output position.
+        auto const abs_offset = ((high | ((low & 0xF0U) << 4U)) + 18U) % buffer_size;
+        auto const length     = (low & 0xFU) + 3;
+        auto const distance   = buffer_size - ((abs_offset - output_size) % buffer_size);
+
+        if (distance > 0) {
+            // If the offset is before the current output position, we copy bytes from the
+            // given location.
+            return lzss::dictionary_match<saxman_adaptor>(
+                    nodes, output_size, source.tellg(), distance, length,
+                    edge_type::dictionary);
+        }
+        // Otherwise, it is a zero fill.
+        return lzss::dictionary_match<saxman_adaptor>(
+                nodes, output_size, source.tellg(), distance, length,
+                edge_type::zerofill);
+    }
+
+    constexpr static size_t output_edge(std::iostream& dest, adj_list_node const& edge) {
+        using diff_t = std::make_signed_t<size_t>;
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise:
+            stream_endian_t::write(dest, edge.get_symbol());
+            break;
+        case dictionary: {
+            auto const distance = static_cast<diff_t>(edge.get_distance());
+            auto const length   = static_cast<diff_t>(edge.get_length());
+            lzss::copy<saxman_adaptor>(dest, distance, length);
+            break;
+        }
+        case zerofill: {
+            auto const length = static_cast<diff_t>(edge.get_length());
+            std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
+            break;
+        }
+        case terminator:
+            break;
+        case invalid:
+            std::cerr << std::format(
+                    "Decompression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+        return edge_size(edge);
+    }
+
+    constexpr static size_t edge_size(adj_list_node const& edge) {
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise:
+            return sizeof(stream_t);
+        case dictionary:
+        case zerofill:
+            return sizeof(stream_t) * edge.get_length();
+        case terminator:
+            return 0;
+        case invalid:
+            std::cerr << std::format(
+                    "Decompression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+        utils::unreachable();
+    }
+};
+
+static_assert(
+        lzss::adaptor_t<saxman_adaptor>,
+        "saxman_adaptor does not satisfy lzss::adaptor_t requirements");
+
+struct saxman_internal {
+    static void decode(std::istream& input, std::iostream& dest, size_t const size) {
+        auto const compressed_size = static_cast<std::streamsize>(size);
+
+        using adaptor_t     = saxman_adaptor;
+        using stream_t      = lzss::istream<adaptor_t>;
+        using adj_list_node = adaptor_t::adj_list_node;
+        using adj_list      = std::list<adj_list_node>;
+
+        adj_list                list;
+        [[maybe_unused]] size_t output_size = 0;
+        {
+            stream_t source(input);
+            while (input.good() && input.tellg() < compressed_size
+                   && adaptor_t::decode_edge(source, list, output_size)) {
+                // Continue decoding until we reach the end of the input.
+            }
+        }
+
+        for (auto const& edge : list) {
+            adaptor_t::output_edge(dest, edge);
         }
     }
 
     static void encode(std::ostream& dest, std::span<uint8_t const> data) {
-        using edge_type   = typename saxman_adaptor::edge_type;
-        using sax_ostream = lzss_ostream<saxman_adaptor>;
-
-        // Compute optimal Saxman parsing of input file.
-        auto        list = find_optimal_lzss_parse(data, saxman_adaptor{});
-        sax_ostream output(dest);
-
-        // Go through each edge in the optimal path.
-        for (auto const& edge : list.parse_list) {
-            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
-            switch (edge.get_type()) {
-            case edge_type::symbolwise:
-                output.descriptor_bit(1);
-                output.put_byte(edge.get_symbol());
-                break;
-            case edge_type::dictionary:
-            case edge_type::zerofill: {
-                size_t const length   = edge.get_length();
-                size_t const dist     = edge.get_distance();
-                size_t const position = edge.get_position();
-                size_t const base     = (position - dist - 0x12U) & 0xFFFU;
-                size_t const low      = base & 0xFFU;
-                size_t const high     = ((length - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
-                output.descriptor_bit(0);
-                output.put_byte(low);
-                output.put_byte(high);
-                break;
-            }
-            case edge_type::terminator:
-                break;
-            case edge_type::invalid:
-                // This should be unreachable.
-                std::cerr << "Compression produced invalid edge type "
-                          << static_cast<size_t>(edge.get_type()) << '\n';
-                utils::unreachable();
-            }
-        }
+        lzss::encode(dest, data, saxman_adaptor{});
     }
 };
 

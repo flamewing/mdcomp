@@ -27,6 +27,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -39,161 +40,223 @@
 template <>
 size_t moduled_comperx::pad_mask_bits = 1U;
 
-class comperx_internal {
-    // NOTE: This has to be changed for other LZSS-based compression schemes.
-    struct comper_x_adaptor {
-        using stream_t            = uint16_t;
-        using stream_endian_t     = big_endian;
-        using descriptor_t        = uint16_t;
-        using descriptor_endian_t = big_endian;
-        using sliding_window_t    = sliding_window<comper_x_adaptor>;
-        enum class edge_type : uint8_t {
-            invalid,
-            terminator,
-            symbolwise,
-            dictionary
-        };
-        // Number of bits on descriptor bitfield.
-        constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
-        // Flag that tells the compressor that new descriptor fields is needed
-        // when a new bit is needed and all bits in the previous one have been
-        // used up.
-        constexpr static bool const need_early_descriptor = false;
-        // Ordering of bits on descriptor field. Big bit endian order means high
-        // order bits come out first.
-        constexpr static bit_endian const descriptor_bit_order = bit_endian::big;
-        // How many characters to skip looking for matches for at the start.
-        constexpr static size_t const first_match_position = 0;
-        // Size of the search buffer.
-        constexpr static size_t const search_buf_size = 256;
-        // Size of the look-ahead buffer.
-        constexpr static size_t const look_ahead_buf_size = 255;
-
-        // Creates the (multilayer) sliding window structure.
-        static auto create_sliding_window(std::span<stream_t const> data) noexcept {
-            return std::array{sliding_window_t(
-                    data, search_buf_size, 2, look_ahead_buf_size,
-                    edge_type::dictionary)};
-        }
-
-        // Given an edge type, computes how many bits are used in the descriptor
-        // field.
-        constexpr static size_t desc_bits(edge_type const type) noexcept {
-            // Comper always uses a single bit descriptor.
-            ignore_unused_variable_warning(type);
-            return 1;
-        }
-
-        // Given an edge type, computes how many bits are used in total by this
-        // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
-        // or "no edge".
-        constexpr static size_t edge_weight(
-                edge_type const type, size_t length) noexcept {
-            ignore_unused_variable_warning(length);
-            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
-            switch (type) {
-                using enum edge_type;
-            case symbolwise:
-            case terminator:
-                // 16-bit value.
-                return desc_bits(type) + 16;
-            case dictionary:
-                // 8-bit distance, 8-bit length.
-                return desc_bits(type) + 8 + 8;
-            case invalid:
-                return std::numeric_limits<size_t>::max();
-            }
-            utils::unreachable();
-        }
-
-        // ComperX finds no additional matches over normal LZSS.
-        constexpr static bool extra_matches(
-                std::span<stream_t const> data, size_t const base_node,
-                size_t const ubound, size_t const lbound,
-                std::vector<adj_list_node<comper_x_adaptor>>& matches) noexcept {
-            ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
-            // Do normal matches.
-            return false;
-        }
-
-        // ComperX needs no additional padding at the end-of-file.
-        constexpr static size_t get_padding(size_t const total_length) noexcept {
-            ignore_unused_variable_warning(total_length);
-            return 0;
-        }
+// NOTE: This has to be changed for other LZSS-based compression schemes.
+struct comperx_adaptor {
+    enum class edge_type : uint8_t {
+        invalid,
+        terminator,
+        symbolwise,
+        dictionary
     };
 
-public:
+    // Flag that tells the compressor that new descriptor fields is needed
+    // when a new bit is needed and all bits in the previous one have been
+    // used up.
+    constexpr static bool const need_early_descriptor = false;
+    // Ordering of bits on descriptor field. Big bit endian order means high
+    // order bits come out first.
+    constexpr static bit_endian const descriptor_bit_order = bit_endian::big;
+    // How many characters to skip looking for matches for at the start.
+    constexpr static size_t const first_match_position = 0;
+    // Size of the search buffer.
+    constexpr static size_t const search_buf_size = 256;
+    // Size of the look-ahead buffer.
+    constexpr static size_t const look_ahead_buf_size = 255;
+
+    using stream_t            = uint16_t;
+    using stream_endian_t     = big_endian;
+    using descriptor_t        = uint16_t;
+    using descriptor_endian_t = big_endian;
+    using sliding_window_t    = lzss::sliding_window<comperx_adaptor>;
+    using adj_list_node       = lzss::adj_list_node<comperx_adaptor>;
+    using adj_list            = std::list<adj_list_node>;
+    using istream_t           = lzss::istream<comperx_adaptor>;
+    using ostream_t           = lzss::ostream<comperx_adaptor>;
+
+    // Number of bits on descriptor bitfield.
+    constexpr static size_t const num_desc_bits = sizeof(descriptor_t) * 8;
+
+    // Creates the (multilayer) sliding window structure.
+    static auto create_sliding_window(std::span<stream_t const> data) noexcept {
+        return std::array{sliding_window_t(
+                data, search_buf_size, 2, look_ahead_buf_size, edge_type::dictionary)};
+    }
+
+    // Given an edge type, computes how many bits are used in the descriptor
+    // field.
+    constexpr static size_t desc_bits(edge_type const type) noexcept {
+        // Comper always uses a single bit descriptor.
+        ignore_unused_variable_warning(type);
+        return 1;
+    }
+
+    // Given an edge type, computes how many bits are used in total by this
+    // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
+    // or "no edge".
+    constexpr static size_t edge_weight(edge_type const type, size_t length) noexcept {
+        ignore_unused_variable_warning(length);
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (type) {
+            using enum edge_type;
+        case symbolwise:
+        case terminator:
+            // 16-bit value.
+            return desc_bits(type) + 16;
+        case dictionary:
+            // 8-bit distance, 8-bit length.
+            return desc_bits(type) + 8 + 8;
+        case invalid:
+            return std::numeric_limits<size_t>::max();
+        }
+        utils::unreachable();
+    }
+
+    // ComperX finds no additional matches over normal LZSS.
+    constexpr static bool extra_matches(
+            std::span<stream_t const> data, size_t const base_node, size_t const ubound,
+            size_t const lbound, std::vector<adj_list_node>& matches) noexcept {
+        ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
+        // Do normal matches.
+        return false;
+    }
+
+    // ComperX needs no additional padding at the end-of-file.
+    constexpr static size_t get_padding(size_t const total_length) noexcept {
+        ignore_unused_variable_warning(total_length);
+        return 0;
+    }
+
+    constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise: {
+            size_t const value = edge.get_symbol();
+            size_t const high  = (value >> 8U) & 0xFFU;
+            size_t const low   = (value & 0xFFU);
+            output.descriptor_bit(0);
+            output.put_byte(high);
+            output.put_byte(low);
+            break;
+        }
+        case dictionary: {
+            size_t const distance = edge.get_distance();
+            size_t const length   = 0x101U - edge.get_length();
+            output.descriptor_bit(1);
+            output.put_byte(distance);
+            output.put_byte(std::rotr(static_cast<uint8_t>(length - 2U), 1) ^ 0x7FU);
+            break;
+        }
+        case terminator: {
+            // Push descriptor for end-of-file marker.
+            output.descriptor_bit(1);
+            output.put_byte(0xffU);
+            output.put_byte(0);
+            break;
+        }
+        case invalid:
+            std::cerr << std::format(
+                    "Compression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+    }
+
+    constexpr static bool decode_edge(
+            istream_t& source, adj_list& nodes, size_t& output_size) {
+        if (source.descriptor_bit() == 0U) {
+            // Symbolwise match.
+            return lzss::symbolwise_match<comperx_adaptor>(
+                    nodes, output_size, source.tellg(),
+                    stream_endian_t::read<stream_t>(source));
+        }
+
+        // Dictionary match.
+        // Distance and length of match.
+        size_t const distance = 0x101U - source.get_byte();
+
+        if (size_t const value = source.get_byte(); value != 0) {
+            size_t const length = std::rotl(static_cast<uint8_t>(value ^ 0x7FU), 1) + 2U;
+            return lzss::dictionary_match<comperx_adaptor>(
+                    nodes, output_size, source.tellg(), distance, length,
+                    edge_type::dictionary);
+        }
+        return lzss::terminate<comperx_adaptor>(nodes, output_size);
+    }
+
+    constexpr static size_t output_edge(std::iostream& dest, adj_list_node const& edge) {
+        using diff_t = std::make_signed_t<size_t>;
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise: {
+            stream_endian_t::write(dest, edge.get_symbol());
+            break;
+        }
+        case dictionary: {
+            auto const distance = static_cast<diff_t>(edge.get_distance());
+            auto const length   = static_cast<diff_t>(edge.get_length());
+            lzss::copy<comperx_adaptor>(dest, distance, length);
+            break;
+        }
+        case terminator:
+            break;
+        case invalid:
+            std::cerr << std::format(
+                    "Decompression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+        return edge_size(edge);
+    }
+
+    constexpr static size_t edge_size(adj_list_node const& edge) {
+        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+        switch (edge.get_type()) {
+            using enum edge_type;
+        case symbolwise:
+            return sizeof(stream_t);
+        case dictionary:
+            return sizeof(stream_t) * edge.get_length();
+        case terminator:
+            return 0;
+        case invalid:
+            std::cerr << std::format(
+                    "Decompression produced invalid edge type {}\n",
+                    static_cast<size_t>(edge.get_type()));
+            utils::unreachable();
+        }
+        utils::unreachable();
+    }
+};
+
+static_assert(
+        lzss::adaptor_t<comperx_adaptor>,
+        "comperx_adaptor does not satisfy lzss::adaptor_t requirements");
+
+struct comperx_internal {
     static void decode(std::istream& input, std::iostream& dest) {
-        using comp_istream = lzss_istream<comper_x_adaptor>;
-        using diff_t       = std::make_signed_t<size_t>;
+        using adaptor_t     = comperx_adaptor;
+        using stream_t      = lzss::istream<adaptor_t>;
+        using adj_list_node = adaptor_t::adj_list_node;
+        using adj_list      = std::list<adj_list_node>;
 
-        comp_istream source(input);
-
-        while (input.good()) {
-            if (source.descriptor_bit() == 0U) {
-                // Symbolwise match.
-                big_endian::write2(dest, big_endian::read2(input));
-            } else {
-                // Dictionary match.
-                // Distance and length of match.
-                diff_t const  distance = 0x101U - source.get_byte();
-                uint8_t const length   = source.get_byte();
-
-                if (length == 0) { /* Stop processing */
-                    break;
-                }
-
-                lzss_copy<comper_x_adaptor>(
-                        dest, distance,
-                        std::rotl(static_cast<uint8_t>(length ^ 0x7FU), 1) + 2U);
+        adj_list                list;
+        [[maybe_unused]] size_t output_size = 0;
+        {
+            stream_t source(input);
+            while (input.good() && adaptor_t::decode_edge(source, list, output_size)) {
+                // Continue decoding until we reach the end of the stream.
             }
+        }
+
+        for (auto const& edge : list) {
+            adaptor_t::output_edge(dest, edge);
         }
     }
 
     static void encode(std::ostream& dest, std::span<uint8_t const> data) {
-        using edge_type    = typename comper_x_adaptor::edge_type;
-        using comp_ostream = lzss_ostream<comper_x_adaptor>;
-
-        // Compute optimal Comper parsing of input file.
-        auto         list = find_optimal_lzss_parse(data, comper_x_adaptor{});
-        comp_ostream output(dest);
-
-        // Go through each edge in the optimal path.
-        for (auto const& edge : list.parse_list) {
-            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
-            switch (edge.get_type()) {
-            case edge_type::symbolwise: {
-                size_t const value = edge.get_symbol();
-                size_t const high  = (value >> 8U) & 0xFFU;
-                size_t const low   = (value & 0xFFU);
-                output.descriptor_bit(0);
-                output.put_byte(high);
-                output.put_byte(low);
-                break;
-            }
-            case edge_type::dictionary: {
-                size_t const length   = 0x101U - edge.get_length();
-                size_t const distance = edge.get_distance();
-                output.descriptor_bit(1);
-                output.put_byte(distance);
-                output.put_byte(std::rotr(static_cast<uint8_t>(length - 2U), 1) ^ 0x7FU);
-                break;
-            }
-            case edge_type::terminator: {
-                // Push descriptor for end-of-file marker.
-                output.descriptor_bit(1);
-                output.put_byte(0xffU);
-                output.put_byte(0);
-                break;
-            }
-            case edge_type::invalid:
-                // This should be unreachable.
-                std::cerr << "Compression produced invalid edge type "
-                          << static_cast<size_t>(edge.get_type()) << '\n';
-                utils::unreachable();
-            }
-        }
+        lzss::encode(dest, data, comperx_adaptor{});
     }
 };
 
