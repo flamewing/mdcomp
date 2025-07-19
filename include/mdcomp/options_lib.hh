@@ -296,7 +296,7 @@ namespace detail {
         auto const do_print_end = [&]() noexcept {
             if constexpr (has_print_end<options_t>) {
                 boost::io::ios_all_saver const flags(std::cout);
-                std::cout << std::format("0x{:06x}", input.tellg());
+                std::cout << std::format("0x{:06x}", static_cast<size_t>(input.tellg()));
             }
         };
         if constexpr (has_moduled<options_t>) {
