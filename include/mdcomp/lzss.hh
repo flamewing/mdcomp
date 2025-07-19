@@ -804,37 +804,41 @@ namespace lzss {
             std::make_signed_t<size_t> const length) {
         constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
 
-        using diff_t               = std::make_signed_t<size_t>;
-        using stream_t             = typename Adaptor::stream_t;
-        diff_t       byte_distance = distance * num_bytes;
-        diff_t       byte_length   = length * num_bytes;
-        diff_t const pointer       = dest.tellp();
+        using diff_t                          = std::make_signed_t<size_t>;
+        using stream_t                        = typename Adaptor::stream_t;
+        diff_t                  byte_distance = distance * num_bytes;
+        [[maybe_unused]] diff_t byte_length   = length * num_bytes;
+        diff_t const            pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
         if (distance == 1) {
-            stream_t const        value = source_endian::template read<stream_t>(dest);
-            std::vector<stream_t> buffer(static_cast<size_t>(length), value);
+            stream_t const value = source_endian::template read<stream_t>(dest);
             dest.seekp(pointer);
-            dest.write(reinterpret_cast<char*>(buffer.data()), byte_length);
+            std::ranges::fill_n(std::ostream_iterator<stream_t>(dest), length, value);
             return;
         }
-        std::vector<char> buffer(static_cast<size_t>(byte_length));
-        if (byte_length > byte_distance) {
-            dest.read(buffer.data(), byte_distance);
-            auto       count  = byte_length - byte_distance;
+        std::vector<stream_t> buffer;
+        buffer.reserve(static_cast<size_t>(length));
+        buffer.resize(static_cast<size_t>(std::min(length, distance)));
+        // Neither std::copy_n nor std::ranges::copy_n work with istream_iterator.
+        for (auto& elem : buffer) {
+            elem = source_endian::template read<stream_t>(dest);
+        }
+        if (length > distance) {
+            buffer.resize(static_cast<size_t>(length));
+            auto       count  = length - distance;
             auto const start  = std::ranges::cbegin(buffer);
-            auto       output = std::ranges::begin(buffer) + byte_distance;
-            while (count > byte_distance) {
+            auto       output = std::ranges::begin(buffer) + distance;
+            auto       copied = distance;
+            while (count > copied) {
                 auto [it_in, it_out] = std::ranges::copy(start, output, output);
-                count -= byte_distance;
-                byte_distance *= 2;
+                count -= copied;
+                copied *= 2;
                 output = it_out;
             }
             std::ranges::copy(start, start + count, output);
-        } else {
-            dest.read(buffer.data(), byte_length);
         }
         dest.seekp(pointer);
-        dest.write(buffer.data(), byte_length);
+        std::ranges::copy(buffer, std::ostream_iterator<stream_t>(dest));
     }
 
     template <adaptor_t Adaptor>
