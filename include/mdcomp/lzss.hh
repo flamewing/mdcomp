@@ -804,25 +804,28 @@ namespace lzss {
             std::make_signed_t<size_t> const length) {
         constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
 
-        using diff_t                          = std::make_signed_t<size_t>;
-        using stream_t                        = typename Adaptor::stream_t;
-        diff_t                  byte_distance = distance * num_bytes;
-        [[maybe_unused]] diff_t byte_length   = length * num_bytes;
-        diff_t const            pointer       = dest.tellp();
+        using diff_t               = std::make_signed_t<size_t>;
+        using stream_t             = typename Adaptor::stream_t;
+        diff_t       byte_distance = distance * num_bytes;
+        diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
+
         if (distance == 1) {
             stream_t const value = source_endian::template read<stream_t>(dest);
             dest.seekp(pointer);
-            std::ranges::fill_n(std::ostream_iterator<stream_t>(dest), length, value);
+            for (diff_t ii = 0; ii < length; ++ii) {
+                source_endian::write(dest, value);
+            }
             return;
         }
+
         std::vector<stream_t> buffer;
         buffer.reserve(static_cast<size_t>(length));
         buffer.resize(static_cast<size_t>(std::min(length, distance)));
-        // Neither std::copy_n nor std::ranges::copy_n work with istream_iterator.
-        for (auto& elem : buffer) {
-            elem = source_endian::template read<stream_t>(dest);
-        }
+        dest.read(
+                reinterpret_cast<char*>(buffer.data()),
+                static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
+
         if (length > distance) {
             buffer.resize(static_cast<size_t>(length));
             auto       count  = length - distance;
@@ -837,8 +840,11 @@ namespace lzss {
             }
             std::ranges::copy(start, start + count, output);
         }
+
         dest.seekp(pointer);
-        std::ranges::copy(buffer, std::ostream_iterator<stream_t>(dest));
+        dest.write(
+                reinterpret_cast<char const*>(buffer.data()),
+                static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
     }
 
     template <adaptor_t Adaptor>
