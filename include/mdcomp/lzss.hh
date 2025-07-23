@@ -23,7 +23,10 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/unreachable.hh"
 
+#include <boost/container/static_vector.hpp>
+
 #include <algorithm>
+#include <bit>
 #include <cassert>
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
@@ -802,48 +805,48 @@ namespace lzss {
     inline void copy(
             std::iostream& dest, std::make_signed_t<size_t> const distance,
             std::make_signed_t<size_t> const length) {
-        constexpr static size_t const num_bytes = sizeof(typename Adaptor::stream_t);
+        constexpr static size_t const num_bytes   = sizeof(typename Adaptor::stream_t);
+        constexpr static size_t const buffer_size = Adaptor::look_ahead_buf_size;
 
-        using diff_t               = std::make_signed_t<size_t>;
-        using stream_t             = typename Adaptor::stream_t;
+        using diff_t   = std::make_signed_t<size_t>;
+        using stream_t = typename Adaptor::stream_t;
+        using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
         diff_t       byte_distance = distance * num_bytes;
         diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
 
+        buffer_t buffer;
         if (distance == 1) {
-            stream_t const value = source_endian::template read<stream_t>(dest);
-            dest.seekp(pointer);
-            for (diff_t ii = 0; ii < length; ++ii) {
-                source_endian::write(dest, value);
-            }
-            return;
-        }
+            buffer.resize(
+                    static_cast<size_t>(length),
+                    source_endian::template read<stream_t>(dest));
+        } else {
+            buffer.resize(
+                    static_cast<size_t>(std::min(length, distance)),
+                    boost::container::default_init_t{});
+            dest.read(
+                    std::bit_cast<char*>(buffer.data()),
+                    static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
 
-        std::vector<stream_t> buffer;
-        buffer.reserve(static_cast<size_t>(length));
-        buffer.resize(static_cast<size_t>(std::min(length, distance)));
-        dest.read(
-                reinterpret_cast<char*>(buffer.data()),
-                static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
-
-        if (length > distance) {
-            buffer.resize(static_cast<size_t>(length));
-            auto       count  = length - distance;
-            auto const start  = std::ranges::cbegin(buffer);
-            auto       output = std::ranges::begin(buffer) + distance;
-            auto       copied = distance;
-            while (count > copied) {
-                auto [it_in, it_out] = std::ranges::copy(start, output, output);
-                count -= copied;
-                copied *= 2;
-                output = it_out;
+            if (length > distance) {
+                buffer.resize(static_cast<size_t>(length));
+                auto       count  = length - distance;
+                auto const start  = std::ranges::cbegin(buffer);
+                auto       output = std::ranges::begin(buffer) + distance;
+                auto       copied = distance;
+                while (count > copied) {
+                    auto [it_in, it_out] = std::ranges::copy(start, output, output);
+                    count -= copied;
+                    copied *= 2;
+                    output = it_out;
+                }
+                std::ranges::copy(start, start + count, output);
             }
-            std::ranges::copy(start, start + count, output);
         }
 
         dest.seekp(pointer);
         dest.write(
-                reinterpret_cast<char const*>(buffer.data()),
+                std::bit_cast<char const*>(buffer.data()),
                 static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
     }
 
