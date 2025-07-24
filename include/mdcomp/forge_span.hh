@@ -20,6 +20,7 @@
 
 #include <concepts>
 #include <cstddef>
+#include <iterator>
 #include <span>
 
 // Workaround for the single dumbest most useless warning in the world. This is literally
@@ -39,9 +40,25 @@ constexpr auto unsafe_forge_span(T* pointer, size_t size) {
 #endif
 }
 
+template <std::contiguous_iterator T>
+constexpr auto unsafe_forge_span(T iter, ptrdiff_t size) {
+#ifdef __clang__
+#    pragma clang unsafe_buffer_usage begin
+#endif
+    return std::span(iter, std::next(iter, size));
+#ifdef __clang__
+#    pragma clang unsafe_buffer_usage end
+#endif
+}
+
 template <typename T>
 constexpr auto unsafe_forge_span(T* pointer, std::signed_integral auto size) {
     return unsafe_forge_span(pointer, static_cast<size_t>(size));
+}
+
+template <std::contiguous_iterator T>
+constexpr auto unsafe_forge_span(T iter, std::unsigned_integral auto size) {
+    return unsafe_forge_span(iter, static_cast<ptrdiff_t>(size));
 }
 
 #endif    // LIB_FORGE_SPAN_HH

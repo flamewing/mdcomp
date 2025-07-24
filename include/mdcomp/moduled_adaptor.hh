@@ -21,6 +21,7 @@
 #define LIB_MODULED_ADAPTOR_HH
 
 #include "mdcomp/bigendian_io.hh"
+#include "mdcomp/forge_span.hh"
 #include "mdcomp/stream_utils.hh"
 
 #include <cstddef>
@@ -94,7 +95,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     while (full_size > MODULE_SIZE) {
         // We want to manage internal padding for all modules but the last.
         pad_mask_bits = 8 * module_padding - 1U;
-        Format::encode(buffer, {pointer, pointer + MODULE_SIZE});
+        Format::encode(buffer, unsafe_forge_span(pointer, MODULE_SIZE));
         full_size -= MODULE_SIZE;
         pointer += MODULE_SIZE;
         // Padding between modules
@@ -102,7 +103,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     }
 
     pad_mask_bits = 7U;
-    Format::encode(buffer, {pointer, pointer + full_size});
+    Format::encode(buffer, unsafe_forge_span(pointer, full_size));
 
     // Pad to even size.
     dest << buffer.rdbuf();
