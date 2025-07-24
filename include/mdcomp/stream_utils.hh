@@ -35,7 +35,7 @@ namespace detail {
     concept has_basic_arithmetic_with = requires(T1 value1, T2 value2) {
         value1 + value2;
         value1 - value2;
-        value1* value2;
+        value1 * value2;
         value1 / value2;
         value1 % value2;
     };
@@ -159,7 +159,7 @@ namespace detail {
         requires(range_adaptor_closure_object<Right> && std::ranges::range<Left>)
         [[nodiscard]] constexpr auto operator|(Left&& left, Right&& right) noexcept(
                 noexcept(std::forward<Right>(right)(std::forward<Left>(left))))
-        requires requires { static_cast<Right&&>(right)(static_cast<Left&&>(left)); }
+        requires requires { static_cast<Right &&>(right)(static_cast<Left &&>(left)); }
         {
             return std::forward<Right>(right)(std::forward<Left>(left));
         }
@@ -306,9 +306,10 @@ namespace detail {
     template <typename reference, typename container_t>
     [[nodiscard]] constexpr auto container_inserter(container_t& cont) {
         if constexpr (can_push_back<container_t, reference>) {
-            return std::back_insert_iterator{cont};
+            return std::back_insert_iterator<std::remove_cvref_t<container_t>>{cont};
         } else {
-            return std::insert_iterator{cont, std::ranges::end(cont)};
+            return std::insert_iterator<std::remove_cvref_t<container_t>>{
+                    cont, std::ranges::end(cont)};
         }
     }
 
