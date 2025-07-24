@@ -102,7 +102,7 @@ namespace std23 {
             : not_qualifying_this<R(Args...)> {};
 
     template <class R, class... Args>
-    struct not_qualifying_this<R(Args...)&> : not_qualifying_this<R(Args...)> {};
+    struct not_qualifying_this<R(Args...) &> : not_qualifying_this<R(Args...)> {};
 
     template <class R, class... Args>
     struct not_qualifying_this<R(Args...) const&> : not_qualifying_this<R(Args...)> {};
@@ -262,6 +262,7 @@ namespace std23 {
                     : fun_pointer(std::bit_cast<decltype(fun_pointer)>(pointer_in)) {}
         };
 
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access)
         template <class T>
         constexpr static auto get(storage obj) {
             if constexpr (std::is_const_v<T>) {
@@ -272,6 +273,8 @@ namespace std23 {
                 return std::bit_cast<T*>(obj.fun_pointer);
             }
         }
+
+        // NOLINTEND(cppcoreguidelines-pro-type-union-access)
     };
 
     // freestanding
