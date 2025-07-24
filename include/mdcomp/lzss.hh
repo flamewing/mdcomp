@@ -811,7 +811,7 @@ namespace lzss {
         using diff_t   = std::make_signed_t<size_t>;
         using stream_t = typename Adaptor::stream_t;
         using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
-        diff_t       byte_distance = distance * num_bytes;
+        diff_t       byte_distance = distance * static_cast<diff_t>(num_bytes);
         diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
 
