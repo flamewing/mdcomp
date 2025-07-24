@@ -141,20 +141,20 @@ namespace detail {
                 throw 5;
             }
         }
-        size_t const base = [&]() {
+        int const base = [&]() {
             if (parameter.starts_with("0x") || parameter.starts_with("0X")) {
                 parameter.remove_prefix(2);
-                return 16U;
+                return 16;
             }
             if (parameter.starts_with("0b") || parameter.starts_with("0B")) {
                 parameter.remove_prefix(2);
-                return 2U;
+                return 2;
             }
             if (parameter.starts_with("0o") || parameter.starts_with("0O")) {
                 parameter.remove_prefix(2);
-                return 8U;
+                return 8;
             }
-            return 10U;
+            return 10;
         }();
         auto [ptr, ec] = std::from_chars(
                 std::ranges::cbegin(parameter), std::ranges::cend(parameter), value,
