@@ -22,7 +22,6 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
-#include "mdcomp/unreachable.hh"
 
 #include <algorithm>
 #include <array>
@@ -98,7 +97,6 @@ struct lzkn1_adaptor {
     // edge. A return of "numeric_limits<size_t>::max()" means "infinite",
     // or "no edge".
     constexpr static size_t edge_weight(edge_type const type, size_t length) noexcept {
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (type) {
             using enum edge_type;
         case symbolwise:
@@ -117,10 +115,11 @@ struct lzkn1_adaptor {
             // 2-bit marker (%11), 6-bit length,
             // length * 8 bits data.
             return desc_bits(type) + 2 + 6 + (length * 8);
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             return std::numeric_limits<size_t>::max();
         }
-        utils::unreachable();
     }
 
     // lzkn1 finds no additional matches over normal LZSS.
@@ -149,7 +148,6 @@ struct lzkn1_adaptor {
         constexpr uint8_t const eof_marker               = 0x1FU;
         constexpr uint8_t const packed_symbolwise_marker = 0xC0U;
         constexpr uint8_t const max_byte = std::numeric_limits<uint8_t>::max();
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise:
@@ -192,12 +190,13 @@ struct lzkn1_adaptor {
             output.put_byte(eof_marker);
             break;
         }
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
-            // This should be unreachable.
             std::cerr << std::format(
                     "Compression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            break;
         }
     }
 
@@ -253,7 +252,6 @@ struct lzkn1_adaptor {
 
     constexpr static size_t output_edge(std::iostream& dest, adj_list_node const& edge) {
         using diff_t = std::make_signed_t<size_t>;
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise: {
@@ -277,18 +275,18 @@ struct lzkn1_adaptor {
         case terminator: {
             break;
         }
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
-            // This should be unreachable.
             std::cerr << std::format(
                     "Decompression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            break;
         }
         return edge_size(edge);
     }
 
     constexpr static size_t edge_size(adj_list_node const& edge) {
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise:
@@ -300,13 +298,14 @@ struct lzkn1_adaptor {
             return sizeof(stream_t) * edge.get_length();
         case terminator:
             return 0;
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             std::cerr << std::format(
                     "Decompression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            return 0;
         }
-        utils::unreachable();
     }
 };
 

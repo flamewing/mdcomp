@@ -18,8 +18,6 @@
 #ifndef LIB_OPTIONS_LIB_HH
 #define LIB_OPTIONS_LIB_HH
 
-#include "mdcomp/unreachable.hh"
-
 #include <getopt.h>
 
 #include <boost/io/ios_state.hpp>
@@ -75,7 +73,7 @@ consteval auto make_short_options() {
                 continue;
             }
             intermediate[length++] = val;
-            // NOLINTNEXTLINE(clang-diagnostic-switch-default)
+            // NOLINTNEXTLINE(clang-diagnostic-switch-enum)
             switch (opt.has_arg) {
             case no_argument:
                 break;
@@ -87,7 +85,7 @@ consteval auto make_short_options() {
                 intermediate[length++] = ':';
                 break;
             default:
-                utils::unreachable();
+                break;
             }
         }
         return std::pair{intermediate, length};

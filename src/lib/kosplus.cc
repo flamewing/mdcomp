@@ -22,7 +22,6 @@
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
-#include "mdcomp/unreachable.hh"
 
 #include <array>
 #include <cstddef>
@@ -90,7 +89,6 @@ struct kosplus_adaptor {
     // Given an edge type, computes how many bits are used in the descriptor
     // field.
     constexpr static size_t desc_bits(edge_type const type) noexcept {
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (type) {
             using enum edge_type;
         case symbolwise:
@@ -104,10 +102,11 @@ struct kosplus_adaptor {
         case terminator:
             // 2-bit descriptor.
             return 2;
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             return std::numeric_limits<size_t>::max();
         }
-        utils::unreachable();
     }
 
     // Given an edge type, computes how many bits are used in total by this
@@ -115,7 +114,6 @@ struct kosplus_adaptor {
     // or "no edge".
     constexpr static size_t edge_weight(edge_type const type, size_t length) noexcept {
         ignore_unused_variable_warning(length);
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (type) {
             using enum edge_type;
         case symbolwise:
@@ -132,10 +130,11 @@ struct kosplus_adaptor {
         case terminator:
             // 24-bit value.
             return desc_bits(type) + 24;
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             return std::numeric_limits<size_t>::max();
         }
-        utils::unreachable();
     }
 
     // KosPlus finds no additional matches over normal LZSS.
@@ -154,7 +153,6 @@ struct kosplus_adaptor {
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise:
@@ -199,12 +197,13 @@ struct kosplus_adaptor {
             output.put_byte(0x00);
             break;
         }
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
-            // This should be unreachable.
             std::cerr << std::format(
                     "Compression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            break;
         }
     }
 
@@ -252,7 +251,6 @@ struct kosplus_adaptor {
 
     constexpr static size_t output_edge(std::iostream& dest, adj_list_node const& edge) {
         using diff_t = std::make_signed_t<size_t>;
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise: {
@@ -269,17 +267,18 @@ struct kosplus_adaptor {
         }
         case terminator:
             break;
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             std::cerr << std::format(
                     "Decompression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            break;
         }
         return edge_size(edge);
     }
 
     constexpr static size_t edge_size(adj_list_node const& edge) {
-        // NOLINTNEXTLINE(clang-diagnostic-switch-default)
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise:
@@ -290,13 +289,14 @@ struct kosplus_adaptor {
             return sizeof(stream_t) * edge.get_length();
         case terminator:
             return 0;
+        // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
+        default:
         case invalid:
             std::cerr << std::format(
                     "Decompression produced invalid edge type {}\n",
                     static_cast<size_t>(edge.get_type()));
-            utils::unreachable();
+            return 0;
         }
-        utils::unreachable();
     }
 };
 
