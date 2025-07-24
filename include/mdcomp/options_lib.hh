@@ -40,6 +40,7 @@
 #include <string_view>
 #include <system_error>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 enum class argument : uint8_t {
@@ -125,6 +126,47 @@ namespace detail {
                     value, parameter);
         }
         throw 5;
+    }
+
+    template <std::integral T>
+    inline void read_value(std::string_view parameter, T& value) {
+        bool const starts_with_minus = parameter.starts_with('-');
+        if (starts_with_minus || parameter.starts_with('+')) {
+            parameter.remove_prefix(1);
+        }
+
+        if constexpr (std::is_unsigned_v<T>) {
+            if (starts_with_minus) {
+                std::cerr << "Cannot parse negative value for unsigned type!\n";
+                throw 5;
+            }
+        }
+        size_t const base = [&]() {
+            if (parameter.starts_with("0x") || parameter.starts_with("0X")) {
+                parameter.remove_prefix(2);
+                return 16U;
+            }
+            if (parameter.starts_with("0b") || parameter.starts_with("0B")) {
+                parameter.remove_prefix(2);
+                return 2U;
+            }
+            if (parameter.starts_with("0o") || parameter.starts_with("0O")) {
+                parameter.remove_prefix(2);
+                return 8U;
+            }
+            return 10U;
+        }();
+        auto [ptr, ec] = std::from_chars(
+                std::ranges::cbegin(parameter), std::ranges::cend(parameter), value,
+                base);
+        if (ec != std::errc{} || ptr != std::ranges::cend(parameter)) {
+            print_error(ec, "value", parameter.data());
+        }
+        if constexpr (std::is_signed_v<T>) {
+            if (starts_with_minus) {
+                value = -value;
+            }
+        }
     }
 
     template <typename options_t>
@@ -220,13 +262,11 @@ namespace detail {
     inline void parse_extract(options_t& options, char const* parameter_in) {
         options.extract = true;
         if (parameter_in != nullptr) {
-            std::string_view const parameter(parameter_in);
-            auto [ptr, ec] = std::from_chars(
-                    std::ranges::cbegin(parameter), std::ranges::cend(parameter),
-                    options.pointer);
-            if (ec != std::errc{}) {
-                print_error(ec, "pointer", parameter_in);
-            }
+            read_value({parameter_in}, options.pointer);
+        }
+        if (options.pointer < 0) {
+            std::cerr << "Error: specified file offset must be a positive number.\n";
+            throw 4;
         }
     }
 
@@ -248,13 +288,7 @@ namespace detail {
     inline void parse_padding(options_t& options, char const* parameter_in) {
         if constexpr (has_padding<options_t>) {
             if (parameter_in != nullptr) {
-                std::string_view const parameter(parameter_in);
-                auto [ptr, ec] = std::from_chars(
-                        std::ranges::cbegin(parameter), std::ranges::cend(parameter),
-                        options.padding);
-                if (ec != std::errc{}) {
-                    print_error(ec, "padding", optarg);
-                }
+                read_value({parameter_in}, options.padding);
             }
             if ((options.padding == 0U) || !std::has_single_bit(options.padding)) {
                 options.padding = options_t::format_t::MODULE_PADDING;
@@ -270,10 +304,10 @@ namespace detail {
     }
 
     template <typename options_t>
-    inline void parse_size(options_t& options, char const* parameter) {
+    inline void parse_size(options_t& options, char const* parameter_in) {
         if constexpr (has_size<options_t>) {
-            if (parameter != nullptr) {
-                options.size = strtoul(parameter, nullptr, 0);
+            if (parameter_in != nullptr) {
+                read_value({parameter_in}, options.size);
             }
             if (options.size == 0) {
                 std::cerr << "Error: specified size must be a positive number.\n";
