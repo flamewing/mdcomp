@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mdcomp/forge_span.hh"
 #include "mdcomp/options_lib.hh"
 #include "mdcomp/saxman.hh"
 
@@ -71,5 +72,5 @@ struct options_t {
 };
 
 int main(int argc, char* argv[]) {
-    return auto_compressor_decompressor(options_t({argv, static_cast<size_t>(argc)}));
+    return auto_compressor_decompressor(options_t(unsafe_forge_span(argv, argc)));
 }

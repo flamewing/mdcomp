@@ -21,6 +21,7 @@
 
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
+#include "mdcomp/forge_span.hh"
 #include "mdcomp/unreachable.hh"
 
 #include <boost/container/static_vector.hpp>
@@ -262,7 +263,9 @@ namespace lzss {
             std::make_signed_t<size_t> position, stream_t* pointer, size_t length,
             typename Adaptor::edge_type type) noexcept {
         using symbolwise_info = typename Adaptor::adj_list_node::symbolwise_info;
-        nodes.emplace_back(position, symbolwise_info{pointer, length}, type);
+        static_assert(std::is_same_v<
+                      symbolwise_info, decltype(unsafe_forge_span(pointer, length))>);
+        nodes.emplace_back(position, unsafe_forge_span(pointer, length), type);
         output_size += Adaptor::edge_size(nodes.back());
         return true;
     }
@@ -677,7 +680,7 @@ namespace lzss {
         auto const* unaligned_ptr = static_cast<void const*>(data_in.data());
         auto const* aligned_ptr   = std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
         assert(aligned_ptr == unaligned_ptr);
-        data_t const data(
+        data_t const data = unsafe_forge_span(
                 static_cast<stream_t const*>(aligned_ptr),
                 data_in.size() / sizeof(stream_t));
         static_assert(

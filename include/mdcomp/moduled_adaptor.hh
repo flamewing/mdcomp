@@ -28,7 +28,6 @@
 #include <ios>
 #include <iosfwd>
 #include <limits>
-#include <memory>
 #include <ranges>
 #include <sstream>
 #include <vector>
@@ -95,7 +94,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     while (full_size > MODULE_SIZE) {
         // We want to manage internal padding for all modules but the last.
         pad_mask_bits = 8 * module_padding - 1U;
-        Format::encode(buffer, {std::to_address(pointer), MODULE_SIZE});
+        Format::encode(buffer, {pointer, pointer + MODULE_SIZE});
         full_size -= MODULE_SIZE;
         pointer += MODULE_SIZE;
         // Padding between modules
@@ -103,7 +102,7 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     }
 
     pad_mask_bits = 7U;
-    Format::encode(buffer, {std::to_address(pointer), static_cast<size_t>(full_size)});
+    Format::encode(buffer, {pointer, pointer + full_size});
 
     // Pad to even size.
     dest << buffer.rdbuf();

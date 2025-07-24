@@ -124,9 +124,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wno-c++20-compat-pedantic)
         add_compile_options(-Wno-padded)
         add_compile_options(-Wno-undefined-var-template)
-
-        # Need this because clang support for operator<=> is bad
-        add_compile_options(-Wno-zero-as-null-pointer-constant)
+        add_compile_options(-Wno-covered-switch-default)
+        add_compile_options(-fsafe-buffer-usage-suggestions)
     else()
         add_compile_options_safe(-Waddress)
         add_compile_options(-Wall -Wextra -pedantic)
@@ -285,11 +284,13 @@ add_library(dummy-mdcomp
     "src/lib/basic_decoder.cc"
     "src/lib/bigendian_io.cc"
     "src/lib/bitstream.cc"
+    "src/lib/forge_span.cc"
     "src/lib/ignore_unused_variable_warning.cc"
     "src/lib/lzss.cc"
     "src/lib/moduled_adaptor.cc"
-    "src/lib/stream_utils.cc"
     "src/lib/options_lib.cc"
+    "src/lib/stream_utils.cc"
+    "src/lib/unreachable.cc"
     "${COMMON_HEADERS}"
 )
 target_include_directories(dummy-mdcomp

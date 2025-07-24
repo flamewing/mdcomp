@@ -17,6 +17,7 @@
 
 #include "mdcomp/kosplus.hh"
 
+#include "mdcomp/forge_span.hh"
 #include "mdcomp/options_lib.hh"
 
 #include <array>
@@ -50,5 +51,5 @@ struct options_t {
 };
 
 int main(int argc, char* argv[]) {
-    return auto_compressor_decompressor(options_t({argv, static_cast<size_t>(argc)}));
+    return auto_compressor_decompressor(options_t(unsafe_forge_span(argv, argc)));
 }
