@@ -3,28 +3,28 @@ name: ci-linux
 on:
   push:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-linux.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-linux.yml"
   pull_request:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-linux.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-linux.yml"
 
 jobs:
   ci-linux:
@@ -59,10 +59,12 @@ jobs:
           fi
           sudo apt-fast install -y libboost-all-dev ninja-build
       - name: Set up GCC
+        if: ${{ matrix.compiler == 'gcc' }}
         uses: egor-tensin/setup-gcc@v1
         with:
           version: 13
       - name: Set up Clang
+        if: ${{ matrix.compiler == 'clang' }}
         uses: egor-tensin/setup-clang@v1
         with:
           version: 19

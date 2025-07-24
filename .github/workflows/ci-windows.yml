@@ -3,28 +3,28 @@ name: ci-windows
 on:
   push:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-windows.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-windows.yml"
   pull_request:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-windows.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-windows.yml"
 
 jobs:
   ci-windows:
