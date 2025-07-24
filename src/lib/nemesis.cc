@@ -911,7 +911,7 @@ public:
                     next_coins.push(make_shared<node>(child0, child1));
                 }
                 index++;
-                current_coins = next_coins;
+                current_coins = std::move(next_coins);
             }
 
             // The Coin Collector's problem has been solved. Now it is time to
@@ -1017,7 +1017,7 @@ public:
             // Is this iteration better than the best?
             if (temp_size_est < size_est) {
                 // If yes, save the code_map and file size.
-                code_map = temp_code_map;
+                code_map = std::move(temp_code_map);
                 size_est = temp_size_est;
             }
         }

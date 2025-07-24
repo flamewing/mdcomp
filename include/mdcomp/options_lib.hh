@@ -20,9 +20,6 @@
 
 #include <getopt.h>
 
-#include <boost/io/ios_state.hpp>
-#include <boost/io_fwd.hpp>
-
 #include <array>
 #include <charconv>
 #include <concepts>    // IWYU pragma: keep
@@ -325,9 +322,8 @@ namespace detail {
 
     template <typename instream, typename outstream, typename options_t>
     inline void do_decode(instream& input, outstream& output, options_t const& options) {
-        auto const do_print_end = [&]() noexcept {
+        auto const do_print_end = [&]() {
             if constexpr (has_print_end<options_t>) {
-                boost::io::ios_all_saver const flags(std::cout);
                 std::cout << std::format("0x{:06x}", static_cast<size_t>(input.tellg()));
             }
         };

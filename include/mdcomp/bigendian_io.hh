@@ -232,8 +232,8 @@ namespace detail {
             uint_t byte2 = new_value & mask2;
             new_value    = static_cast<uint_t>(
                     new_value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
-            mask1 = static_cast<uint_t>(mask1 << nbits);
-            mask2 = static_cast<uint_t>(mask2 >> nbits);
+            mask1 = std::rotl(mask1, nbits);
+            mask2 = std::rotr(mask2, nbits);
             diff -= 2ULL * nbits;
         }
         return uint_t(new_value & std::numeric_limits<uint_t>::max());
