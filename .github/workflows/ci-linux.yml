@@ -35,11 +35,11 @@ jobs:
         generator: [make, ninja]
         include:
           - compiler: gcc
-            cc: gcc-12
-            cxx: g++-12
+            cc: gcc-13
+            cxx: g++-13
           - compiler: clang
-            cc: clang-18
-            cxx: clang++-18
+            cc: clang-19
+            cxx: clang++-19
           - generator: make
             cmake_generator: "Unix Makefiles"
           - generator: ninja
@@ -61,11 +61,11 @@ jobs:
       - name: Set up GCC
         uses: egor-tensin/setup-gcc@v1
         with:
-          version: 12
+          version: 13
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
         with:
-          version: 18
+          version: 19
       - name: Checkout code
         uses: actions/checkout@master
       - name: Configure

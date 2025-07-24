@@ -35,7 +35,7 @@ jobs:
         if: ${{ env.REPO_ALIVE == 'true' }}
         uses: egor-tensin/setup-gcc@v1
         with:
-          version: 12
+          version: 13
       - name: Install dependencies
         if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
