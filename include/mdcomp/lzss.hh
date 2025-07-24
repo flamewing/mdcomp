@@ -334,6 +334,11 @@ namespace lzss {
             return get_lookahead_buffer_size() != 0;
         }
 
+#ifdef __clang__
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
+
         void find_matches(match_vector& matches) const noexcept {
             static_assert(
                     noexcept(Adaptor::edge_weight(edge_type(), size_t())),
@@ -384,6 +389,10 @@ namespace lzss {
                 }
             }
         }
+
+#ifdef __clang__
+#    pragma clang diagnostic pop
+#endif
 
     private:
         [[nodiscard]] bool find_extra_matches(match_vector& matches) const noexcept {
