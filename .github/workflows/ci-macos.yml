@@ -46,8 +46,8 @@ jobs:
       - name: Configure
         run: |
           export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib $LDFLAGS"
-          export CFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CFLAGS"
-          export CXXFLAGS="-I$(brew --prefix boost)/include -I$(brew --prefix llvm)/include $CXXFLAGS"
+          export CFLAGS="-isystem $(brew --prefix boost)/include -isystem $(brew --prefix llvm)/include $CFLAGS"
+          export CXXFLAGS="-isystem $(brew --prefix boost)/include -isystem $(brew --prefix llvm)/include $CXXFLAGS"
           export CC="$(brew --prefix llvm)/bin/clang"
           export CXX="$(brew --prefix llvm)/bin/clang++"
           cmake -S . -B build -G "${{ matrix.cmake_generator }}"
