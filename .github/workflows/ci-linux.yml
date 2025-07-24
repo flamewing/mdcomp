@@ -3,28 +3,28 @@ name: ci-linux
 on:
   push:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-linux.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-linux.yml"
   pull_request:
     paths:
-      - '**'
-      - '!COPYING'
-      - '!COPYING-asm'
-      - '!INSTALL'
-      - '!**.md'
-      - '!.clang*'
-      - '!.gitignore'
-      - '!.gitattributes'
-      - '!.github/workflows/*'
-      - '.github/workflows/ci-linux.yml'
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-linux.yml"
 
 jobs:
   ci-linux:
@@ -47,7 +47,16 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo apt-fast update
+          if ! apt-fast -- help &> /dev/null; then
+            sudo add-apt-repository -u -y ppa:apt-fast/stable
+            sudo apt-get update
+            echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
+            echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
+            echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
+            DEBIAN_FRONTEND=noninteractive sudo apt install -y apt-fast
+          else
+            sudo apt-fast update
+          fi
           sudo apt-fast install -y libboost-all-dev ninja-build
       - name: Checkout code
         uses: actions/checkout@master
