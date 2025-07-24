@@ -29,16 +29,6 @@
 // They might as well reword the warning to say "This constructor is doing exactly what
 // you want, but we are going to warn about it anyway. And make you do dumb workarounds to
 // avoid the warning."
-template <typename T>
-constexpr auto unsafe_forge_span(T* pointer, size_t size) {
-#ifdef __clang__
-#    pragma clang unsafe_buffer_usage begin
-#endif
-    return std::span(pointer, size);
-#ifdef __clang__
-#    pragma clang unsafe_buffer_usage end
-#endif
-}
 
 template <std::contiguous_iterator T>
 constexpr auto unsafe_forge_span(T iter, ptrdiff_t size) {
@@ -49,11 +39,6 @@ constexpr auto unsafe_forge_span(T iter, ptrdiff_t size) {
 #ifdef __clang__
 #    pragma clang unsafe_buffer_usage end
 #endif
-}
-
-template <typename T>
-constexpr auto unsafe_forge_span(T* pointer, std::signed_integral auto size) {
-    return unsafe_forge_span(pointer, static_cast<size_t>(size));
 }
 
 template <std::contiguous_iterator T>
