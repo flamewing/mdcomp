@@ -14,53 +14,54 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Activity check
+        id: activity_check
         shell: bash
         run: |
           DATEUTC=$(curl -sL https://api.github.com/repos/flamewing/mdcomp/commits | jq -r '[.[]][0]' | jq -r '.commit.committer.date')
           TIMESTAMP=$(date --utc -d "$DATEUTC" +%s)
           DAYS=$(( ($(date --utc +%s) - $TIMESTAMP) / 86400 ))
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo REPO_ALIVE=true >> $GITHUB_ENV
+            echo "repo_alive=true" >> $GITHUB_OUTPUT
           else
             if [ $DAYS -gt 0 ]; then
-              echo REPO_ALIVE=false >> $GITHUB_ENV
+              echo "repo_alive=false" >> $GITHUB_OUTPUT
             else
-              echo REPO_ALIVE=true >> $GITHUB_ENV
+              echo "repo_alive=true" >> $GITHUB_OUTPUT
             fi
           fi
       - name: Install dependencies
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW32
-          install:
-            base-devel git p7zip
+          install: base-devel git p7zip
             mingw-w64-i686-toolchain mingw-w64-i686-binutils mingw-w64-i686-ntldd mingw-w64-i686-boost mingw-w64-i686-cmake
       - name: Checkout code
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: actions/checkout@master
       - name: Configure
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles'
       - name: Build
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
           cmake --build build -j2
       - name: Create package
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        id: create_package
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
           for ff in $(${MSYSTEM_PREFIX}/bin/ntldd -R build/*.exe  | tr '\\' '/' | grep -io "$(cygpath -m ${MSYSTEM_PREFIX}).\+\.dll" | sort -u); do
             cp $(cygpath -u "$ff") build/
           done
           SNAPSHOT_PATH=$(cygpath -m $(pwd -P))
-          echo "SNAPSHOT_PATH=${SNAPSHOT_PATH}" >> $GITHUB_ENV
+          echo "snapshot_path=${SNAPSHOT_PATH}" >> $GITHUB_OUTPUT
           export BUILDFILE="v0.2.0.$(date --utc +'%Y%m%d')"
-          echo "BUILDFILE=${BUILDFILE}" >> $GITHUB_ENV
+          echo "buildfile=${BUILDFILE}" >> $GITHUB_OUTPUT
           cd build
           "/c/Program Files/7-Zip/7z.exe" -tzip a ${SNAPSHOT_PATH}/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
       - name: VirusTotal Scan
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         id: scan_files
         uses: crazy-max/ghaction-virustotal@v2
         with:
@@ -68,45 +69,45 @@ jobs:
           github_token: ${{ github.token }}
           update_release_body: true
           files: |
-            ${{ env.SNAPSHOT_PATH }}/mdcomp-${{ env.BUILDFILE }}.zip
+            ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
       - name: Generate VirusTotal Body
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
-          echo "Snapshot ${{ env.BUILDFILE }}" > ${{ env.SNAPSHOT_PATH }}/body.txt
-          echo "" >> ${{ env.SNAPSHOT_PATH }}/body.txt
-          echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> ${{ env.SNAPSHOT_PATH }}/body.txt
-          echo "" >> ${{ env.SNAPSHOT_PATH }}/body.txt
+          echo "Snapshot ${{ steps.create_package.outputs.buildfile }}" > ${{ steps.create_package.outputs.snapshot_path }}/body.txt
+          echo "" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
+          echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
+          echo "" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           analysis="${{ steps.scan_files.outputs.analysis }}"
           while read -d, -r pair; do
             IFS='=' read -r filename analysisURL <<<"$pair"
-            echo "* [$(basename $filename)]($analysisURL)" >> ${{ env.SNAPSHOT_PATH }}/body.txt
+            echo "* [$(basename $filename)]($analysisURL)" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           done <<<"$analysis,"
       - name: Create release
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: snapshot-${{ env.BUILDFILE }}
-          release_name: Snapshot ${{ env.BUILDFILE }}
-          body_path: ${{ env.SNAPSHOT_PATH }}/body.txt
+          tag_name: snapshot-${{ steps.create_package.outputs.buildfile }}
+          release_name: Snapshot ${{ steps.create_package.outputs.buildfile }}
+          body_path: ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           draft: true
           prerelease: false
       # Theses pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`.
       # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
       - name: Upload snapshot
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.SNAPSHOT_PATH }}/mdcomp-${{ env.BUILDFILE }}.zip
-          asset_name: mdcomp-${{ env.BUILDFILE }}.zip
+          asset_path: ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
+          asset_name: mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
           asset_content_type: application/zip
       - name: Finish release
-        if: ${{ env.REPO_ALIVE == 'true' }}
+        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: eregon/publish-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
