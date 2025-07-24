@@ -63,8 +63,8 @@ jobs:
       - name: Configure
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
-          export CC=gcc-11
-          export CXX=g++-11
+          export CC=gcc-13
+          export CXX=g++-13
           cmake -S . -B build -G 'Unix Makefiles'
       - name: Build with cov-build
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
