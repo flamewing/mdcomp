@@ -96,7 +96,7 @@ bool basic_decoder<Format, Pad, Args...>::encode(
             data.back() = 0;
         }
     }
-    if (Format::encode(dest, {data.data(), data.size()}, args...)) {
+    if (Format::encode(dest, data, args...)) {
         detail::pad_to_even(dest);
         return true;
     }
