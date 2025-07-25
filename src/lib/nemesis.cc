@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Flamewing 2011-2016 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2011-2025 <flamewing.sonic@gmail.com>
  * Loosely based on code by Roger Sanders (AKA Nemesis) and William Sanders
  * (AKA Milamber)
  *

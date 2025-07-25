@@ -2,7 +2,7 @@
 
 ## **This license applies for src/asm directory**
 
-_Copyright © `2019-2022`, `flamewing`_<br>
+_Copyright © `2019-2025`, `flamewing`_
 _All rights reserved._
 
 Website: <<https://spdx.org/licenses/0BSD.html>>

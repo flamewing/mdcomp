@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Flamewing 2015-2016 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2015-2025 <flamewing.sonic@gmail.com>
  *
  *
  * This program is free software: you can redistribute it and/or modify it

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Flamewing 2011-2016 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2011-2025 <flamewing.sonic@gmail.com>
  * Copyright (C) 2002-2004 The KENS Project Development Team
  * Copyright (C) 2002-2003 Roger Sanders (AKA Nemesis)
  *
