@@ -1,6 +1,6 @@
 /*
  * Copyright (C) Clownacy 2016
- * Copyright (C) Flamewing 2016 <flamewing.sonic@gmail.com>
+ * Copyright (C) Flamewing 2016-2025 <flamewing.sonic@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published
