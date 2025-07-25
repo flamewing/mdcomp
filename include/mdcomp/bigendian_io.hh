@@ -215,8 +215,8 @@ namespace detail {
                     return (__builtin_bswap64(value >> 64U)
                             | (static_cast<T>(__builtin_bswap64(value)) << 64U));
                 }
-            }
 #    endif
+            }
         }
 
         using uint_t = std::make_unsigned_t<std::remove_cv_t<T>>;
