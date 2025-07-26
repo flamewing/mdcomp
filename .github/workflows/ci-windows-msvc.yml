@@ -38,9 +38,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "latest"
+          vcpkgDirectory: "${{ github.workspace }}/vcpkg"
+          runVcpkgInstall: true
       - name: Configure
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: |
           cmake --build build -j2
