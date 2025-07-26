@@ -1,0 +1,48 @@
+name: ci-windows-msvc
+
+on:
+  push:
+    paths:
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-windows-msvc.yml"
+  pull_request:
+    paths:
+      - "**"
+      - "!COPYING"
+      - "!COPYING-asm"
+      - "!INSTALL"
+      - "!**.md"
+      - "!.clang*"
+      - "!.gitignore"
+      - "!.gitattributes"
+      - "!.github/workflows/*"
+      - ".github/workflows/ci-windows-msvc.yml"
+
+jobs:
+  ci-windows-msvc:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        generator: [vs2022]
+        include:
+          - generator: vs2022
+            cmake_generator: "Visual Studio 17 2022"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Configure
+        run: |
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: |
+          cmake --build build -j2

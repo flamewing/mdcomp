@@ -31,7 +31,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # generator: [make, msys, vs2019]
         generator: [make, msys]
         architecture: [i686, x86_64]
         include:
@@ -39,8 +38,6 @@ jobs:
             cmake_generator: "Unix Makefiles"
           - generator: msys
             cmake_generator: "MSYS Makefiles"
-          # - generator: vs2019
-          #   cmake_generator: "Visual Studio 16 2019"
           - architecture: i686
             msystem: MINGW32
             arch: i686
@@ -55,8 +52,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msystem }}
-          install:
-            base-devel git
+          install: base-devel git
             mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-binutils
             mingw-w64-${{ matrix.arch }}-ntldd mingw-w64-${{ matrix.arch }}-boost
             mingw-w64-${{ matrix.arch }}-cmake
