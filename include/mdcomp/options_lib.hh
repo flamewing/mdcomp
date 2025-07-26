@@ -30,6 +30,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <ranges>
 #include <span>
 #include <sstream>
@@ -153,10 +154,10 @@ namespace detail {
             }
             return 10;
         }();
-        auto [ptr, ec] = std::from_chars(
-                std::ranges::cbegin(parameter), std::ranges::cend(parameter), value,
-                base);
-        if (ec != std::errc{} || ptr != std::ranges::cend(parameter)) {
+        auto const* const start = std::to_address(std::ranges::cbegin(parameter));
+        auto const* const end   = std::to_address(std::ranges::cend(parameter));
+        if (auto [ptr, ec] = std::from_chars(start, end, value, base);
+            ec != std::errc{} || ptr != end) {
             print_error(ec, "value", parameter.data());
         }
         if constexpr (std::is_signed_v<T>) {

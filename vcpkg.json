@@ -1,0 +1,12 @@
+{
+  "name": "mdcomp",
+  "version": "0.2.0",
+  "description": "Sega Mega Drive compression/decompression utilities",
+  "homepage": "https://github.com/flamewing/mdcomp",
+  "license": "LGPL-3.0-or-later AND 0BSD",
+  "supports": "windows | linux | osx",
+  "dependencies": [
+    "boost-container",
+    "getopt"
+  ]
+}

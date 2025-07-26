@@ -57,11 +57,17 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 include(GNUInstallDirs)
+include(CheckCXXCompilerFlag)
 
 cmake_policy(SET CMP0167 NEW)
 find_package(Boost REQUIRED)
 
-include(CheckCXXCompilerFlag)
+if(NOT Boost_FOUND)
+    message(FATAL_ERROR "Boost not found. Make sure it is available on your system.")
+else()
+    # Add to include directories
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
 
 function(add_compile_options_safe FLAG)
     string(REGEX REPLACE "[-=+]" "" FLAG_NO_SIGNS ${FLAG}) # <- The variable recieving the result of the test can't have those signs in its name
@@ -211,6 +217,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wunused-const-variable=1)
     endif()
 elseif(MSVC)
+    find_package(unofficial-getopt-win32 REQUIRED)
+
     if(WARNINGS_ARE_ERRORS)
         add_compile_options("/WX")
     endif()
@@ -220,6 +228,7 @@ elseif(MSVC)
     add_compile_options("/wd4127") # warning C4127: conditional expression is constant
     add_compile_options("/wd4244") # warning C4244: 'initializing': conversion from 'int' to 'char', possible loss of data
     add_compile_options("/wd4251")
+    add_compile_options("/wd4702") # warning C4702: unreachable code
 
     # Clang: -Wshorten-64-to-32 -Wimplicit-int-conversion
     add_compile_options("/wd4267") # warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
@@ -362,6 +371,13 @@ function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(${TARGETNAME} PUBLIC ${LIBNAME})
+
+    if(MSVC)
+        target_link_libraries(${TARGETNAME}
+            PRIVATE unofficial::getopt-win32::getopt
+        )
+    endif()
+
     set_target_properties(${TARGETNAME}
         PROPERTIES
         OUTPUT_NAME ${EXENAME}

@@ -46,17 +46,17 @@
 #endif
 
 #if defined(_MSC_VER)
-#    define INLINE       [[msvc::forceinline]]
-#    define CONST_INLINE [[msvc::forceinline]]
-#    define PURE_INLINE  [[msvc::forceinline]]
+#    define INLINE       [[msvc::forceinline]] inline
+#    define CONST_INLINE [[msvc::forceinline]] inline
+#    define PURE_INLINE  [[msvc::forceinline]] inline
 #elif defined(__GNUG__)
-#    define INLINE       [[gnu::always_inline]]
-#    define CONST_INLINE [[using gnu: const, always_inline]]
-#    define PURE_INLINE  [[using gnu: pure, always_inline]]
+#    define INLINE       [[gnu::always_inline]] inline
+#    define CONST_INLINE [[using gnu: const, always_inline]] inline
+#    define PURE_INLINE  [[using gnu: pure, always_inline]] inline
 #else
-#    define INLINE
-#    define CONST_INLINE
-#    define PURE_INLINE
+#    define INLINE       inline
+#    define CONST_INLINE inline
+#    define PURE_INLINE  inline
 #endif
 
 namespace detail {

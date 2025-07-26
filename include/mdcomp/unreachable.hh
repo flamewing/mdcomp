@@ -20,7 +20,7 @@
 
 namespace utils {
 #if defined(_MSC_VER)
-#    define INLINE [[msvc::forceinline]]
+#    define INLINE [[msvc::forceinline]] inline
 #elif defined(__GNUG__)
 #    define INLINE [[gnu::always_inline]] inline
 #else

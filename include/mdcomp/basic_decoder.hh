@@ -23,6 +23,7 @@
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/stream_utils.hh"
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
