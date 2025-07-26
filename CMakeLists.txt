@@ -309,24 +309,23 @@ target_include_directories(dummy-mdcomp
 )
 
 function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
-    if("${TYPE}" STREQUAL "STATIC")
-        add_library(${TARGETNAME}
-            STATIC
+    if("${TYPE}" STREQUAL "OBJECT")
+        add_library("${TARGETNAME}"
+            OBJECT
             "${SRCFILE}"
             "${HDRFILE}"
             "${COMMON_HEADERS}"
         )
-        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME ${OUTPUT})
+        set_property(TARGET "${TARGETNAME}" PROPERTY POSITION_INDEPENDENT_CODE 1)
+        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
+    elseif("${TYPE}" STREQUAL "STATIC")
+        add_library("${TARGETNAME}" STATIC $<TARGET_OBJECTS:${OUTPUT}Obj>)
+        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
     else()
-        add_library(${TARGETNAME}
-            SHARED
-            "${SRCFILE}"
-            "${HDRFILE}"
-            "${COMMON_HEADERS}"
-        )
+        add_library("${TARGETNAME}" SHARED $<TARGET_OBJECTS:${OUTPUT}Obj>)
     endif()
 
-    add_library(mdcomp::${TARGETNAME} ALIAS ${TARGETNAME})
+    add_library("mdcomp::${TARGETNAME}" ALIAS "${TARGETNAME}")
     target_include_directories(${TARGETNAME}
         PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -343,6 +342,14 @@ function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
 endfunction()
 
 function(define_lib TARGETNAME SRCFILE HDRFILE)
+    define_lib_internal(
+        "OBJECT"
+        "${TARGETNAME}Obj"
+        "${TARGETNAME}"
+        "${SRCFILE}"
+        "${HDRFILE}"
+        "${COMMON_HEADERS}"
+    )
     define_lib_internal(
         "STATIC"
         "${TARGETNAME}Static"
