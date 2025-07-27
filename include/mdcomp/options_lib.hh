@@ -21,8 +21,10 @@
 #include <getopt.h>
 
 #include <array>
+#include <bit>
 #include <charconv>
 #include <concepts>    // IWYU pragma: keep
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>

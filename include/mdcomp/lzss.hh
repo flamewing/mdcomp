@@ -24,6 +24,7 @@
 #include "mdcomp/forge_span.hh"
 #include "mdcomp/unreachable.hh"
 
+#include <boost/container/container_fwd.hpp>
 #include <boost/container/static_vector.hpp>
 
 #include <algorithm>
@@ -32,6 +33,7 @@
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
+#include <iosfwd>
 #include <iostream>
 #include <iterator>
 #include <limits>

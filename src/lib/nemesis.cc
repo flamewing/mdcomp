@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -71,7 +72,7 @@ namespace {
             size_t sum = 0;
             size_t pos = 1;
             for (size_t i = 0; pos <= vals.size(); ++i) {
-                size_t val = vals[vals.size() - pos];
+                size_t const val = vals[vals.size() - pos];
                 if (i % 4 < 2) {
                     sum += val;
                 } else {
@@ -716,7 +717,7 @@ public:
                     for (auto const& partition : integer_partitions) {
                         // Tally up the code length for this coefficient
                         // line.
-                        size_t length = std::inner_product(
+                        size_t const length = std::inner_product(
                                 partition.begin(), partition.end(), run_length.cbegin(),
                                 size_t{0});
                         // Is the length better than the best yet?

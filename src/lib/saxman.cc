@@ -32,6 +32,7 @@
 #include <istream>
 #include <iterator>
 #include <limits>
+#include <list>
 #include <ostream>
 #include <span>
 #include <sstream>

@@ -24,6 +24,7 @@
 #include "mdcomp/forge_span.hh"
 #include "mdcomp/stream_utils.hh"
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -32,6 +33,7 @@
 #include <ranges>
 #include <sstream>
 #include <vector>
+
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {

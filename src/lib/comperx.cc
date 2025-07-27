@@ -24,12 +24,14 @@
 #include "mdcomp/lzss.hh"
 
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <list>
 #include <ostream>
 #include <span>
 #include <sstream>

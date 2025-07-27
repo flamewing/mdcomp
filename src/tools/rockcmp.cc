@@ -20,7 +20,6 @@
 #include "mdcomp/rocket.hh"
 
 #include <array>
-#include <cstddef>
 #include <filesystem>
 #include <iostream>
 #include <span>

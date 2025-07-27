@@ -21,6 +21,7 @@
 #include "mdcomp/bigendian_io.hh"
 
 #include <algorithm>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>

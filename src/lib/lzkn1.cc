@@ -25,17 +25,20 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <list>
 #include <ostream>
 #include <span>
 #include <sstream>
 #include <type_traits>
 #include <vector>
+
 
 template <>
 size_t moduled_lzkn1::pad_mask_bits = 1U;
@@ -234,8 +237,8 @@ struct lzkn1_adaptor {
         // Dictionary matches.
         if ((value & short_match_marker) == short_match_marker) {
             // Short dictionary match.
-            size_t distance = value & 0xFU;
-            size_t length   = (value >> 4U) - 6U;
+            size_t const distance = value & 0xFU;
+            size_t const length   = (value >> 4U) - 6U;
             return lzss::dictionary_match<lzkn1_adaptor>(
                     nodes, output_size, source.tellg(), distance, length,
                     edge_type::dictionary_short);

@@ -30,6 +30,7 @@
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <list>
 #include <ostream>
 #include <span>
 #include <sstream>
