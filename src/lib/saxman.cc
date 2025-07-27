@@ -312,7 +312,7 @@ struct saxman_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         lzss::encode(dest, data, saxman_adaptor{});
     }
 };
@@ -332,7 +332,7 @@ bool saxman::decode(std::istream& source, std::iostream& dest, size_t size) {
 }
 
 bool saxman::encode(
-        std::ostream& dest, std::span<uint8_t const> data, bool const with_size) {
+        std::ostream& dest, std::span<char const> data, bool const with_size) {
     std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
     auto const        start = out_buff.tellg();
     saxman_internal::encode(out_buff, data);

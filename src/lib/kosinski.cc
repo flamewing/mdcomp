@@ -337,7 +337,7 @@ struct kosinski_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         lzss::encode(dest, data, kosinski_adaptor{});
     }
 };
@@ -352,7 +352,7 @@ bool kosinski::decode(std::istream& source, std::iostream& dest) {
     return true;
 }
 
-bool kosinski::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool kosinski::encode(std::ostream& dest, std::span<char const> data) {
     kosinski_internal::encode(dest, data);
     return true;
 }

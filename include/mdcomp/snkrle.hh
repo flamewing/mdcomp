@@ -22,7 +22,6 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -33,7 +32,7 @@ using moduled_snkrle = moduled_adaptor<snkrle, 4096U, 1U>;
 class snkrle : public basic_snkrle, public moduled_snkrle {
     friend basic_snkrle;
     friend moduled_snkrle;
-    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
+    static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:
     using basic_snkrle::encode;

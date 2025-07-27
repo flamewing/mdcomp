@@ -326,7 +326,7 @@ struct kosplus_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         lzss::encode(dest, data, kosplus_adaptor{});
     }
 };
@@ -341,7 +341,7 @@ bool kosplus::decode(std::istream& source, std::iostream& dest) {
     return true;
 }
 
-bool kosplus::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool kosplus::encode(std::ostream& dest, std::span<char const> data) {
     kosplus_internal::encode(dest, data);
     return true;
 }

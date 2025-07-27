@@ -23,7 +23,6 @@
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/stream_utils.hh"
 
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -69,7 +68,8 @@ public:
         }
 
         auto const size_bytes = count * sizeof(T);
-        return std::bit_cast<T*>(::operator new[](size_bytes, std::align_val_t{Align}));
+        return reinterpret_cast<T*>(
+                ::operator new[](size_bytes, std::align_val_t{Align}));
     }
 
     void deallocate(T* pointer, [[maybe_unused]] std::size_t count_bytes) {
@@ -85,13 +85,13 @@ bool basic_decoder<Format, Pad, Args...>::encode(
     source.ignore(std::numeric_limits<std::streamsize>::max());
     auto full_size = static_cast<size_t>(source.gcount());
     source.seekg(start);
-    std::vector<uint8_t, aligned_allocator<uint8_t>> data;
+    std::vector<char, aligned_allocator<char>> data;
     if constexpr (Pad == pad_mode::pad_even) {
         data.resize(detail::round_up(full_size, 2U));
     } else {
         data.resize(full_size);
     }
-    source.read(std::bit_cast<char*>(data.data()), std::ssize(data));
+    source.read(data.data(), std::ssize(data));
     if constexpr (Pad == pad_mode::pad_even) {
         if (data.size() > full_size) {
             data.back() = 0;

@@ -281,7 +281,7 @@ struct rocket_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         lzss::encode(dest, data, rocket_adaptor{});
     }
 };
@@ -308,7 +308,7 @@ bool rocket::encode(std::istream& source, std::ostream& dest) {
     return basic_rocket::encode(input, dest);
 }
 
-bool rocket::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool rocket::encode(std::ostream& dest, std::span<char const> data) {
     // Internal buffer.
     std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
     rocket_internal::encode(out_buff, data);

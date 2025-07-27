@@ -23,7 +23,6 @@
 #include "mdcomp/moduled_adaptor.hh"
 
 #include <cstddef>
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -35,7 +34,7 @@ class saxman : public basic_saxman, public moduled_saxman {
     friend basic_saxman;
     friend moduled_saxman;
     static bool encode(
-            std::ostream& dest, std::span<uint8_t const> data, bool with_size = true);
+            std::ostream& dest, std::span<char const> data, bool with_size = true);
 
 public:
     using basic_saxman::encode;

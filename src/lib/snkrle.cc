@@ -21,7 +21,6 @@
 #include "mdcomp/bigendian_io.hh"
 
 #include <algorithm>
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -108,9 +107,9 @@ bool snkrle::decode(std::istream& source, std::ostream& dest) {
     return true;
 }
 
-bool snkrle::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool snkrle::encode(std::ostream& dest, std::span<char const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(std::bit_cast<char const*>(data.data()), std::ssize(data));
+    source.write(data.data(), std::ssize(data));
     source.seekg(0);
     snkrle_internal::encode(source, dest);
     return true;

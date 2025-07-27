@@ -22,7 +22,6 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -33,7 +32,7 @@ using moduled_comperx = moduled_adaptor<comperx, 4096U, 1U>;
 class comperx : public basic_comperx, public moduled_comperx {
     friend basic_comperx;
     friend moduled_comperx;
-    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
+    static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:
     using basic_comperx::encode;

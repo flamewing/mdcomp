@@ -22,7 +22,6 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -33,7 +32,7 @@ using moduled_lzkn1 = moduled_adaptor<lzkn1, 4096U, 1U>;
 class lzkn1 : public basic_lzkn1, public moduled_lzkn1 {
     friend basic_lzkn1;
     friend moduled_lzkn1;
-    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
+    static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:
     using basic_lzkn1::encode;

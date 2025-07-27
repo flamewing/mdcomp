@@ -257,7 +257,7 @@ struct comper_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         lzss::encode(dest, data, comper_adaptor{});
     }
 };
@@ -272,7 +272,7 @@ bool comper::decode(std::istream& source, std::iostream& dest) {
     return true;
 }
 
-bool comper::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool comper::encode(std::ostream& dest, std::span<char const> data) {
     comper_internal::encode(dest, data);
     return true;
 }

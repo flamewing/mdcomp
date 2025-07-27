@@ -28,7 +28,6 @@
 #include <boost/container/static_vector.hpp>
 
 #include <algorithm>
-#include <bit>
 #include <cassert>
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
@@ -237,7 +236,7 @@ namespace lzss {
         using symbolwise_data = typename Adaptor::adj_list_node::symbolwise_data;
         symbolwise_data data(length);
         source.read(
-                std::bit_cast<char*>(data.data()),
+                reinterpret_cast<char*>(data.data()),
                 static_cast<std::streamsize>(length * sizeof(stream_t)));
         nodes.emplace_back(position, std::move(data), type);
         output_size += Adaptor::edge_size(nodes.back());
@@ -667,7 +666,7 @@ namespace lzss {
     };
 
     template <adaptor_t Adaptor>
-    auto find_optimal_parse(std::span<uint8_t const> data_in, Adaptor adaptor) noexcept {
+    auto find_optimal_parse(std::span<char const> data_in, Adaptor adaptor) noexcept {
         ignore_unused_variable_warning(adaptor);
         using edge_type       = typename Adaptor::edge_type;
         using stream_t        = typename Adaptor::stream_t;
@@ -679,7 +678,7 @@ namespace lzss {
 
         auto read_stream = [](data_t data, size_t offset) {
             auto const* pointer
-                    = std::bit_cast<uint8_t const*>(std::addressof(data[offset]));
+                    = reinterpret_cast<char const*>(std::addressof(data[offset]));
             return stream_endian_t::template read<stream_t>(pointer);
         };
 
@@ -839,7 +838,7 @@ namespace lzss {
                     static_cast<size_t>(std::min(length, distance)),
                     boost::container::default_init_t{});
             dest.read(
-                    std::bit_cast<char*>(buffer.data()),
+                    reinterpret_cast<char*>(buffer.data()),
                     static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
 
             if (length > distance) {
@@ -860,13 +859,13 @@ namespace lzss {
 
         dest.seekp(pointer);
         dest.write(
-                std::bit_cast<char const*>(buffer.data()),
+                reinterpret_cast<char const*>(buffer.data()),
                 static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
     }
 
     template <adaptor_t Adaptor>
     auto encode(
-            std::ostream& dest, std::span<uint8_t const> data, Adaptor adaptor) noexcept {
+            std::ostream& dest, std::span<char const> data, Adaptor adaptor) noexcept {
         using ostream_t = Adaptor::ostream_t;
 
         // Compute optimal Comper parsing of input file.

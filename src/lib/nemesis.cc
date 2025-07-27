@@ -26,7 +26,6 @@
 
 #include <algorithm>
 #include <array>
-#include <bit>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -1154,9 +1153,9 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     return true;
 }
 
-bool nemesis::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool nemesis::encode(std::ostream& dest, std::span<char const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(std::bit_cast<char const*>(data.data()), std::ssize(data));
+    source.write(data.data(), std::ssize(data));
     source.seekg(0);
     return encode(source, dest);
 }

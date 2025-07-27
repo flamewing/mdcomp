@@ -25,7 +25,6 @@
 
 #include <algorithm>
 #include <array>
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -38,7 +37,6 @@
 #include <sstream>
 #include <type_traits>
 #include <vector>
-
 
 template <>
 size_t moduled_lzkn1::pad_mask_bits = 1U;
@@ -264,7 +262,7 @@ struct lzkn1_adaptor {
         case packed_symbolwise: {
             auto const data = edge.get_data();
             dest.write(
-                    std::bit_cast<char const*>(data.data()),
+                    reinterpret_cast<char const*>(data.data()),
                     static_cast<std::streamsize>(data.size() * sizeof(stream_t)));
             break;
         }
@@ -344,7 +342,7 @@ struct lzkn1_internal {
         }
     }
 
-    static void encode(std::ostream& dest, std::span<uint8_t const> data) {
+    static void encode(std::ostream& dest, std::span<char const> data) {
         big_endian::write2(dest, data.size() & std::numeric_limits<uint16_t>::max());
         lzss::encode(dest, data, lzkn1_adaptor{});
     }
@@ -360,7 +358,7 @@ bool lzkn1::decode(std::istream& source, std::iostream& dest) {
     return true;
 }
 
-bool lzkn1::encode(std::ostream& dest, std::span<uint8_t const> data) {
+bool lzkn1::encode(std::ostream& dest, std::span<char const> data) {
     lzkn1_internal::encode(dest, data);
     return true;
 }

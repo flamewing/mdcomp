@@ -23,7 +23,6 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -34,7 +33,7 @@ using moduled_nemesis = moduled_adaptor<nemesis, 4096U, 1U>;
 class nemesis : public basic_nemesis, public moduled_nemesis {
     friend basic_nemesis;
     friend moduled_nemesis;
-    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
+    static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:
     static bool encode(std::istream& source, std::ostream& dest);

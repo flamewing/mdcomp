@@ -22,7 +22,6 @@
 #include "mdcomp/basic_decoder.hh"
 #include "mdcomp/moduled_adaptor.hh"
 
-#include <cstdint>
 #include <iosfwd>
 #include <span>
 
@@ -33,7 +32,7 @@ using moduled_kosinski = moduled_adaptor<kosinski, 4096U, 16U>;
 class kosinski : public basic_kosinski, public moduled_kosinski {
     friend basic_kosinski;
     friend moduled_kosinski;
-    static bool encode(std::ostream& dest, std::span<uint8_t const> data);
+    static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:
     using basic_kosinski::encode;

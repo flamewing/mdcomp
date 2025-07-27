@@ -603,7 +603,7 @@ inline int auto_compressor_decompressor(options_t options) {
 
         constexpr static auto as_u8string_view = [](std::string_view path) {
             return std::u8string_view{
-                    std::bit_cast<char8_t const*>(path.data()), path.size()};
+                    reinterpret_cast<char8_t const*>(path.data()), path.size()};
         };
         std::filesystem::path infile{as_u8string_view(options.positional.front())};
         std::filesystem::path outfile{as_u8string_view(options.positional.back())};

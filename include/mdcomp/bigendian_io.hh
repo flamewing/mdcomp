@@ -65,13 +65,14 @@ namespace detail {
     template <typename Iter>
     concept byte_input_iterator = requires() {
         requires std::input_iterator<Iter>;
-        requires(std::is_same_v<std::iter_value_t<Iter>, char>)
-                        || (std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
+        requires(
+                std::is_same_v<std::iter_value_t<Iter>, char>
+                || std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
     };
 
     template <typename Iter>
     concept byte_output_iterator
-            = (std::output_iterator<Iter, uint8_t>) || (std::output_iterator<Iter, char>);
+            = std::output_iterator<Iter, uint8_t> || std::output_iterator<Iter, char>;
 
     template <typename T>
     concept container = std::regular<T> && std::swappable<T>

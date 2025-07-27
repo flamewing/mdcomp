@@ -24,7 +24,6 @@
 #include "mdcomp/forge_span.hh"
 #include "mdcomp/stream_utils.hh"
 
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -33,7 +32,6 @@
 #include <ranges>
 #include <sstream>
 #include <vector>
-
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
@@ -84,10 +82,10 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     source.ignore(std::numeric_limits<std::streamsize>::max());
     auto full_size = source.gcount();
     source.seekg(location);
-    std::vector<uint8_t> data;
+    std::vector<char> data;
     data.resize(static_cast<size_t>(full_size));
     auto pointer = std::ranges::cbegin(data);
-    source.read(std::bit_cast<char*>(data.data()), full_size);
+    source.read(data.data(), full_size);
 
     big_endian::write2(
             dest, static_cast<size_t>(full_size) & std::numeric_limits<uint16_t>::max());
