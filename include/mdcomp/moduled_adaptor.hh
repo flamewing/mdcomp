@@ -35,7 +35,11 @@
 
 template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
+    moduled_adaptor() = default;
+    friend Format;
+
 public:
+    // NOLINTNEXTLINE(performance-enum-size)
     enum {
         MODULE_SIZE    = DefaultModuleSize,
         MODULE_PADDING = DefaultModulePadding

@@ -229,10 +229,14 @@ namespace detail {
         auto   mask2     = static_cast<uint_t>(mask1 << diff);
         uint_t new_value = value;
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-            uint_t byte1 = new_value & mask1;
-            uint_t byte2 = new_value & mask2;
-            new_value    = static_cast<uint_t>(
-                    new_value ^ byte1 ^ byte2 ^ (byte1 << diff) ^ (byte2 >> diff));
+            uint_t const byte1 = new_value & mask1;
+            uint_t const byte2 = new_value & mask2;
+            uint_t const byte3 = byte1 << diff;
+            uint_t const byte4 = byte2 >> diff;
+            new_value ^= byte1;
+            new_value ^= byte2;
+            new_value ^= byte3;
+            new_value ^= byte4;
             mask1 = std::rotl(mask1, nbits);
             mask2 = std::rotr(mask2, nbits);
             diff -= 2ULL * nbits;
@@ -257,7 +261,7 @@ namespace detail {
         requires has_read_bytes_function<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
-            alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
+            alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
             std::forward<Stream>(input).read(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
                 return detail::byteswap(std::bit_cast<To>(buffer));
@@ -270,7 +274,7 @@ namespace detail {
         requires is_input_streambuf<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
-            alignas(alignof(To)) std::array<char, sizeof(To)> buffer;
+            alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
             std::forward<Stream>(input).sgetn(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
                 return detail::byteswap(std::bit_cast<To>(buffer));
@@ -284,10 +288,10 @@ namespace detail {
         // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
         [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept {
             using iterator = std::remove_cvref_t<IterRef>;
+            alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
             if constexpr (contiguous_reverse_iterator<iterator>) {
                 std::advance(input, sizeof(To));
             }
-            alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
@@ -325,11 +329,11 @@ namespace detail {
         requires has_write_bytes_function<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
+            using buffer_t = std::array<char, sizeof(From)>;
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
             }
-            alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = std::bit_cast<decltype(buffer)>(value);
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
             std::forward<Stream>(output).write(buffer.data(), sizeof(From));
         }
 
@@ -337,11 +341,11 @@ namespace detail {
         requires is_output_streambuf<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
+            using buffer_t = std::array<char, sizeof(From)>;
             if constexpr (endian != std::endian::native) {
                 value = detail::byteswap(value);
             }
-            alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = std::bit_cast<decltype(buffer)>(value);
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
             std::forward<Stream>(output).sputn(buffer.data(), sizeof(From));
         }
 
@@ -364,6 +368,7 @@ namespace detail {
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
             using iterator = std::remove_cvref_t<IterRef>;
+            using buffer_t = std::array<char, sizeof(From)>;
             if constexpr (contiguous_reverse_iterator<iterator>) {
                 std::advance(output, sizeof(From));
                 if constexpr (endian == std::endian::native) {
@@ -374,8 +379,7 @@ namespace detail {
                     value = detail::byteswap(value);
                 }
             }
-            alignas(alignof(From)) std::array<char, sizeof(From)> buffer
-                    = std::bit_cast<decltype(buffer)>(value);
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
             if constexpr (
                     (std::contiguous_iterator<iterator>)
                     || (contiguous_reverse_iterator<iterator>)) {

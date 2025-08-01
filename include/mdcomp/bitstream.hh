@@ -174,8 +174,8 @@ public:
             check_buffer();
         }
         --num_read_bits;
-        uint_t bit = (bit_buffer >> num_read_bits) & 1U;
-        bit_buffer ^= (bit << num_read_bits);
+        uint_t bit = static_cast<uint_t>(bit_buffer >> num_read_bits) & 1U;
+        bit_buffer ^= static_cast<uint_t>(bit << num_read_bits);
         if constexpr (EarlyRead) {
             check_buffer();
         }
@@ -191,17 +191,17 @@ public:
         }
         uint_t bits;
         if (num_read_bits < count) {
-            size_t delta    = count - num_read_bits;
-            bits            = static_cast<uint_t>(bit_buffer << delta);
-            bit_buffer      = read_bits();
-            num_read_bits   = bit_count - delta;
-            uint_t new_bits = bit_buffer >> num_read_bits;
-            bit_buffer ^= (new_bits << num_read_bits);
+            size_t const delta = count - num_read_bits;
+            bits               = static_cast<uint_t>(bit_buffer << delta);
+            bit_buffer         = read_bits();
+            num_read_bits      = bit_count - delta;
+            uint_t new_bits    = bit_buffer >> num_read_bits;
+            bit_buffer ^= static_cast<uint_t>(new_bits << num_read_bits);
             bits |= new_bits;
         } else {
             num_read_bits -= count;
             bits = bit_buffer >> num_read_bits;
-            bit_buffer ^= (bits << num_read_bits);
+            bit_buffer ^= static_cast<uint_t>(bits << num_read_bits);
         }
         if constexpr (EarlyRead) {
             check_buffer();
@@ -260,12 +260,13 @@ public:
     INLINE bool write(uint_t const data, size_t const size) noexcept(
             noexcept(write_bits(bit_buffer))) {
         if (waiting_bits + size >= bit_count) {
-            size_t delta = bit_count - waiting_bits;
-            waiting_bits = (waiting_bits + size) % bit_count;
-            uint_t bits
-                    = static_cast<uint_t>(bit_buffer << delta) | (data >> waiting_bits);
+            size_t const delta = bit_count - waiting_bits;
+            waiting_bits       = (waiting_bits + size) % bit_count;
+            uint_t bits        = static_cast<uint_t>(bit_buffer << delta)
+                          | static_cast<uint_t>(data >> waiting_bits);
             write_bits(bits);
-            bit_buffer = data & (all_ones >> (bit_count - waiting_bits));
+            bit_buffer
+                    = data & static_cast<uint_t>(all_ones >> (bit_count - waiting_bits));
             return true;
         }
         bit_buffer = static_cast<uint_t>(bit_buffer << size) | data;

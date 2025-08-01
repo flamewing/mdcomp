@@ -39,6 +39,9 @@ enum class pad_mode : uint8_t {
 
 template <typename Format, pad_mode Pad, typename... Args>
 class basic_decoder {
+    basic_decoder() = default;
+    friend Format;
+
 public:
     static bool encode(std::istream& source, std::ostream& dest, Args... args);
     static void extract(std::istream& source, std::iostream& dest);

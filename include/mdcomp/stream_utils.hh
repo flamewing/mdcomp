@@ -77,7 +77,11 @@ namespace detail {
 
     namespace pipe {
         template <typename derived>
-        struct base {};
+        struct base {
+        private:
+            base() = default;
+            friend derived;
+        };
 
         template <typename Ty>
         Ty* derived_from_range_adaptor_closure(base<Ty>&);    // not defined

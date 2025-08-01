@@ -700,7 +700,7 @@ namespace lzss {
                 noexcept(Adaptor::get_padding(0)),
                 "Adaptor::get_padding() is not noexcept");
         utils::assume(data.size() >= Adaptor::first_match_position);
-        size_t num_nodes = data.size() - Adaptor::first_match_position;
+        size_t const num_nodes = data.size() - Adaptor::first_match_position;
         utils::assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
         // Auxiliary data structures:
         // * The parent of a node is the node that reaches that node with the
@@ -824,7 +824,7 @@ namespace lzss {
         using diff_t   = std::make_signed_t<size_t>;
         using stream_t = typename Adaptor::stream_t;
         using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
-        diff_t       byte_distance = distance * static_cast<diff_t>(num_bytes);
+        diff_t const byte_distance = distance * static_cast<diff_t>(num_bytes);
         diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
 

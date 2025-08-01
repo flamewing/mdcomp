@@ -111,7 +111,7 @@ inline auto gen_argument_tuple(instream& input, outstream& output, Args&&... arg
 
 namespace detail {
     [[noreturn]] inline void print_error(
-            std::errc error, std::string const& parameter, char const* value) {
+            std::errc error, std::string const& parameter, std::string_view value) {
         if (error == std::errc::invalid_argument) {
             std::cerr << std::format(
                     "Invalid value '{}' given for '{}' parameter!\n", value, parameter);
@@ -160,7 +160,7 @@ namespace detail {
         auto const* const end   = std::to_address(std::ranges::cend(parameter));
         if (auto [ptr, ec] = std::from_chars(start, end, value, base);
             ec != std::errc{} || ptr != end) {
-            print_error(ec, "value", parameter.data());
+            print_error(ec, "value", parameter);
         }
         if constexpr (std::is_signed_v<T>) {
             if (starts_with_minus) {
@@ -220,7 +220,7 @@ namespace detail {
 
     template <typename options_t, typename instream, typename outstream>
     [[nodiscard]] auto get_decode_args(
-            options_t options, instream& input, outstream& output) {
+            options_t& options, instream& input, outstream& output) {
         if constexpr (has_get_decode_args<options_t>) {
             return options.get_decode_args(input, output);
         } else {
@@ -230,7 +230,7 @@ namespace detail {
 
     template <typename options_t, typename instream, typename outstream>
     [[nodiscard]] auto get_moduled_decode_args(
-            options_t options, instream& input, outstream& output) {
+            options_t& options, instream& input, outstream& output) {
         if constexpr (has_get_moduled_decode_args<options_t>) {
             return options.get_moduled_decode_args(input, output);
         } else {
@@ -240,7 +240,7 @@ namespace detail {
 
     template <typename options_t, typename instream, typename outstream>
     [[nodiscard]] auto get_encode_args(
-            options_t options, instream& input, outstream& output) {
+            options_t& options, instream& input, outstream& output) {
         if constexpr (has_get_encode_args<options_t>) {
             return options.get_encode_args(input, output);
         } else {
@@ -250,7 +250,7 @@ namespace detail {
 
     template <typename options_t, typename instream, typename outstream>
     [[nodiscard]] auto get_moduled_encode_args(
-            options_t options, instream& input, outstream& output) {
+            options_t& options, instream& input, outstream& output) {
         if constexpr (has_get_moduled_encode_args<options_t>) {
             return options.get_moduled_encode_args(input, output);
         } else {
@@ -605,8 +605,8 @@ inline int auto_compressor_decompressor(options_t options) {
             return std::u8string_view{
                     reinterpret_cast<char8_t const*>(path.data()), path.size()};
         };
-        std::filesystem::path infile{as_u8string_view(options.positional.front())};
-        std::filesystem::path outfile{as_u8string_view(options.positional.back())};
+        std::filesystem::path const infile{as_u8string_view(options.positional.front())};
+        std::filesystem::path const outfile{as_u8string_view(options.positional.back())};
 
         if constexpr (detail::has_crunch<options_t>) {
             if (options.crunch) {
