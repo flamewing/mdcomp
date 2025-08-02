@@ -224,20 +224,8 @@ elseif(MSVC)
     endif()
 
     add_compile_options("/W4")
-    add_compile_options("/wd4018") # warning C4018: '>': signed/unsigned mismatch
-    add_compile_options("/wd4127") # warning C4127: conditional expression is constant
-    add_compile_options("/wd4244") # warning C4244: 'initializing': conversion from 'int' to 'char', possible loss of data
-    add_compile_options("/wd4251")
+    add_compile_options("/wd4244") # warning C4244: '<x>': conversion from '<a>' to '<b>', possible loss of data
     add_compile_options("/wd4702") # warning C4702: unreachable code
-
-    # Clang: -Wshorten-64-to-32 -Wimplicit-int-conversion
-    add_compile_options("/wd4267") # warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-    add_compile_options("/wd4389") # warning C4389: '==': signed/unsigned mismatch
-    add_compile_options("/wd4482")
-    add_compile_options("/wd4512")
-    add_compile_options("/wd4701") # warning C4701: potentially uninitialized local variable 'err' used
-    add_compile_options("/wd4706") # warning C4706: assignment within conditional expression
-    add_compile_options("/wd4800") # warning C4800: 'const SymbolDatabase *' : forcing value to bool 'true' or 'false' (performance warning)
 endif()
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
