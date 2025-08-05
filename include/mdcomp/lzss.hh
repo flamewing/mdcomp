@@ -22,6 +22,7 @@
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
 #include "mdcomp/forge_span.hh"
+#include "mdcomp/stream_utils.hh"
 #include "mdcomp/unreachable.hh"
 
 #include <boost/container/container_fwd.hpp>
@@ -233,12 +234,7 @@ namespace lzss {
             node_container_t& nodes, size_t& output_size,
             std::make_signed_t<size_t> position, stream_t& source, size_t length,
             typename Adaptor::edge_type type) noexcept {
-        using symbolwise_data = typename Adaptor::adj_list_node::symbolwise_data;
-        symbolwise_data data(length);
-        source.read(
-                reinterpret_cast<char*>(data.data()),
-                static_cast<std::streamsize>(length * sizeof(stream_t)));
-        nodes.emplace_back(position, std::move(data), type);
+        nodes.emplace_back(position, source.read_from_bytes(length), type);
         output_size += Adaptor::edge_size(nodes.back());
         return true;
     }
@@ -438,6 +434,7 @@ namespace lzss {
     private:
         using descriptor_t        = typename Adaptor::descriptor_t;
         using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
+        using stream_t            = typename Adaptor::stream_t;
         using bit_buffer_t        = obitstream<
                        descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
         // Where we will output to.
@@ -520,6 +517,10 @@ namespace lzss {
             write1(buffer, static_cast<uint8_t>(value));
         }
 
+        void write_as_bytes(std::span<stream_t const> data) {
+            detail::write_as_bytes(buffer, data);
+        }
+
         ostream& write(char* pointer, std::streamsize count) noexcept {
             out.write(pointer, count);
             return *this;
@@ -537,6 +538,7 @@ namespace lzss {
     private:
         using descriptor_t        = typename Adaptor::descriptor_t;
         using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
+        using stream_t            = typename Adaptor::stream_t;
         using bit_buffer_t        = ibitstream<
                        descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
                        Adaptor::need_early_descriptor>;
@@ -562,6 +564,10 @@ namespace lzss {
         // Puts a byte in the input buffer.
         constexpr uint8_t get_byte() noexcept {
             return read1(*in);
+        }
+
+        [[nodiscard]] std::vector<stream_t> read_from_bytes(size_t count) {
+            return detail::read_from_bytes<std::vector<stream_t>>(*in, count);
         }
 
         constexpr istream& read(char* pointer, std::streamsize count) noexcept {
@@ -677,9 +683,7 @@ namespace lzss {
         using data_t          = std::span<stream_t const>;
 
         auto read_stream = [](data_t data, size_t offset) {
-            auto const* pointer
-                    = reinterpret_cast<char const*>(std::addressof(data[offset]));
-            return stream_endian_t::template read<stream_t>(pointer);
+            return stream_endian_t::template read<stream_t>(data[offset]);
         };
 
         // TODO: we should be allocating a std::vector<stream_t const> to begin with.
@@ -837,9 +841,7 @@ namespace lzss {
             buffer.resize(
                     static_cast<size_t>(std::min(length, distance)),
                     boost::container::default_init_t{});
-            dest.read(
-                    reinterpret_cast<char*>(buffer.data()),
-                    static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
+            detail::read_from_bytes(dest, std::span<stream_t>(buffer));
 
             if (length > distance) {
                 buffer.resize(static_cast<size_t>(length));
@@ -858,9 +860,7 @@ namespace lzss {
         }
 
         dest.seekp(pointer);
-        dest.write(
-                reinterpret_cast<char const*>(buffer.data()),
-                static_cast<std::streamsize>(buffer.size() * sizeof(stream_t)));
+        detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
     }
 
     template <adaptor_t Adaptor>

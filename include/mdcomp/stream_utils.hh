@@ -18,6 +18,8 @@
 #ifndef LIB_STREAM_UTILS_HH
 #define LIB_STREAM_UTILS_HH
 
+#include "mdcomp/bigendian_io.hh"
+
 #include <algorithm>
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
@@ -59,6 +61,28 @@ namespace detail {
         while (dest.tellp() < padding_end) {
             dest.put(0);
         }
+    }
+
+    template <std::integral T>
+    inline void read_from_bytes(std::istream& source, std::span<T> data) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        auto* pointer = reinterpret_cast<char*>(data.data());
+        source.read(pointer, static_cast<std::streamsize>(data.size() * sizeof(T)));
+    }
+
+    template <detail::contiguous_container Cont>
+    requires std::integral<typename Cont::value_type>
+    [[nodiscard]] inline Cont read_from_bytes(std::istream& source, size_t count) {
+        Cont data(count);
+        read_from_bytes(source, std::span<typename Cont::value_type>{data});
+        return data;
+    }
+
+    template <std::integral int_t>
+    inline void write_as_bytes(std::ostream& dest, std::span<int_t const> data) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        auto const* pointer = reinterpret_cast<char const*>(data.data());
+        dest.write(pointer, static_cast<std::streamsize>(data.size() * sizeof(int_t)));
     }
 
     // All of the following is stolen from MS-STL.

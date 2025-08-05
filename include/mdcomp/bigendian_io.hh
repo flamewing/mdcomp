@@ -257,6 +257,16 @@ namespace detail {
     template <std::endian endian>
     struct endian_base {
     private:
+        template <std::unsigned_integral To, std::unsigned_integral From>
+        requires(std::same_as<std::remove_cvref_t<From>, std::remove_cvref_t<To>>)
+        [[nodiscard]] INLINE constexpr static To read_impl(From const input) noexcept {
+            if constexpr (endian != std::endian::native) {
+                return detail::byteswap(input);
+            } else {
+                return input;
+            }
+        }
+
         template <std::unsigned_integral To, typename Stream>
         requires has_read_bytes_function<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
@@ -323,6 +333,15 @@ namespace detail {
                 std::advance(input, sizeof(To));
             }
             return value;
+        }
+
+        template <std::unsigned_integral T>
+        [[nodiscard]] INLINE constexpr static T write_impl(T& input, T value) noexcept {
+            if constexpr (endian != std::endian::native) {
+                input = detail::byteswap(value);
+            } else {
+                input = value;
+            }
         }
 
         template <std::unsigned_integral From, typename Stream>

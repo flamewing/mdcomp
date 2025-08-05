@@ -601,12 +601,11 @@ inline int auto_compressor_decompressor(options_t options) {
             }
         }
 
-        constexpr static auto as_u8string_view = [](std::string_view path) {
-            return std::u8string_view{
-                    reinterpret_cast<char8_t const*>(path.data()), path.size()};
+        constexpr static auto as_u8string = [](std::string_view path) {
+            return std::u8string{path.cbegin(), path.cend()};
         };
-        std::filesystem::path const infile{as_u8string_view(options.positional.front())};
-        std::filesystem::path const outfile{as_u8string_view(options.positional.back())};
+        std::filesystem::path const infile{as_u8string(options.positional.front())};
+        std::filesystem::path const outfile{as_u8string(options.positional.back())};
 
         if constexpr (detail::has_crunch<options_t>) {
             if (options.crunch) {

@@ -261,9 +261,7 @@ struct lzkn1_adaptor {
         }
         case packed_symbolwise: {
             auto const data = edge.get_data();
-            dest.write(
-                    reinterpret_cast<char const*>(data.data()),
-                    static_cast<std::streamsize>(data.size() * sizeof(stream_t)));
+            detail::write_as_bytes(dest, data);
             break;
         }
         case dictionary_short:
