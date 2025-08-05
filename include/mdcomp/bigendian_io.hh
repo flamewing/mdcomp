@@ -171,7 +171,7 @@ namespace detail {
     // GCC/clang both have a 128-bit integer type, which this implementation
     // supports; but MSVC compiler does not support a 128-bit integer, so this
     // is not portable.
-    template <std::integral T>
+    template <std::unsigned_integral T>
     [[nodiscard]] CONST_INLINE constexpr T byteswap_impl(T value) noexcept {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
         return std::byteswap(value);
@@ -220,7 +220,7 @@ namespace detail {
             }
         }
 
-        using uint_t = std::make_unsigned_t<std::remove_cv_t<T>>;
+        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
         // Fallback implementation that handles even __int24 etc.
         size_t const nbits = CHAR_BIT;
 
@@ -231,8 +231,8 @@ namespace detail {
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
             uint_t const byte1 = new_value & mask1;
             uint_t const byte2 = new_value & mask2;
-            uint_t const byte3 = byte1 << diff;
-            uint_t const byte4 = byte2 >> diff;
+            auto const   byte3 = static_cast<uint_t>(byte1 << diff);
+            auto const   byte4 = static_cast<uint_t>(byte2 >> diff);
             new_value ^= byte1;
             new_value ^= byte2;
             new_value ^= byte3;
@@ -250,8 +250,8 @@ namespace detail {
         // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
         // They can be both 64-bit depending on platform, and which one is used
         // in the definition of uint64_t, the other will not match.
-        return std::bit_cast<T>(
-                byteswap_impl(std::bit_cast<select_unsigned_t<sizeof(T)>>(value)));
+        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
+        return std::bit_cast<T>(byteswap_impl(std::bit_cast<uint_t>(value)));
     }
 
     template <std::endian endian>

@@ -108,11 +108,12 @@ namespace detail {
 
     template <std::signed_integral int_t>
     [[nodiscard]] CONST_INLINE constexpr auto reverse_bits(int_t value) noexcept {
-        return std::bit_cast<int_t>(reverse_bits(std::make_unsigned_t<int_t>(value)));
+        using uint_t = std::make_unsigned_t<int_t>;
+        return std::bit_cast<int_t>(reverse_bits(std::bit_cast<uint_t>(value)));
     }
 
-    static_assert(reverse_bits<uint8_t>(0x35U) == 0xacU);
-    static_assert(reverse_bits<uint16_t>(0x1357U) == 0xeac8U);
+    static_assert(reverse_bits(uint8_t{0x35U}) == uint8_t{0xacU});
+    static_assert(reverse_bits(uint16_t{0x1357U}) == uint16_t{0xeac8U});
     static_assert(reverse_bits(0x01234567U) == 0xE6A2C480U);
     static_assert(reverse_bits(0x0123456789abcdefULL) == 0xf7b3d591E6A2C480ULL);
 
