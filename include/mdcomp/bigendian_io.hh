@@ -92,7 +92,7 @@ namespace detail {
                                       };
 
     template <size_t Size>
-    CONST_INLINE constexpr auto select_unsigned() noexcept {
+    CONST_INLINE constexpr auto uint_for_size() noexcept {
         static_assert(std::has_single_bit(Size), "Size must be a power of 2");
         static_assert(
                 Size > 0 && Size <= sizeof(uint64_t),
@@ -109,7 +109,10 @@ namespace detail {
     }
 
     template <size_t Size>
-    using select_unsigned_t = decltype(select_unsigned<Size>());
+    using uint_for_size_t = decltype(uint_for_size<Size>());
+
+    template <typename T>
+    using uint_for_t = decltype(uint_for_size<sizeof(T)>());
 
     // Note: fails for stupid stuff like
     // std::reverse_iterator<std::reverse_iterator<T>>. This failure is
@@ -250,7 +253,7 @@ namespace detail {
         // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
         // They can be both 64-bit depending on platform, and which one is used
         // in the definition of uint64_t, the other will not match.
-        using uint_t = select_unsigned_t<sizeof(T)>;
+        using uint_t = uint_for_t<T>;
         return std::bit_cast<T>(byteswap_impl(std::bit_cast<uint_t>(value)));
     }
 
@@ -439,9 +442,11 @@ namespace detail {
         }
 
         template <size_t Size, typename Src>
-        [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(noexcept(
-                read_impl<detail::select_unsigned_t<Size>>(std::forward<Src>(input)))) {
-            return read_impl<detail::select_unsigned_t<Size>>(std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(
+                noexcept(read_impl<detail::uint_for_size_t<Size>>(
+                        std::forward<Src>(input)))) {
+            return read_impl<detail::uint_for_size_t<Size>>(
+                    std::forward<Src>(input));
         }
 
         template <typename Src, std::integral To>
@@ -494,7 +499,7 @@ namespace detail {
 
         template <size_t Size, typename Dst>
         INLINE constexpr static void
-                write_n(Dst&& output, detail::select_unsigned_t<Size> value) noexcept(
+                write_n(Dst&& output, detail::uint_for_size_t<Size> value) noexcept(
                         noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
         }
