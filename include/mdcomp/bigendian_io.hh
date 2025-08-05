@@ -250,7 +250,7 @@ namespace detail {
         // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
         // They can be both 64-bit depending on platform, and which one is used
         // in the definition of uint64_t, the other will not match.
-        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
+        using uint_t = select_unsigned_t<sizeof(T)>;
         return std::bit_cast<T>(byteswap_impl(std::bit_cast<uint_t>(value)));
     }
 
@@ -492,11 +492,10 @@ namespace detail {
             write_impl(std::forward<Dst>(output), value);
         }
 
-        template <
-                size_t Size, typename Dst,
-                typename Uint_t = detail::select_unsigned_t<Size>>
-        INLINE constexpr static void write_n(Dst&& output, Uint_t value) noexcept(
-                noexcept(write_impl(std::forward<Dst>(output), value))) {
+        template <size_t Size, typename Dst>
+        INLINE constexpr static void
+                write_n(Dst&& output, detail::select_unsigned_t<Size> value) noexcept(
+                        noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
         }
 
