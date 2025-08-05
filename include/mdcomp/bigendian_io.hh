@@ -442,11 +442,9 @@ namespace detail {
         }
 
         template <size_t Size, typename Src>
-        [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(
-                noexcept(read_impl<detail::uint_for_size_t<Size>>(
-                        std::forward<Src>(input)))) {
-            return read_impl<detail::uint_for_size_t<Size>>(
-                    std::forward<Src>(input));
+        [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(noexcept(
+                read_impl<detail::uint_for_size_t<Size>>(std::forward<Src>(input)))) {
+            return read_impl<detail::uint_for_size_t<Size>>(std::forward<Src>(input));
         }
 
         template <typename Src, std::integral To>
