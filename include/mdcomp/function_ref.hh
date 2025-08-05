@@ -290,8 +290,8 @@ namespace std23 {
         template <class T>
         using cv = signature::template cv<T>;
         template <class T>
-        using cvref                = cv<T>&;
-        constexpr static bool noex = signature::is_noexcept;
+        using cvref                     = cv<T>&;
+        constexpr static bool no_except = signature::is_noexcept;
 
         template <class... T>
         constexpr static bool is_invocable_using
@@ -306,7 +306,8 @@ namespace std23 {
         explicit(false) function_ref(F* callable) noexcept
         requires std::is_function_v<F> && is_invocable_using<F>
                 : fun_pointer(
-                          [](storage func, param_t<Args>... args) noexcept(noex) -> R {
+                          [](storage func,
+                             param_t<Args>... args) noexcept(no_except) -> R {
                               if constexpr (std::is_void_v<R>) {
                                   get<F>(func)(static_cast<decltype(args)>(args)...);
                               } else {
@@ -323,7 +324,8 @@ namespace std23 {
         requires(!std::is_same_v<std::remove_cvref_t<F>, function_ref>
                  && !std::is_member_pointer_v<T> && is_invocable_using<cvref<T>>)
                 : fun_pointer(
-                          [](storage func, param_t<Args>... args) noexcept(noex) -> R {
+                          [](storage func,
+                             param_t<Args>... args) noexcept(no_except) -> R {
                               cvref<T> obj = *get<T>(func);
                               if constexpr (std::is_void_v<R>) {
                                   obj(static_cast<decltype(args)>(args)...);
@@ -342,12 +344,16 @@ namespace std23 {
         template <auto f>
         explicit(false) constexpr function_ref(nontype_t<f>) noexcept
         requires is_invocable_using<decltype(f)>
-                : fun_pointer([](storage, param_t<Args>... args) noexcept(noex) -> R {
-                      return std23::invoke_r<R>(f, static_cast<decltype(args)>(args)...);
-                  }) {
+                : fun_pointer(
+                          [](storage, param_t<Args>... args) noexcept(no_except) -> R {
+                              return std23::invoke_r<R>(
+                                      f, static_cast<decltype(args)>(args)...);
+                          }) {
             using func_t = decltype(f);
             if constexpr (std::is_pointer_v<func_t> || std::is_member_pointer_v<func_t>) {
-                static_assert(f != nullptr, "NTTP callable must be usable");
+                static_assert(
+                        f != nullptr,
+                        "Non-Type Template Parameter callable must be usable");
             }
         }
 
@@ -356,7 +362,8 @@ namespace std23 {
         requires(!std::is_rvalue_reference_v<U &&>
                  && is_invocable_using<decltype(f), cvref<T>>)
                 : fun_pointer(
-                          [](storage self, param_t<Args>... args) noexcept(noex) -> R {
+                          [](storage self,
+                             param_t<Args>... args) noexcept(no_except) -> R {
                               cvref<T> cobj = *get<T>(self);
                               return std23::invoke_r<R>(
                                       f, cobj, static_cast<decltype(args)>(args)...);
@@ -364,7 +371,9 @@ namespace std23 {
                   object(std::addressof(obj)) {
             using func_t = decltype(f);
             if constexpr (std::is_pointer_v<func_t> || std::is_member_pointer_v<func_t>) {
-                static_assert(f != nullptr, "NTTP callable must be usable");
+                static_assert(
+                        f != nullptr,
+                        "Non-Type Template Parameter callable must be usable");
             }
         }
 
@@ -374,7 +383,8 @@ namespace std23 {
         constexpr function_ref(nontype_t<f>, cv<T>* obj) noexcept
         requires is_invocable_using<decltype(f), decltype(obj)>
                 : fun_pointer(
-                          [](storage self, param_t<Args>... args) noexcept(noex) -> R {
+                          [](storage self,
+                             param_t<Args>... args) noexcept(no_except) -> R {
                               return std23::invoke_r<R>(
                                       f, get<cv<T>>(self),
                                       static_cast<decltype(args)>(args)...);
@@ -382,7 +392,9 @@ namespace std23 {
                   object(obj) {
             using func_t = decltype(f);
             if constexpr (std::is_pointer_v<func_t> || std::is_member_pointer_v<func_t>) {
-                static_assert(f != nullptr, "NTTP callable must be usable");
+                static_assert(
+                        f != nullptr,
+                        "Non-Type Template Parameter callable must be usable");
             }
 
             if constexpr (std::is_member_pointer_v<func_t>) {
@@ -390,7 +402,7 @@ namespace std23 {
             }
         }
 
-        constexpr R operator()(Args... args) const noexcept(noex) {
+        constexpr R operator()(Args... args) const noexcept(no_except) {
             return fun_pointer(object, args...);
         }
     };

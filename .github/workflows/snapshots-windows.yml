@@ -56,10 +56,10 @@ jobs:
           done
           SNAPSHOT_PATH=$(cygpath -m $(pwd -P))
           echo "snapshot_path=${SNAPSHOT_PATH}" >> $GITHUB_OUTPUT
-          export BUILDFILE="v0.2.0.$(date --utc +'%Y%m%d')"
-          echo "buildfile=${BUILDFILE}" >> $GITHUB_OUTPUT
+          export BUILD_FILE="v0.2.0.$(date --utc +'%Y%m%d')"
+          echo "build_file=${BUILD_FILE}" >> $GITHUB_OUTPUT
           cd build
-          "/c/Program Files/7-Zip/7z.exe" -tzip a ${SNAPSHOT_PATH}/mdcomp-${BUILDFILE}.zip -mx9 -mmt *.{exe,dll}
+          "/c/Program Files/7-Zip/7z.exe" -tzip a ${SNAPSHOT_PATH}/mdcomp-${BUILD_FILE}.zip -mx9 -mmt *.{exe,dll}
       - name: VirusTotal Scan
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         id: scan_files
@@ -69,11 +69,11 @@ jobs:
           github_token: ${{ github.token }}
           update_release_body: true
           files: |
-            ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
+            ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.build_file }}.zip
       - name: Generate VirusTotal Body
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
-          echo "Snapshot ${{ steps.create_package.outputs.buildfile }}" > ${{ steps.create_package.outputs.snapshot_path }}/body.txt
+          echo "Snapshot ${{ steps.create_package.outputs.build_file }}" > ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           echo "" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           echo "🛡 [VirusTotal GitHub Action](https://github.com/crazy-max/ghaction-virustotal) analysis:" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           echo "" >> ${{ steps.create_package.outputs.snapshot_path }}/body.txt
@@ -89,8 +89,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: snapshot-${{ steps.create_package.outputs.buildfile }}
-          release_name: Snapshot ${{ steps.create_package.outputs.buildfile }}
+          tag_name: snapshot-${{ steps.create_package.outputs.build_file }}
+          release_name: Snapshot ${{ steps.create_package.outputs.build_file }}
           body_path: ${{ steps.create_package.outputs.snapshot_path }}/body.txt
           draft: true
           prerelease: false
@@ -103,8 +103,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
-          asset_name: mdcomp-${{ steps.create_package.outputs.buildfile }}.zip
+          asset_path: ${{ steps.create_package.outputs.snapshot_path }}/mdcomp-${{ steps.create_package.outputs.build_file }}.zip
+          asset_name: mdcomp-${{ steps.create_package.outputs.build_file }}.zip
           asset_content_type: application/zip
       - name: Finish release
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}

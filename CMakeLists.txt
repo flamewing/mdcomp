@@ -70,7 +70,7 @@ else()
 endif()
 
 function(add_compile_options_safe FLAG)
-    string(REGEX REPLACE "[-=+]" "" FLAG_NO_SIGNS ${FLAG}) # <- The variable recieving the result of the test can't have those signs in its name
+    string(REGEX REPLACE "[-=+]" "" FLAG_NO_SIGNS ${FLAG}) # <- The variable receiving the result of the test can't have those signs in its name
     check_cxx_compiler_flag(${FLAG} CXX_COMPILER_SUPPORTS_${FLAG_NO_SIGNS})
 
     if(CXX_COMPILER_SUPPORTS_${FLAG_NO_SIGNS})
@@ -240,10 +240,10 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     endif()
 
     # Set FrameworkPathOverride to get rid of MSB3644 warnings.
-    join(netfxpath "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
+    join(net_fx_path "C:\\Program Files\\Reference Assemblies\\Microsoft\\Framework\\.NETFramework\\v4.0")
     file(WRITE run-msbuild.bat "
         ${MSBUILD_SETUP}
-        ${CMAKE_MAKE_PROGRAM} -p:FrameworkPathOverride=\"${netfxpath}\" %*")
+        ${CMAKE_MAKE_PROGRAM} -p:FrameworkPathOverride=\"${net_fx_path}\" %*")
 endif()
 
 set(COMMON_HEADERS
@@ -258,12 +258,12 @@ set(COMMON_HEADERS
 )
 
 # Interface library for a few exported headers.
-set(BIGENDIANIO_HEADERS
+set(BIG_ENDIAN_IO_HEADERS
     "include/mdcomp/bigendian_io.hh"
     "include/mdcomp/bitstream.hh"
     "include/mdcomp/ignore_unused_variable_warning.hh"
 )
-add_library(bigendian_io INTERFACE "${BIGENDIANIO_HEADERS}")
+add_library(bigendian_io INTERFACE "${BIG_ENDIAN_IO_HEADERS}")
 add_library(mdcomp::bigendian_io ALIAS bigendian_io)
 target_include_directories(bigendian_io
     INTERFACE
@@ -272,7 +272,7 @@ target_include_directories(bigendian_io
 )
 set_target_properties(bigendian_io
     PROPERTIES
-    PUBLIC_HEADER "${BIGENDIANIO_HEADERS}"
+    PUBLIC_HEADER "${BIG_ENDIAN_IO_HEADERS}"
 )
 
 # Dummy library for generating compile_commands.json that
@@ -296,86 +296,86 @@ target_include_directories(dummy-mdcomp
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-function(define_lib_internal TYPE TARGETNAME OUTPUT SRCFILE HDRFILE)
+function(define_lib_internal TYPE TARGET_NAME OUTPUT SRC_FILE HDR_FILE)
     if("${TYPE}" STREQUAL "OBJECT")
-        add_library("${TARGETNAME}"
+        add_library("${TARGET_NAME}"
             OBJECT
-            "${SRCFILE}"
-            "${HDRFILE}"
+            "${SRC_FILE}"
+            "${HDR_FILE}"
             "${COMMON_HEADERS}"
         )
-        set_property(TARGET "${TARGETNAME}" PROPERTY POSITION_INDEPENDENT_CODE 1)
-        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
+        set_property(TARGET "${TARGET_NAME}" PROPERTY POSITION_INDEPENDENT_CODE 1)
+        set_target_properties(${TARGET_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
     elseif("${TYPE}" STREQUAL "STATIC")
-        add_library("${TARGETNAME}" STATIC $<TARGET_OBJECTS:${OUTPUT}Obj>)
-        set_target_properties(${TARGETNAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
+        add_library("${TARGET_NAME}" STATIC $<TARGET_OBJECTS:${OUTPUT}Obj>)
+        set_target_properties(${TARGET_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
     else()
-        add_library("${TARGETNAME}" SHARED $<TARGET_OBJECTS:${OUTPUT}Obj>)
+        add_library("${TARGET_NAME}" SHARED $<TARGET_OBJECTS:${OUTPUT}Obj>)
     endif()
 
-    add_library("mdcomp::${TARGETNAME}" ALIAS "${TARGETNAME}")
-    target_include_directories(${TARGETNAME}
+    add_library("mdcomp::${TARGET_NAME}" ALIAS "${TARGET_NAME}")
+    target_include_directories(${TARGET_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
-    target_link_libraries(${TARGETNAME}
+    target_link_libraries(${TARGET_NAME}
         INTERFACE
         bigendian_io
     )
-    set_target_properties(${TARGETNAME}
+    set_target_properties(${TARGET_NAME}
         PROPERTIES
-        PUBLIC_HEADER "${HDRFILE};${COMMON_HEADERS}"
+        PUBLIC_HEADER "${HDR_FILE};${COMMON_HEADERS}"
     )
 endfunction()
 
-function(define_lib TARGETNAME SRCFILE HDRFILE)
+function(define_lib TARGET_NAME SRC_FILE HDR_FILE)
     define_lib_internal(
         "OBJECT"
-        "${TARGETNAME}Obj"
-        "${TARGETNAME}"
-        "${SRCFILE}"
-        "${HDRFILE}"
+        "${TARGET_NAME}Obj"
+        "${TARGET_NAME}"
+        "${SRC_FILE}"
+        "${HDR_FILE}"
         "${COMMON_HEADERS}"
     )
     define_lib_internal(
         "STATIC"
-        "${TARGETNAME}Static"
-        "${TARGETNAME}"
-        "${SRCFILE}"
-        "${HDRFILE}"
+        "${TARGET_NAME}Static"
+        "${TARGET_NAME}"
+        "${SRC_FILE}"
+        "${HDR_FILE}"
         "${COMMON_HEADERS}"
     )
     define_lib_internal(
         "SHARED"
-        "${TARGETNAME}"
-        "${TARGETNAME}"
-        "${SRCFILE}"
-        "${HDRFILE}"
+        "${TARGET_NAME}"
+        "${TARGET_NAME}"
+        "${SRC_FILE}"
+        "${HDR_FILE}"
         "${COMMON_HEADERS}"
     )
 endfunction()
 
-function(define_exe TARGETNAME SRCFILE LIBNAME EXENAME)
-    add_executable(${TARGETNAME}
-        "${SRCFILE}"
+function(define_exe TARGET_NAME SRC_FILE LIB_NAME EXE_NAME)
+    add_executable(${TARGET_NAME}
+        "${SRC_FILE}"
     )
-    target_include_directories(${TARGETNAME}
+    target_include_directories(${TARGET_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
-    target_link_libraries(${TARGETNAME} PUBLIC ${LIBNAME})
+    target_link_libraries(${TARGET_NAME} PUBLIC ${LIB_NAME})
 
     if(MSVC)
-        target_link_libraries(${TARGETNAME}
+        target_link_libraries(${TARGET_NAME}
             PRIVATE unofficial::getopt-win32::getopt
         )
     endif()
 
-    set_target_properties(${TARGETNAME}
+    set_target_properties(${TARGET_NAME}
         PROPERTIES
-        OUTPUT_NAME ${EXENAME}
+        OUTPUT_NAME ${EXE_NAME}
     )
 endfunction()
 
