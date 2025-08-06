@@ -174,6 +174,37 @@ namespace detail {
     template <class... Ts>
     overloaded(Ts...) -> overloaded<Ts...>;
 
+    template <std::unsigned_integral T>
+    [[nodiscard]] CONST_INLINE constexpr T fallback_byteswap(T value) noexcept {
+        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
+        // Fallback implementation that handles even __int24 etc.
+        constexpr size_t const nbits = CHAR_BIT;
+        constexpr size_t const delta = 2ULL * nbits;
+
+        size_t bit_offset     = nbits * (sizeof(T) + 1);
+        size_t shift_amount   = bit_offset - delta;
+        uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
+        auto   high_byte_mask = static_cast<uint_t>(low_byte_mask << shift_amount);
+        uint_t new_value      = value;
+        for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
+            bit_offset -= delta;
+            uint_t const low_byte  = new_value & low_byte_mask;
+            uint_t const high_byte = new_value & high_byte_mask;
+            new_value ^= low_byte;
+            new_value ^= high_byte;
+            new_value ^= static_cast<uint_t>(low_byte << bit_offset);
+            new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
+            low_byte_mask  = std::rotl(low_byte_mask, nbits);
+            high_byte_mask = std::rotr(high_byte_mask, nbits);
+        }
+        return uint_t(new_value & std::numeric_limits<uint_t>::max());
+    };
+
+    static_assert(fallback_byteswap(uint8_t{0x35U}) == uint8_t{0x35U});
+    static_assert(fallback_byteswap(uint16_t{0x1357U}) == uint16_t{0x5713U});
+    static_assert(fallback_byteswap(0x01234567U) == 0x67452301U);
+    static_assert(fallback_byteswap(0x0123456789abcdefULL) == 0xefcdab8967452301ULL);
+
     // Mashed together implementation based on libstdc++/libc++/MS STL.
     // GCC/clang both have a 128-bit integer type, which this implementation
     // supports; but MSVC compiler does not support a 128-bit integer, so this
@@ -183,30 +214,6 @@ namespace detail {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
         return std::byteswap(value);
 #else
-        constexpr auto fallback_byteswap = []<typename UT>(UT val) noexcept {
-            using uint_t = std::make_unsigned_t<std::remove_cvref_t<UT>>;
-            // Fallback implementation that handles even __int24 etc.
-            constexpr size_t const nbits = CHAR_BIT;
-            constexpr size_t const delta = 2ULL * nbits;
-
-            size_t bit_offset     = nbits * (sizeof(T) + 1);
-            size_t shift_amount   = bit_offset - delta;
-            uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
-            auto   high_byte_mask = static_cast<uint_t>(low_byte_mask << shift_amount);
-            uint_t new_value      = val;
-            for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-                bit_offset -= delta;
-                uint_t const low_byte  = new_value & low_byte_mask;
-                uint_t const high_byte = new_value & high_byte_mask;
-                new_value ^= low_byte;
-                new_value ^= high_byte;
-                new_value ^= static_cast<uint_t>(low_byte << bit_offset);
-                new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
-                low_byte_mask  = std::rotl(low_byte_mask, nbits);
-                high_byte_mask = std::rotr(high_byte_mask, nbits);
-            }
-            return uint_t(new_value & std::numeric_limits<uint_t>::max());
-        };
         if constexpr (CHAR_BIT == 8) {
             if (!std::is_constant_evaluated()) {
                 constexpr auto const builtin_bswap = overloaded(
