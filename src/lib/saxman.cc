@@ -155,6 +155,8 @@ struct saxman_adaptor {
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {
+        constexpr auto const buffer_size = saxman_adaptor::search_buf_size;
+        constexpr auto const max_byte    = std::numeric_limits<uint8_t>::max();
         switch (edge.get_type()) {
             using enum edge_type;
         case symbolwise:
@@ -166,9 +168,9 @@ struct saxman_adaptor {
             size_t const length   = edge.get_length();
             size_t const dist     = edge.get_distance();
             size_t const position = edge.get_position();
-            size_t const base     = (position - dist - 0x12U) & 0xFFFU;
-            size_t const low      = base & 0xFFU;
-            size_t const high     = ((length - 3U) & 0x0FU) | ((base >> 4U) & 0xF0U);
+            size_t const base     = (position - dist - 18U) % buffer_size;
+            size_t const low      = base & max_byte;
+            size_t const high     = ((length - 3U) % 16) | (((base ^ low) >> 4U));
             output.descriptor_bit(0);
             output.put_byte(low);
             output.put_byte(high);
@@ -213,11 +215,12 @@ struct saxman_adaptor {
         // The offset is stored as being absolute within current 0x1000-byte block, with
         // part of it being remapped to the end of the previous 0x1000-byte block. We just
         // rebase it around the current output position.
-        auto const abs_offset = ((high | ((low & 0xF0U) << 4U)) + 18U) % buffer_size;
-        auto const length     = (low & 0xFU) + 3;
-        auto const distance   = buffer_size - ((abs_offset - output_size) % buffer_size);
+        auto const offset   = ((high | ((low & 0xF0U) << 4U)) + 18U) % buffer_size;
+        auto const length   = (low % 16) + 3U;
+        auto const base     = ((offset - output_size) % buffer_size) + output_size;
+        auto const distance = output_size + buffer_size - base;
 
-        if (distance > 0) {
+        if (base >= buffer_size) {
             // If the offset is before the current output position, we copy bytes from the
             // given location.
             return lzss::dictionary_match<saxman_adaptor>(
