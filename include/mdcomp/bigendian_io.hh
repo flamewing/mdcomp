@@ -187,27 +187,26 @@ namespace detail {
             using uint_t = std::make_unsigned_t<std::remove_cvref_t<UT>>;
             // Fallback implementation that handles even __int24 etc.
             constexpr size_t const nbits = CHAR_BIT;
+            constexpr size_t const delta = 2ULL * nbits;
 
-            size_t diff      = nbits * (sizeof(T) - 1);
-            uint_t mask1     = std::numeric_limits<uint8_t>::max();
-            auto   mask2     = static_cast<uint_t>(mask1 << diff);
-            uint_t new_value = val;
+            size_t bit_offset     = nbits * (sizeof(T) + 1);
+            size_t shift_amount   = bit_offset - delta;
+            uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
+            auto   high_byte_mask = static_cast<uint_t>(low_byte_mask << shift_amount);
+            uint_t new_value      = val;
             for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-                uint_t const byte1 = new_value & mask1;
-                uint_t const byte2 = new_value & mask2;
-                auto const   byte3 = static_cast<uint_t>(byte1 << diff);
-                auto const   byte4 = static_cast<uint_t>(byte2 >> diff);
-                new_value ^= byte1;
-                new_value ^= byte2;
-                new_value ^= byte3;
-                new_value ^= byte4;
-                mask1 = std::rotl(mask1, nbits);
-                mask2 = std::rotr(mask2, nbits);
-                diff -= 2ULL * nbits;
+                bit_offset -= delta;
+                uint_t const low_byte  = new_value & low_byte_mask;
+                uint_t const high_byte = new_value & high_byte_mask;
+                new_value ^= low_byte;
+                new_value ^= high_byte;
+                new_value ^= static_cast<uint_t>(low_byte << bit_offset);
+                new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
+                low_byte_mask  = std::rotl(low_byte_mask, nbits);
+                high_byte_mask = std::rotr(high_byte_mask, nbits);
             }
             return uint_t(new_value & std::numeric_limits<uint_t>::max());
         };
-        // NOLINTNEXTLINE(misc-redundant-expression)
         if constexpr (CHAR_BIT == 8) {
             if (!std::is_constant_evaluated()) {
                 constexpr auto const builtin_bswap = overloaded(
@@ -257,6 +256,11 @@ namespace detail {
         }
 #endif
     }
+
+    static_assert(byteswap_impl(uint8_t{0x35U}) == uint8_t{0x35U});
+    static_assert(byteswap_impl(uint16_t{0x1357U}) == uint16_t{0x5713U});
+    static_assert(byteswap_impl(0x01234567U) == 0x67452301U);
+    static_assert(byteswap_impl(0x0123456789abcdefULL) == 0xefcdab8967452301ULL);
 
     template <std::integral T>
     [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
