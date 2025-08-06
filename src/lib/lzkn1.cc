@@ -28,7 +28,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <format>
 #include <iostream>
 #include <istream>
 #include <limits>
@@ -195,9 +194,8 @@ struct lzkn1_adaptor {
         // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
         default:
         case invalid:
-            std::cerr << std::format(
-                    "Compression produced invalid edge type {}\n",
-                    static_cast<size_t>(edge.get_type()));
+            std::cerr << "Compression produced invalid edge type "
+                      << static_cast<size_t>(edge.get_type()) << '\n';
             break;
         }
     }
@@ -278,9 +276,8 @@ struct lzkn1_adaptor {
         // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
         default:
         case invalid:
-            std::cerr << std::format(
-                    "Decompression produced invalid edge type {}\n",
-                    static_cast<size_t>(edge.get_type()));
+            std::cerr << "Decompression produced invalid edge type "
+                      << static_cast<size_t>(edge.get_type()) << '\n';
             break;
         }
         return edge_size(edge);
@@ -301,9 +298,8 @@ struct lzkn1_adaptor {
         // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)
         default:
         case invalid:
-            std::cerr << std::format(
-                    "Decompression produced invalid edge type {}\n",
-                    static_cast<size_t>(edge.get_type()));
+            std::cerr << "Decompression produced invalid edge type "
+                      << static_cast<size_t>(edge.get_type()) << '\n';
             return 0;
         }
     }
