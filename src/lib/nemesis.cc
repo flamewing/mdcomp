@@ -1003,7 +1003,7 @@ public:
             // Is this iteration better than the best?
             if (temp_size_est < size_est) {
                 // If yes, save the code_map and file size.
-                code_map = temp_code_map;
+                code_map = std::move(temp_code_map);
                 size_est = temp_size_est;
             }
         }
