@@ -225,7 +225,6 @@ elseif(MSVC)
 
     add_compile_options("/W4")
     add_compile_options("/wd4244") # warning C4244: '<x>': conversion from '<a>' to '<b>', possible loss of data
-    add_compile_options("/wd4702") # warning C4702: unreachable code
 endif()
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")

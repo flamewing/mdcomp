@@ -59,6 +59,10 @@
 #    define PURE_INLINE  inline
 #endif
 
+#if defined(_MSC_VER) && !defined(__has_builtin)
+#    define __has_builtin(x) 0
+#endif
+
 namespace detail {
     // Meta-programming stuff.
 
@@ -179,13 +183,37 @@ namespace detail {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
         return std::byteswap(value);
 #else
+        constexpr auto fallback_byteswap = []<typename UT>(UT val) noexcept {
+            using uint_t = std::make_unsigned_t<std::remove_cvref_t<UT>>;
+            // Fallback implementation that handles even __int24 etc.
+            constexpr size_t const nbits = CHAR_BIT;
+
+            size_t diff      = nbits * (sizeof(T) - 1);
+            uint_t mask1     = std::numeric_limits<uint8_t>::max();
+            auto   mask2     = static_cast<uint_t>(mask1 << diff);
+            uint_t new_value = val;
+            for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
+                uint_t const byte1 = new_value & mask1;
+                uint_t const byte2 = new_value & mask2;
+                auto const   byte3 = static_cast<uint_t>(byte1 << diff);
+                auto const   byte4 = static_cast<uint_t>(byte2 >> diff);
+                new_value ^= byte1;
+                new_value ^= byte2;
+                new_value ^= byte3;
+                new_value ^= byte4;
+                mask1 = std::rotl(mask1, nbits);
+                mask2 = std::rotr(mask2, nbits);
+                diff -= 2ULL * nbits;
+            }
+            return uint_t(new_value & std::numeric_limits<uint_t>::max());
+        };
         // NOLINTNEXTLINE(misc-redundant-expression)
         if constexpr (CHAR_BIT == 8) {
-            if constexpr (sizeof(T) == 1) {
-                return value;
-            }
             if (!std::is_constant_evaluated()) {
                 constexpr auto const builtin_bswap = overloaded(
+                        [](uint8_t const val) {
+                            return val;    // No-op for 8-bit values.
+                        },
 #    ifdef __GNUG__
                         [](uint16_t const val) {
                             return __builtin_bswap16(val);
@@ -195,7 +223,7 @@ namespace detail {
                         },
                         [](uint64_t const val) {
                             return __builtin_bswap64(val);
-                        }
+                        },
 #    elif defined(_MSC_VER)
                         [](uint16_t const val) {
                             return _byteswap_ushort(val);
@@ -205,46 +233,28 @@ namespace detail {
                         },
                         [](uint64_t const val) {
                             return _byteswap_uint64(val);
-                        }
+                        },
 #    endif
-                );
-                if constexpr (sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8) {
-                    return builtin_bswap(value);
-                }
-#    ifdef __GNUG__
+                        [](auto const& val) {
+                            return fallback_byteswap(val);
+                        });
                 if constexpr (sizeof(T) == 16) {
                     if constexpr (__has_builtin(__builtin_bswap128)) {
                         return __builtin_bswap128(value);
+                    } else {
+                        T high = builtin_bswap(static_cast<uint64_t>(value >> 64U));
+                        T low  = builtin_bswap(static_cast<uint64_t>(value));
+                        return high | (low << 64U);
                     }
-                    return (__builtin_bswap64(value >> 64U)
-                            | (static_cast<T>(__builtin_bswap64(value)) << 64U));
+                } else {
+                    return builtin_bswap(value);
                 }
-#    endif
+            } else {
+                return fallback_byteswap(value);
             }
+        } else {
+            return fallback_byteswap(value);
         }
-
-        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
-        // Fallback implementation that handles even __int24 etc.
-        size_t const nbits = CHAR_BIT;
-
-        size_t diff      = nbits * (sizeof(T) - 1);
-        uint_t mask1     = std::numeric_limits<uint8_t>::max();
-        auto   mask2     = static_cast<uint_t>(mask1 << diff);
-        uint_t new_value = value;
-        for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-            uint_t const byte1 = new_value & mask1;
-            uint_t const byte2 = new_value & mask2;
-            auto const   byte3 = static_cast<uint_t>(byte1 << diff);
-            auto const   byte4 = static_cast<uint_t>(byte2 >> diff);
-            new_value ^= byte1;
-            new_value ^= byte2;
-            new_value ^= byte3;
-            new_value ^= byte4;
-            mask1 = std::rotl(mask1, nbits);
-            mask2 = std::rotr(mask2, nbits);
-            diff -= 2ULL * nbits;
-        }
-        return uint_t(new_value & std::numeric_limits<uint_t>::max());
 #endif
     }
 

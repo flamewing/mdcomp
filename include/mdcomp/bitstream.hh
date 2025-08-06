@@ -70,8 +70,9 @@ namespace detail {
             uint_t const val2    = value ^ val1;
             uint_t const new_val = (factor * val1) + (val2 / factor);
             return reverse_byte_bits<new_size, new_mask>(new_val);
+        } else {
+            return value;
         }
-        return value;
     }
 
     template <std::unsigned_integral uint_t>
