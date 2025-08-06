@@ -181,11 +181,10 @@ namespace detail {
         constexpr size_t const nbits = CHAR_BIT;
         constexpr size_t const delta = 2ULL * nbits;
 
-        size_t       bit_offset     = nbits * (sizeof(T) + 1);
-        size_t const shift_amount   = bit_offset - delta;
-        uint_t       low_byte_mask  = std::numeric_limits<uint8_t>::max();
-        auto         high_byte_mask = static_cast<uint_t>(low_byte_mask << shift_amount);
-        uint_t       new_value      = value;
+        uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
+        uint_t high_byte_mask = std::rotr(low_byte_mask, nbits);
+        uint_t new_value      = value;
+        size_t bit_offset     = nbits * (sizeof(T) + 1);
         for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
             bit_offset -= delta;
             uint_t const low_byte  = new_value & low_byte_mask;
