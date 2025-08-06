@@ -198,7 +198,7 @@ namespace detail {
             high_byte_mask = std::rotr(high_byte_mask, nbits);
         }
         return uint_t(new_value & std::numeric_limits<uint_t>::max());
-    };
+    }
 
     static_assert(fallback_byteswap(uint8_t{0x35U}) == uint8_t{0x35U});
     static_assert(fallback_byteswap(uint16_t{0x1357U}) == uint16_t{0x5713U});
