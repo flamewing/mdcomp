@@ -817,6 +817,19 @@ namespace lzss {
         return result;
     }
 
+    template <adaptor_t Adaptor>
+    inline void fill(
+            std::iostream& dest, typename Adaptor::stream_t const value,
+            std::make_signed_t<size_t> const length) noexcept {
+        constexpr static size_t const buffer_size = Adaptor::look_ahead_buf_size;
+
+        using stream_t = typename Adaptor::stream_t;
+        using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
+
+        buffer_t buffer(static_cast<size_t>(length), value);
+        detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+    }
+
     // NOLINTBEGIN(bugprone-easily-swappable-parameters)
     template <adaptor_t Adaptor>
     inline void copy(
@@ -832,23 +845,23 @@ namespace lzss {
         diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
 
-        buffer_t buffer;
         if (distance == 1) {
-            buffer.resize(
-                    static_cast<size_t>(length),
-                    source_endian::template read<stream_t>(dest));
+            stream_t const dest_value = source_endian::template read<stream_t>(dest);
+            dest.seekp(pointer);
+            lzss::fill<Adaptor>(dest, dest_value, length);
         } else {
-            buffer.resize(
+            buffer_t buffer(
                     static_cast<size_t>(std::min(length, distance)),
                     boost::container::default_init_t{});
             detail::read_from_bytes(dest, std::span<stream_t>(buffer));
 
             if (length > distance) {
-                buffer.resize(static_cast<size_t>(length));
-                auto       count  = length - distance;
-                auto const start  = std::ranges::cbegin(buffer);
-                auto       output = std::ranges::begin(buffer) + distance;
-                auto       copied = distance;
+                auto const start = std::ranges::cbegin(buffer);
+                buffer.resize(
+                        static_cast<size_t>(length), boost::container::default_init_t{});
+                auto count  = length - distance;
+                auto output = std::ranges::begin(buffer) + distance;
+                auto copied = distance;
                 while (count > copied) {
                     auto [it_in, it_out] = std::ranges::copy(start, output, output);
                     count -= copied;
@@ -857,11 +870,13 @@ namespace lzss {
                 }
                 std::ranges::copy(start, start + count, output);
             }
-        }
 
-        dest.seekp(pointer);
-        detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+            dest.seekp(pointer);
+            detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+        }
     }
+
+    // NOLINTEND(bugprone-easily-swappable-parameters)
 
     template <adaptor_t Adaptor>
     auto encode(
@@ -879,7 +894,5 @@ namespace lzss {
     }
 
 }    // namespace lzss
-
-// NOLINTEND(bugprone-easily-swappable-parameters)
 
 #endif    // LIB_LZSS_HH

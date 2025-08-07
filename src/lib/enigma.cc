@@ -149,11 +149,11 @@ public:
             return outv | flags;
         };
 
-        auto const make_generator = [&](int delta) noexcept {
+        auto const make_generator = [&](int16_t delta) noexcept {
             return [delta, value = read_value()]() mutable noexcept {
-                uint16_t const current = value;
+                auto const current = std::bit_cast<int16_t>(value);
                 value += delta;
-                return current;
+                return std::bit_cast<uint16_t>(current);
             };
         };
 

@@ -29,7 +29,6 @@
 #include <cstdint>
 #include <iostream>
 #include <istream>
-#include <iterator>
 #include <limits>
 #include <list>
 #include <ostream>
@@ -201,7 +200,7 @@ struct rocket_adaptor {
             auto const delta    = distance - base;
             if (delta > 0) {
                 diff_t const count = std::min(length, delta);
-                std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), count, 0x20);
+                lzss::fill<rocket_adaptor>(dest, 0x20, count);
                 length -= count;
                 distance -= count;
             }
@@ -295,9 +294,7 @@ bool rocket::decode(std::istream& source, std::iostream& dest) {
 bool rocket::encode(std::istream& source, std::ostream& dest) {
     // We will pre-fill the buffer with 0x3C0 0x20's.
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
-    std::ranges::fill_n(
-            std::ostreambuf_iterator<char>(input), rocket_adaptor::first_match_position,
-            0x20);
+    lzss::fill<rocket_adaptor>(input, 0x20, rocket_adaptor::first_match_position);
     // Copy to buffer.
     input << source.rdbuf();
     input.seekg(0);
@@ -305,17 +302,18 @@ bool rocket::encode(std::istream& source, std::ostream& dest) {
 }
 
 bool rocket::encode(std::ostream& dest, std::span<char const> data) {
+    using diff_t = std::make_signed_t<size_t>;
     // Internal buffer.
     std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
     rocket_internal::encode(out_buff, data);
 
     // Fill in header
     // Size of decompressed file
-    big_endian::write2(
-            dest,
-            static_cast<uint16_t>(data.size() - rocket_adaptor::first_match_position));
+    size_t const uncompressed_size = data.size() - rocket_adaptor::first_match_position;
+    big_endian::write2(dest, static_cast<uint16_t>(uncompressed_size));
+    auto const compressed_size = static_cast<diff_t>(out_buff.tellp()) + 4;
     // Size of compressed file
-    big_endian::write2(dest, static_cast<uint16_t>(out_buff.tellp()));
+    big_endian::write2(dest, static_cast<uint16_t>(compressed_size));
 
     out_buff.seekg(0);
     dest << out_buff.rdbuf();

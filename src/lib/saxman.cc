@@ -23,13 +23,11 @@
 #include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/lzss.hh"
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <istream>
-#include <iterator>
 #include <limits>
 #include <list>
 #include <ostream>
@@ -248,7 +246,7 @@ struct saxman_adaptor {
         }
         case zerofill: {
             auto const length = static_cast<diff_t>(edge.get_length());
-            std::ranges::fill_n(std::ostreambuf_iterator<char>(dest), length, 0);
+            lzss::fill<saxman_adaptor>(dest, 0x00, length);
             break;
         }
         case terminator:
