@@ -53,11 +53,15 @@ namespace detail {
 
     template <std::unsigned_integral uint_t>
     [[nodiscard]] CONST_INLINE consteval uint_t get_mask() noexcept {
-        uint_t mask = std::numeric_limits<uint_t>::max();
-        for (size_t size = sizeof(uint_t); size > 1; size >>= 1U) {
-            mask = next_mask(mask, size * CHAR_BIT / 2);
+        if constexpr (sizeof(uint_t) == 1) {
+            return std::numeric_limits<uint_t>::max();
+        } else {
+            uint_t mask = std::numeric_limits<uint_t>::max();
+            for (size_t size = sizeof(uint_t); size > 1; size >>= 1U) {
+                mask = next_mask(mask, size * CHAR_BIT / 2);
+            }
+            return mask;
         }
-        return mask;
     }
 
     template <size_t size, auto mask, std::unsigned_integral uint_t>

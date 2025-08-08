@@ -176,27 +176,31 @@ namespace detail {
 
     template <std::unsigned_integral T>
     [[nodiscard]] CONST_INLINE constexpr T fallback_byteswap(T value) noexcept {
-        using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
-        // Fallback implementation that handles even __int24 etc.
-        constexpr size_t const nbits = CHAR_BIT;
-        constexpr size_t const delta = 2ULL * nbits;
+        if constexpr (sizeof(T) == 1) {
+            return value;    // No-op for 8-bit values.
+        } else {
+            using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
+            // Fallback implementation that handles even __int24 etc.
+            constexpr size_t const nbits = CHAR_BIT;
+            constexpr size_t const delta = 2ULL * nbits;
 
-        uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
-        uint_t high_byte_mask = std::rotr(low_byte_mask, nbits);
-        uint_t new_value      = value;
-        size_t bit_offset     = nbits * (sizeof(T) + 1);
-        for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-            bit_offset -= delta;
-            uint_t const low_byte  = new_value & low_byte_mask;
-            uint_t const high_byte = new_value & high_byte_mask;
-            new_value ^= low_byte;
-            new_value ^= high_byte;
-            new_value ^= static_cast<uint_t>(low_byte << bit_offset);
-            new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
-            low_byte_mask  = std::rotl(low_byte_mask, nbits);
-            high_byte_mask = std::rotr(high_byte_mask, nbits);
+            uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
+            uint_t high_byte_mask = std::rotr(low_byte_mask, nbits);
+            uint_t new_value      = value;
+            size_t bit_offset     = nbits * (sizeof(T) + 1);
+            for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
+                bit_offset -= delta;
+                uint_t const low_byte  = new_value & low_byte_mask;
+                uint_t const high_byte = new_value & high_byte_mask;
+                new_value ^= low_byte;
+                new_value ^= high_byte;
+                new_value ^= static_cast<uint_t>(low_byte << bit_offset);
+                new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
+                low_byte_mask  = std::rotl(low_byte_mask, nbits);
+                high_byte_mask = std::rotr(high_byte_mask, nbits);
+            }
+            return uint_t(new_value & std::numeric_limits<uint_t>::max());
         }
-        return uint_t(new_value & std::numeric_limits<uint_t>::max());
     }
 
     static_assert(fallback_byteswap(uint8_t{0x35U}) == uint8_t{0x35U});
