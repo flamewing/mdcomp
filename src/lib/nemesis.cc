@@ -31,7 +31,6 @@
 #include <cstdint>
 #include <ios>
 #include <istream>
-#include <limits>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -789,9 +788,9 @@ public:
     }
 
     template <typename Compare>
-    static std::streamoff encode(
-            std::istream& source, std::ostream& dest, nemesis_mode mode,
-            std::streamoff const length, Compare&& comp) {
+    static std::stringstream encode(
+            std::istream& source, nemesis_mode mode, std::streamoff const length,
+            Compare&& comp) {
         auto compare = std::forward<Compare>(comp);
         // Seek to start and clear all errors.
         source.clear();
@@ -1024,6 +1023,8 @@ public:
         // This is no longer needed.
         count_map.clear();
 
+        // This is what we output.
+        std::stringstream dest;
         // We now have a prefix-free code map associating the RLE-encoded nibble
         // runs with their code. Now we write the file.
         // Write header.
@@ -1081,7 +1082,7 @@ public:
         }
         // Fill remainder of last byte with zeroes and write if needed.
         bits.flush();
-        return dest.tellp();
+        return dest;
     }
 };
 
@@ -1123,33 +1124,23 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
         value = new_value;
     }
 
-    std::array<std::stringstream, 4> buffers;
     using nemesis_mode = nemesis_internal::nemesis_mode;
     // Four different attempts to encode, for improved file size.
-    std::array sizes{
+    std::array buffers{
             nemesis_internal::encode(
-                    str_source, buffers[0], nemesis_mode::normal, size, compare_node{}),
+                    str_source, nemesis_mode::normal, size, compare_node{}),
             nemesis_internal::encode(
-                    str_source, buffers[1], nemesis_mode::normal, size, compare_node2{}),
+                    str_source, nemesis_mode::normal, size, compare_node2{}),
             nemesis_internal::encode(
-                    source_xor, buffers[2], nemesis_mode::progressive_xor, size,
-                    compare_node{}),
+                    source_xor, nemesis_mode::progressive_xor, size, compare_node{}),
             nemesis_internal::encode(
-                    source_xor, buffers[3], nemesis_mode::progressive_xor, size,
-                    compare_node2{})};
+                    source_xor, nemesis_mode::progressive_xor, size, compare_node2{})};
 
     // Figure out what was the best encoding.
-    std::streamoff best_size   = std::numeric_limits<std::streamoff>::max();
-    size_t         best_stream = 0;
-    for (size_t ii = 0; ii < sizes.size(); ii++) {
-        if (sizes[ii] < best_size) {
-            best_size   = sizes[ii];
-            best_stream = ii;
-        }
-    }
+    auto& best_iter = *std::ranges::min_element(buffers, {}, &std::stringstream::tellp);
 
-    buffers[best_stream].seekg(0);
-    dest << buffers[best_stream].rdbuf();
+    best_iter.seekg(0);
+    dest << best_iter.rdbuf();
     return true;
 }
 
