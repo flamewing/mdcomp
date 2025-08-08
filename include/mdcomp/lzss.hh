@@ -826,8 +826,14 @@ namespace lzss {
         using stream_t = typename Adaptor::stream_t;
         using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
 
-        buffer_t buffer(static_cast<size_t>(length), value);
-        detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+        try {
+            buffer_t buffer(static_cast<size_t>(length), value);
+            detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+        } catch (boost::container::bad_alloc& except [[maybe_unused]]) {
+            // The buffer allocation can theoretically fail with an exception,
+            // but this simply is not possible for us.
+            utils::unreachable();
+        }
     }
 
     // NOLINTBEGIN(bugprone-easily-swappable-parameters)

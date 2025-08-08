@@ -79,7 +79,7 @@ namespace detail {
     }
 
     template <std::integral int_t>
-    inline void write_as_bytes(std::ostream& dest, std::span<int_t const> data) {
+    inline void write_as_bytes(std::ostream& dest, std::span<int_t const> data) noexcept {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto const* pointer = reinterpret_cast<char const*>(data.data());
         dest.write(pointer, static_cast<std::streamsize>(data.size() * sizeof(int_t)));
