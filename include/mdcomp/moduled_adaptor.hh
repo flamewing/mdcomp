@@ -75,7 +75,6 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         std::istream& source, std::ostream& dest, size_t const module_padding) {
-    using diff_t  = std::make_signed_t<size_t>;
     auto location = source.tellg();
     source.ignore(std::numeric_limits<std::streamsize>::max());
     auto full_size = static_cast<size_t>(source.gcount());
@@ -89,7 +88,7 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         Format::encode(buffer, input_span.subspan(0, ModuleSize));
         input_span = input_span.subspan(ModuleSize);
         // Padding between modules
-        detail::pad_to_multiple(buffer, static_cast<diff_t>(module_padding));
+        detail::pad_to_multiple(buffer, module_padding);
     }
 
     Format::encode(buffer, input_span);

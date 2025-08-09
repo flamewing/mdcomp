@@ -63,6 +63,16 @@ namespace detail {
         }
     }
 
+    template <std::unsigned_integral T>
+    inline void pad_to_multiple(std::ostream& dest, T multiple) {
+        pad_to_multiple(dest, static_cast<std::streamoff>(multiple));
+    }
+
+    template <std::signed_integral T>
+    inline void pad_to_multiple(std::ostream& dest, T multiple) {
+        pad_to_multiple(dest, static_cast<std::streamoff>(multiple));
+    }
+
     template <std::integral T>
     inline void read_from_bytes(std::istream& source, std::span<T> data) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
