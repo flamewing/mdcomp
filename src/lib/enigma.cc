@@ -121,9 +121,6 @@ base_flag_io<Callback> const& base_flag_io<Callback>::get(size_t const flags) {
     return array[flags];
 }
 
-template <>
-size_t moduled_enigma::pad_mask_bits = 1U;
-
 using enigma_output_iterator = endian_output_iterator<big_endian, uint16_t>;
 
 static_assert(std::output_iterator<enigma_output_iterator, uint16_t>);

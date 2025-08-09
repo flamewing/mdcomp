@@ -21,18 +21,15 @@
 #define LIB_ENIGMA_HH
 
 #include "mdcomp/basic_decoder.hh"
-#include "mdcomp/moduled_adaptor.hh"
 
 #include <iosfwd>
 #include <span>
 
 class enigma;
-using basic_enigma   = basic_decoder<enigma, pad_mode::dont_pad>;
-using moduled_enigma = moduled_adaptor<enigma, 4096U, 1U>;
+using basic_enigma = basic_decoder<enigma, pad_mode::dont_pad>;
 
-class enigma : public basic_enigma, public moduled_enigma {
+class enigma : public basic_enigma {
     friend basic_enigma;
-    friend moduled_enigma;
     static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:

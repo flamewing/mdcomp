@@ -21,18 +21,15 @@
 #define LIB_NEMESIS_HH
 
 #include "mdcomp/basic_decoder.hh"
-#include "mdcomp/moduled_adaptor.hh"
 
 #include <iosfwd>
 #include <span>
 
 class nemesis;
-using basic_nemesis   = basic_decoder<nemesis, pad_mode::dont_pad>;
-using moduled_nemesis = moduled_adaptor<nemesis, 4096U, 1U>;
+using basic_nemesis = basic_decoder<nemesis, pad_mode::dont_pad>;
 
-class nemesis : public basic_nemesis, public moduled_nemesis {
+class nemesis : public basic_nemesis {
     friend basic_nemesis;
-    friend moduled_nemesis;
     static bool encode(std::ostream& dest, std::span<char const> data);
 
 public:

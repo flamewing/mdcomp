@@ -412,9 +412,6 @@ struct compare_node2 {
     }
 };
 
-template <>
-size_t moduled_nemesis::pad_mask_bits = 1U;
-
 using nem_ibitstream = ibitstream<uint8_t, bit_endian::big, big_endian, true>;
 using nem_obitstream = obitstream<uint8_t, bit_endian::big, big_endian>;
 
