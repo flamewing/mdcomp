@@ -36,9 +36,6 @@
 #include <type_traits>
 #include <vector>
 
-template <>
-size_t moduled_kosinski::pad_mask_bits = 1U;
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct kosinski_adaptor {
     enum class edge_type : uint8_t {
@@ -144,13 +141,6 @@ struct kosinski_adaptor {
         ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
         // Do normal matches.
         return false;
-    }
-
-    // KosinskiM needs to pad each module to a multiple of 16 bytes.
-    static size_t get_padding(size_t const total_length) noexcept {
-        return ((total_length + moduled_kosinski::pad_mask_bits)
-                & ~moduled_kosinski::pad_mask_bits)
-               - total_length;
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {

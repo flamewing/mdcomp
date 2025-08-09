@@ -36,9 +36,6 @@
 #include <type_traits>
 #include <vector>
 
-template <>
-size_t moduled_comper::pad_mask_bits = 1U;
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct comper_adaptor {
     enum class edge_type : uint8_t {
@@ -117,12 +114,6 @@ struct comper_adaptor {
         ignore_unused_variable_warning(data, base_node, ubound, lbound, matches);
         // Do normal matches.
         return false;
-    }
-
-    // Comper needs no additional padding at the end-of-file.
-    constexpr static size_t get_padding(size_t const total_length) noexcept {
-        ignore_unused_variable_warning(total_length);
-        return 0;
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {

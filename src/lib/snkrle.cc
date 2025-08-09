@@ -33,9 +33,6 @@
 #include <sstream>
 #include <string>
 
-template <>
-size_t moduled_snkrle::pad_mask_bits = 1U;
-
 class snkrle_internal {
     using snkrle_output_iterator = endian_output_iterator<source_endian, uint8_t>;
 

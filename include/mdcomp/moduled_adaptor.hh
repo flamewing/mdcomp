@@ -45,8 +45,6 @@ public:
         MODULE_PADDING = DefaultModulePadding
     };
 
-    static size_t pad_mask_bits;
-
     static bool moduled_decode(
             std::istream& source, std::iostream& dest,
             size_t module_padding = DefaultModulePadding);
@@ -98,7 +96,6 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
     auto const padding = static_cast<std::streamoff>(module_padding);
     while (full_size > MODULE_SIZE) {
         // We want to manage internal padding for all modules but the last.
-        pad_mask_bits = 8 * module_padding - 1U;
         Format::encode(buffer, unsafe_forge_span(pointer, MODULE_SIZE));
         full_size -= MODULE_SIZE;
         pointer += MODULE_SIZE;
@@ -106,7 +103,6 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
         detail::pad_to_multiple(buffer, padding);
     }
 
-    pad_mask_bits = 7U;
     Format::encode(buffer, unsafe_forge_span(pointer, full_size));
 
     // Pad to even size.

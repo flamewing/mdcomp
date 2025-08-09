@@ -648,14 +648,12 @@ namespace lzss {
             { T::desc_bits(type) } -> std::same_as<size_t>;
             { T::edge_weight(type, value) } -> std::same_as<size_t>;
             { T::extra_matches(data, value, value, value, vnodes) } -> std::same_as<bool>;
-            { T::get_padding(value) } -> std::same_as<size_t>;
             { T::encode_edge(output, edge) };
             { T::decode_edge(input, lnodes, output_size) } -> std::same_as<bool>;
             { T::output_edge(dest, edge) } -> std::same_as<size_t>;
             { T::edge_size(edge) } -> std::same_as<size_t>;
             noexcept(T::desc_bits(type));
             noexcept(T::edge_weight(type, value));
-            noexcept(T::get_padding(value));
             noexcept(T::extra_matches(data, value, value, value, vnodes));
         };
     };
@@ -697,12 +695,6 @@ namespace lzss {
         data_t const data = unsafe_forge_span(
                 static_cast<stream_t const*>(aligned_ptr),
                 data_in.size() / sizeof(stream_t));
-        static_assert(
-                noexcept(Adaptor::desc_bits(edge_type())),
-                "Adaptor::desc_bits() is not noexcept");
-        static_assert(
-                noexcept(Adaptor::get_padding(0)),
-                "Adaptor::get_padding() is not noexcept");
         utils::assume(data.size() >= Adaptor::first_match_position);
         size_t const num_nodes = data.size() - Adaptor::first_match_position;
         utils::assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
@@ -755,8 +747,6 @@ namespace lzss {
                     edge_weight += (Adaptor::num_desc_bits - descriptor_modulus);
                     descriptor_cost += (Adaptor::num_desc_bits - descriptor_modulus);
                 }
-                // Compensate for the Adaptor's padding, if any.
-                edge_weight += Adaptor::get_padding(edge_weight);
             }
             // Is the cost to reach the target node through this edge less
             // than the current cost?

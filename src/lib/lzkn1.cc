@@ -38,9 +38,6 @@
 #include <type_traits>
 #include <vector>
 
-template <>
-size_t moduled_lzkn1::pad_mask_bits = 1U;
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct lzkn1_adaptor {
     enum class edge_type : uint8_t {
@@ -137,12 +134,6 @@ struct lzkn1_adaptor {
         }
         // Do normal matches.
         return false;
-    }
-
-    // lzkn1M needs to pad each module to a multiple of 16 bytes.
-    static size_t get_padding(size_t const total_length) noexcept {
-        ignore_unused_variable_warning(total_length);
-        return 0;
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {

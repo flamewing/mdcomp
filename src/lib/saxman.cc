@@ -36,9 +36,6 @@
 #include <type_traits>
 #include <vector>
 
-template <>
-size_t moduled_saxman::pad_mask_bits = 1U;
-
 // NOTE: This has to be changed for other LZSS-based compression schemes.
 struct saxman_adaptor {
     enum class edge_type : uint8_t {
@@ -144,12 +141,6 @@ struct saxman_adaptor {
             }
         }
         return !matches.empty();
-    }
-
-    // Saxman needs no additional padding at the end-of-file.
-    constexpr static size_t get_padding(size_t const total_length) noexcept {
-        ignore_unused_variable_warning(total_length);
-        return 0;
     }
 
     constexpr static void encode_edge(ostream_t& output, adj_list_node const& edge) {
