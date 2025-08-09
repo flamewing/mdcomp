@@ -31,39 +31,36 @@
 #include <limits>
 #include <ranges>
 #include <sstream>
+#include <type_traits>
 #include <vector>
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
+template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
     moduled_adaptor() = default;
     friend Format;
 
 public:
-    // NOLINTNEXTLINE(performance-enum-size)
-    enum {
-        MODULE_SIZE    = DefaultModuleSize,
-        MODULE_PADDING = DefaultModulePadding
-    };
+    constexpr static size_t default_module_padding = DefaultModulePadding;
 
     static bool moduled_decode(
             std::istream& source, std::iostream& dest,
-            size_t module_padding = DefaultModulePadding);
+            size_t module_padding = default_module_padding);
 
     static bool moduled_encode(
             std::istream& source, std::ostream& dest,
-            size_t module_padding = DefaultModulePadding);
+            size_t module_padding = default_module_padding);
 };
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_decode(
+template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
+bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
         std::istream& source, std::iostream& dest, size_t const module_padding) {
+    using diff_t                = std::make_signed_t<size_t>;
     int64_t const     full_size = big_endian::read2(source);
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     input << source.rdbuf();
     detail::pad_to_even(input);
     input.seekg(0);
 
-    auto const padding = static_cast<std::streamoff>(module_padding);
     while (true) {
         Format::decode(input, dest);
         if (dest.tellp() >= full_size) {
@@ -71,15 +68,16 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_d
         }
 
         // Skip padding between modules
-        input.seekg(detail::round_up(input.tellg(), padding));
+        input.seekg(detail::round_up(input.tellg(), static_cast<diff_t>(module_padding)));
     }
 
     return true;
 }
 
-template <typename Format, size_t DefaultModuleSize, size_t DefaultModulePadding>
-bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_encode(
+template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
+bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         std::istream& source, std::ostream& dest, size_t const module_padding) {
+    using diff_t  = std::make_signed_t<size_t>;
     auto location = source.tellg();
     source.ignore(std::numeric_limits<std::streamsize>::max());
     auto full_size = source.gcount();
@@ -93,14 +91,13 @@ bool moduled_adaptor<Format, DefaultModuleSize, DefaultModulePadding>::moduled_e
             dest, static_cast<size_t>(full_size) & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
 
-    auto const padding = static_cast<std::streamoff>(module_padding);
-    while (full_size > MODULE_SIZE) {
+    while (full_size > ModuleSize) {
         // We want to manage internal padding for all modules but the last.
-        Format::encode(buffer, unsafe_forge_span(pointer, MODULE_SIZE));
-        full_size -= MODULE_SIZE;
-        pointer += MODULE_SIZE;
+        Format::encode(buffer, unsafe_forge_span(pointer, ModuleSize));
+        full_size -= ModuleSize;
+        pointer += ModuleSize;
         // Padding between modules
-        detail::pad_to_multiple(buffer, padding);
+        detail::pad_to_multiple(buffer, static_cast<diff_t>(module_padding));
     }
 
     Format::encode(buffer, unsafe_forge_span(pointer, full_size));

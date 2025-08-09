@@ -291,7 +291,7 @@ namespace detail {
                 read_value({parameter_in}, options.padding);
             }
             if ((options.padding == 0U) || !std::has_single_bit(options.padding)) {
-                options.padding = options_t::format_t::MODULE_PADDING;
+                options.padding = options_t::format_t::default_module_padding;
             }
         }
     }

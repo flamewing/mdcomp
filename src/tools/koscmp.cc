@@ -53,7 +53,7 @@ struct options_t {
     std::span<char*>      positional;
     std::streamsize       pointer = 0;
 
-    size_t padding = moduled_kosinski::MODULE_PADDING;
+    size_t padding = moduled_kosinski::default_module_padding;
     bool   extract = false;
     bool   moduled = false;
     bool   crunch  = false;
