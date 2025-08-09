@@ -21,7 +21,6 @@
 #define LIB_MODULED_ADAPTOR_HH
 
 #include "mdcomp/bigendian_io.hh"
-#include "mdcomp/forge_span.hh"
 #include "mdcomp/stream_utils.hh"
 
 #include <cstddef>
@@ -29,7 +28,6 @@
 #include <ios>
 #include <iosfwd>
 #include <limits>
-#include <ranges>
 #include <sstream>
 #include <type_traits>
 #include <vector>
@@ -80,27 +78,21 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
     using diff_t  = std::make_signed_t<size_t>;
     auto location = source.tellg();
     source.ignore(std::numeric_limits<std::streamsize>::max());
-    auto full_size = source.gcount();
+    auto full_size = static_cast<size_t>(source.gcount());
     source.seekg(location);
-    std::vector<char> data;
-    data.resize(static_cast<size_t>(full_size));
-    auto pointer = std::ranges::cbegin(data);
-    source.read(data.data(), full_size);
+    auto data = detail::read_from_bytes<std::vector<char>>(source, full_size);
 
-    big_endian::write2(
-            dest, static_cast<size_t>(full_size) & std::numeric_limits<uint16_t>::max());
+    big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
-
-    while (full_size > ModuleSize) {
-        // We want to manage internal padding for all modules but the last.
-        Format::encode(buffer, unsafe_forge_span(pointer, ModuleSize));
-        full_size -= ModuleSize;
-        pointer += ModuleSize;
+    std::span         input_span(data);
+    while (input_span.size() > ModuleSize) {
+        Format::encode(buffer, input_span.subspan(0, ModuleSize));
+        input_span = input_span.subspan(ModuleSize);
         // Padding between modules
         detail::pad_to_multiple(buffer, static_cast<diff_t>(module_padding));
     }
 
-    Format::encode(buffer, unsafe_forge_span(pointer, full_size));
+    Format::encode(buffer, input_span);
 
     // Pad to even size.
     dest << buffer.rdbuf();
