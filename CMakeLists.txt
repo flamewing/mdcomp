@@ -248,17 +248,21 @@ set(COMMON_HEADERS
     "include/mdcomp/basic_decoder.hh"
     "include/mdcomp/bigendian_io.hh"
     "include/mdcomp/bitstream.hh"
+    "include/mdcomp/forge_span.hh"
+    "include/mdcomp/function_ref.hh"
     "include/mdcomp/ignore_unused_variable_warning.hh"
     "include/mdcomp/lzss.hh"
     "include/mdcomp/moduled_adaptor.hh"
-    "include/mdcomp/stream_utils.hh"
     "include/mdcomp/options_lib.hh"
+    "include/mdcomp/stream_utils.hh"
+    "include/mdcomp/unreachable.hh"
 )
 
 # Interface library for a few exported headers.
 set(BIG_ENDIAN_IO_HEADERS
     "include/mdcomp/bigendian_io.hh"
     "include/mdcomp/bitstream.hh"
+    "include/mdcomp/function_ref.hh"
     "include/mdcomp/ignore_unused_variable_warning.hh"
 )
 add_library(bigendian_io INTERFACE "${BIG_ENDIAN_IO_HEADERS}")
