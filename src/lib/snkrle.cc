@@ -26,12 +26,10 @@
 #include <ios>
 #include <iosfwd>
 #include <istream>
-#include <iterator>
 #include <limits>
 #include <ostream>
 #include <span>
 #include <sstream>
-#include <string>
 
 class snkrle_internal {
     using snkrle_output_iterator = endian_output_iterator<source_endian, uint8_t>;
@@ -103,7 +101,7 @@ bool snkrle::decode(std::istream& source, std::ostream& dest) {
 
 bool snkrle::encode(std::ostream& dest, std::span<char const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(data.data(), std::ssize(data));
+    utils::write_as_bytes(source, data);
     source.seekg(0);
     snkrle_internal::encode(source, dest);
     return true;

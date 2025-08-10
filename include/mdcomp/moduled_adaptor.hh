@@ -76,7 +76,7 @@ template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         std::istream& source, std::ostream& dest, size_t const module_padding) {
     auto full_size = utils::size(source);
-    auto data = utils::read_from_bytes<std::vector<char>>(source, full_size);
+    auto data      = utils::read_from_bytes<std::vector<char>>(source, full_size);
 
     big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);

@@ -41,7 +41,6 @@
 #include <set>
 #include <span>
 #include <sstream>
-#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -527,11 +526,11 @@ public:
         output.flush();
 
         auto const final_size = static_cast<std::streamsize>(num_tiles << 5U);
+        str_dest.seekg(0);
+        str_dest.clear();
         if (alt_out) {
             // For alternating decoding, we must now incrementally XOR and
             // output the lines.
-            str_dest.seekg(0);
-            str_dest.clear();
             uint32_t value = source_endian::read4(str_dest);
             source_endian::write4(dest, value);
             while (str_dest.tellg() < final_size) {
@@ -539,7 +538,7 @@ public:
                 source_endian::write4(dest, value);
             }
         } else {
-            dest.write(str_dest.str().c_str(), final_size);
+            dest << str_dest.rdbuf();
         }
     }
 
@@ -1143,7 +1142,7 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
 
 bool nemesis::encode(std::ostream& dest, std::span<char const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(data.data(), std::ssize(data));
+    utils::write_as_bytes(source, data);
     source.seekg(0);
     return encode(source, dest);
 }

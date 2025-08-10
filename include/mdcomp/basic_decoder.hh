@@ -84,13 +84,14 @@ template <typename Format, pad_mode Pad, typename... Args>
 bool basic_decoder<Format, Pad, Args...>::encode(
         std::istream& source, std::ostream& dest, Args... args) {
     auto full_size = utils::size(source);
+
     std::vector<char, aligned_allocator<char>> data;
     if constexpr (Pad == pad_mode::pad_even) {
         data.resize(utils::round_up(full_size, 2U));
     } else {
         data.resize(full_size);
     }
-    source.read(data.data(), std::ssize(data));
+    utils::read_from_bytes(source, std::span{data});
     if constexpr (Pad == pad_mode::pad_even) {
         if (data.size() > full_size) {
             data.back() = 0;

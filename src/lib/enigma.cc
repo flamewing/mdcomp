@@ -38,7 +38,6 @@
 #include <set>
 #include <span>
 #include <sstream>
-#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -376,7 +375,7 @@ bool enigma::encode(std::istream& source, std::ostream& dest) {
 
 bool enigma::encode(std::ostream& dest, std::span<char const> data) {
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
-    source.write(data.data(), std::ssize(data));
+    utils::write_as_bytes(source, data);
     source.seekg(0);
     return encode(source, dest);
 }
