@@ -20,6 +20,8 @@
 
 #include "mdcomp/bigendian_io.hh"
 
+#include <boost/container/container_fwd.hpp>
+
 #include <algorithm>
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
@@ -112,10 +114,22 @@ namespace utils {
 
     template <contiguous_container Cont>
     requires std::integral<typename Cont::value_type>
-    [[nodiscard]] inline Cont read_from_bytes(std::istream& source, size_t count) {
-        Cont data(count);
-        read_from_bytes(source, std::span<typename Cont::value_type>{data});
+    [[nodiscard]] inline Cont read_from_bytes(
+            std::istream& source, size_t count, size_t alignment) {
+        using value_t = typename Cont::value_type;
+        Cont   data;
+        size_t capacity = utils::round_up(count, alignment);
+        data.reserve(capacity);
+        data.resize(count);
+        read_from_bytes(source, std::span<value_t>(data));
+        data.resize(capacity);
         return data;
+    }
+
+    template <contiguous_container Cont>
+    requires std::integral<typename Cont::value_type>
+    [[nodiscard]] inline Cont read_from_bytes(std::istream& source, size_t count) {
+        return read_from_bytes<Cont>(source, count, 1);
     }
 
     template <std::integral int_t>

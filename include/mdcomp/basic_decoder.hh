@@ -20,7 +20,6 @@
 #ifndef LIB_BASIC_DECODER_H
 #define LIB_BASIC_DECODER_H
 
-#include "mdcomp/ignore_unused_variable_warning.hh"
 #include "mdcomp/stream_utils.hh"
 
 #include <cstddef>
@@ -29,7 +28,6 @@
 #include <limits>
 #include <memory>
 #include <new>
-#include <span>
 #include <vector>
 
 enum class pad_mode : uint8_t {
@@ -83,20 +81,12 @@ public:
 template <typename Format, pad_mode Pad, typename... Args>
 bool basic_decoder<Format, Pad, Args...>::encode(
         std::istream& source, std::ostream& dest, Args... args) {
-    auto full_size = utils::size(source);
+    using aligned_alloc = aligned_allocator<char, alignof(std::max_align_t)>;
+    using cont_t        = std::vector<char, aligned_alloc>;
 
-    std::vector<char, aligned_allocator<char>> data;
-    if constexpr (Pad == pad_mode::pad_even) {
-        data.resize(utils::round_up(full_size, 2U));
-    } else {
-        data.resize(full_size);
-    }
-    utils::read_from_bytes(source, std::span{data});
-    if constexpr (Pad == pad_mode::pad_even) {
-        if (data.size() > full_size) {
-            data.back() = 0;
-        }
-    }
+    auto full_size = utils::size(source);
+    auto padding   = Pad == pad_mode::pad_even ? 2U : 1U;
+    auto data      = utils::read_from_bytes<cont_t>(source, full_size, padding);
     if (Format::encode(dest, data, args...)) {
         utils::pad_to_even(dest);
         return true;
