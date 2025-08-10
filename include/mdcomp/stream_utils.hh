@@ -32,18 +32,20 @@
 #include <type_traits>
 #include <utility>
 
-namespace detail {
-    template <typename T1, typename T2>
-    concept has_basic_arithmetic_with = requires(T1 value1, T2 value2) {
-        value1 + value2;
-        value1 - value2;
-        value1 * value2;
-        value1 / value2;
-        value1 % value2;
-    };
+namespace utils {
+    namespace detail {
+        template <typename T1, typename T2>
+        concept has_basic_arithmetic_with = requires(T1 value1, T2 value2) {
+            value1 + value2;
+            value1 - value2;
+            value1 * value2;
+            value1 / value2;
+            value1 % value2;
+        };
+    }    // namespace detail
 
     template <typename T1, typename T2>
-    requires has_basic_arithmetic_with<T1, T2>
+    requires detail::has_basic_arithmetic_with<T1, T2>
     constexpr auto round_up(T1 const value, T2 const factor) noexcept {
         constexpr decltype(factor) const one{1};
         return ((value + factor - one) / factor) * factor;
@@ -73,6 +75,34 @@ namespace detail {
         pad_to_multiple(dest, static_cast<std::streamoff>(multiple));
     }
 
+    inline std::make_signed_t<size_t> ssize(std::istream& source) {
+        auto current = source.tellg();
+        source.ignore(std::numeric_limits<std::streamsize>::max());
+        auto full_size = source.gcount();
+        source.seekg(current);
+        return static_cast<std::make_signed_t<size_t>>(full_size);
+    }
+
+    template <typename T>
+    requires requires(T const& container) {
+        { std::size(container) } -> std::integral;
+    }
+    inline std::make_signed_t<size_t> ssize(T const& container) {
+        return static_cast<std::make_signed_t<size_t>>(std::size(container));
+    }
+
+    inline size_t size(std::istream& source) {
+        return static_cast<size_t>(ssize(source));
+    }
+
+    template <typename T>
+    requires requires(T const& container) {
+        { std::size(container) } -> std::integral;
+    }
+    inline size_t size(T const& container) {
+        return static_cast<size_t>(std::size(container));
+    }
+
     template <std::integral T>
     inline void read_from_bytes(std::istream& source, std::span<T> data) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -80,7 +110,7 @@ namespace detail {
         source.read(pointer, static_cast<std::streamsize>(data.size() * sizeof(T)));
     }
 
-    template <detail::contiguous_container Cont>
+    template <contiguous_container Cont>
     requires std::integral<typename Cont::value_type>
     [[nodiscard]] inline Cont read_from_bytes(std::istream& source, size_t count) {
         Cont data(count);
@@ -483,6 +513,6 @@ namespace detail {
         return range_closure<to_template_fn<container_t>, std::decay_t<types_t>...>{
                 std::forward<types_t>(args)...};
     }
-}    // namespace detail
+}    // namespace utils
 
 #endif    // LIB_STREAM_UTILS_HH

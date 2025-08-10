@@ -251,7 +251,7 @@ struct lzkn1_adaptor {
         }
         case packed_symbolwise: {
             auto const data = edge.get_data();
-            detail::write_as_bytes(dest, data);
+            utils::write_as_bytes(dest, data);
             break;
         }
         case dictionary_short:

@@ -66,10 +66,7 @@ public:
     }
 
     static void encode(std::istream& source, std::ostream& dest) {
-        auto position = source.tellg();
-        source.ignore(std::numeric_limits<std::streamsize>::max());
-        std::streampos const size = source.gcount();
-        source.seekg(position);
+        auto size = utils::ssize(source);
         big_endian::write2(dest, static_cast<uint16_t>(size));
         uint8_t curr = read1(source);
         while (source.good()) {

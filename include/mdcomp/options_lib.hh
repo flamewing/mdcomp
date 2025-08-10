@@ -109,7 +109,7 @@ inline auto gen_argument_tuple(instream& input, outstream& output, Args&&... arg
     }
 #define OVERLOADS_OF(name) [&](auto&&... args) RETURNS(name(FWD(args)...))
 
-namespace detail {
+namespace optionlib {
     [[noreturn]] inline void print_error(
             std::errc error, std::string const& parameter, std::string_view value) {
         if (error == std::errc::invalid_argument) {
@@ -375,7 +375,7 @@ namespace detail {
         if constexpr (has_pointer<options_t>) {
             input.seekg(options.pointer);
         }
-        detail::do_decode(input, buffer, options);
+        optionlib::do_decode(input, buffer, options);
         input.close();
         buffer.seekg(0);
         std::fstream output(
@@ -386,7 +386,7 @@ namespace detail {
                     "Output file '{}' could not be opened.\n", outfile.string());
             return 3;
         }
-        detail::do_encode(buffer, output, options);
+        optionlib::do_encode(buffer, output, options);
         return 0;
     }
 
@@ -411,7 +411,7 @@ namespace detail {
         if constexpr (has_pointer<options_t>) {
             input.seekg(options.pointer);
         }
-        detail::do_decode(input, output, options);
+        optionlib::do_decode(input, output, options);
         return 0;
     }
 
@@ -433,7 +433,7 @@ namespace detail {
                     "Output file '{}' could not be opened.\n", outfile.string());
             return 3;
         }
-        detail::do_encode(input, output, options);
+        optionlib::do_encode(input, output, options);
         return 0;
     }
 
@@ -573,7 +573,7 @@ namespace detail {
 
         return 1;
     }
-}    // namespace detail
+}    // namespace optionlib
 
 #undef FWD
 #undef RETURNS
@@ -582,11 +582,11 @@ namespace detail {
 template <typename options_t>
 inline int auto_compressor_decompressor(options_t options) {
     try {
-        detail::command_argument_parser(options);
-        if constexpr (detail::has_crunch<options_t>) {
+        optionlib::command_argument_parser(options);
+        if constexpr (optionlib::has_crunch<options_t>) {
             if (options.positional.size() != 2
                 && (!options.crunch || options.positional.size() != 1)) {
-                detail::print_usage(options, std::cout);
+                optionlib::print_usage(options, std::cout);
                 return 1;
             }
             if (options.extract && options.crunch) {
@@ -596,7 +596,7 @@ inline int auto_compressor_decompressor(options_t options) {
             }
         } else {
             if (options.positional.size() != 2) {
-                detail::print_usage(options, std::cout);
+                optionlib::print_usage(options, std::cout);
                 return 1;
             }
         }
@@ -607,17 +607,17 @@ inline int auto_compressor_decompressor(options_t options) {
         std::filesystem::path const infile{as_u8string(options.positional.front())};
         std::filesystem::path const outfile{as_u8string(options.positional.back())};
 
-        if constexpr (detail::has_crunch<options_t>) {
+        if constexpr (optionlib::has_crunch<options_t>) {
             if (options.crunch) {
-                return detail::crunch_file(infile, outfile, options);
+                return optionlib::crunch_file(infile, outfile, options);
             }
         }
 
         if (options.extract) {
-            return detail::decode_file(infile, outfile, options);
+            return optionlib::decode_file(infile, outfile, options);
         }
 
-        return detail::encode_file(infile, outfile, options);
+        return optionlib::encode_file(infile, outfile, options);
     } catch (int error) {
         return error;
     } catch (...) {

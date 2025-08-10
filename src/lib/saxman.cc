@@ -326,8 +326,7 @@ bool saxman::encode(
     saxman_internal::encode(out_buff, data);
     if (with_size) {
         out_buff.seekg(start);
-        out_buff.ignore(std::numeric_limits<std::streamsize>::max());
-        auto full_size = out_buff.gcount();
+        auto full_size = utils::size(out_buff);
         little_endian::write2(dest, static_cast<uint16_t>(full_size));
     }
     out_buff.seekg(start);

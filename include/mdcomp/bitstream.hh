@@ -44,40 +44,43 @@
 #    define PURE_INLINE  inline
 #endif
 
-namespace detail {
-    template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr uint_t next_mask(
-            uint_t mask, size_t size) noexcept {
-        return mask ^ static_cast<uint_t>(mask << size);
-    }
+namespace utils {
+    namespace detail {
+        template <std::unsigned_integral uint_t>
+        [[nodiscard]] CONST_INLINE constexpr uint_t next_mask(
+                uint_t mask, size_t size) noexcept {
+            return mask ^ static_cast<uint_t>(mask << size);
+        }
 
-    template <std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE consteval uint_t get_mask() noexcept {
-        if constexpr (sizeof(uint_t) == 1) {
-            return std::numeric_limits<uint_t>::max();
-        } else {
-            uint_t mask = std::numeric_limits<uint_t>::max();
-            for (size_t size = sizeof(uint_t); size > 1; size >>= 1U) {
-                mask = next_mask(mask, size * CHAR_BIT / 2);
+        template <std::unsigned_integral uint_t>
+        [[nodiscard]] CONST_INLINE consteval uint_t get_mask() noexcept {
+            if constexpr (sizeof(uint_t) == 1) {
+                return std::numeric_limits<uint_t>::max();
+            } else {
+                uint_t mask = std::numeric_limits<uint_t>::max();
+                for (size_t size = sizeof(uint_t); size > 1; size >>= 1U) {
+                    mask = next_mask(mask, size * CHAR_BIT / 2);
+                }
+                return mask;
             }
-            return mask;
         }
-    }
 
-    template <size_t size, auto mask, std::unsigned_integral uint_t>
-    [[nodiscard]] CONST_INLINE constexpr uint_t reverse_byte_bits(uint_t value) noexcept {
-        constexpr size_t const new_size = size >> 1U;
-        constexpr auto const   factor   = uint_t{1} << new_size;
-        constexpr auto const   new_mask = next_mask<uint_t>(mask, new_size);
-        if constexpr (size > 1) {
-            uint_t const val1    = value & new_mask;
-            uint_t const val2    = value ^ val1;
-            uint_t const new_val = (factor * val1) + (val2 / factor);
-            return reverse_byte_bits<new_size, new_mask>(new_val);
-        } else {
-            return value;
+        template <size_t size, auto mask, std::unsigned_integral uint_t>
+        [[nodiscard]] CONST_INLINE constexpr uint_t reverse_byte_bits(
+                uint_t value) noexcept {
+            constexpr size_t const new_size = size >> 1U;
+            constexpr auto const   factor   = uint_t{1} << new_size;
+            constexpr auto const   new_mask = next_mask<uint_t>(mask, new_size);
+            if constexpr (size > 1) {
+                uint_t const val1    = value & new_mask;
+                uint_t const val2    = value ^ val1;
+                uint_t const new_val = (factor * val1) + (val2 / factor);
+                return reverse_byte_bits<new_size, new_mask>(new_val);
+            } else {
+                return value;
+            }
         }
-    }
+    }    // namespace detail
 
     template <std::unsigned_integral uint_t>
     [[nodiscard]] CONST_INLINE constexpr auto reverse_bits(uint_t value) noexcept {
@@ -107,8 +110,8 @@ namespace detail {
             }
         }
 #endif
-        constexpr auto const mask = get_mask<uint_t>();
-        return reverse_byte_bits<CHAR_BIT, mask>(byteswap(value));
+        constexpr auto const mask = detail::get_mask<uint_t>();
+        return detail::reverse_byte_bits<CHAR_BIT, mask>(byteswap(value));
     }
 
     template <std::signed_integral int_t>
@@ -126,7 +129,7 @@ namespace detail {
     concept bit_callback = requires(F callable, Args... arguments) {
         { callable(arguments...) } -> std::same_as<R>;
     };
-}    // namespace detail
+}    // namespace utils
 
 enum class bit_endian : uint8_t {
     little,
@@ -137,7 +140,7 @@ enum class bit_endian : uint8_t {
 // "EarlyRead" means, in this context, to read a new T as soon as the old one
 // runs out of bits; the alternative is to read when a new bit is needed.
 template <
-        std::unsigned_integral uint_t, detail::bit_callback<uint_t> Reader,
+        std::unsigned_integral uint_t, utils::bit_callback<uint_t> Reader,
         bit_endian bit_order, bool EarlyRead>
 class ibitbuffer {
 private:
@@ -150,7 +153,7 @@ private:
     [[nodiscard]] INLINE uint_t read_bits() noexcept(noexcept(reader())) {
         uint_t bits = reader();
         if constexpr (bit_order == bit_endian::little) {
-            return detail::reverse_bits(bits);
+            return utils::reverse_bits(bits);
         } else {
             return bits;
         }
@@ -222,7 +225,7 @@ public:
 
 // This class allows outputting bits into a buffer.
 template <
-        std::unsigned_integral uint_t, detail::bit_callback<void, uint_t> Writer,
+        std::unsigned_integral uint_t, utils::bit_callback<void, uint_t> Writer,
         bit_endian bit_order>
 class obitbuffer {
 private:
@@ -235,7 +238,7 @@ private:
 
     INLINE void write_bits(uint_t const bits) noexcept(noexcept(writer(bits))) {
         if constexpr (bit_order == bit_endian::little) {
-            writer(detail::reverse_bits(bits));
+            writer(utils::reverse_bits(bits));
         } else {
             writer(bits);
         }

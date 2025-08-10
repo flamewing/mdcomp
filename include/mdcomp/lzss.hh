@@ -445,7 +445,7 @@ namespace lzss {
         std::string buffer;
 
         void flush_buffer() noexcept {
-            out.write(buffer.c_str(), static_cast<std::streamsize>(buffer.size()));
+            utils::write_as_bytes<char const>(out, buffer);
             buffer.clear();
         }
 
@@ -518,7 +518,7 @@ namespace lzss {
         }
 
         void write_as_bytes(std::span<stream_t const> data) {
-            detail::write_as_bytes(buffer, data);
+            utils::write_as_bytes(buffer, data);
         }
 
         ostream& write(char* pointer, std::streamsize count) noexcept {
@@ -567,7 +567,7 @@ namespace lzss {
         }
 
         [[nodiscard]] std::vector<stream_t> read_from_bytes(size_t count) {
-            return detail::read_from_bytes<std::vector<stream_t>>(*in, count);
+            return utils::read_from_bytes<std::vector<stream_t>>(*in, count);
         }
 
         constexpr istream& read(char* pointer, std::streamsize count) noexcept {
@@ -818,7 +818,7 @@ namespace lzss {
 
         try {
             buffer_t buffer(static_cast<size_t>(length), value);
-            detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+            utils::write_as_bytes<stream_t const>(dest, buffer);
         } catch (boost::container::bad_alloc& except [[maybe_unused]]) {
             // The buffer allocation can theoretically fail with an exception,
             // but this simply is not possible for us.
@@ -849,7 +849,7 @@ namespace lzss {
             buffer_t buffer(
                     static_cast<size_t>(std::min(length, distance)),
                     boost::container::default_init_t{});
-            detail::read_from_bytes(dest, std::span<stream_t>(buffer));
+            utils::read_from_bytes(dest, std::span<stream_t>(buffer));
 
             if (length > distance) {
                 auto const start = std::ranges::cbegin(buffer);
@@ -868,7 +868,7 @@ namespace lzss {
             }
 
             dest.seekp(pointer);
-            detail::write_as_bytes(dest, std::span<stream_t const>(buffer));
+            utils::write_as_bytes<stream_t const>(dest, buffer);
         }
     }
 

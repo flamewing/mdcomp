@@ -211,9 +211,7 @@ public:
         // maps.
         uint16_t mask_val = 0;
         source.seekg(0);
-        source.ignore(std::numeric_limits<std::streamsize>::max());
-        auto const full_size = source.gcount() / 2;
-        source.seekg(0);
+        auto full_size = utils::ssize(source) / 2;
         for (diff_t loc = 0; loc < full_size; loc++) {
             uint16_t const value = big_endian::read2(source);
             mask_val |= value;

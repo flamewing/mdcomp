@@ -83,13 +83,10 @@ public:
 template <typename Format, pad_mode Pad, typename... Args>
 bool basic_decoder<Format, Pad, Args...>::encode(
         std::istream& source, std::ostream& dest, Args... args) {
-    auto start = source.tellg();
-    source.ignore(std::numeric_limits<std::streamsize>::max());
-    auto full_size = static_cast<size_t>(source.gcount());
-    source.seekg(start);
+    auto full_size = utils::size(source);
     std::vector<char, aligned_allocator<char>> data;
     if constexpr (Pad == pad_mode::pad_even) {
-        data.resize(detail::round_up(full_size, 2U));
+        data.resize(utils::round_up(full_size, 2U));
     } else {
         data.resize(full_size);
     }
@@ -100,7 +97,7 @@ bool basic_decoder<Format, Pad, Args...>::encode(
         }
     }
     if (Format::encode(dest, data, args...)) {
-        detail::pad_to_even(dest);
+        utils::pad_to_even(dest);
         return true;
     }
     return false;
@@ -110,7 +107,7 @@ template <typename Format, pad_mode Pad, typename... Args>
 void basic_decoder<Format, Pad, Args...>::extract(
         std::istream& source, std::iostream& dest) {
     dest << source.rdbuf();
-    detail::pad_to_even(dest);
+    utils::pad_to_even(dest);
     dest.seekg(0);
 }
 

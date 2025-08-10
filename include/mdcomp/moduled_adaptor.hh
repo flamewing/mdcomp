@@ -56,7 +56,7 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
     int64_t const     full_size = big_endian::read2(source);
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     input << source.rdbuf();
-    detail::pad_to_even(input);
+    utils::pad_to_even(input);
     input.seekg(0);
 
     while (true) {
@@ -66,7 +66,7 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
         }
 
         // Skip padding between modules
-        input.seekg(detail::round_up(input.tellg(), static_cast<diff_t>(module_padding)));
+        input.seekg(utils::round_up(input.tellg(), static_cast<diff_t>(module_padding)));
     }
 
     return true;
@@ -75,11 +75,8 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         std::istream& source, std::ostream& dest, size_t const module_padding) {
-    auto location = source.tellg();
-    source.ignore(std::numeric_limits<std::streamsize>::max());
-    auto full_size = static_cast<size_t>(source.gcount());
-    source.seekg(location);
-    auto data = detail::read_from_bytes<std::vector<char>>(source, full_size);
+    auto full_size = utils::size(source);
+    auto data = utils::read_from_bytes<std::vector<char>>(source, full_size);
 
     big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
@@ -88,14 +85,14 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         Format::encode(buffer, input_span.subspan(0, ModuleSize));
         input_span = input_span.subspan(ModuleSize);
         // Padding between modules
-        detail::pad_to_multiple(buffer, module_padding);
+        utils::pad_to_multiple(buffer, module_padding);
     }
 
     Format::encode(buffer, input_span);
 
     // Pad to even size.
     dest << buffer.rdbuf();
-    detail::pad_to_even(dest);
+    utils::pad_to_even(dest);
     return true;
 }
 

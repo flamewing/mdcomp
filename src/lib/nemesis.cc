@@ -699,7 +699,7 @@ public:
                     auto run_length = std::views::iota(size_t{0})
                                       | std::views::take(count)
                                       | std::views::transform(get_nibble_run_code_length)
-                                      | detail::to<std::vector<size_t>>();
+                                      | utils::to<std::vector<size_t>>();
 
                     // Now go through the linear coefficient table and
                     // tally up the total code size, looking for the
@@ -838,7 +838,7 @@ public:
             return std::make_shared<node>(run, frequency);
         };
         auto nodes = count_map | std::views::filter(freq_filter)
-                     | std::views::transform(to_node) | detail::to<node_vector>();
+                     | std::views::transform(to_node) | utils::to<node_vector>();
 
         // The base coin collection for the length-limited Huffman coding has
         // one coin list per character in length of the limitation. Each coin
@@ -1106,7 +1106,7 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     str_source << source.rdbuf();
 
     // Pad source with zeroes until it is a multiple of 32 bytes.
-    detail::pad_to_multiple(str_source, 32);
+    utils::pad_to_multiple(str_source, 32);
     auto const size = str_source.tellp();
 
     // Now we will build the alternating bit stream for mode 1 compression.
