@@ -66,7 +66,10 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
         }
 
         // Skip padding between modules
-        input.seekg(utils::round_up(input.tellg(), static_cast<diff_t>(module_padding)));
+        input.seekg(
+                utils::round_up(
+                        static_cast<diff_t>(input.tellg()),
+                        static_cast<diff_t>(module_padding)));
     }
 
     return true;
