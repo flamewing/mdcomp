@@ -27,7 +27,7 @@
 
 class comperx;
 using basic_comperx   = basic_decoder<comperx, pad_mode::pad_even>;
-using moduled_comperx = moduled_adaptor<comperx, 4096U, 1U>;
+using moduled_comperx = moduled_adaptor<comperx, 4096U, 2U>;
 
 class comperx : public basic_comperx, public moduled_comperx {
     friend basic_comperx;

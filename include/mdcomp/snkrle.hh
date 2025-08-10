@@ -27,7 +27,7 @@
 
 class snkrle;
 using basic_snkrle   = basic_decoder<snkrle, pad_mode::pad_even>;
-using moduled_snkrle = moduled_adaptor<snkrle, 4096U, 1U>;
+using moduled_snkrle = moduled_adaptor<snkrle, 4096U, 2U>;
 
 class snkrle : public basic_snkrle, public moduled_snkrle {
     friend basic_snkrle;
