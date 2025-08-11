@@ -21,6 +21,7 @@
 
 #include "mdcomp/bigendian_io.hh"
 #include "mdcomp/bitstream.hh"
+#include "mdcomp/stream_utils.hh"
 
 #include <algorithm>
 #include <array>

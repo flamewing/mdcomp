@@ -116,9 +116,9 @@ namespace utils {
     requires std::integral<typename Cont::value_type>
     [[nodiscard]] inline Cont read_from_bytes(
             std::istream& source, size_t count, size_t alignment) {
-        using value_t = typename Cont::value_type;
-        Cont   data;
-        size_t capacity = utils::round_up(count, alignment);
+        size_t const capacity = utils::round_up(count, alignment);
+        using value_t         = typename Cont::value_type;
+        Cont data;
         data.reserve(capacity);
         data.resize(count);
         read_from_bytes(source, std::span<value_t>(data));
