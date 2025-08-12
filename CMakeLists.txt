@@ -414,15 +414,17 @@ add_custom_target(
     ${ALL_SOURCE_FILES}
 )
 
-cmake_path(NATIVE_PATH CMAKE_BINARY_DIR NORMALIZE build_dir)
-cmake_path(APPEND_STRING CMAKE_SOURCE_DIR "/.clang-tidy" OUTPUT_VARIABLE tidy_dir)
-cmake_path(NATIVE_PATH tidy_dir NORMALIZE tidy)
-find_program(python NAMES python3)
-find_program(run_tidy NAMES run-clang-tidy)
-add_custom_target(
-    mdcomp-tidy
-    COMMAND ${python} ${run_tidy} -use-color -header-filter=.* -p ${build_dir} -quiet -config-file ${tidy}
-)
+if(NOT MSVC)
+    cmake_path(NATIVE_PATH CMAKE_BINARY_DIR NORMALIZE build_dir)
+    cmake_path(APPEND_STRING CMAKE_SOURCE_DIR "/.clang-tidy" OUTPUT_VARIABLE tidy_dir)
+    cmake_path(NATIVE_PATH tidy_dir NORMALIZE tidy)
+    find_program(python NAMES python3)
+    find_program(run_tidy NAMES run-clang-tidy)
+    add_custom_target(
+        mdcomp-tidy
+        COMMAND ${python} ${run_tidy} -use-color -header-filter=.* -p ${build_dir} -quiet -config-file ${tidy}
+    )
+endif()
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
