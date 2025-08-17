@@ -102,15 +102,15 @@ struct lzkn1_adaptor {
             // 8-bit value.
             return desc_bits(type) + 8;
         case dictionary_short:
-            // 4-bit distance, 2-bit marker (%10),
+            // 4-bit distance, 2-bit marker (0b10),
             // 2-bit length.
             return desc_bits(type) + 4 + 2 + 2;
         case dictionary_long:
-            // 10-bit distance, 1-bit marker (%0),
+            // 10-bit distance, 1-bit marker (0b0),
             // 5-bit length.
             return desc_bits(type) + 10 + 1 + 5;
         case packed_symbolwise:
-            // 2-bit marker (%11), 6-bit length,
+            // 2-bit marker (0b11), 6-bit length,
             // length * 8 bits data.
             return desc_bits(type) + 2 + 6 + (length * 8);
         // NOLINTNEXTLINE(clang-diagnostic-covered-switch-default)

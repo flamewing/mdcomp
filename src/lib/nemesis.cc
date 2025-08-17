@@ -457,7 +457,7 @@ public:
         size_t       bits_written = 0;
         while (bits_written < total_bits) {
             if (code == 0x3f && length == 6) {
-                // Bit pattern %111111; inline RLE.
+                // Bit pattern 0b111111; inline RLE.
                 // First 3 bits are repetition count, followed by the inlined
                 // nibble.
                 size_t  count  = bits.read(3) + 1;
