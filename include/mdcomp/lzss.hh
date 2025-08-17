@@ -722,40 +722,38 @@ namespace lzss {
         // often.
         auto relax = [last_node = data.size(), &total_costs, &descriptor_costs,
                       &parent_nodes, &parent_edges](
-                             size_t index, size_t const base_descriptor_cost,
+                             size_t index, size_t const base_desc_cost,
                              auto const& elem) noexcept {
             // Need destination ID and edge weight.
             size_t const next_node
                     = elem.get_destination() - Adaptor::first_match_position;
-            size_t edge_weight = total_costs[index] + elem.get_weight();
+            size_t path_cost = total_costs[index] + elem.get_weight();
             // Compute descriptor bits from using this edge.
-            size_t descriptor_cost
-                    = base_descriptor_cost + Adaptor::desc_bits(elem.get_type());
+            size_t desc_cost = base_desc_cost + Adaptor::desc_bits(elem.get_type());
             if (next_node == last_node) {
                 // This is the ending node. Add the descriptor bits for the
                 // end-of-file marker.
-                edge_weight += Adaptor::edge_weight(edge_type::terminator, 0);
-                descriptor_cost += Adaptor::desc_bits(edge_type::terminator);
+                path_cost += Adaptor::edge_weight(edge_type::terminator, 0);
+                desc_cost += Adaptor::desc_bits(edge_type::terminator);
                 // If the descriptor bitfield had exactly 0 bits left after
                 // this, we may need to emit a new descriptor bitfield (the
                 // full Adaptor::num_desc_bits bits). Otherwise, we need to
                 // pads the last descriptor bitfield to full size.
                 // This accomplishes both.
-                size_t const descriptor_modulus
-                        = descriptor_cost % Adaptor::num_desc_bits;
-                if (descriptor_modulus != 0 || Adaptor::need_early_descriptor) {
-                    edge_weight += (Adaptor::num_desc_bits - descriptor_modulus);
-                    descriptor_cost += (Adaptor::num_desc_bits - descriptor_modulus);
+                bool const descriptor_full = (desc_cost % Adaptor::num_desc_bits) == 0;
+                if (!descriptor_full || Adaptor::need_early_descriptor) {
+                    path_cost = utils::round_up(path_cost, Adaptor::num_desc_bits);
+                    desc_cost = utils::round_up(desc_cost, Adaptor::num_desc_bits);
                 }
             }
             // Is the cost to reach the target node through this edge less
             // than the current cost?
-            if (total_costs[next_node] > edge_weight) {
+            if (total_costs[next_node] > path_cost) {
                 // If so, update the data structures with new best edge.
-                total_costs[next_node]      = edge_weight;
+                total_costs[next_node]      = path_cost;
                 parent_nodes[next_node]     = index;
                 parent_edges[next_node]     = elem;
-                descriptor_costs[next_node] = descriptor_cost;
+                descriptor_costs[next_node] = desc_cost;
             }
         };
 
