@@ -269,13 +269,14 @@ public:
     INLINE bool write(uint_t const data, size_t const size) noexcept(
             noexcept(write_bits(bit_buffer))) {
         if (waiting_bits + size >= bit_count) {
-            size_t const delta = bit_count - waiting_bits;
-            waiting_bits       = (waiting_bits + size) % bit_count;
-            uint_t bits        = static_cast<uint_t>(bit_buffer << delta)
-                          | static_cast<uint_t>(data >> waiting_bits);
+            size_t const delta     = bit_count - waiting_bits;
+            waiting_bits           = (waiting_bits + size) % bit_count;
+            auto const   high_bits = static_cast<uint_t>(bit_buffer << delta);
+            auto const   low_bits  = static_cast<uint_t>(data >> waiting_bits);
+            uint_t const bits      = high_bits | low_bits;
+            auto const mask = static_cast<uint_t>(all_ones >> (bit_count - waiting_bits));
             write_bits(bits);
-            bit_buffer
-                    = data & static_cast<uint_t>(all_ones >> (bit_count - waiting_bits));
+            bit_buffer = data & mask;
             return true;
         }
         bit_buffer = static_cast<uint_t>(bit_buffer << size) | data;
