@@ -22,12 +22,14 @@ jobs:
         run: |
           DATEUTC=$(curl -sL https://api.github.com/repos/flamewing/mdcomp/commits | jq -r '[.[]][0]' | jq -r '.commit.committer.date')
           TIMESTAMP=$(date --utc -d "$DATEUTC" +%s)
-          DAYS=$(( ($(date --utc +%s) - $TIMESTAMP) / 86400 ))
+          DAYS=$(( ($(date --utc -d "0:00" +%s) - $TIMESTAMP) / 86400 ))
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo repo_alive=true >> $GITHUB_OUTPUT
+            echo event is workflow_dispatch. Force building snapshot not doing activity check
           else
             if [ $DAYS -gt 0 ]; then
               echo repo_alive=false >> $GITHUB_OUTPUT
+              echo "No activity in 24 hours before midnight UTC not running Coverity. Last activity at $DATEUTC."
             else
               echo repo_alive=true >> $GITHUB_OUTPUT
             fi
