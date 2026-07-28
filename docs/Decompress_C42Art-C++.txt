@@ -1,0 +1,108 @@
+		private long bitcycle(long count)
+		{
+			long output = 0, counter, carry = 0;
+
+			while (count != 0) {
+				if (maxbits == 0) {
+					datum = ((long) readbyte()) << 24;
+					maxbits = 8;
+				}
+				counter = count;
+				if (count > maxbits)
+					counter = maxbits;
+				count -= counter;
+				do {
+					carry = (datum & 0x80000000) >> 31;
+					datum <<= 1;
+					output = (output << 1) | carry;
+					maxbits--;
+				} while (--counter != 0);
+			}
+			return output;
+		}
+
+		private void drawcompressed(long addr)
+		{
+			/* here's the abritrary palette, if anyone was interested
+			SolidBrush[] b = {
+				new SolidBrush(Color.Transparent),
+				new SolidBrush(Color.Black),
+				new SolidBrush(Color.Red),
+				new SolidBrush(Color.Blue),
+				new SolidBrush(Color.Green),
+				new SolidBrush(Color.Yellow),
+				new SolidBrush(Color.Purple),
+				new SolidBrush(Color.Gray),
+				new SolidBrush(Color.Silver),
+				new SolidBrush(Color.Brown),
+				new SolidBrush(Color.Cyan),
+				new SolidBrush(Color.Magenta),
+				new SolidBrush(Color.Maroon),
+				new SolidBrush(Color.Fuchsia),
+				new SolidBrush(Color.Orange),
+				new SolidBrush(Color.LimeGreen)
+			}; */
+			long x0, xshift, y0, yshift, c0, cshift;
+			long c, n;
+
+			seekto(addr + 3);
+			maxbits = datum = 0;
+			x0 = readbyte();
+			xshift = readbyte();
+			y0 = readbyte();
+			yshift = readbyte();
+			c0 = readbyte();
+			cshift = readbyte();
+			width = (int) bitcycle(xshift); // skip x1, y1
+			height = (int) bitcycle(yshift);
+			for (;;) {
+				long x1, x2;
+				long x, y;
+
+				x1 = bitcycle(xshift);// + x0;
+				x2 = bitcycle(xshift);// + x0;
+				if (x1 == x2)
+					break;
+				n = x2 - x1;
+				y = bitcycle(yshift);//+ y0;
+				y = y & 0xFF;
+				for (x = x1 & 0xFF; n != 0; x++, n--) {
+					c = (bitcycle(cshift) + c0 + (int) startingindex.Value) & 0xFF;
+					g.FillRectangle(new SolidBrush(palette[(c == (int) startingindex.Value) ? 0 : c % 256]),
+						x, y, 1, 1);
+				}
+			}
+			g.Flush();
+		}
+
+		private void drawuncompressed(long addr)
+		{
+			long x0, y0, x1, y1, x2, y2, x3;
+
+			seekto(addr);
+			x0 = readsword();
+			x1 = readsword();
+			y0 = (sbyte) readbyte();
+			readbyte();
+			y1 = (sbyte) readbyte();
+			readbyte();
+			width = (int) (x1 - x0);
+			height = (int) (y1 - y0);
+			for (;;) {
+				x2 = (sbyte) readbyte();
+				x3 = (sbyte) readbyte();
+				if (x2 == x3 && x2 == 0)
+					break;
+				y2 = (sbyte) readbyte();
+				readbyte();
+				for (; x2 < x3; x2++) {
+					int c;
+
+					c = (byte) readbyte() + (int) startingindex.Value;
+					System.Diagnostics.Debug.WriteLine(c.ToString() + " " + (c % 256));
+					g.FillRectangle(new SolidBrush(palette[(c == (int) startingindex.Value) ? 0 : c % 256]),
+						x2 - x0, y2 - y0, 1, 1);
+				}
+			}
+			g.Flush();
+		}

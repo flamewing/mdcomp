@@ -1,0 +1,242 @@
+; =============== S U B R O U T I N E =======================================
+; Decompresses a C42 art file into a buffer.
+; The decompression results in the following data:
+; 	WORD	Initial X
+; 	WORD	Final X
+; 	WORD	Initial Y
+; 	WORD	Final Y
+; 	For each row:
+; 		BYTE	Initial row X
+; 		BYTE	Final row X
+; 		BYTE	Row Y (multiplied by 256?)
+; 		BYTE[]	Pixels (if 0 on art file, transparent (0), otherwise add r3)
+;
+; Input:
+; 	r1	input data
+; 	r2	output buffer
+; 	r3	palette offset
+; Output:
+; 	r0	Number of bytes in decompressed art
+;DrawArt32X
+Decompress_C42Art:
+	mov.b	@(2,r1),r0					; Read format byte
+	cmp/eq	#h'42,r0					; If r0 is 'B' then C42 art is bit-packed.
+	bf	Decompress_UnpackedC42			; Branch for unpacked art
+	mov.l	r14,@-r15					; Store registers...
+	mov.l	r13,@-r15					; ...
+	mov.l	r12,@-r15					; ...
+	mov.l	r11,@-r15					; ...
+	mov.l	r10,@-r15					; ...
+	mov.l	r9,@-r15					; ...
+	mov.l	r8,@-r15					; ...
+	mov.l	r7,@-r15					; ...
+	mov.l	r6,@-r15					; ...
+	mov.l	r5,@-r15					; ...
+	mov.l	r4,@-r15					; ...
+	mov.l	r2,@-r15					; ...
+	mov.l	r1,@-r15					; ... on stack (We miss you, movem...)
+	sts.l	pr,@-r15					; Store return address
+	mov.w	@r1+,r0						; Read number of bytes in decompressed art
+	add	#1,r1							; Skip format byte
+	extu.w	r0,r0						; Zero-extend from word
+	mov.l	r0,@-r15					; Save it
+	mov.b	@r1+,r4						; Read initial X (delta-encoded)
+	mov.b	@r1+,r5						; Read number of bits used for X
+	mov.b	@r1+,r6						; Read initial Y (delta-encoded)
+	mov.b	@r1+,r7						; Read number of bits used for Y
+	mov.b	@r1+,r8						; Read base palette index (delta-encoded)
+	mov.b	@r1+,r9						; Read number of bits used for palette entries
+	mov	#0,r14							; Number of bits in bitstream buffer
+	mov.w	r4,@r2						; Write initial X
+	bsr	ReadBitstream					; Read width
+	mov	r5,r12							; Branch slot - bit count for X
+	; **** BRANCH SLOT WARNING ****
+	add	r4,r0							; Add initial X to width, for final X
+	mov.w	r0,@(2,r2)					; Write final X
+	add	#4,r2							; Increment destination past all this
+	mov	r6,r0							; Copy initial Y to r0
+	shll8	r0							; Shift it up 8 bits...
+	mov.w	r0,@r2						; ... and write to destination
+	bsr	ReadBitstream					; Read height
+	mov	r7,r12							; Branch slot - bit count for Y
+	; **** BRANCH SLOT WARNING ****
+	add	r6,r0							; Add initial Y, for final Y
+	shll8	r0							; Shift it up 8 bits...
+	mov.w	r0,@(2,r2)					; ... and write to destination
+	bra	.start_row
+	add	#4,r2							; Branch slot - Increment destination past all this
+	; **** BRANCH SLOT WARNING ****
+; ---------------------------------------------------------------------------
+.decompress_row:
+	sub	r10,r0							; Compute row width (loop counter)
+	mov	r0,r10							; Store it to r10
+	bsr	ReadBitstream					; Read row Y offset
+	mov	r7,r12							; Branch slot - bit count for Y
+	; **** BRANCH SLOT WARNING ****
+	add	r6,r0							; Add in initial Y
+	shll8	r0							; Shift it up 8 bits...
+	mov.w	r0,@(2,r2)					; ... and write to destination
+	add	#4,r2
+
+.row_loop:
+	bsr	ReadBitstream					; Read a palette offset
+	mov	r9,r12							; Branch slot - bit count for palette
+	; **** BRANCH SLOT WARNING ****
+	add	r8,r0							; Add in base palette index
+	tst	r0,r0							; Is it transparent?
+	bt/s	.write_pix					; Banch if yes
+	dt	r10								; Branch slot - decrement and test loop counter
+	; **** BRANCH SLOT WARNING ****
+	add	r3,r0							; Otherwise, add in palette offset
+
+.write_pix:
+	mov.b	r0,@r2						; Write pixel
+	bf/s	.row_loop					; Branch if there are pixels remaining in this row
+	add	#1,r2							; Branch slot
+	; **** BRANCH SLOT WARNING ****
+
+.start_row:
+	bsr	ReadBitstream					; Read a X offset
+	mov	r5,r12							; Branch slot - bit count for X
+	; **** BRANCH SLOT WARNING ****
+	add	r4,r0							; Add initial X
+	mov.b	r0,@r2						; Store it to destination
+	mov	r0,r10							; Save to r10
+	bsr	ReadBitstream					; Read a X offset
+	mov	r5,r12							; Branch slot - bit count for X
+	; **** BRANCH SLOT WARNING ****
+	add	r4,r0							; Add initial X
+	cmp/eq	r10,r0						; Is this row empty?
+	bf/s	.decompress_row				; Branch if not
+	mov.b	r0,@(1,r2)					; Branch slot - store it to destination
+	; **** BRANCH SLOT WARNING ****
+	mov	#0,r0							; Clear r0
+	mov.w	r0,@r2						; Undo the last 2 byte writes
+	mov.l	@r15+,r0					; Restore decompressed size
+	lds.l	@r15+,pr					; Restore return address
+	mov.l	@r15+,r1					; Restore registers...
+	mov.l	@r15+,r2					; ...
+	mov.l	@r15+,r4					; ...
+	mov.l	@r15+,r5					; ...
+	mov.l	@r15+,r6					; ...
+	mov.l	@r15+,r7					; ...
+	mov.l	@r15+,r8					; ...
+	mov.l	@r15+,r9					; ...
+	mov.l	@r15+,r10					; ...
+	mov.l	@r15+,r11					; ...
+	mov.l	@r15+,r12					; ...
+	mov.l	@r15+,r13					; ...
+	rts
+	mov.l	@r15+,r14					; Branch slot - ... from stack (we miss you, movem...)
+	; **** BRANCH SLOT WARNING ****
+; ---------------------------------------------------------------------------
+;DrawUncompressedArt
+Decompress_UnpackedC42:
+	mov.l	r4,@-r15					; Save registers...
+	mov.l	r2,@-r15					; ...
+	mov.l	r1,@-r15					; ... into stack
+	mov	#4,r4							; Want to read 4 words
+
+.copy_loop:
+	mov.w	@r1+,r0						; Read a word
+	dt	r4								; Decrement r4 and test
+	mov.w	r0,@r2						; Store to destination
+	bf/s	.copy_loop					; Branch if all 4 words have been read
+	add	#2,r2							; Branch slot - increment destination pointer
+	; **** BRANCH SLOT WARNING ****
+	bt	.start_row						; Will always jump (could be bra, were it not for branch slot)
+; ---------------------------------------------------------------------------
+.decompress_row:
+	sub	r4,r0							; Compute row width (loop counter)
+	mov.w	@r1+,r4						; Read row Y
+	mov.w	r4,@r2						; Write to destination
+	add	#2,r2							; Increment destination by 2
+
+.row_loop:
+	mov.b	@r1+,r4						; Read a palette index
+	tst	r4,r4							; Is it transparent?
+	bt/s	.write_pix					; Branch if yes
+	dt	r0								; Branch slot; decrement loop counter and test
+	; **** BRANCH SLOT WARNING ****
+	add	r3,r4							; Otherwise, add in palette offset
+
+.write_pix:
+	mov.b	r4,@r2						; Write pixel
+	bf/s	.row_loop					; Branch if there are pixels remaining in this row
+	add	#1,r2							; Branch slot - advance destination
+	; **** BRANCH SLOT WARNING ****
+
+.start_row:
+	mov.b	@r1+,r4						; Read initial X
+	mov.b	@r1+,r0						; Read final X
+	mov.b	r4,@r2						; Store initial X...
+	mov.b	r0,@(1,r2)					; ... and final X
+	cmp/eq	r4,r0						; Is initial X = final X?
+	bf/s	.decompress_row				; Branch if not
+	add	#2,r2							; Branch slot - increment destination by 2
+	; **** BRANCH SLOT WARNING ****
+	mov	r2,r0							; Save current destination position to r0
+	mov.l	@r15+,r1					; Restore registers...
+	mov.l	@r15+,r2					; ...
+	mov.l	@r15+,r4					; ... from stack
+	rts
+	sub	r2,r0							; Branch slot - turn r0 into decompressed bytes
+	; **** BRANCH SLOT WARNING ****
+; End of function DrawArt32X
+; ===========================================================================
+
+; =============== S U B R O U T I N E =======================================
+; Reads r12 bits from r1 into r0. This is done by storing one byte from r1
+; into r13, and the number of bits available in r13 in r14.
+;
+; Input:
+; 	r1	Input data
+; 	r12	Number of bits to read
+; 	r13	Available bits in buffer
+; 	r14	Number of bits available in buffer
+; Output:
+; 	r0	Bits read
+; 	r1	Incremented if more bits requested than were available on buffer
+; 	r13	Available bits in buffer
+; 	r14	Number of bits available in buffer
+;BitCycleForCompressedArt
+ReadBitstream:
+	mov	#0,r0							; Clear d0
+	cmp/pl	r12							; Asking for a negative number of bits?
+	bf	.done							; If so, get out
+
+.byte_loop:
+	tst	r14,r14							; Are any bits available in the buffer?
+	bf	.have_bits						; Branch if yes
+	mov.b	@r1+,r13					; Read a byte
+	mov	#8,r14							; We now have 8 bits in the buffer
+	shll16	r13							; Shift bits up...
+	shll8	r13							; ... by 24 places
+
+.have_bits:
+	cmp/hi	r14,r12						; Were more bits requested than what was available?
+	bf/s	.got_count					; Branch if not
+	mov	r12,r11							; Branch slot - loop counter = value requested
+	; **** BRANCH SLOT WARNING ****
+	mov	r14,r11							; Loop counter = value available
+
+.got_count:
+	sub	r11,r12							; r12 = bits needed next time
+
+.bit_loop:
+	shll	r13							; Extract topmost bit from buffer...
+	rotcl	r0							; ... and put it on r0
+	dt	r11								; Decrement loop counter and test
+	bf/s	.bit_loop					; Branch if it is not zero
+	add	#-1,r14							; Branch slot - decrement available bits
+	; **** BRANCH SLOT WARNING ****
+	tst	r12,r12							; Do we need more bits?
+	bf	.byte_loop						; Branch if so
+
+.done:
+	rts
+	nop									; Branch slot
+	; **** BRANCH SLOT WARNING ****
+; End of function ReadBitstream
+; ===========================================================================
+

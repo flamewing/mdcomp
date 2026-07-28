@@ -1,0 +1,78 @@
+Bit-Packed C42:
+	word	Decompressed size
+	byte	Always 'B'
+	byte	Initial X (delta encoded; bx)
+	byte	Bits used for X (nx)
+	byte	Initial Y (delta encoded; by)
+	byte	Bits used for Y (ny)
+	byte	Base palette index (bp)
+	byte	Bits used for palette (np)
+	byte[]	Compressed bitstream
+
+	Decompression:
+		r2[0].w = bx
+		r2[2].w = bx + bits.read(nx)
+		r2 += 4
+		r2[0].w = by << 8
+		r2[2].w = (by + bits.read(ny)) << 8
+		r2 += 4
+		do {
+			r2[0].b = cxi = bx + bits.read(nx)
+			r2[1].b = cxf = bx + bits.read(nx)
+			delta = cxf - cxi
+			if (delta == 0) {
+				r2[0].w = 0
+				return
+			}
+			r2[2].w = (by + bits.read(ny)) << 8
+			r2 += 4
+			do {
+				pix = bp + bits.read(np)
+				if (pix != 0) {
+					pix += paloff
+					r2 += 1
+				}
+				r2[0].b = pix
+				r2 += 1
+			} while (delta--)
+		}
+
+Unpacked:
+	word	Initial X (delta encoded; bxi)
+	word	Final X (delta encoded; bxf)
+	word	Initial Y (delta encoded; byi)
+	word	Final Y (delta encoded; byf)
+	struct {
+		byte	Initial X
+		byte	Final X
+		word	Row Y
+		byte[]	Pixels
+	}[]		Image data
+
+	Decompression:
+		r2[0].w = bxi
+		r2[2].w = bxf
+		r2[4].w = byi
+		r2[6].w = byf
+		r2 += 8
+		do {
+			r2[0].b = cxi = *r1.b++
+			r2[1].b = cxf = *r1.b++
+			delta = cxf - cxi
+			r2 += 2
+			if (delta == 0) {
+				return
+			}
+			r2[0].w = *r1.b++
+			r2 += 2
+			do {
+				pix = *r1.b++
+				if (pix != 0) {
+					pix += paloff
+					r2 += 1
+				}
+				r2[0].b = pix
+				r2 += 1
+			} while (delta--)
+		}
+
