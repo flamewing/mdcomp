@@ -55,7 +55,7 @@ public:
                 size -= count;
                 if (count == 255 && size > 0) {
                     curr = read1(source);
-                    write1(dest, next);
+                    write1(dest, curr);
                     size--;
                 }
             } else {

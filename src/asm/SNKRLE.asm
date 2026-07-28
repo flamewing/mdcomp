@@ -21,6 +21,16 @@
 ; INPUT:
 ; 	a0	Source address
 ; 	a1	Destination address
+;
+; CALLER REQUIREMENTS:
+; 	a0 and a1 are word-aligned.
+; 	The source begins with a nonzero, even decompressed byte count.
+; 	The compressed stream is well-formed and no run exceeds the remaining size.
+; 	One padding byte beyond the compressed payload is readable by MOVEP.
+;
+; CLOBBERS:
+; 	d0-d1/d3-d6/a0-a1/a4/cc; uses the stack for the copy-table subroutine.
+; 	The final value of a0 is unspecified.
 ; ===========================================================================
 ; Note on preconditions:
 ; The following preconditions are conditions satisfied by the decoding logic at
@@ -41,7 +51,6 @@
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 SNKDec:
-	;16 words = 1 tile
 	move.w	#$FE,d0
 	moveq	#0,d1
 	moveq	#0,d4
@@ -65,7 +74,8 @@ SNKDec:
 	; We now have a word on the buffer. Write it to output stream.
 	move.w	d6,(a1)+
 	subq.w	#2,d1
-	; PRECONDITIONS: (1), (2), (3) and (4) still hold.
+	; PRECONDITIONS: (1), (2'), (3"), and (4) now hold. If the bytes are
+	; identical, (2) and (3*) also hold by equality.
 	; Branch if decompression was finished.
 	beq.s	SNKDecEnd
 	; Is this a run of identical bytes?
@@ -117,7 +127,7 @@ SNKDec:
 	; Write both to output stream.
 	move.w	d6,(a1)+
 	subq.w	#2,d1
-	; PRECONDITIONS: (1), (2'), and (4) still hold; (3) is replaced by (3").
+	; PRECONDITIONS: (1), (2'), and (4) still hold; (3*) is replaced by (3").
 	; Branch if decompression was finished.
 	beq.s	SNKDecEnd
 	bra.s	.main_loop_buffer_clear
@@ -134,7 +144,7 @@ SNKDec:
 
 .main_loop_buffer_clear:
 	; PRECONDITIONS: (1), (2'), (3"), and (4) hold.
-	; Swap (empty) buffer to d6 and last character read to d6.
+	; Move the last character read from d6 to d3.
 	move.b	d6,d3
 	; PRECONDITIONS: (1), and (4) still hold; (2') is replaced by (2),
 	; and (3") is replaced by (3').
@@ -142,11 +152,17 @@ SNKDec:
 	movep.w	0(a0),d6
 	; Print it again to buffer for ease of comparison.
 	move.b	(a0)+,d6
-	; PRECONDITIONS: (1), (2), and (4) still hold; (3') is replaced by (3*).
+	; PRECONDITIONS: (1), (2'), (3*), and (4) now hold.
 	; Is this a run of identical bytes?
 	cmp.b	d6,d3
-	; Branch if not.
-	bne.s	.main_loop
+	; If not, make the newly buffered character the last character read before
+	; returning to the main loop.
+	beq.s	.main_loop_buffer_run
+	move.b	d6,d3
+	; PRECONDITIONS: (1), (2), (3), and (4) now hold.
+	bra.s	.main_loop
+.main_loop_buffer_run:
+	; PRECONDITIONS: (1), (2), (3*), and (4) hold by equality.
 	; We have a run. Fetch number of repetitions.
 	move.b	(a0)+,d5
 	; Zero repetitions means we just need to print the character to the buffer.
@@ -198,7 +214,7 @@ SNKDec:
 	; Write both to output stream.
 	move.w	d6,(a1)+
 	subq.w	#2,d1
-	; PRECONDITIONS: (1), (2'), and (4) still hold; (3) is replaced by (3").
+	; PRECONDITIONS: (1), (2'), and (4) still hold; (3*) is replaced by (3").
 	; Branch if decompression was not finished.
 	bne.s	.main_loop_buffer_clear
 
