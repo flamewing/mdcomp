@@ -29,8 +29,9 @@ codec family.
    Batman & Robin, Compile/Puyo Puyo, Kid Chameleon, and Space Harrier codecs.
 2. Give each codec in scope a checked, memory-only decoder and encoder where
    the format is sufficiently understood.
-3. Improve the shared LZSS infrastructure to support formats with separate
-   descriptor and parameter/data streams.
+3. Improve the shared LZSS infrastructure with overlap-aware indexed match
+   discovery and support for formats with separate descriptor and
+   parameter/data streams.
 4. Refactor Enigma and SnKRLE to produce reusable parse plans and exact output
    sizes.
 5. Replace Nemesis's greedy and heuristic decisions with a formally modelled
@@ -126,6 +127,97 @@ these properties:
 LZ-derived implementations should reuse LZ match discovery while supplying
 their own token types and costs. Non-LZ formats may reuse only the
 shortest-path and plan machinery.
+
+### Overlap-aware LZSS match indexing
+
+Replace the exhaustive search in `lzss::sliding_window` with indexed match
+discovery without changing the set of legal dictionary edges. The current
+matcher deliberately supports self-referencing copies whose source begins in
+the search window but overlaps the destination when the match length exceeds
+its distance. For a match at input position `i`, source position `j`, and
+length `length`, eligibility is based on:
+
+```text
+i - window_size <= j < i
+input[i : i + length] == input[j : j + length]
+```
+
+It must not require `j + length <= i`. This distinction is observable for
+periodic inputs: a run of one repeated byte can be represented by one literal
+followed by a distance-one copy longer than its source prefix.
+
+The preferred first implementation to evaluate is an offline suffix array over
+the complete input, an LCP/RMQ structure for longest-common-extension queries,
+and an active ordered set of suffix-array ranks for each distance-cost layer.
+At each input position, querying the lexicographic predecessor and successor
+within a layer yields a longest match in that eligible source set. Cap the
+result at the codec's lookahead limit and generate every legal prefix required
+by the parse graph. This fits the buffer refactor's whole-input prepare phase
+and avoids adopting a complex mutable suffix-tree implementation prematurely.
+
+Keep the multilayer suffix-tree design as an alternative when its rightmost
+equal-cost-position operations are materially useful. An online version must
+index far enough into the lookahead to compare overlapping suffixes, enlarge
+each distance layer accordingly, and filter candidates by source *start*
+position. A suffix-tree node may contain both eligible previous suffixes and
+ineligible lookahead suffixes, so node queries need descendant occurrence-range
+information rather than rejecting a whole node based on one occurrence.
+
+Distance layers must correspond to actual encoded-cost boundaries, as the
+existing Kosinski-family windows do. For a layer in which every distance has
+the same cost, one longest source and all of its legal prefixes are sufficient
+for size optimality. If distance cost, canonical tie-breaking, or format
+legality varies within a layer, enumerate the nondominated `(distance, length,
+cost)` candidates or provide rightmost/range-predecessor queries; do not assume
+that one longest occurrence represents every prefix.
+
+Ordinary dictionary matches and codec-specific matches must be independent
+candidate sources:
+
+```text
+indexed dictionary matches + adaptor-provided synthetic matches
+                         -> merge/deduplicate
+                         -> optimal-parse graph
+```
+
+In particular, Saxman's implicit zero-fill references should remain synthetic
+matches. Finding a zero-fill must not suppress ordinary dictionary matches: a
+dictionary occurrence can share the zero prefix and then continue beyond it.
+Replace the current boolean short-circuit contract of `extra_matches` with an
+additive candidate interface, then remove only edges proven to be dominated.
+
+Correctness and performance checklist:
+
+- [ ] Specify self-referencing copy semantics per codec and verify that its C++,
+      C, and assembly decoders copy in the required forward/periodic manner.
+- [ ] Build an offline suffix-array/LCP/RMQ prototype with one active source set
+      per distance-cost layer.
+- [ ] Compare every indexed candidate set with the exhaustive matcher on
+      bounded exhaustive and deterministic randomized inputs.
+- [ ] Cover distance-one runs, periods two and three, `length == distance`,
+      `length == distance + 1`, maximum match length, and both search-window
+      boundaries.
+- [ ] Test candidate completeness independently from shortest-path selection;
+      equal compressed output alone can hide a missing but tied edge.
+- [ ] Change adaptor-specific matching from replacement to additive generation
+      and add a Saxman case where zero-fill and a longer normal match coexist.
+- [ ] Prove the candidate-pruning rule for each cost-layer model or retain all
+      nondominated candidates.
+- [ ] Benchmark repetitive worst cases and representative inputs against the
+      exhaustive matcher, including construction time and peak memory.
+- [ ] Preserve a small exhaustive matcher as a test oracle after the indexed
+      implementation becomes the production path.
+
+Primary algorithm references:
+
+- [Dictionary-symbolwise flexible parsing](https://doi.org/10.1016/j.jda.2011.12.021)
+  for the prefix-closed dictionary and optimal-parse graph model;
+- [The Rightmost Equal-Cost Position Problem](https://arxiv.org/abs/1211.5108)
+  for multilayer suffix trees and distance-cost layers;
+- [Simpler and Faster Lempel Ziv Factorization](https://arxiv.org/abs/1211.3642)
+  for a practical suffix-array-based alternative;
+- [the earlier overlap question](https://stackoverflow.com/questions/31347593/matches-overlapping-lookahead-on-lz77-lzss-with-suffix-trees)
+  for the original mdcomp motivation and constraints.
 
 ### Definition of optimality
 
@@ -659,6 +751,9 @@ Optimal encoders additionally require:
 - [ ] Make plan emission independent of stream I/O.
 - [ ] Add deterministic equal-cost tie-breaking.
 - [ ] Add a brute-force reference solver for small parse graphs.
+- [ ] Replace exhaustive LZSS matching with a verified overlap-aware index.
+- [ ] Make ordinary and adaptor-specific LZSS candidates additive.
+- [ ] Retain exhaustive matching as the indexed matcher's bounded test oracle.
 
 ### 2. First implementation group
 
