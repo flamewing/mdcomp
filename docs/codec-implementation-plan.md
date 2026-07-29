@@ -550,6 +550,13 @@ Checklist:
 
 ### Enigma
 
+The detailed investigation and staged implementation are specified in
+[`enigma-optimal-parsing-plan.md`](enigma-optimal-parsing-plan.md). That plan
+separates advisory structural analysis, header-candidate search, exact
+fixed-header parsing, and physical emission. It also retains the complete
+legacy output as a non-regression candidate and keeps global-optimality claims
+conditional on candidate completeness and container-level cost validation.
+
 The current encoder selects a common value and an initial incrementing value,
 then greedily prioritizes incrementing runs, common-value runs, +1/-1
 sequences, and buffered inline values.
@@ -567,6 +574,8 @@ Checklist:
 - [ ] Build a decoder-backed exhaustive oracle for short word sequences.
 - [ ] Implement an optimal graph for fixed common and incrementing header
       values.
+- [ ] Execute and evaluate the staged work in
+      [`enigma-optimal-parsing-plan.md`](enigma-optimal-parsing-plan.md).
 - [ ] Determine the reachable incrementing-value state space and bound it
       without losing optimal solutions.
 - [ ] Derive a finite set of common-value and initial-increment candidates from
@@ -600,6 +609,14 @@ Checklist:
 - [ ] Reject uncompressed sizes that do not fit the format header.
 
 ## Nemesis Algorithm Research
+
+The parse-side investigation and staged implementation are specified in
+[`nemesis-nibble-run-parsing-plan.md`](nemesis-nibble-run-parsing-plan.md).
+That plan turns the current greedy run splitting into maximal-run dynamic
+parsing, alternating parse/table relaxation, and a deterministic seed
+portfolio, while retaining the complete legacy encode as a non-regression
+candidate. It is a practical improvement strategy, not a global-optimality
+claim; the oracle and proof obligations remain here.
 
 ### Problem statement
 
@@ -658,6 +675,8 @@ The objective is total stored bits, not merely weighted payload-code length.
 - [ ] Investigate alternating fixed-codebook parse and fixed-parse code
       optimization as a practical upper-bound heuristic, without describing it
       as globally optimal.
+- [ ] Execute and evaluate the staged maximal-run and multi-seed work in
+      [`nemesis-nibble-run-parsing-plan.md`](nemesis-nibble-run-parsing-plan.md).
 - [ ] Determine whether the small Nemesis alphabet and maximum code length make
       exact codebook subset/length enumeration practical.
 - [ ] Analyse whether long-run splitting can be integrated directly into parse
