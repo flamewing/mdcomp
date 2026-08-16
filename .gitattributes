@@ -3,7 +3,7 @@
 *.pal		binary
 *.shp		binary
 *.vga		binary
-*.xpm		text
+*.xpm		text eol=lf
 
 *.bmp		binary
 *.gif		binary
@@ -32,59 +32,73 @@
 *.vcxproj	eol=crlf
 *.vsprops	eol=crlf
 *.manifest	eol=crlf
+*.bat		text eol=crlf
 
-*.glade		text diff=html
-*.htm		text diff=html
-*.html		text diff=html
-*.shtml		text diff=html
-*.ui		text diff=html
-*.xml		text diff=html
+*.glade		text diff=html eol=lf
+*.htm		text diff=html eol=lf
+*.html		text diff=html eol=lf
+*.shtml		text diff=html eol=lf
+*.ui		text diff=html eol=lf
+*.xml		text diff=html eol=lf
 
-*.inc		text diff=php
-*.php		text diff=php
-*.php3		text diff=php
-*.tpl		text diff=php
+*.inc		text diff=php eol=lf
+*.php		text diff=php eol=lf
+*.php3		text diff=php eol=lf
+*.tpl		text diff=php eol=lf
+*.md		text diff=asm eol=lf
 
-*.ac		text
-*.am		text
-*.in		text
-*.m4		text
+*.ac		text eol=lf
+*.am		text eol=lf
+*.in		text eol=lf
+*.m4		text eol=lf
 
-*.bat		text
-*.sh		text
+*.sh		text eol=lf
 
-*.cfg		text
-*.txt		text
+*.cfg		text eol=lf
+*.txt		text eol=lf
 
-*.iss		text
+*.iss		text eol=lf
 
-*.c			text diff=cpp
-*.cc		text diff=cpp
-*.cpp		text diff=cpp
-*.cxx		text diff=cpp
-*.c++		text diff=cpp
-*.h			text diff=cpp
-*.hh 		text diff=cpp
-*.hpp		text diff=cpp
-*.m			text diff=objc
-*.mm		text diff=objc
-*.ll		text diff=cpp
-*.rc		text
-*.uc		text
-*.yy		text diff=cpp
+*.asm		text diff=asm eol=lf
+*.68k		text diff=asm eol=lf
+*.m68		text diff=asm eol=lf
+*.m68k		text diff=asm eol=lf
+*.s68		text diff=asm eol=lf
+*.s68k		text diff=asm eol=lf
+*.a80		text diff=asm eol=lf
+*.z80		text diff=asm eol=lf
+*.c			text diff=cpp eol=lf
+*.cc		text diff=cpp eol=lf
+*.cpp		text diff=cpp eol=lf
+*.cxx		text diff=cpp eol=lf
+*.c++		text diff=cpp eol=lf
+*.h			text diff=cpp eol=lf
+*.hh 		text diff=cpp eol=lf
+*.hpp		text diff=cpp eol=lf
+*.m			text diff=objc eol=lf
+*.mm		text diff=objc eol=lf
+*.ll		text diff=cpp eol=lf
+*.rc		text eol=lf
+*.uc		text eol=lf
+*.yy		text diff=cpp eol=lf
 
-*.java		test diff=java
+*.java		text diff=java eol=lf
 
-Changelog	text
-Makefile*	text
+Changelog	text eol=lf
+Makefile*	text eol=lf
 
-AUTHORS		text
-COPYING		text
-FAQ			text
-INSTALL		text
-NEWS		text
-README*		text
+AUTHORS		text eol=lf
+COPYING		text eol=lf
+FAQ			text eol=lf
+INSTALL		text eol=lf
+NEWS		text eol=lf
+README*		text eol=lf
 
 *.pbxproj	text
 *.xcscheme	text diff=xml
 *.vcxproj.filters	text diff=xml
+
+.gitattributes  text eol=lf
+.gitignore	    text eol=lf
+.clang-format	text eol=lf
+.clangd         text eol=lf
