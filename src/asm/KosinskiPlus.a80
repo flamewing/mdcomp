@@ -56,15 +56,39 @@ zKosPlusDec:
 	jr	c, .Code_01
 
 	; Code 00 (Dictionary ref. short).
-	xor	a
-	_zKos_ReadBit
-	rla
-	_zKos_ReadBit
-	rla
-	push	bc							; Save bitstream info
-	ld	c, (hl)							; Get the displacement byte
+	push	hl							; Save displacement byte position
 	inc	hl								; Move past the displacement byte
+	; Note: the macros below may change hl.
+	xor	a
+	_zKosPlus_ReadBit
+	rla
+	_zKosPlus_ReadBit
+	rla
+	; hl has possibly been changed here.
+	; To handle all cases, we must:
+	; (1) Save the current stream position (hl)
+	; (2) Save the current bitstream info (bc)
+	; (3) Restore the displacement byte position to (hl)
+	; (4) Get the displacement byte (c) from (hl)
+	; (5) Restore hl to the saved stream position
+	; (6) Ensure that the bitstream info (bc) is at the top of the stack
+	; Right now, the stack is:
+	; sp -> displacement byte position
+	ex	(sp), hl						; Exchange old and new input position
+	; sp -> current stream position
+	; hl = displacement byte position
+	push	bc							; Save bitstream info
+	;       current stream position
+	; sp -> bitstream info
+	ld	c, (hl)							; Get the displacement byte
 	ld	b, -1							; bc = displacement
+	; bc = displacement
+	pop	hl								; hl = Saved bitstream info
+	; sp -> current stream position
+	; hl = bitstream info
+	ex	(sp), hl						; Save bitstream info, restore input position
+	; sp -> bitstream info
+	; hl = current stream position
 
 .StreamCopy:
 	push	hl							; Save input position
@@ -75,6 +99,7 @@ zKosPlusDec:
 	ld	b, 0							; bc = number of copies-2
 
 	ldir
+	; Always copy at least two bytes.
 	ldi
 	ldi
 	pop	hl								; Restore input position
@@ -86,9 +111,9 @@ zKosPlusDec:
 	push	bc							; Save bitstream bits
 	ld	a, (hl)							; a = %HHHHHCCC.
 	or	7								; a = %HHHHH111.
-	rra									; a = %1HHHHH11.
-	rra									; a = %11HHHHH1.
-	rra									; a = %111HHHHH.
+	rrca								; a = %1HHHHH11.
+	rrca								; a = %11HHHHH1.
+	rrca								; a = %111HHHHH.
 	ld	b, a							; b = %111HHHHH.
 	ld	a, (hl)							; a = %HHHHHCCC.
 	inc	hl								; Move past the displacement byte
@@ -96,15 +121,16 @@ zKosPlusDec:
 	inc	hl								; Move past the displacement byte
 	and	7								; a = %00000CCC = 10-number of copies
 	jr	z, .LargeCopy					; if CCC=0, branch.
+
 	neg									; a = number of copies-10
 	add	a, 8							; a = number of copies-2
 	jr	.StreamCopy
 ; ---------------------------------------------------------------------------
 .LargeCopy:
 	; special mode (extended counter)
-	ld	a, (hl)							; a = number of copies-8
+	ld	a, (hl)							; a = number of copies-9
 	or	a
-	ret	z								; If cnt=0, quit decompression.
+	jr	z, .Quit						; If cnt=0, quit decompression.
 
 	inc	hl								; Move past the count byte
 	push	hl							; Save input position
@@ -112,12 +138,16 @@ zKosPlusDec:
 	ld	h, d							; hl = pointer to output
 	add	hl, bc							; hl = pointer to source of data to copy from
 
-	ld	bc, 8
+	ld	bc, 9
 	ldir
 	ld	c, a
-	ld	b, 0							; bc = number of copies-8
+	ld	b, 0							; bc = number of copies-9
 	ldir
 	pop	hl								; Restore input position
 	pop	bc								; Restore bitstream bits
 	jr	.FetchNewCode
+; ---------------------------------------------------------------------------
+.Quit:
+	pop	bc								; Stack cleanup
+	ret
 ; ===========================================================================
