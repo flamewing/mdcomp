@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; Moduled decompression queue header.
+; Moduled decompression queue footer.
 ;
 ; Usage pattern:
 ; 	set module_remap_A000_to_8000,1			; 0 for anything but Kosinski
@@ -30,34 +30,33 @@
 ; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
-	move.l	a0,(Kos_decomp_source).w
-	move.l	a1,(Kos_decomp_destination).w
-	andi.w	#$7FFF,(Kos_decomp_queue_count).w	; clear decompression in progress bit
+	move.l	a0,(Kos_decomp_source).w			; end of compressed stream
+	move.l	a1,(Kos_decomp_destination).w	; end of decompressed output
+	andi.w	#$7FFF,(Kos_decomp_queue_count).w	; clear decoder-execution flag
 	subq.w	#1,(Kos_decomp_queue_count).w
-	beq.s	.Done								; branch if there aren't any entries remaining in the queue
+	beq.s	.done								; queue is now empty
 	lea	(Kos_decomp_queue).w,a0
-	lea	(Kos_decomp_queue+8).w,a1				; otherwise, shift all entries up
+	lea	(Kos_decomp_queue+8).w,a1				; promote the remaining FIFO entries
 	rept (Kos_decomp_queue_End-(Kos_decomp_queue+8))/4
 		move.l	(a1)+,(a0)+
 	endm
 
-.Done:
+.done:
 	rts
 ; ---------------------------------------------------------------------------
 Restore_Kos_Bookmark:
 	KosMRestoreRegs (Kos_decomp_stored_Wregisters).w,(Kos_decomp_stored_Lregisters).w
-	move.l	(Kos_decomp_bookmark).w,-(sp)
+	move.l	(Kos_decomp_bookmark).w,-(sp)			; rebuild an exception frame
 	move.w	(Kos_decomp_stored_SR).w,-(sp)
-	rte
-; End of function Process_Kos_Queue
+	rte										; resume at the interrupted instruction
+; End of function Restore_Kos_Bookmark
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 ; Backs up current state for later restoration.
 ; ---------------------------------------------------------------------------
 Backup_Kos_Registers:
-	move	sr,(Kos_decomp_stored_SR).w
+	move	sr,(Kos_decomp_stored_SR).w				; V-int restored the decoder's SR
 	KosMSaveRegs (Kos_decomp_stored_Wregisters).w,(Kos_decomp_stored_Lregisters).w
-	rts
+	rts										; return from the interrupted queue call
 ; ===========================================================================

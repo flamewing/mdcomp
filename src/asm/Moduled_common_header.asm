@@ -31,6 +31,15 @@
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
 ; FUNCTION:
+; 	Clear_Kos_Queue
+;
+; DESCRIPTION
+; 	Clears the Kosinski module queue
+;
+; INPUT:
+; 	none
+; ---------------------------------------------------------------------------
+; FUNCTION:
 ; 	Queue_Kos_Module
 ;
 ; DESCRIPTION
@@ -70,7 +79,11 @@
 ; 	Processes the first entry in the Kosinski decompression queue
 ; ---------------------------------------------------------------------------
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; ---------------------------------------------------------------------------
+; Clear the Kosinski module queue.
+;
+; input:
+;  none
 ; ---------------------------------------------------------------------------
 Clear_Kos_Queue:
 	moveq	#0,d0
@@ -81,121 +94,138 @@ Clear_Kos_Queue:
 ; End of function Clear_Kos_Queue
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Adds a Kosinski Moduled archive to the module queue
-; Inputs:
-; a1 = address of the archive
-; d2 = destination in VRAM
+; Queue a Kosinski Moduled archive for decompression and transfer to VRAM.
+;
+; The first archive becomes active immediately. Later archives occupy six-byte
+; FIFO records (source longword, VRAM destination word). A zero source marks a
+; free record. Exceeding the fixed queue capacity enters the error debugger.
+;
+; input:
+;  a1 = address of the archive, including its uncompressed-size header
+;  d2.w = destination VRAM byte address
 ; ---------------------------------------------------------------------------
 Queue_Kos_Module:
 	lea	(Kos_module_queue).w,a2
-	tst.l	(a2)	; is the first slot free?
-	beq.s	Process_Kos_Module_Queue_Init	; if it is, branch
+	tst.l	(a2)							; is the active record free?
+	beq.s	Process_Kos_Module_Queue_Init	; if so, initialize this archive directly
 
-.findFreeSlot:
-	addq.w	#6,a2	; otherwise, check next slot
+.find_free_slot:
+	addq.w	#6,a2						; otherwise, inspect the next FIFO record
 	tst.l	(a2)
-	bne.s	.findFreeSlot
+	bne.s	.find_free_slot
 
-	move.l	a1,(a2)+	; store source address
-	move.w	d2,(a2)+	; store destination VRAM address
+	move.l	a1,(a2)+					; archive address
+	move.w	d2,(a2)+					; destination VRAM address
 	rts
 ; End of function Queue_Kos_Module
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Initializes processing of the first module on the queue
+; Initialize the archive at the head of the module queue.
+;
+; KosM archives begin with their total uncompressed byte size, then contain
+; independently compressed modules of at most $1000 bytes. This routine derives
+; the module count and final transfer size, consumes the size header, and sets
+; the active archive's initial VRAM destination.
+;
+; input:
+;  a1 = address of the archive's uncompressed-size header
+;  d2.w = destination VRAM byte address
 ; ---------------------------------------------------------------------------
 Process_Kos_Module_Queue_Init:
-	move.w	(a1)+,d3				; get uncompressed size
+	move.w	(a1)+,d3				; total uncompressed size in bytes
 	if module_remap_A000_to_8000<>0
 	cmpi.w	#$A000,d3
-	bne.s	.gotsize
-	move.w	#$8000,d3				; $A000 means $8000 for some reason
+	bne.s	.size_ready
+	move.w	#$8000,d3				; preserve S3&K's special $A000 encoding
 
-.gotsize:
+.size_ready:
 	endif
-	lsr.w	#1,d3
+	lsr.w	#1,d3					; convert total size to words
 	move.w	d3,d0
 	rol.w	#5,d0
-	andi.w	#$1F,d0					; get number of complete modules
+	andi.w	#$1F,d0					; number of complete $800-word modules
 	move.w	d0,(Kos_modules_left).w
-	andi.w	#$7FF,d3				; get size of last module in words
-	bne.s	.gotleftover			; branch if it's non-zero
-	subq.w	#1,(Kos_modules_left).w	; otherwise decrement the number of modules
-	move.w	#$800,d3				; and take the size of the last module to be $800 words
+	andi.w	#$7FF,d3				; final partial module's word count
+	bne.s	.last_size_ready
+	subq.w	#1,(Kos_modules_left).w	; exact multiple: one full module is also the last
+	move.w	#$800,d3
 
-.gotleftover:
+.last_size_ready:
 	move.w	d3,(Kos_last_module_size).w
-	move.w	d2,(Kos_module_destination).w
-	move.l	a1,(Kos_module_queue).w
-	addq.w	#1,(Kos_modules_left).w	; store total number of modules
+	move.w	d2,(Kos_module_destination).w	; first VRAM destination
+	move.l	a1,(Kos_module_queue).w		; first module, after the size header
+	addq.w	#1,(Kos_modules_left).w			; include the final module
 	rts
 ; End of function Process_Kos_Module_Queue_Init
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Processes the first module on the queue
+; Advance the active KosM archive by one pipeline stage.
+;
+; A positive Kos_modules_left means the current module has not yet been sent to
+; the RAM decompression queue. Bit 15 marks it as queued or decompressed. Once
+; the decompression queue becomes empty, the $1000-byte buffer is queued for
+; DMA to VRAM, the archive pointers advance, and a completed archive is removed
+; from the module FIFO. Normally called after V-int by WaitVInt.
 ; ---------------------------------------------------------------------------
 Process_Kos_Module_Queue:
 	tst.w	(Kos_modules_left).w
-	bne.s	.modulesLeft
+	bne.s	.module_pending
 
-.done:
+.return:
 	rts
 ; ---------------------------------------------------------------------------
-.modulesLeft:
-	bmi.s	.decompressionStarted
+.module_pending:
+	bmi.s	.wait_for_decompression
 	cmpi.w	#(Kos_decomp_queue_End-Kos_decomp_queue)/8,(Kos_decomp_queue_count).w
-	bhs.s	.done					; branch if the Kosinski decompression queue is full
+	bhs.s	.return					; wait if the RAM decompression queue is full
 	movea.l	(Kos_module_queue).w,a1
 	lea	(Kos_decomp_buffer).w,a2
-	bsr.w	Queue_Kos				; add current module to decompression queue
-	ori.w	#$8000,(Kos_modules_left).w	; and set bit to signify decompression in progress
+	bsr.w	Queue_Kos				; decompress this module into the shared buffer
+	ori.w	#$8000,(Kos_modules_left).w	; mark it as submitted
 	rts
 ; ---------------------------------------------------------------------------
-.decompressionStarted:
+.wait_for_decompression:
 	tst.w	(Kos_decomp_queue_count).w
-	bne.s	.done					; branch if the decompression isn't complete
+	bne.s	.return					; wait until the decompression pipeline is empty
 
-	; otherwise, DMA the decompressed data to VRAM
-	andi.w	#$7F,(Kos_modules_left).w
-	move.w	#$800,d3
+	andi.w	#$7F,(Kos_modules_left).w	; clear the submitted flag, retaining the count
+	move.w	#$800,d3					; full module: $800 words/$1000 bytes
 	subq.w	#1,(Kos_modules_left).w
-	bne.s	.skip	; branch if it isn't the last module
+	bne.s	.transfer_size_ready
 	move.w	(Kos_last_module_size).w,d3
 
-.skip:
+.transfer_size_ready:
 	move.w	(Kos_module_destination).w,d2
 	move.w	d2,d0
 	add.w	d3,d0
 	add.w	d3,d0
-	move.w	d0,(Kos_module_destination).w	; set new destination
+	move.w	d0,(Kos_module_destination).w	; advance VRAM by the decompressed byte count
 	if module_padding<>0
 	move.l	(Kos_module_queue).w,d0
 	move.l	(Kos_decomp_source).w,d1
 	sub.l	d1,d0
 	andi.l	#$F,d0
-	add.l	d0,d1					; round to the nearest $10 boundary
-	move.l	d1,(Kos_module_queue).w	; and set new source
+	add.l	d0,d1					; round the consumed compressed stream up to $10 bytes
+	move.l	d1,(Kos_module_queue).w	; next compressed module
 	else
 	move.l	(Kos_decomp_source).w,(Kos_module_queue).w	; set new source
 	endif
 	if defined(DMAfunctions_defined) && defined(AssumeSourceAddressInBytes) && ~~AssumeSourceAddressInBytes
-	move.l	#dmaSource(Kos_decomp_buffer),d1
+	move.l	#dmaSource(Kos_decomp_buffer),d1	; DMA source is expressed in words
 	else
-	move.l	#Kos_decomp_buffer,d1
+	move.l	#Kos_decomp_buffer,d1	; DMA source is expressed in bytes
 	endif
-	move.w	sr,-(sp)						; Save current interrupt mask
-	disableInts								; Mask off interrupts
+	move.w	sr,-(sp)						; protect the DMA queue insertion from V-int
+	disableInts
 	jsr	(QueueDMATransfer).w
-	move.w	(sp)+,sr						; Restore interrupts to previous state
+	move.w	(sp)+,sr
 	tst.w	(Kos_modules_left).w
-	bne.s	.exit					; return if this wasn't the last module
-	; otherwise, shift all entries up
+	bne.s	.archive_done				; more modules remain in this archive
+
+	; The archive is complete. Remove its record and promote the rest of the FIFO.
 	lea	(Kos_module_queue).w,a0
 	lea	(Kos_module_queue+6).w,a1
 	rept (Kos_module_queue_End-(Kos_module_queue+6))/6
@@ -203,68 +233,78 @@ Process_Kos_Module_Queue:
 		move.w	(a1)+,(a0)+
 	endm
 	moveq	#0,d0
-	move.l	d0,(a0)+				; and mark the last slot as free
+	move.l	d0,(a0)+				; mark the vacated last record as free
 	move.w	d0,(a0)+
 	move.l	(Kos_module_queue).w,d0
-	beq.s	.exit					; return if the queue is now empty
+	beq.s	.archive_done				; no next archive
 	movea.l	d0,a1
 	move.w	(Kos_module_destination).w,d2
-	bra.w	Process_Kos_Module_Queue_Init
+	bra.w	Process_Kos_Module_Queue_Init	; tail-call to activate the promoted record
 ; ---------------------------------------------------------------------------
-.exit:
+.archive_done:
 	rts
 ; End of function Process_Kos_Module_Queue
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Adds Kosinski-compressed data to the decompression queue
-; Inputs:
-; a1 = compressed data address
-; a2 = decompression destination in RAM
+; Append one raw Kosinski stream to the RAM decompression FIFO.
+;
+; The caller is responsible for verifying that a slot is available. Each entry
+; is an eight-byte source/destination pointer pair.
+;
+; input:
+;  a1 = compressed data address
+;  a2 = decompression destination in RAM
 ; ---------------------------------------------------------------------------
 Queue_Kos:
-	move.w	(Kos_decomp_queue_count).w,d0
-	lsl.w	#3,d0
+	move.w	(Kos_decomp_queue_count).w,d0	; existing entry count
+	lsl.w	#3,d0						; eight bytes per entry
 	lea	(Kos_decomp_queue).w,a3
-	move.l	a1,(a3,d0.w)			; store source
-	move.l	a2,4(a3,d0.w)			; store destination
+	move.l	a1,(a3,d0.w)			; compressed source
+	move.l	a2,4(a3,d0.w)			; RAM destination
 	addq.w	#1,(Kos_decomp_queue_count).w
 	rts
 ; End of function Queue_Kos
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Checks if V-int occured in the middle of Kosinski queue processing
-; and stores the location from which processing is to resume if it did
+; Divert an interrupted queued decompression through its register-save path.
+;
+; V-int calls this after saving its own registers. If its exception-frame PC
+; lies inside the active decoder body, preserve that PC as the resume bookmark
+; and replace it with Backup_Kos_Registers. V-int's eventual RTE will therefore
+; save the restored decoder registers and return early to its original caller.
 ; ---------------------------------------------------------------------------
 Set_Kos_Bookmark:
 	tst.w	(Kos_decomp_queue_count).w
-	bpl.s	.done					; branch if a decompression wasn't in progress
-	move.l	$42(sp),d0				; check address V-int is supposed to rte to
-	cmpi.l	#Process_Kos_Queue.Main,d0
+	bpl.s	.done					; bit 15 clear: no decoder state to preserve
+	move.l	$42(sp),d0				; interrupted PC in V-int's exception frame
+	cmpi.l	#Process_Kos_Queue.decompress,d0
 	blo.s	.done
-	cmpi.l	#Process_Kos_Queue.Done,d0
+	cmpi.l	#Process_Kos_Queue.done,d0
 	bhs.s	.done
-	move.l	$42(sp),(Kos_decomp_bookmark).w
-	move.l	#Backup_Kos_Registers,$42(sp)	; force V-int to rte here instead if needed
+	move.l	$42(sp),(Kos_decomp_bookmark).w	; exact decoder instruction to resume
+	move.l	#Backup_Kos_Registers,$42(sp)	; redirect V-int's RTE to the save shim
 
 .done:
 	rts
 ; End of function Set_Kos_Bookmark
 ; ===========================================================================
 
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
-; Processes the first entry in the Kosinski decompression queue
+; Process the first queued RAM decompression.
+;
+; Bit 15 of Kos_decomp_queue_count is an execution flag. A normal entry starts
+; the shared Kosinski decoder. If V-int interrupted an earlier invocation, the
+; negative count selects Restore_Kos_Bookmark instead. Completed entries are
+; removed by shifting the remaining source/destination pairs forward.
 ; ---------------------------------------------------------------------------
 Process_Kos_Queue:
 	tst.w	(Kos_decomp_queue_count).w
-	beq.w	.Done
-	bmi.w	Restore_Kos_Bookmark	; branch if a decompression was interrupted by V-int
+	beq.w	.done
+	bmi.w	Restore_Kos_Bookmark		; resume an invocation interrupted by V-int
 
-.Main:
-	ori.w	#$8000,(Kos_decomp_queue_count).w	; set sign bit to signify decompression in progress
+.decompress:
+	ori.w	#$8000,(Kos_decomp_queue_count).w	; mark decoder execution in progress
 	movea.l	(Kos_decomp_source).w,a0
 	movea.l	(Kos_decomp_destination).w,a1
