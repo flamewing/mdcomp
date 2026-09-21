@@ -155,7 +155,7 @@ Process_Kos_Module_Queue_Init:
 .last_size_ready:
 	move.w	d3,(Kos_last_module_size).w
 	move.w	d2,(Kos_module_destination).w	; first VRAM destination
-	move.l	a1,(Kos_module_queue).w		; first module, after the size header
+	move.l	a1,(Kos_module_source).w		; first module, after the size header
 	addq.w	#1,(Kos_modules_left).w			; include the final module
 	rts
 ; End of function Process_Kos_Module_Queue_Init
@@ -204,14 +204,14 @@ Process_Kos_Module_Queue:
 	add.w	d3,d0
 	move.w	d0,(Kos_module_destination).w	; advance VRAM by the decompressed byte count
 	if module_padding<>0
-	move.l	(Kos_module_queue).w,d0
+	move.l	(Kos_module_source).w,d0
 	move.l	(Kos_decomp_source).w,d1
 	sub.l	d1,d0
 	andi.l	#$F,d0
 	add.l	d0,d1					; round the consumed compressed stream up to $10 bytes
-	move.l	d1,(Kos_module_queue).w	; next compressed module
+	move.l	d1,(Kos_module_source).w	; next compressed module
 	else
-	move.l	(Kos_decomp_source).w,(Kos_module_queue).w	; set new source
+	move.l	(Kos_decomp_source).w,(Kos_module_source).w	; set new source
 	endif
 	if defined(DMAfunctions_defined) && defined(AssumeSourceAddressInBytes) && ~~AssumeSourceAddressInBytes
 	move.l	#dmaSource(Kos_decomp_buffer),d1	; DMA source is expressed in words
