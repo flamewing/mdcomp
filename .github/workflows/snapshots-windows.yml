@@ -33,9 +33,9 @@ jobs:
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW32
+          msystem: MINGW64
           install: base-devel git p7zip
-            mingw-w64-i686-toolchain mingw-w64-i686-binutils mingw-w64-i686-ntldd mingw-w64-i686-boost mingw-w64-i686-cmake
+            mingw-w64-x86_64-toolchain mingw-w64-x86_64-binutils mingw-w64-x86_64-ntldd mingw-w64-x86_64-boost mingw-w64-x86_64-cmake
       - name: Checkout code
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         uses: actions/checkout@master

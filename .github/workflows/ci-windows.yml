@@ -32,15 +32,12 @@ jobs:
     strategy:
       matrix:
         generator: [make, msys]
-        architecture: [i686, x86_64]
+        architecture: [x86_64]
         include:
           - generator: make
             cmake_generator: "Unix Makefiles"
           - generator: msys
             cmake_generator: "MSYS Makefiles"
-          - architecture: i686
-            msystem: MINGW32
-            arch: i686
           - architecture: x86_64
             msystem: MINGW64
             arch: x86_64
