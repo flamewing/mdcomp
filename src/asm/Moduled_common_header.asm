@@ -109,15 +109,21 @@ Queue_Kos_Module:
 	lea	(Kos_module_queue).w,a2
 	tst.l	(a2)							; is the active record free?
 	beq.s	Process_Kos_Module_Queue_Init	; if so, initialize this archive directly
+	move.w	#Kos_module_queue_End,d3
 
 .find_free_slot:
 	addq.w	#6,a2						; otherwise, inspect the next FIFO record
+	cmp.w	a2,d3
+	ble.s	.queue_full
 	tst.l	(a2)
 	bne.s	.find_free_slot
 
 	move.l	a1,(a2)+					; archive address
 	move.w	d2,(a2)+					; destination VRAM address
 	rts
+; ---------------------------------------------------------------------------
+.queue_full:
+	trap	#15							; prevent corruption beyond the queue
 ; End of function Queue_Kos_Module
 ; ===========================================================================
 
