@@ -79,6 +79,29 @@
 ; 	Processes the first entry in the Kosinski decompression queue
 ; ---------------------------------------------------------------------------
 
+; fills a region of 68k RAM with 0
+moduledClearRAM macro startaddr,endaddr
+	if ((startaddr)&$8000)==0
+		lea	(startaddr).l,a1
+	else
+		lea	(startaddr).w,a1
+	endif
+	moveq	#0,d0
+	if ((startaddr)&1)
+		move.b	d0,(a1)+
+	endif
+	move.w	#((endaddr-startaddr) - ((startaddr)&1))/4-1,d1
+.loop:
+	move.l	d0,(a1)+
+	dbra	d1,.loop
+	if (((endaddr-startaddr) - ((startaddr)&1))&2)
+		move.w	d0,(a1)+
+	endif
+	if (((endaddr-startaddr) - ((startaddr)&1))&1)
+		move.b	d0,(a1)+
+	endif
+	endm
+
 ; ---------------------------------------------------------------------------
 ; Clear the Kosinski module queue.
 ;
@@ -86,8 +109,7 @@
 ;  none
 ; ---------------------------------------------------------------------------
 Clear_Kos_Queue:
-	moveq	#0,d0
-	move.l	d0,(Kos_module_queue).w
+	moduledClearRAM Kos_module_queue,Kos_module_queue_End
 	move.w	d0,(Kos_modules_left).w
 	move.w	d0,(Kos_decomp_queue_count).w
 	rts
