@@ -164,9 +164,9 @@ Queue_Kos_Module:
 Process_Kos_Module_Queue_Init:
 	move.w	(a1)+,d3				; total uncompressed size in bytes
 	if module_remap_A000_to_8000<>0
-	cmpi.w	#$A000,d3
-	bne.s	.size_ready
-	move.w	#$8000,d3				; preserve S3&K's special $A000 encoding
+		cmpi.w	#$A000,d3
+		bne.s	.size_ready
+		move.w	#$8000,d3				; preserve S3&K's special $A000 encoding
 
 .size_ready:
 	endif
@@ -232,19 +232,19 @@ Process_Kos_Module_Queue:
 	add.w	d3,d0
 	move.w	d0,(Kos_module_destination).w	; advance VRAM by the decompressed byte count
 	if module_padding<>0
-	move.l	(Kos_module_source).w,d0
-	move.l	(Kos_decomp_source).w,d1
-	sub.l	d1,d0
-	andi.l	#$F,d0
-	add.l	d0,d1					; round the consumed compressed stream up to $10 bytes
-	move.l	d1,(Kos_module_source).w	; next compressed module
+		move.l	(Kos_module_source).w,d0
+		move.l	(Kos_decomp_source).w,d1
+		sub.l	d1,d0
+		andi.l	#$F,d0
+		add.l	d0,d1					; round the consumed compressed stream up to $10 bytes
+		move.l	d1,(Kos_module_source).w	; next compressed module
 	else
-	move.l	(Kos_decomp_source).w,(Kos_module_source).w	; set new source
+		move.l	(Kos_decomp_source).w,(Kos_module_source).w	; set new source
 	endif
 	if defined(DMAfunctions_defined) && defined(AssumeSourceAddressInBytes) && ~~AssumeSourceAddressInBytes
-	move.l	#dmaSource(Kos_decomp_buffer),d1	; DMA source is expressed in words
+		move.l	#dmaSource(Kos_decomp_buffer),d1	; DMA source is expressed in words
 	else
-	move.l	#Kos_decomp_buffer,d1	; DMA source is expressed in bytes
+		move.l	#Kos_decomp_buffer,d1	; DMA source is expressed in bytes
 	endif
 	move.w	sr,-(sp)						; protect the DMA queue insertion from V-int
 	disableInts
