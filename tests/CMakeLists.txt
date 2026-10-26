@@ -10,6 +10,7 @@ add_executable(mdcomp-unit-tests
     unit/bitstream.cc
     unit/stream_utils.cc
     unit/decoder_wrappers.cc
+    unit/lzss.cc
 )
 target_link_libraries(mdcomp-unit-tests PRIVATE mdcomp::bigendian_io Catch2::Catch2WithMain)
 target_include_directories(mdcomp-unit-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -26,5 +27,16 @@ catch_discover_tests(mdcomp-unit-tests
     TEST_PREFIX "unit::"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES LABELS "unit" TIMEOUT 30
+    DISCOVERY_MODE PRE_TEST
+)
+
+add_executable(mdcomp-codec-smoke-tests codec/lzss_smoke.cc)
+target_link_libraries(mdcomp-codec-smoke-tests PRIVATE Catch2::Catch2WithMain
+    mdcomp::comperStatic mdcomp::comperxStatic mdcomp::kosinskiStatic
+    mdcomp::kosplusStatic mdcomp::lzkn1Static mdcomp::rocketStatic mdcomp::saxmanStatic)
+catch_discover_tests(mdcomp-codec-smoke-tests
+    TEST_PREFIX "codec::"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    PROPERTIES LABELS "codec" TIMEOUT 30
     DISCOVERY_MODE PRE_TEST
 )

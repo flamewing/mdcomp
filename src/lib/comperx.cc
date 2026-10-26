@@ -131,10 +131,12 @@ struct comperx_adaptor {
         }
         case dictionary: {
             size_t const distance = edge.get_distance();
-            size_t const length   = 0x101U - edge.get_length();
+            size_t const length   = edge.get_length();
             output.descriptor_bit(1);
-            output.put_byte(distance);
-            output.put_byte(std::rotr(static_cast<uint8_t>(length - 2U), 1) ^ 0x7FU);
+            // Zero displacement selects RLE; other displacements are signed
+            // word offsets relative to the word preceding the destination.
+            output.put_byte(distance == 1 ? 0 : 0x101U - distance);
+            output.put_byte((0x80U - (length >> 1U)) | ((length & 1U) << 7U));
             break;
         }
         case terminator: {
@@ -164,10 +166,12 @@ struct comperx_adaptor {
 
         // Dictionary match.
         // Distance and length of match.
-        size_t const distance = 0x101U - source.get_byte();
+        size_t const displacement = source.get_byte();
+        size_t const distance     = displacement == 0 ? 1 : 0x101U - displacement;
 
         if (size_t const value = source.get_byte(); value != 0) {
-            size_t const length = std::rotl(static_cast<uint8_t>(value ^ 0x7FU), 1) + 2U;
+            size_t const length
+                    = ((0x100U - 2U * (value & 0x7FU)) & 0xffU) + (value >> 7U);
             return lzss::dictionary_match<comperx_adaptor>(
                     nodes, output_size, source.tellg(), distance, length,
                     edge_type::dictionary);

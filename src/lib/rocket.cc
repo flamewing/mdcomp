@@ -287,7 +287,12 @@ bool rocket::encode(std::istream& source, std::ostream& dest) {
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
     lzss::fill<rocket_adaptor>(input, 0x20, rocket_adaptor::first_match_position);
     // Copy to buffer.
-    input << source.rdbuf();
+    if (!source) {
+        return false;
+    }
+    if (source.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
+        input << source.rdbuf();
+    }
     input.seekg(0);
     return basic_rocket::encode(input, dest);
 }
@@ -302,11 +307,14 @@ bool rocket::encode(std::ostream& dest, std::span<char const> data) {
     // Size of decompressed file
     size_t const uncompressed_size = data.size() - rocket_adaptor::first_match_position;
     big_endian::write2(dest, static_cast<uint16_t>(uncompressed_size));
-    auto const compressed_size = static_cast<diff_t>(out_buff.tellp()) + 4;
+    // The header stores payload bytes, excluding the four-byte header itself.
+    auto const compressed_size = static_cast<diff_t>(out_buff.tellp());
     // Size of compressed file
     big_endian::write2(dest, static_cast<uint16_t>(compressed_size));
 
     out_buff.seekg(0);
-    dest << out_buff.rdbuf();
+    if (out_buff.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
+        dest << out_buff.rdbuf();
+    }
     return true;
 }

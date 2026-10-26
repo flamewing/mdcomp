@@ -331,6 +331,8 @@ bool saxman::encode(
         little_endian::write2(dest, static_cast<uint16_t>(full_size));
     }
     out_buff.seekg(start);
-    dest << out_buff.rdbuf();
+    if (out_buff.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
+        dest << out_buff.rdbuf();
+    }
     return true;
 }

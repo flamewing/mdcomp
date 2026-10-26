@@ -33,6 +33,7 @@
 #include <concepts>    // IWYU pragma: keep
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <iosfwd>
 #include <iostream>
 #include <iterator>
@@ -94,7 +95,7 @@ namespace lzss {
 
         constexpr adj_list_node(
                 size_t position_in, symbolwise_data info, edge_type type_in) noexcept
-                : position(position_in), type(type_in), match(info) {}
+                : position(position_in), type(type_in), match(std::move(info)) {}
 
         constexpr adj_list_node(
                 size_t position_in, dictionary_info info, edge_type type_in) noexcept
@@ -159,7 +160,7 @@ namespace lzss {
     requires requires(node_container_t nodes, Adaptor::adj_list_node edge) {
         { nodes.emplace_back(edge) };
     }
-    constexpr bool terminate(node_container_t& nodes, size_t& output_size) noexcept {
+    constexpr bool terminate(node_container_t& nodes, size_t& output_size) {
         using edge_type = typename Adaptor::edge_type;
         nodes.emplace_back(edge_type::terminator);
         output_size += Adaptor::edge_size(nodes.back());
@@ -170,7 +171,7 @@ namespace lzss {
     requires requires(node_container_t nodes, Adaptor::adj_list_node edge) {
         { nodes.emplace_back(edge) };
     }
-    constexpr bool terminate(node_container_t& nodes) noexcept {
+    constexpr bool terminate(node_container_t& nodes) {
         size_t output_size = 0;
         return terminate<Adaptor>(nodes, output_size);
     }
@@ -182,7 +183,7 @@ namespace lzss {
     constexpr bool dictionary_match(
             node_container_t& nodes, size_t& output_size,
             std::make_signed_t<size_t> position, size_t distance, size_t length,
-            typename Adaptor::edge_type type) noexcept {
+            typename Adaptor::edge_type type) {
         using dictionary_info = typename Adaptor::adj_list_node::dictionary_info;
         nodes.emplace_back(position, dictionary_info{distance, length}, type);
         output_size += Adaptor::edge_size(nodes.back());
@@ -195,7 +196,7 @@ namespace lzss {
     }
     constexpr bool dictionary_match(
             node_container_t& nodes, std::make_signed_t<size_t> position, size_t distance,
-            size_t length, typename Adaptor::edge_type type) noexcept {
+            size_t length, typename Adaptor::edge_type type) {
         size_t output_size = 0;
         return dictionary_match<Adaptor>(
                 nodes, output_size, position, distance, length, type);
@@ -207,8 +208,7 @@ namespace lzss {
     }
     constexpr bool symbolwise_match(
             node_container_t& nodes, size_t& output_size,
-            std::make_signed_t<size_t> position,
-            typename Adaptor::stream_t value) noexcept {
+            std::make_signed_t<size_t> position, typename Adaptor::stream_t value) {
         using edge_type = typename Adaptor::edge_type;
         nodes.emplace_back(position, value, edge_type::symbolwise);
         output_size += Adaptor::edge_size(nodes.back());
@@ -221,7 +221,7 @@ namespace lzss {
     }
     constexpr bool symbolwise_match(
             node_container_t& nodes, std::make_signed_t<size_t> position,
-            typename Adaptor::stream_t value) noexcept {
+            typename Adaptor::stream_t value) {
         size_t output_size = 0;
         return symbolwise_match<Adaptor>(nodes, output_size, position, value);
     }
@@ -233,7 +233,7 @@ namespace lzss {
     constexpr bool symbolwise_data(
             node_container_t& nodes, size_t& output_size,
             std::make_signed_t<size_t> position, stream_t& source, size_t length,
-            typename Adaptor::edge_type type) noexcept {
+            typename Adaptor::edge_type type) {
         nodes.emplace_back(position, source.read_from_bytes(length), type);
         output_size += Adaptor::edge_size(nodes.back());
         return true;
@@ -245,7 +245,7 @@ namespace lzss {
     }
     constexpr bool symbolwise_data(
             node_container_t& nodes, std::make_signed_t<size_t> position,
-            stream_t& source, size_t length, typename Adaptor::edge_type type) noexcept {
+            stream_t& source, size_t length, typename Adaptor::edge_type type) {
         size_t output_size = 0;
         return symbolwise_data<Adaptor>(
                 nodes, output_size, position, source, length, type);
@@ -258,7 +258,7 @@ namespace lzss {
     constexpr bool symbolwise_info(
             node_container_t& nodes, size_t& output_size,
             std::make_signed_t<size_t> position, stream_t* pointer, size_t length,
-            typename Adaptor::edge_type type) noexcept {
+            typename Adaptor::edge_type type) {
         using symbolwise_info = typename Adaptor::adj_list_node::symbolwise_info;
         static_assert(std::is_same_v<
                       symbolwise_info, decltype(unsafe_forge_span(pointer, length))>);
@@ -273,7 +273,7 @@ namespace lzss {
     }
     constexpr bool symbolwise_info(
             node_container_t& nodes, std::make_signed_t<size_t> position,
-            stream_t* pointer, size_t length, typename Adaptor::edge_type type) noexcept {
+            stream_t* pointer, size_t length, typename Adaptor::edge_type type) {
         size_t output_size = 0;
         return symbolwise_info<Adaptor>(
                 nodes, output_size, position, pointer, length, type);
@@ -336,7 +336,7 @@ namespace lzss {
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
 
-        void find_matches(match_vector& matches) const noexcept {
+        void find_matches(match_vector& matches) const {
             static_assert(
                     noexcept(Adaptor::edge_weight(edge_type(), size_t())),
                     "Adaptor::edge_weight() is not noexcept");
@@ -436,15 +436,22 @@ namespace lzss {
         using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
         using stream_t            = typename Adaptor::stream_t;
         using bit_buffer_t        = obitstream<
-                       descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
+                descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t>;
         // Where we will output to.
         std::ostream& out;
         // Internal bitstream output buffer.
         bit_buffer_t bits;
         // Internal parameter buffer.
         std::string buffer;
+        bool        finalized = false;
 
-        void flush_buffer() noexcept {
+        void require_open() const {
+            if (finalized) {
+                throw std::logic_error("LZSS output is already finalized");
+            }
+        }
+
+        void flush_buffer() {
             utils::write_as_bytes<char const>(out, buffer);
             buffer.clear();
         }
@@ -460,6 +467,26 @@ namespace lzss {
 
         // Destructor: writes anything that hasn't been written.
         ~ostream() noexcept {
+            if (std::uncaught_exceptions() != 0) {
+                return;
+            }
+            try {
+                finish();
+            } catch (...) {
+                // Explicit finish() propagates exceptions. The destructor can
+                // only report a failed fallback flush through the stream state.
+                try {
+                    out.setstate(std::ios::badbit);
+                } catch (...) {
+                }
+            }
+        }
+
+        void finish() {
+            if (finalized) {
+                return;
+            }
+            finalized = true;
             // We need a dummy descriptor field if we have exactly zero bits left
             // on the previous descriptor field; this is because the decoder will
             // immediately fetch a new descriptor field when the previous one has
@@ -480,7 +507,8 @@ namespace lzss {
 
         // Writes a bit to the descriptor bitfield. When the descriptor field is
         // full, outputs it and the output parameter buffer.
-        void descriptor_bit(descriptor_t const bit) noexcept {
+        void descriptor_bit(descriptor_t const bit) {
+            require_open();
             if constexpr (Adaptor::need_early_descriptor) {
                 if (bits.push(bit)) {
                     flush_buffer();
@@ -499,30 +527,39 @@ namespace lzss {
         // If the buffer was filled, it is written out and the output parameter
         // buffer is written as well, before any left-over bits are written to
         // the internal buffer.
-        void descriptor_bits(descriptor_t const value, size_t count) noexcept {
-            if constexpr (Adaptor::need_early_descriptor) {
-                if (bits.write(value, count)) {
-                    flush_buffer();
-                }
-            } else {
-                if (!bits.have_waiting_bits()) {
-                    flush_buffer();
-                }
-                bits.write(value, count);
+        void descriptor_bits(descriptor_t const value, size_t count) {
+            require_open();
+            if (count > sizeof(descriptor_t) * CHAR_BIT) {
+                throw std::out_of_range("Descriptor count exceeds word width");
+            }
+            while (count != 0) {
+                --count;
+                descriptor_bit(static_cast<descriptor_t>((value >> count) & 1U));
             }
         }
 
         // Puts a byte in the output buffer.
-        void put_byte(size_t const value) noexcept {
+        void put_byte(size_t const value) {
+            require_open();
             write1(buffer, static_cast<uint8_t>(value));
         }
 
         void write_as_bytes(std::span<stream_t const> data) {
-            utils::write_as_bytes(buffer, data);
+            require_open();
+            if (!data.empty()) {
+                buffer.append(
+                        reinterpret_cast<char const*>(data.data()), data.size_bytes());
+            }
         }
 
-        ostream& write(char* pointer, std::streamsize count) noexcept {
-            out.write(pointer, count);
+        ostream& write(char const* pointer, std::streamsize count) {
+            require_open();
+            if (count < 0) {
+                throw std::invalid_argument("Negative parameter byte count");
+            }
+            if (count != 0) {
+                buffer.append(pointer, static_cast<size_t>(count));
+            }
             return *this;
         }
     };
@@ -540,8 +577,8 @@ namespace lzss {
         using descriptor_endian_t = typename Adaptor::descriptor_endian_t;
         using stream_t            = typename Adaptor::stream_t;
         using bit_buffer_t        = ibitstream<
-                       descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
-                       Adaptor::need_early_descriptor>;
+                descriptor_t, Adaptor::descriptor_bit_order, descriptor_endian_t,
+                Adaptor::need_early_descriptor>;
         // Where we will input to.
         std::istream* in;
         // Internal bitstream input buffer.
@@ -549,20 +586,20 @@ namespace lzss {
 
     public:
         // Constructor.
-        explicit istream(std::istream& source) noexcept : in(&source), bits(*in) {}
+        explicit istream(std::istream& source) : in(&source), bits(*in) {}
 
         // Reads a bit from the descriptor bitfield.
-        constexpr descriptor_t descriptor_bit() noexcept {
+        constexpr descriptor_t descriptor_bit() {
             return bits.pop();
         }
 
         // Reads up to sizeof(T) * CHAR_BIT bits from the descriptor bitfield.
-        constexpr descriptor_t descriptor_bits(size_t count) noexcept {
+        constexpr descriptor_t descriptor_bits(size_t count) {
             return bits.read(count);
         }
 
         // Puts a byte in the input buffer.
-        constexpr uint8_t get_byte() noexcept {
+        constexpr uint8_t get_byte() {
             return read1(*in);
         }
 
@@ -570,12 +607,12 @@ namespace lzss {
             return utils::read_from_bytes<std::vector<stream_t>>(*in, count);
         }
 
-        constexpr istream& read(char* pointer, std::streamsize count) noexcept {
+        constexpr istream& read(char* pointer, std::streamsize count) {
             in->read(pointer, count);
             return *this;
         }
 
-        [[nodiscard]] std::streampos tellg() const noexcept {
+        [[nodiscard]] std::streampos tellg() const {
             return in->tellg();
         }
 
@@ -583,7 +620,7 @@ namespace lzss {
             return in->eof();
         }
 
-        [[nodiscard]] constexpr bool peek_eof() const noexcept {
+        [[nodiscard]] constexpr bool peek_eof() const {
             return in->peek() == std::istream::traits_type::eof();
         }
     };
@@ -670,7 +707,7 @@ namespace lzss {
     };
 
     template <adaptor_t Adaptor>
-    auto find_optimal_parse(std::span<char const> data_in, Adaptor adaptor) noexcept {
+    auto find_optimal_parse(std::span<char const> data_in, Adaptor adaptor) {
         ignore_unused_variable_warning(adaptor);
         using edge_type       = typename Adaptor::edge_type;
         using stream_t        = typename Adaptor::stream_t;
@@ -689,13 +726,24 @@ namespace lzss {
         // This is fine in this case because I am manually over-aligning the memory
         // that gets passed in by using an aligned allocator for std::vector, see
         // basic_decoder::encode.
+        if (data_in.size() % sizeof(stream_t) != 0
+            || data_in.size() / sizeof(stream_t) < Adaptor::first_match_position) {
+            throw std::invalid_argument(
+                    "LZSS input has invalid symbol granularity or history prefix");
+        }
         auto const* unaligned_ptr = static_cast<void const*>(data_in.data());
-        auto const* aligned_ptr   = std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
+        if (reinterpret_cast<uintptr_t>(unaligned_ptr) % alignof(stream_t) != 0) {
+            throw std::invalid_argument("LZSS input is not aligned for its symbol type");
+        }
+        auto const* aligned_ptr
+                = data_in.empty() ? unaligned_ptr
+                                  : std::assume_aligned<alignof(stream_t)>(unaligned_ptr);
         assert(aligned_ptr == unaligned_ptr);
-        data_t const data = unsafe_forge_span(
-                static_cast<stream_t const*>(aligned_ptr),
-                data_in.size() / sizeof(stream_t));
-        utils::assume(data.size() >= Adaptor::first_match_position);
+        data_t const data = data_in.empty()
+                                    ? data_t{}
+                                    : unsafe_forge_span(
+                                              static_cast<stream_t const*>(aligned_ptr),
+                                              data_in.size() / sizeof(stream_t));
         size_t const num_nodes = data.size() - Adaptor::first_match_position;
         utils::assume(num_nodes <= std::numeric_limits<size_t>::max() - 1);
         // Auxiliary data structures:
@@ -718,12 +766,29 @@ namespace lzss {
                 num_nodes + 1, std::numeric_limits<size_t>::max());
         descriptor_costs[0] = 0;
 
+        static_assert(Adaptor::num_desc_bits > 0);
+        auto finish_cost = [](size_t& path_cost, size_t& desc_cost) {
+            path_cost += Adaptor::edge_weight(edge_type::terminator, 0);
+            desc_cost += Adaptor::desc_bits(edge_type::terminator);
+            auto padded = utils::round_up(desc_cost, Adaptor::num_desc_bits);
+            if constexpr (Adaptor::need_early_descriptor) {
+                if (padded == desc_cost) {
+                    padded += Adaptor::num_desc_bits;
+                }
+            }
+            path_cost += padded - desc_cost;
+            desc_cost = padded;
+        };
+        if (num_nodes == 0) {
+            finish_cost(total_costs[0], descriptor_costs[0]);
+        }
+
         // Extracting distance relax logic from the loop so it can be used more
         // often.
-        auto relax = [last_node = data.size(), &total_costs, &descriptor_costs,
-                      &parent_nodes, &parent_edges](
+        auto relax = [last_node = num_nodes, &total_costs, &descriptor_costs,
+                      &parent_nodes, &parent_edges, &finish_cost](
                              size_t index, size_t const base_desc_cost,
-                             auto const& elem) noexcept {
+                             auto const& elem) {
             // Need destination ID and edge weight.
             size_t const next_node
                     = elem.get_destination() - Adaptor::first_match_position;
@@ -733,18 +798,12 @@ namespace lzss {
             if (next_node == last_node) {
                 // This is the ending node. Add the descriptor bits for the
                 // end-of-file marker.
-                path_cost += Adaptor::edge_weight(edge_type::terminator, 0);
-                desc_cost += Adaptor::desc_bits(edge_type::terminator);
+                finish_cost(path_cost, desc_cost);
                 // If the descriptor bitfield had exactly 0 bits left after
                 // this, we may need to emit a new descriptor bitfield (the
                 // full Adaptor::num_desc_bits bits). Otherwise, we need to
                 // pads the last descriptor bitfield to full size.
                 // This accomplishes both.
-                bool const descriptor_full = (desc_cost % Adaptor::num_desc_bits) == 0;
-                if (!descriptor_full || Adaptor::need_early_descriptor) {
-                    path_cost = utils::round_up(path_cost, Adaptor::num_desc_bits);
-                    desc_cost = utils::round_up(desc_cost, Adaptor::num_desc_bits);
-                }
             }
             // Is the cost to reach the target node through this edge less
             // than the current cost?
@@ -773,12 +832,11 @@ namespace lzss {
                 edge_type const type   = edge_type::symbolwise;
                 relax(ii, base_descriptor_cost, node_t(offset, value, type));
             }
-            auto const relax_elem
-                    = [&relax, ii, base_descriptor_cost](auto const& elem) noexcept {
-                          if (elem.is_valid()) {
-                              relax(ii, base_descriptor_cost, elem);
-                          }
-                      };
+            auto const relax_elem = [&relax, ii, base_descriptor_cost](auto const& elem) {
+                if (elem.is_valid()) {
+                    relax(ii, base_descriptor_cost, elem);
+                }
+            };
             // Get the adjacency list for this node.
             for (auto& window : win_set) {
                 window.find_matches(matches);
@@ -808,19 +866,26 @@ namespace lzss {
     template <adaptor_t Adaptor>
     inline void fill(
             std::iostream& dest, typename Adaptor::stream_t const value,
-            std::make_signed_t<size_t> const length) noexcept {
+            std::make_signed_t<size_t> const length) {
         constexpr static size_t const buffer_size = Adaptor::look_ahead_buf_size;
 
         using stream_t = typename Adaptor::stream_t;
         using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
 
-        try {
-            buffer_t buffer(static_cast<size_t>(length), value);
-            utils::write_as_bytes<stream_t const>(dest, buffer);
-        } catch (boost::container::bad_alloc& except [[maybe_unused]]) {
-            // The buffer allocation can theoretically fail with an exception,
-            // but this simply is not possible for us.
-            utils::unreachable();
+        static_assert(buffer_size > 0);
+        if (length < 0) {
+            throw std::invalid_argument("Negative fill length");
+        }
+        buffer_t buffer(std::min(static_cast<size_t>(length), buffer_size), value);
+        auto     remaining = static_cast<size_t>(length);
+        while (remaining != 0) {
+            auto const count = std::min(remaining, buffer.size());
+            utils::write_as_bytes<stream_t const>(
+                    dest, std::span<stream_t const>(buffer).first(count));
+            if (!dest) {
+                throw std::ios_base::failure("Cannot write dictionary fill");
+            }
+            remaining -= count;
         }
     }
 
@@ -835,8 +900,20 @@ namespace lzss {
         using diff_t   = std::make_signed_t<size_t>;
         using stream_t = typename Adaptor::stream_t;
         using buffer_t = boost::container::static_vector<stream_t, buffer_size>;
+        if (length < 0 || static_cast<size_t>(length) > buffer_size) {
+            throw std::out_of_range("Dictionary copy exceeds lookahead capacity");
+        }
+        if (length == 0) {
+            return;
+        }
+        diff_t const pointer = dest.tellp();
+        if (pointer < 0) {
+            throw std::ios_base::failure("Cannot determine copy position");
+        }
+        if (distance <= 0 || distance > pointer / static_cast<diff_t>(num_bytes)) {
+            throw std::out_of_range("Dictionary distance exceeds output history");
+        }
         diff_t const byte_distance = distance * static_cast<diff_t>(num_bytes);
-        diff_t const pointer       = dest.tellp();
         dest.seekg(pointer - byte_distance);
 
         if (distance == 1) {
@@ -873,8 +950,7 @@ namespace lzss {
     // NOLINTEND(bugprone-easily-swappable-parameters)
 
     template <adaptor_t Adaptor>
-    auto encode(
-            std::ostream& dest, std::span<char const> data, Adaptor adaptor) noexcept {
+    auto encode(std::ostream& dest, std::span<char const> data, Adaptor adaptor) {
         using ostream_t = Adaptor::ostream_t;
 
         // Compute optimal Comper parsing of input file.
@@ -885,6 +961,7 @@ namespace lzss {
         for (auto const& edge : list.parse_list) {
             Adaptor::encode_edge(output, edge);
         }
+        output.finish();
     }
 
 }    // namespace lzss
