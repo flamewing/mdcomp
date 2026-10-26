@@ -107,6 +107,7 @@ test
 
 #### cmake ####
 build*
+__pycache__/
 run-msbuild.*
 compile_commands.json
 

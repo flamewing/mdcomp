@@ -1,0 +1,86 @@
+--- src/kens/S-Compressor.cpp
++++ src/kens/S-Compressor.cpp
+@@ -23,7 +23,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+--- src/kens/S-Decompressor.cpp
++++ src/kens/S-Decompressor.cpp
+@@ -23,7 +23,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+--- src/tools/enicmp.cpp
++++ src/tools/enicmp.cpp
+@@ -21,7 +21,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+--- src/tools/koscmp.cpp
++++ src/tools/koscmp.cpp
+@@ -21,7 +21,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "kosinski.h"
+--- src/tools/nemcmp.cpp
++++ src/tools/nemcmp.cpp
+@@ -21,7 +21,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "nemesis.h"
+--- src/tools/saxcmp.cpp
++++ src/tools/saxcmp.cpp
+@@ -21,7 +21,7 @@
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+-#include <sys/io.h>
++#include <io.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "saxman.h"
+--- src/kens/nemesis.cc
++++ src/kens/nemesis.cc
+@@ -251,7 +251,7 @@
+ struct Compare_size
+ {
+ 	bool operator()(std::pair<size_t,std::pair<size_t,nibble_run> > const& lhs,
+-	                std::pair<size_t,std::pair<size_t,nibble_run> > const& rhs)
++	                std::pair<size_t,std::pair<size_t,nibble_run> > const& rhs) const
+ 	{
+ 		if (lhs.first < rhs.first)
+ 			return true;
+@@ -273,7 +273,7 @@
+ struct Compare_node
+ {
+ 	bool operator()(std::tr1::shared_ptr<node> const& lhs,
+-	                std::tr1::shared_ptr<node> const& rhs)
++	                std::tr1::shared_ptr<node> const& rhs) const
+ 	{
+ 		return *lhs > *rhs;
+ 	}

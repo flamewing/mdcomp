@@ -1,0 +1,54 @@
+{
+  "references": {
+    "kens-rc3": {
+      "version": "KENS 1.4 RC3 Win32, primary SourceForge distribution",
+      "source_url": "https://sourceforge.net/projects/genesiscomp/files/kens/kens-vc%2B%2B/1.4/kens-v1.4-rc3-win32.rar/download",
+      "archive_sha256": "bbc70b0579a305fa1eace88c40a8f864918c934c64360349596b9f0082e132f1",
+      "source_archive_url": "https://sourceforge.net/projects/genesiscomp/files/kens/kens-vc%2B%2B/1.4/kens-v1.4-rc3-win32-source.rar/download",
+      "source_archive_sha256": "7282eb657a1504473c21699294b2179f8e209707b01e303ce3709d8e084950d8",
+      "license": "LGPL-2.1-or-later (library headers)",
+      "lineage": "Original 2002-2004 KENS; predates the flamewing rewrite; separate algorithm implementation, not an assumed oracle",
+      "dll_sha256": {
+        "Enigma.dll": "e3a2f71e755b6b347257cc68627b9f962f833558a414944808461a147f3b45f4",
+        "Kosinski.dll": "7bb7d7a8dd7505c5addbeb4cf10f430b95b29ff62857fafd32334346cddd87b2",
+        "Nemesis.dll": "c5a0dcaa50f03c29871697d94d27681c3a425f48d40e9506f1f598778d6b0ea9",
+        "Saxman.dll": "bf39485d13b7a159e7c7b5f1a647593ee369b8af3100dd1ed6778b1a40aa29cb"
+      },
+      "build": "Original 32-bit DLLs; tests/support/original_kens.cs compiled with .NET Framework csc 4.8, /platform:x86"
+    },
+    "kens15": {
+      "version": "Archive kens-1.4.22.tar.xz; extracted directory kens-1.5a1; CMake project kens_1.4.22",
+      "source_url": "https://sourceforge.net/projects/genesiscomp/files/kens/kens-cmake/1.5%20alpha/kens-1.4.22.tar.xz/download",
+      "archive_sha256": "a076b45d475f6b2e2a078cd924feccaca974120683823a022fe664390570281c",
+      "license": "LGPL-3.0-or-later rewritten codecs; LGPL-2.1-or-later retained Saxman; GPL tools (see archive)",
+      "lineage": "ChangeLog.htm explicitly replaces Kosinski, Enigma and Nemesis with flamewing routines. Those codecs share mdcomp ancestry; Saxman is retained original code.",
+      "build": "GCC 16.2, C++98, CMake policy minimum 3.5; tests/references/kens15-portability.patch applied",
+      "patch_sha256": "128707d726281b23341342bc3c7623f2b2e1183ae9046198fe574a83f9287793"
+    },
+    "kenssharp": {
+      "version": "master at pinned commit",
+      "source_url": "https://github.com/sonicretro/KENSSharp",
+      "commit": "1e662b6cd946fcaf60964427579ddbf4d509ab5e",
+      "archive_url": "https://codeload.github.com/sonicretro/KENSSharp/zip/1e662b6cd946fcaf60964427579ddbf4d509ab5e",
+      "archive_sha256": "b3933b5b43f35d8213c37ab719f2b6e5c68342bdd338f4deda076c143b7bd380",
+      "license": "LGPL-3.0 (COPYING)",
+      "lineage": "Based on an earlier flamewing/mdcomp implementation; inherited and independently fixed bugs are possible; shared-lineage check",
+      "build": "VS 2022 MSBuild, Release AnyCPU, .NET Framework v4.8, empty TargetFrameworkProfile; generated EXE config switched from runtime v2 to v4; no codec source changes"
+    },
+    "snkrle": {
+      "source_url": "https://github.com/kirjavascript/m68k-RLE",
+      "commit": "4f4f871d68d7c6736fa404ebbbf342587fc33946",
+      "source_sha256": "0960f7f8fdd603c9e48a0f7d7a603f2702a23e171ec87e0b38b3b1ca85ff93df",
+      "license": "No license specified in repository; source and binaries not vendored",
+      "lineage": "kirjavascript / snkenjoi original C codec reference; decomp.asm not executed in this checkpoint",
+      "build": "Unmodified comp.c, GCC 16.2, -std=c11 -O2",
+      "adaptation": "BE16 tile-count header multiplied/divided by 32 for cross-decodes; token body unchanged"
+    },
+    "kens-mirror": {
+      "source_url": "https://github.com/Clownacy/KENS-frontend",
+      "commit": "b35f41327bda9a26a755bb321a317a32cd13d652",
+      "lineage": "Supplementary mirror DLLs rebuilt in 2015; hashes differ from the primary 2004 RC3 distribution. Not used for committed fixtures.",
+      "license": "LGPL-2.1-or-later (headers)"
+    }
+  }
+}

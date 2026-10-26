@@ -1,5 +1,7 @@
 # Pinned master-binary comparisons
 
+For original KENS, KENSSharp, and kirjavascript RLE comparisons, see [external codec qualification](external.md). Those references have separate pins, lineage notes, reported failures, and saved fixtures.
+
 The reference tools share mdcomp ancestry. They are cross-version regression references, not independent format oracles. No ROM assets are used. [master.json](master.json) pins source/release commits, the archive URL and SHA-256, executable hashes, compiler details, and the deterministic corpus. Binaries and generated comparison artifacts stay in ignored build directories.
 
 Two references are retained: the published `snapshot-v0.2.0.20211206` Windows binaries targeting `83ddc58527637d193b883606f8b94625574d2e0c`, and an isolated source build of master at `72c6df405a75d322c5b3722da46c3abb864d3793`. The pre-test branch is pinned at `a8b9a26`, immediately before the Catch2 infrastructure commit. The published binaries can be imported explicitly; normal configure/build/test runs never download them.

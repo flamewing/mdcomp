@@ -1,0 +1,420 @@
+{
+  "kens-rc3": {
+    "summary": {
+      "cases": 64,
+      "passed": 36,
+      "directions": {
+        "reference_to_reference": 36,
+        "reference_to_candidate": 45,
+        "candidate_to_reference": 48,
+        "candidate_to_candidate": 64
+      }
+    },
+    "binary_hashes": {
+      "kens.exe": "dfa96ae35128c95d13acc22710aa19cca48c9179479566f60b01ab6ca42bdb7a",
+      "Enigma.dll": "e3a2f71e755b6b347257cc68627b9f962f833558a414944808461a147f3b45f4",
+      "Kosinski.dll": "7bb7d7a8dd7505c5addbeb4cf10f430b95b29ff62857fafd32334346cddd87b2",
+      "Nemesis.dll": "c5a0dcaa50f03c29871697d94d27681c3a425f48d40e9506f1f598778d6b0ea9",
+      "Saxman.dll": "bf39485d13b7a159e7c7b5f1a647593ee369b8af3100dd1ed6778b1a40aa29cb",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "saxcmp.exe": "847e2df763d92e92527286467a0395ac4fe9d664e7788243c1dd7220b7e963a6"
+    },
+    "codecs": {
+      "Enigma": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 12,
+          "reference_to_candidate": 12,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "zeros-32",
+          "zeros-64",
+          "zeros-256",
+          "zeros-512"
+        ]
+      },
+      "Kosinski": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Nemesis": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 8,
+          "reference_to_candidate": 8,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "ascending-32",
+          "random-seed-12345678-32",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      },
+      "Saxman": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 9,
+          "candidate_to_reference": 0,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "zeros-32",
+          "repeat-32",
+          "ascending-32",
+          "random-seed-12345678-32",
+          "zeros-64",
+          "repeat-64",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "zeros-256",
+          "repeat-256",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "zeros-512",
+          "repeat-512",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      }
+    }
+  },
+  "kens15": {
+    "summary": {
+      "cases": 64,
+      "passed": 40,
+      "directions": {
+        "reference_to_reference": 40,
+        "reference_to_candidate": 49,
+        "candidate_to_reference": 48,
+        "candidate_to_candidate": 64
+      }
+    },
+    "binary_hashes": {
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "reference-koscmp.exe": "653b97937149297077a9be09ef725c8260a137e7bddfcbedbfa746e61490e31c",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "reference-enicmp.exe": "4edf886a13801d6c6c589c27b6fb40cca29c89aa11c07b69812f8afff00dfec0",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "reference-nemcmp.exe": "b9f332cb05b86e749ebdae76eddb6485e2b66a554ae65c3ad54cf2e4b80dfb8e",
+      "saxcmp.exe": "847e2df763d92e92527286467a0395ac4fe9d664e7788243c1dd7220b7e963a6",
+      "reference-saxcmp.exe": "4c33cd9cd50e62b4adc717433411cd4b3e2e6ab4bfaddb2a475f34934f52c0ad"
+    },
+    "codecs": {
+      "Enigma": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 8,
+          "reference_to_candidate": 8,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "ascending-32",
+          "random-seed-12345678-32",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      },
+      "Kosinski": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Nemesis": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Saxman": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 9,
+          "candidate_to_reference": 0,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "zeros-32",
+          "repeat-32",
+          "ascending-32",
+          "random-seed-12345678-32",
+          "zeros-64",
+          "repeat-64",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "zeros-256",
+          "repeat-256",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "zeros-512",
+          "repeat-512",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      }
+    }
+  },
+  "kenssharp": {
+    "summary": {
+      "cases": 96,
+      "passed": 80,
+      "directions": {
+        "reference_to_reference": 80,
+        "reference_to_candidate": 91,
+        "candidate_to_reference": 96,
+        "candidate_to_candidate": 96
+      }
+    },
+    "binary_hashes": {
+      "KensSharp.exe": "0422e3765011fda17ca16c807f1e2c1ba6136af03cbe91a94d3957b80f191aa0",
+      "SonicRetro.KensSharp.Common.dll": "5ea2a1526dff4f4afe111d7813795f6065c1a54448bc502d1426ffa03ce64ca9",
+      "SonicRetro.KensSharp.Comper.dll": "12c30c136bae7dca70e3ee29bb53cc6eb042fd80d14af4475d1df3e13332b92e",
+      "SonicRetro.KensSharp.Enigma.dll": "2561720906dda73292bdf29a15e316b26b1b322483aaee57d8cc2e206cb048ea",
+      "SonicRetro.KensSharp.Kosinski+.dll": "a945a35e04d670bc40a3129d51fe48475d16694f0fc51c28816cf521c4c1d986",
+      "SonicRetro.KensSharp.Kosinski.dll": "aabf0b3e158db66f247e877f632d3f61cb1371b4b3af5208a10c3025c5f7da39",
+      "SonicRetro.KensSharp.Nemesis.dll": "f10c262f0ebbf7d72ad78ac11f820b643b743b07b38d2d98a74b8eedb0840629",
+      "SonicRetro.KensSharp.Saxman.dll": "5a40f35d46f652bb3a54080cd790bd9282c111c9ef099e3b7b8eb7a14747e052",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "saxcmp.exe": "847e2df763d92e92527286467a0395ac4fe9d664e7788243c1dd7220b7e963a6",
+      "compcmp.exe": "158d370cc2a69bc431c956b11cd249ca5e9b6cbe0e511fa927c11d1c8c436cb8",
+      "kosplus.exe": "fb40e564322f5c7190d9e8c21d0ac6c3894a788b95dfc4b6089ec717167a6f5a"
+    },
+    "codecs": {
+      "Comper": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Enigma": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Kosinski": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "KosinskiPlus": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Nemesis": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Saxman": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 11,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "zeros-32",
+          "repeat-32",
+          "ascending-32",
+          "random-seed-12345678-32",
+          "zeros-64",
+          "repeat-64",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "zeros-256",
+          "repeat-256",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "zeros-512",
+          "repeat-512",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      }
+    }
+  },
+  "snkrle": {
+    "summary": {
+      "cases": 20,
+      "passed": 20,
+      "directions": {
+        "reference_to_reference": 20,
+        "reference_to_candidate": 20,
+        "candidate_to_reference": 20,
+        "candidate_to_candidate": 20
+      }
+    },
+    "binary_hashes": {
+      "rle.exe": "b6e8681416a6e7bdfba62818ee83757fdad4b641cfdb49a64fa7a5938a51c27b",
+      "snkcmp.exe": "26a8818f610f93a1aa0efd0164ffc5fb48d63900346c3098c8320dd228ceb0ad"
+    },
+    "codecs": {
+      "SnKRLE": {
+        "cases": 20,
+        "directions": {
+          "reference_to_reference": 20,
+          "reference_to_candidate": 20,
+          "candidate_to_reference": 20,
+          "candidate_to_candidate": 20
+        },
+        "incomplete_or_failed_cases": []
+      }
+    }
+  },
+  "kens-mirror": {
+    "summary": {
+      "cases": 64,
+      "passed": 35,
+      "directions": {
+        "reference_to_reference": 35,
+        "reference_to_candidate": 44,
+        "candidate_to_reference": 48,
+        "candidate_to_candidate": 64
+      }
+    },
+    "binary_hashes": {
+      "kens.exe": "dfa96ae35128c95d13acc22710aa19cca48c9179479566f60b01ab6ca42bdb7a",
+      "Enigma.dll": "9449aa99c8ae016c522c3a5a9d843f17579510462012fe9137193a2dbd9b9c14",
+      "Kosinski.dll": "764c4963c5e0ce1b56663fb5d8474252ec6009be9b6d0fe34a2b71b2b3032ebc",
+      "Nemesis.dll": "d816eef135c6a9c55d7efa3820a3044328a8accb98045496219134ba09468989",
+      "Saxman.dll": "89af95787ad327efb94e03ea44bd28ab8342182c4716209908a9088ce724b53e",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "saxcmp.exe": "847e2df763d92e92527286467a0395ac4fe9d664e7788243c1dd7220b7e963a6"
+    },
+    "codecs": {
+      "Enigma": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 9,
+          "reference_to_candidate": 9,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "random-seed-12345678-32",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "zeros-512",
+          "ascending-512"
+        ]
+      },
+      "Kosinski": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": []
+      },
+      "Nemesis": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 10,
+          "reference_to_candidate": 10,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "ascending-32",
+          "random-seed-12345678-32",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      },
+      "Saxman": {
+        "cases": 16,
+        "directions": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 9,
+          "candidate_to_reference": 0,
+          "candidate_to_candidate": 16
+        },
+        "incomplete_or_failed_cases": [
+          "zeros-32",
+          "repeat-32",
+          "ascending-32",
+          "random-seed-12345678-32",
+          "zeros-64",
+          "repeat-64",
+          "ascending-64",
+          "random-seed-12345678-64",
+          "zeros-256",
+          "repeat-256",
+          "ascending-256",
+          "random-seed-12345678-256",
+          "zeros-512",
+          "repeat-512",
+          "ascending-512",
+          "random-seed-12345678-512"
+        ]
+      }
+    }
+  }
+}
