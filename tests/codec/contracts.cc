@@ -109,3 +109,43 @@ TEST_CASE("Nemesis selects both normal and XOR modes", "[codec][options][nemesis
     }
     CHECK(modes == std::set<bool>{false, true});
 }
+
+TEST_CASE("Saxman stops at the declared body boundary", "[codec][saxman][boundary]") {
+    auto const& codec = codec_test::for_codec<saxman>();
+    std::string body;
+    std::string expected;
+    for (unsigned group = 0; group < 2; ++group) {
+        body += '\xff';
+        for (unsigned i = 0; i < 8; ++i) {
+            auto const value = static_cast<char>(group * 8 + i);
+            body += value;
+            expected += value;
+        }
+    }
+    body += '\0';    // An unused descriptor at the exact boundary is legal.
+    for (bool header : {false, true}) {
+        codec_test::options settings;
+        settings.size_header     = header;
+        settings.compressed_size = body.size();
+        auto const encoded = (header ? std::string("\x13\0", 2) : std::string{}) + body;
+        for (auto const& suffix : {std::string{}, std::string("TRAILER")}) {
+            auto const result = codec_test::run(codec.decode, encoded + suffix, settings);
+            REQUIRE(result.success);
+            CHECK(result.bytes == expected);
+            CHECK(result.consumed == encoded.size());
+        }
+    }
+}
+
+TEST_CASE(
+        "Saxman rejects truncated framing and dictionary tokens",
+        "[codec][saxman][negative]") {
+    auto const& codec = codec_test::for_codec<saxman>();
+    for (auto const& input :
+         {std::string{}, std::string(1, '\0'), std::string("\x03\0\0\0", 4),
+          std::string("\x02\0\0\0", 4)}) {
+        auto const result = codec_test::run(codec.decode, input);
+        CHECK_FALSE(result.success);
+        CHECK(result.bytes.empty());
+    }
+}

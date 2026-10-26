@@ -34,7 +34,9 @@
 #include <ostream>
 #include <span>
 #include <sstream>
+#include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 // NOTE: This has to be changed for other LZSS-based compression schemes.
@@ -278,7 +280,10 @@ static_assert(
         "saxman_adaptor does not satisfy lzss::adaptor_t requirements");
 
 struct saxman_internal {
-    static void decode(std::istream& input, std::iostream& dest, size_t const size) {
+    static bool decode(std::istream& input, std::iostream& dest, size_t const size) {
+        if (size == 0) {
+            return bool(dest);
+        }
         auto const compressed_size = static_cast<std::streamsize>(size);
 
         using adaptor_t     = saxman_adaptor;
@@ -296,9 +301,13 @@ struct saxman_internal {
             }
         }
 
+        if (input.fail()) {
+            return false;
+        }
         for (auto const& edge : list) {
             adaptor_t::output_edge(dest, edge);
         }
+        return bool(dest);
     }
 
     static void encode(std::ostream& dest, std::span<char const> data) {
@@ -311,13 +320,19 @@ bool saxman::decode(std::istream& source, std::iostream& dest, size_t size) {
         size = little_endian::read2(source);
     }
 
-    auto const        location = source.tellg();
-    std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
-    extract(source, input);
-
-    saxman_internal::decode(input, dest, size);
-    source.seekg(location + input.tellg());
-    return true;
+    if (!source
+        || size > static_cast<size_t>(std::numeric_limits<std::streamsize>::max())) {
+        source.setstate(std::ios::failbit);
+        return false;
+    }
+    // The size counts body bytes only. In particular, an unused final descriptor
+    // must not consume alignment padding or data belonging to the next stream.
+    auto bytes = utils::read_from_bytes<std::string>(source, size);
+    if (!source) {
+        return false;
+    }
+    std::istringstream input(std::move(bytes), std::ios::in | std::ios::binary);
+    return saxman_internal::decode(input, dest, size);
 }
 
 bool saxman::encode(
