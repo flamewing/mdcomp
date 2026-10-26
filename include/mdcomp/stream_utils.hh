@@ -28,8 +28,11 @@
 #include <cstdint>
 #include <ios>
 #include <iterator>
+#include <limits>
 #include <ostream>
 #include <ranges>
+#include <span>
+#include <stdexcept>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -48,41 +51,88 @@ namespace utils {
 
     template <typename T1, typename T2>
     requires detail::has_basic_arithmetic_with<T1, T2>
-    constexpr auto round_up(T1 const value, T2 const factor) noexcept {
-        constexpr decltype(factor) const one{1};
-        return ((value + factor - one) / factor) * factor;
-    }
-
-    inline void pad_to_even(std::ostream& dest) {
-        if ((dest.tellp() % 2) != 0) {
-            dest.put(0);
+    constexpr auto round_up(T1 const value, T2 const factor) {
+        using result_t      = decltype((value / factor) * factor);
+        auto const amount   = static_cast<result_t>(value);
+        auto const multiple = static_cast<result_t>(factor);
+        if (multiple <= 0) {
+            throw std::invalid_argument("Rounding factor must be positive");
         }
+        auto const remainder = amount % multiple;
+        auto const delta     = remainder == 0  ? result_t{0}
+                               : remainder < 0 ? -remainder
+                                               : multiple - remainder;
+        if constexpr (std::integral<result_t>) {
+            if (amount > std::numeric_limits<result_t>::max() - delta) {
+                throw std::overflow_error("Rounded size is not representable");
+            }
+        }
+        return amount + delta;
     }
 
     inline void pad_to_multiple(std::ostream& dest, std::streamoff multiple) {
-        // Padding between modules
-        int64_t const padding_end = round_up(dest.tellp(), multiple);
-        while (dest.tellp() < padding_end) {
-            dest.put(0);
+        auto const position = dest.tellp();
+        if (position == std::streampos{-1}) {
+            throw std::ios_base::failure("Cannot determine padding position");
         }
+        auto const current = static_cast<std::streamoff>(position);
+        auto const padding = round_up(current, multiple) - current;
+        for (std::streamoff count = 0; count < padding; ++count) {
+            dest.put(0);
+            if (!dest) {
+                throw std::ios_base::failure("Cannot write stream padding");
+            }
+        }
+    }
+
+    inline void pad_to_even(std::ostream& dest) {
+        pad_to_multiple(dest, std::streamoff{2});
     }
 
     template <std::unsigned_integral T>
     inline void pad_to_multiple(std::ostream& dest, T multiple) {
+        if (!std::in_range<std::streamoff>(multiple)) {
+            throw std::overflow_error("Padding factor exceeds stream offset range");
+        }
         pad_to_multiple(dest, static_cast<std::streamoff>(multiple));
     }
 
     template <std::signed_integral T>
     inline void pad_to_multiple(std::ostream& dest, T multiple) {
+        if (!std::in_range<std::streamoff>(multiple)) {
+            throw std::overflow_error("Padding factor exceeds stream offset range");
+        }
         pad_to_multiple(dest, static_cast<std::streamoff>(multiple));
     }
 
     inline std::make_signed_t<size_t> ssize(std::istream& source) {
-        auto current = source.tellg();
-        source.ignore(std::numeric_limits<std::streamsize>::max());
-        auto full_size = source.gcount();
-        source.seekg(current);
-        return static_cast<std::make_signed_t<size_t>>(full_size);
+        auto const current = source.tellg();
+        if (current == std::streampos{-1}) {
+            throw std::ios_base::failure("Cannot determine input position");
+        }
+        try {
+            source.seekg(0, std::ios::end);
+            auto const end = source.tellg();
+            if (end == std::streampos{-1} || end < current) {
+                throw std::ios_base::failure("Cannot determine remaining input size");
+            }
+            source.seekg(current);
+            if (!source) {
+                throw std::ios_base::failure("Cannot restore input position");
+            }
+            auto const remaining = end - current;
+            if (!std::in_range<std::make_signed_t<size_t>>(remaining)) {
+                throw std::overflow_error("Input size exceeds ptrdiff_t");
+            }
+            return static_cast<std::make_signed_t<size_t>>(remaining);
+        } catch (...) {
+            try {
+                source.clear();
+                source.seekg(current);
+            } catch (...) {
+            }
+            throw;
+        }
     }
 
     template <typename T>
@@ -106,7 +156,12 @@ namespace utils {
     }
 
     template <std::integral T>
+    requires(!std::is_const_v<T> && !std::same_as<T, bool>)
     inline void read_from_bytes(std::istream& source, std::span<T> data) {
+        if (data.size() > static_cast<size_t>(std::numeric_limits<std::streamsize>::max())
+                                  / sizeof(T)) {
+            throw std::length_error("Byte read exceeds streamsize");
+        }
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto* pointer = reinterpret_cast<char*>(data.data());
         source.read(pointer, static_cast<std::streamsize>(data.size() * sizeof(T)));
@@ -119,7 +174,9 @@ namespace utils {
         size_t const capacity = utils::round_up(count, alignment);
         using value_t         = typename Cont::value_type;
         Cont data;
-        data.reserve(capacity);
+        if constexpr (requires { data.reserve(capacity); }) {
+            data.reserve(capacity);
+        }
         data.resize(count);
         read_from_bytes(source, std::span<value_t>(data));
         data.resize(capacity);
@@ -133,7 +190,11 @@ namespace utils {
     }
 
     template <std::integral int_t>
-    inline void write_as_bytes(std::ostream& dest, std::span<int_t const> data) noexcept {
+    inline void write_as_bytes(std::ostream& dest, std::span<int_t const> data) {
+        if (data.size() > static_cast<size_t>(std::numeric_limits<std::streamsize>::max())
+                                  / sizeof(int_t)) {
+            throw std::length_error("Byte write exceeds streamsize");
+        }
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto const* pointer = reinterpret_cast<char const*>(data.data());
         dest.write(pointer, static_cast<std::streamsize>(data.size() * sizeof(int_t)));
@@ -156,7 +217,7 @@ namespace utils {
     namespace pipe {
         template <typename derived>
         struct base {
-        private:
+        protected:
             base() = default;
             friend derived;
         };
@@ -183,12 +244,12 @@ namespace utils {
 
             template <typename Ty1, typename Ty2>
             constexpr explicit pipeline(Ty1&& val1, Ty2&& val2) noexcept(
-                    std::is_nothrow_constructible_v<Ty1, ClosureLeft>
-                    && std::is_nothrow_constructible_v<Ty2, ClosureRight>)
+                    std::is_nothrow_constructible_v<ClosureLeft, Ty1>
+                    && std::is_nothrow_constructible_v<ClosureRight, Ty2>)
                     : left(std::forward<Ty1>(val1)), right(std::forward<Ty2>(val2)) {}
 
             template <typename Ty>
-            [[nodiscard]] constexpr auto operator()(Ty&& val) & noexcept(
+            [[nodiscard]] constexpr decltype(auto) operator()(Ty&& val) & noexcept(
                     noexcept(right(left(std::forward<Ty>(val)))))
             requires requires { right(left(std::forward<Ty>(val))); }
             {
@@ -196,7 +257,7 @@ namespace utils {
             }
 
             template <typename Ty>
-            [[nodiscard]] constexpr auto operator()(Ty&& val) const& noexcept(
+            [[nodiscard]] constexpr decltype(auto) operator()(Ty&& val) const& noexcept(
                     noexcept(right(left(std::forward<Ty>(val)))))
             requires requires { right(left(std::forward<Ty>(val))); }
             {
@@ -204,7 +265,7 @@ namespace utils {
             }
 
             template <typename Ty>
-            [[nodiscard]] constexpr auto operator()(Ty&& val) && noexcept(
+            [[nodiscard]] constexpr decltype(auto) operator()(Ty&& val) && noexcept(
                     noexcept(std::move(right)(std::move(left)(std::forward<Ty>(val)))))
             requires requires {
                 std::move(right)(std::move(left)(std::forward<Ty>(val)));
@@ -214,7 +275,7 @@ namespace utils {
             }
 
             template <typename Ty>
-            [[nodiscard]] constexpr auto operator()(Ty&& val) const&& noexcept(
+            [[nodiscard]] constexpr decltype(auto) operator()(Ty&& val) const&& noexcept(
                     noexcept(std::move(right)(std::move(left)(std::forward<Ty>(val)))))
             requires requires {
                 std::move(right)(std::move(left)(std::forward<Ty>(val)));
@@ -239,9 +300,13 @@ namespace utils {
 
         template <typename Left, typename Right>
         requires(range_adaptor_closure_object<Right> && std::ranges::range<Left>)
-        [[nodiscard]] constexpr auto operator|(Left&& left, Right&& right) noexcept(
-                noexcept(std::forward<Right>(right)(std::forward<Left>(left))))
-        requires requires { static_cast<Right &&>(right)(static_cast<Left &&>(left)); }
+        [[nodiscard]] constexpr decltype(auto) operator|(
+                Left&&  left,
+                Right&& right) noexcept(noexcept(std::
+                                                         forward<Right>(right)(
+                                                                 std::forward<Left>(
+                                                                         left))))
+        requires requires { static_cast<Right&&>(right)(static_cast<Left&&>(left)); }
         {
             return std::forward<Right>(right)(std::forward<Left>(left));
         }
@@ -401,18 +466,18 @@ namespace utils {
         if constexpr (converts_direct_constructible<range_t, container_t, types_t...>) {
             return container_t(
                     std::forward<range_t>(range), std::forward<types_t>(args)...);
-        } else if constexpr (converts_tag_constructible<
-                                     range_t, container_t, types_t...>) {
+        } else if constexpr (
+                converts_tag_constructible<range_t, container_t, types_t...>) {
             return container_t(
                     from_range, std::forward<range_t>(range),
                     std::forward<types_t>(args)...);
-        } else if constexpr (converts_and_common_constructible<
-                                     range_t, container_t, types_t...>) {
+        } else if constexpr (
+                converts_and_common_constructible<range_t, container_t, types_t...>) {
             return container_t(
                     std::ranges::begin(range), std::ranges::end(range),
                     std::forward<types_t>(args)...);
-        } else if constexpr (converts_constructible_insertable<
-                                     range_t, container_t, types_t...>) {
+        } else if constexpr (
+                converts_constructible_insertable<range_t, container_t, types_t...>) {
             container_t cont(std::forward<types_t>(args)...);
             if constexpr (sized_and_reservable<range_t, container_t>) {
                 cont.reserve(std::ranges::size(range));
@@ -421,14 +486,14 @@ namespace utils {
                     range,
                     container_inserter<std::ranges::range_reference_t<range_t>>(cont));
             return cont;
-        } else if constexpr (std::ranges::input_range<
-                                     std::ranges::range_reference_t<range_t>>) {
+        } else if constexpr (
+                std::ranges::input_range<std::ranges::range_reference_t<range_t>>) {
             auto const operation = []<typename elem_t>(elem_t&& elem) {
                 return to<std::ranges::range_value_t<container_t>>(
                         std::forward<elem_t>(elem));
             };
             return to<container_t>(
-                    std::ranges::transform(range, operation),
+                    std::views::transform(range, operation),
                     std::forward<types_t>(args)...);
         } else {
             static_assert(
@@ -489,10 +554,10 @@ namespace utils {
             return static_cast<decltype(count(
                     from_range, std::declval<range_t>(), std::declval<args_t>()...))*>(
                     nullptr);
-        } else if constexpr (requires(
-                                     phony_input_iterator<range_t> iter, args_t... args) {
-                                 count(iter, iter, args...);
-                             }) {
+        } else if constexpr (
+                requires(phony_input_iterator<range_t> iter, args_t... args) {
+                    count(iter, iter, args...);
+                }) {
             return static_cast<decltype(count(
                     std::declval<phony_input_iterator<range_t>>(),
                     std::declval<phony_input_iterator<range_t>>(),
