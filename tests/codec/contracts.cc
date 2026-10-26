@@ -16,7 +16,7 @@ namespace {
                                       ? codec_test::run(codec.decode, encoded.bytes)
                                       : codec_test::result{};
         auto const expected = codec_test::padded(codec, input);
-        CAPTURE(codec.name, size, pattern, seed, encoded.diagnostic, decoded.diagnostic);
+        CAPTURE(std::string(codec.name), size, pattern, seed, encoded.diagnostic, decoded.diagnostic);
         if (!encoded.success || !decoded.success || decoded.bytes != expected) {
             codec_test::save_failure(
                     codec.name,

@@ -27,7 +27,7 @@ TEMPLATE_TEST_CASE(
                                                                codec.moduled_decode,
                                                                encoded.bytes, settings)
                                                      : codec_test::result{};
-                CAPTURE(codec.name, size, pattern, padding, encoded.diagnostic,
+                CAPTURE(std::string(codec.name), size, pattern, padding, encoded.diagnostic,
                         decoded.diagnostic);
                 if (!encoded.success || !decoded.success || decoded.bytes != input) {
                     codec_test::save_failure(
@@ -63,6 +63,18 @@ TEMPLATE_TEST_CASE(
     auto const encoded = codec_test::run(codec.moduled_encode, std::string(65536, 'x'));
     CHECK_FALSE(encoded.success);
     CHECK(encoded.bytes.empty());
+    codec_test::options settings;
+    settings.module_padding = 0;
+    auto const invalid_encode = codec_test::run(codec.moduled_encode, "xx", settings);
+    CHECK_FALSE(invalid_encode.success);
+    CHECK(invalid_encode.bytes.empty());
+    CHECK_FALSE(invalid_encode.diagnostic.empty());
+    auto const valid = codec_test::run(codec.moduled_encode, "xx");
+    REQUIRE(valid.success);
+    auto const invalid_decode = codec_test::run(codec.moduled_decode, valid.bytes, settings);
+    CHECK_FALSE(invalid_decode.success);
+    CHECK(invalid_decode.bytes.empty());
+    CHECK_FALSE(invalid_decode.diagnostic.empty());
 }
 
 TEMPLATE_TEST_CASE(
@@ -72,7 +84,7 @@ TEMPLATE_TEST_CASE(
     size_t const size    = 65535 - 65535 % codec.input_granularity;
     auto const   input   = codec_test::corpus(size, 1);
     auto const   encoded = codec_test::run(codec.moduled_encode, input);
-    CAPTURE(codec.name, size, encoded.diagnostic);
+    CAPTURE(std::string(codec.name), size, encoded.diagnostic);
     REQUIRE(encoded.success);
     auto const decoded = codec_test::run(codec.moduled_decode, encoded.bytes);
     CAPTURE(decoded.diagnostic);

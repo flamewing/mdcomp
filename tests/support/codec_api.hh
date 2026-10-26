@@ -25,7 +25,7 @@ namespace codec_test {
     struct options {
         bool   size_header     = true;
         size_t compressed_size = 0;
-        size_t module_padding  = 0;
+        std::optional<size_t> module_padding;
     };
 
     using operation = bool (*)(std::istream&, std::iostream&, options const&);

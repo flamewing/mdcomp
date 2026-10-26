@@ -47,8 +47,7 @@ namespace codec_test {
                 std::istream& input, std::iostream& output, options const& settings) {
             return Codec::moduled_encode(
                     input, output,
-                    settings.module_padding ? settings.module_padding
-                                            : Codec::default_module_padding);
+                    settings.module_padding.value_or(Codec::default_module_padding));
         }
 
         template <typename Codec>
@@ -56,8 +55,7 @@ namespace codec_test {
                 std::istream& input, std::iostream& output, options const& settings) {
             return Codec::moduled_decode(
                     input, output,
-                    settings.module_padding ? settings.module_padding
-                                            : Codec::default_module_padding);
+                    settings.module_padding.value_or(Codec::default_module_padding));
         }
 
         template <typename Codec>
