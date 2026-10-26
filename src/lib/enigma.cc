@@ -222,12 +222,12 @@ public:
 
         auto         put_mask = flag_writer::get(mask_val >> 11U);
         size_t const packet_length
-                = std::bit_cast<unsigned>(std::bit_width(mask_val & 0x7ffU));
+                = std::max<size_t>(1, std::bit_width(mask_val & 0x7ffU));
 
         // Find the most common 2-byte value.
         auto const high = std::ranges::max_element(
                 counts, {}, &decltype(counts)::value_type::second);
-        uint16_t const common_value = high->first;
+        uint16_t const common_value = high == counts.end() ? uint16_t{0} : high->first;
         // No longer needed.
         counts.clear();
 
@@ -295,7 +295,7 @@ public:
             uint16_t const value = unpack[position];
             if (value == incrementing_value) {
                 flush_buffer();
-                size_t const last  = std::min(unpack.size(), position + 15);
+                size_t const last  = std::min(unpack.size(), position + 16);
                 uint16_t     next  = value + 1;
                 size_t       count = 0;
                 for (size_t i = position + 1; i < last; i++) {
@@ -312,7 +312,7 @@ public:
             }
             if (value == common_value) {
                 flush_buffer();
-                size_t const   last  = std::min(unpack.size(), position + 15);
+                size_t const   last  = std::min(unpack.size(), position + 16);
                 uint16_t const next  = value;
                 size_t         count = 0;
                 for (size_t i = position + 1; i < last; i++) {
@@ -331,7 +331,7 @@ public:
                 uint16_t const index = delta + 1U;
                 if (next != incrementing_value && index <= 2U) {
                     flush_buffer();
-                    size_t const last  = std::min(unpack.size(), position + 15);
+                    size_t const last  = std::min(unpack.size(), position + 16);
                     size_t       count = 1;
                     next += delta;
                     for (size_t i = position + 2; i < last; i++) {

@@ -1,5 +1,6 @@
 #include "mdcomp/comper.hh"
 #include "mdcomp/comperx.hh"
+#include "mdcomp/enigma.hh"
 #include "mdcomp/kosinski.hh"
 #include "mdcomp/kosplus.hh"
 #include "mdcomp/lzkn1.hh"
@@ -40,6 +41,29 @@ TEMPLATE_TEST_CASE(
             REQUIRE(TestType::decode(compressed, output));
             CHECK(output.str() == bytes);
         }
+    }
+}
+
+TEST_CASE(
+        "Enigma uses full sixteen-word runs and a nonzero packet width",
+        "[codec][enigma]") {
+    for (size_t words :
+         {size_t{0}, size_t{1}, size_t{15}, size_t{16}, size_t{17}, size_t{128},
+          size_t{256}}) {
+        CAPTURE(words);
+        std::string const  bytes(words * 2, '\0');
+        std::istringstream input(bytes);
+        std::stringstream  compressed;
+        REQUIRE(enigma::encode(input, compressed));
+        CHECK(static_cast<unsigned char>(compressed.str()[0]) == 1);
+        if (words == 128) {
+            // Cross-version reference vector from the pinned master tools.
+            CHECK(compressed.str()
+                  == std::string("\x01\0\0\0\0\0\x01\xf7\xdf\x7d\xf7\xdf\x7b\xf8", 14));
+        }
+        std::ostringstream output;
+        REQUIRE(enigma::decode(compressed, output));
+        CHECK(output.str() == bytes);
     }
 }
 

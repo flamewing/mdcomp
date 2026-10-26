@@ -37,7 +37,7 @@ catch_discover_tests(mdcomp-unit-tests
 add_executable(mdcomp-codec-smoke-tests codec/lzss_smoke.cc)
 target_link_libraries(mdcomp-codec-smoke-tests PRIVATE Catch2::Catch2WithMain
     mdcomp::comperStatic mdcomp::comperxStatic mdcomp::kosinskiStatic
-    mdcomp::kosplusStatic mdcomp::lzkn1Static mdcomp::rocketStatic mdcomp::saxmanStatic)
+    mdcomp::kosplusStatic mdcomp::lzkn1Static mdcomp::rocketStatic mdcomp::saxmanStatic mdcomp::enigmaStatic)
 catch_discover_tests(mdcomp-codec-smoke-tests
     TEST_PREFIX "codec::"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
