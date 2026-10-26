@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "license": "No explicit license grant identified in these source files; not vendored. Sega original code and disassembly-project annotations remain separately attributed.",
+  "sources": [
+    {
+      "name": "kosinski.asm",
+      "url": "https://raw.githubusercontent.com/sonicretro/s1disasm/89c0e0e06b51fd9ebac44d988e4a89bd643fd031/_inc/Decompression/Kosinski%20Decompression.asm",
+      "sha256": "a87b23ae116f32d040dbd8f1922542e0fc6af92a70a87d55bac12a30bc9cc64e",
+      "origin": "Sonic 1 disassembly, original-derived MC68000 code; comments/labels are disassembly-project additions"
+    },
+    {
+      "name": "enigma.asm",
+      "url": "https://raw.githubusercontent.com/sonicretro/s1disasm/89c0e0e06b51fd9ebac44d988e4a89bd643fd031/_inc/Decompression/Enigma%20Decompression.asm",
+      "sha256": "76fed2de986b3e79e1f2bd517b06cc9eb64cff0a1679b77268c9a31bfee4136e",
+      "origin": "Sonic 1 disassembly, original-derived MC68000 code; comments/labels are disassembly-project additions"
+    },
+    {
+      "name": "nemesis.asm",
+      "url": "https://raw.githubusercontent.com/sonicretro/s1disasm/89c0e0e06b51fd9ebac44d988e4a89bd643fd031/_inc/Decompression/Nemesis%20Decompression.asm",
+      "sha256": "6b5d7a8ef48875b4be24f307cd99ff712b96ec7e6a40c33da94d015cfc4cdd68",
+      "origin": "Sonic 1 disassembly, original-derived MC68000 code; comments/labels are disassembly-project additions"
+    },
+    {
+      "name": "saxman-z80.asm",
+      "url": "https://raw.githubusercontent.com/sonicretro/s2disasm/4ef457c18fc4902396c43ab06fabc119ac6ecb64/s2.sounddriver.asm",
+      "sha256": "ff34692c633f96d50073c24f6ebb72df5c739892c31be6b19b2ae604e76232c7",
+      "extract_start": "zSaxmanDec:",
+      "extract_end": "; End of function zDecEndOrGetByte",
+      "extracted_sha256": "41a1994498274cb8533f3925667dacc38e1520f7ef7370de1093b24774e5684d",
+      "origin": "Sonic 2 sound driver; OptimiseDriver=0 selects original behavior; extracted contiguous block without instruction edits"
+    }
+  ],
+  "qualification": "Original-derived game-disassembly references, not pristine recovered build sources. RAM entry used for Nemesis; no VDP emulation or ROM assets."
+}

@@ -1,0 +1,9 @@
+[submodule "tests/third_party/asl"]
+	path = tests/third_party/asl
+	url = https://github.com/flamewing/asl-releases.git
+[submodule "tests/third_party/musashi"]
+	path = tests/third_party/musashi
+	url = https://github.com/kstenerud/Musashi.git
+[submodule "tests/third_party/z80"]
+	path = tests/third_party/z80
+	url = https://github.com/superzazu/z80.git
