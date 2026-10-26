@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: prerequisite design; implementation not started.
+Status: implementation started. Catch2 v3, CTest registration, CI test jobs, and endian I/O runtime/constexpr regressions are implemented. Codec baseline and assembly work remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -37,11 +37,9 @@ complete. Documentation deliverables and their validation are tracked in
 
 ## Current Baseline
 
-The project currently has no CTest integration or runtime test targets. Its
-existing checks are compile-time `static_assert`s for concepts, byte order,
-bit operations, iterators, and selected adaptor properties. Those assertions
-remain valuable, but they do not execute codec operations or validate format
-compatibility.
+The project now has a Catch2 v3 unit target registered with CTest. Endian I/O regressions exercise byte order, scalar and iterator transfers, stream adapters, failure propagation, and available 128-bit types at runtime and, where possible, through `static_assert`s. Existing header assertions remain compiled. Codec operations and format compatibility are not yet covered by this initial suite. See [the test workflow](../tests/README.md) for dependency setup and local commands.
+
+The first implementation checkpoint contains 17 unit cases, including exhaustive 16-bit byte swapping and a deterministic 64-bit corpus. These pass with GCC 16.2, Clang 23.1, and MSVC 19.44 in C++20 mode; GCC also passes in C++23 mode and with 128-bit support disabled after loading its platform headers. Full GCC and MSVC library/tool builds pass, and a separate `BUILD_TESTING=OFF` configuration builds without Catch2. These checks establish the endian utility baseline, not codec compatibility or the assembly oracle gate.
 
 The current implemented C++ codec set to baseline is:
 
@@ -88,19 +86,17 @@ Initial CTest labels:
 
 Checklist:
 
-- [ ] Add `include(CTest)` and make all runtime tests conditional on
-      `BUILD_TESTING`.
-- [ ] Add Catch2 v3 through a test-only vcpkg manifest feature.
-- [ ] Enable the C language for the test-only emulator targets.
+- [x] Add `include(CTest)` and make all runtime tests conditional on `BUILD_TESTING`.
+- [x] Add Catch2 v3 through a test-only vcpkg manifest feature.
+- [x] Enable the C language when testing is enabled, ready for test-only emulator targets.
 - [ ] Create `tests/` with separate support, unit, codec, assembly, and fixture
       directories.
-- [ ] Add shared Catch2 test executables without linking every codec into every
-      test unnecessarily.
-- [ ] Register test cases with CTest using `catch_discover_tests`.
-- [ ] Apply deterministic per-test timeouts and CTest labels.
-- [ ] Ensure tests write generated files only below the build directory.
-- [ ] Preserve and continue compiling the existing `static_assert`s.
-- [ ] Add a documented `cmake --build` plus `ctest` local workflow.
+- [x] Add a shared Catch2 unit executable linked only to the endian interface library; codec executables will follow as their coverage is added.
+- [x] Register test cases with CTest using `catch_discover_tests`.
+- [x] Apply deterministic per-test timeouts and CTest labels.
+- [x] Ensure tests run and write generated files only below the build directory.
+- [x] Preserve and continue compiling the existing `static_assert`s.
+- [x] Add a documented `cmake --build` plus `ctest` local workflow.
 - [ ] Provide reusable compile/run hooks for the tested C++, C, and CLI
       examples required by [`documentation-plan.md`](documentation-plan.md).
 
@@ -785,7 +781,7 @@ Checklist:
 
 ### 0. Framework skeleton
 
-- [ ] Add CTest and Catch2.
+- [x] Add CTest and Catch2.
 - [ ] Create the common C++ codec test adapter.
 - [ ] Add one round-trip and one known-answer smoke test.
 - [ ] Establish fixture provenance conventions.
