@@ -37,6 +37,8 @@ catch_discover_tests(mdcomp-unit-tests
 add_executable(mdcomp-codec-smoke-tests
     codec/lzss_smoke.cc
     codec/contracts.cc
+    codec/known_answers.cc
+    fixtures/known_answers.cc
     support/codec_api.cc)
 target_include_directories(mdcomp-codec-smoke-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(mdcomp-codec-smoke-tests PRIVATE Catch2::Catch2WithMain
@@ -48,7 +50,18 @@ catch_discover_tests(mdcomp-codec-smoke-tests
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES LABELS "codec" TIMEOUT 30
     DISCOVERY_MODE PRE_TEST
+    ADD_TAGS_AS_LABELS
 )
+
+add_executable(mdcomp-fixture-export support/export_fixtures.cc fixtures/known_answers.cc)
+target_include_directories(mdcomp-fixture-export PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(mdcomp-fixture-export PRIVATE mdcomp::bigendian_io)
+add_test(NAME codec::fixture-manifest
+    COMMAND "${CMAKE_COMMAND}" "-DEXPORTER=$<TARGET_FILE:mdcomp-fixture-export>"
+        "-DOUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/fixture-export"
+        "-DMANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/manifest.json"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/support/check_fixtures.cmake")
+set_tests_properties(codec::fixture-manifest PROPERTIES LABELS "codec;fixtures" TIMEOUT 30)
 
 set(MDCOMP_REFERENCE_BIN_DIR "" CACHE PATH "Optional pinned reference CLI binary directory")
 set(MDCOMP_REFERENCE_COMMIT "unspecified" CACHE STRING "Commit identifying the reference binaries")

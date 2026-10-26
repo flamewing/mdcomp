@@ -890,12 +890,12 @@ namespace lzss {
     }
 
     // NOLINTBEGIN(bugprone-easily-swappable-parameters)
-    template <adaptor_t Adaptor>
+    template <adaptor_t Adaptor, size_t MaxLength = Adaptor::look_ahead_buf_size>
     inline void copy(
             std::iostream& dest, std::make_signed_t<size_t> const distance,
             std::make_signed_t<size_t> const length) {
         constexpr static size_t const num_bytes   = sizeof(typename Adaptor::stream_t);
-        constexpr static size_t const buffer_size = Adaptor::look_ahead_buf_size;
+        constexpr static size_t const buffer_size = MaxLength;
 
         using diff_t   = std::make_signed_t<size_t>;
         using stream_t = typename Adaptor::stream_t;

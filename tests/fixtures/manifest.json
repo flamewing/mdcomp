@@ -1,0 +1,1481 @@
+{
+  "fixtures": {
+    "comper/distance-256": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "19ae905493e7aed3254f8fa7ef454e6ccc88d225f6e7f4ca66462920b5212ea3",
+      "compressed_size": 550,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "5ba36cbafccfd158440d0cc05c865ed401b1818e471eae91c98aca92218738bd",
+      "raw_size": 516,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/literal-1": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "c508e63f293bac9fcd5d3c8034d10d129a5915566fcdf36aa0ea0b02de43f7a1",
+      "compressed_size": 6,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e4f60d0aa6d7f3d3b6a6494b1c861b99f649c6f9ec51abaf201b20f297327c95",
+      "raw_size": 2,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/literal-15": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "c88d22028fe5b73298b7be295afd438465357cc5f46f391b544fb6cc620f490e",
+      "compressed_size": 34,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8f554d3f71d806abfbf98ba9755c1ba8dd61d1155b3d2b94ad2559571ae7b7eb",
+      "raw_size": 30,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/literal-16": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "73654e299b4460557ccfb7720bd0ee2d4ba56b2c89923bfefce958298afeff6c",
+      "compressed_size": 38,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "77e3701ca5242d9484aadf94c94c0b3f1291621742b06cbed3d0d6ad8d0d44d5",
+      "raw_size": 32,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/literal-17": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "c677699077d9394d107a19bd439b43f3a82678c0029ef335c1d03642f41053f7",
+      "compressed_size": 40,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8853da2a68beed931b5a96456e2e86bb4b686c081e8fc50a92e09f3adcb5fde9",
+      "raw_size": 34,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/overlap-2": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "db70e684249709818115d56a543483af64af82591bef6f5b191b2ac83b593650",
+      "compressed_size": 8,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "67a7f6384abfb5c2f8ded2d7486e0ea430f180351118da1d7085a44e9200f4e5",
+      "raw_size": 6,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comper/overlap-256": {
+      "classification": "hand-constructed",
+      "codec": "comper",
+      "compressed_sha256": "71dac8ce644c5ef85125c3e0dc779f937c1c1bc2094fe099bbc2178d799e95eb",
+      "compressed_size": 8,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "6f9d90f7981b29582e1f1d2b9d57423d6ebb047bfda2f2b1d1f58314a7ecea5e",
+      "raw_size": 514,
+      "source": "src/asm/Comper_internal.asm"
+    },
+    "comperx/distance-256": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "a436126ed38e1f43707afeaeb55ec2554b4f95d3a4f29ba1836f4fdab63affb1",
+      "compressed_size": 550,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "5ba36cbafccfd158440d0cc05c865ed401b1818e471eae91c98aca92218738bd",
+      "raw_size": 516,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/literal-1": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "c508e63f293bac9fcd5d3c8034d10d129a5915566fcdf36aa0ea0b02de43f7a1",
+      "compressed_size": 6,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e4f60d0aa6d7f3d3b6a6494b1c861b99f649c6f9ec51abaf201b20f297327c95",
+      "raw_size": 2,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/literal-15": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "c88d22028fe5b73298b7be295afd438465357cc5f46f391b544fb6cc620f490e",
+      "compressed_size": 34,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8f554d3f71d806abfbf98ba9755c1ba8dd61d1155b3d2b94ad2559571ae7b7eb",
+      "raw_size": 30,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/literal-16": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "73654e299b4460557ccfb7720bd0ee2d4ba56b2c89923bfefce958298afeff6c",
+      "compressed_size": 38,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "77e3701ca5242d9484aadf94c94c0b3f1291621742b06cbed3d0d6ad8d0d44d5",
+      "raw_size": 32,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/literal-17": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "c677699077d9394d107a19bd439b43f3a82678c0029ef335c1d03642f41053f7",
+      "compressed_size": 40,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8853da2a68beed931b5a96456e2e86bb4b686c081e8fc50a92e09f3adcb5fde9",
+      "raw_size": 34,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/overlap-2": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "c6ede24352958a22aadf3dd0d2c73e1432e8b7b6dd2cf9c615a351cc58059511",
+      "compressed_size": 8,
+      "edges": [
+        "rle",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "67a7f6384abfb5c2f8ded2d7486e0ea430f180351118da1d7085a44e9200f4e5",
+      "raw_size": 6,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/overlap-254": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "7ff01fcfb58c99986c4eaf6888644b9461f9582a96c2de01b6caab87db9a7d26",
+      "compressed_size": 8,
+      "edges": [
+        "rle",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "3c255b8a913930896cc06188d3dccd7b9fc86c13492eb39ef8fca7220f49d5a5",
+      "raw_size": 510,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/overlap-255": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "7b4c44ee188bc5049d9d904dcece810bdfe739651f6e46293578c6632c5cd80e",
+      "compressed_size": 8,
+      "edges": [
+        "rle",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "9c30e31ddb75e38e228ca9243de07f50a269215f2d634cf25fdcf076109579d1",
+      "raw_size": 512,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/overlap-3": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "0d18b6b0f6d8cef283da02af80067c357ed01f5dd53ecb658c71ea2db8f09fcf",
+      "compressed_size": 8,
+      "edges": [
+        "rle",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e8d2b02c9fe0ad657dd1b89528864698094df98b0e193b2810411fff7a72e28d",
+      "raw_size": 8,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "enigma/all-flags": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "f38d1892f634d75366db07ca4d877ac49246b97fa43f813392c9ff78ab63622c",
+      "compressed_size": 14,
+      "edges": [
+        "inline-literals",
+        "all-flags",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "2c67376c6af18938a57700863c5a26e0118f6152bd3429bd999e00a1452f1e4b",
+      "raw_size": 4,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-0-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "412f4597823594d8ec7949e5b43d76d2f6dd8ffb41b36dc75b86093d12c5e994",
+      "compressed_size": 10,
+      "edges": [
+        "incrementing",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b3d510ef04275ca8e698e5b3cbb0ece3949ef9252f0cdc839e9ee347409a2209",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-0-16": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "595a1500b0b6d026b6addcb1c41c6918c60db1d9fede6a486180d9563b87c232",
+      "compressed_size": 10,
+      "edges": [
+        "incrementing",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "09fd2f0419d3a997e5ee2e9384802faea6194d9f783c0887c6347d6cf7484c57",
+      "raw_size": 32,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-1-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "8b9749838de81576a6193785ffcd1478ceb749856c9910b92b8e332b4f329d26",
+      "compressed_size": 10,
+      "edges": [
+        "common",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e8587c7a3951cfa2c372e2edcc4e31d7e1de736f9f2cd0eb5d047bea7d729c64",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-1-16": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "2e8bc59ac604434c2f26835a7d9187b3767ba0be52ab3ada7e3fdc6956e39eba",
+      "compressed_size": 10,
+      "edges": [
+        "common",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cbef3bd3c3d46ed97bdd044df8e83b7e30539bbbd2888798919d27c0838f76e4",
+      "raw_size": 32,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-2-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "6cba832e43d12e7ca853633fe79f3a8c1619c5ec2474b8120acbbf0d6a383ec9",
+      "compressed_size": 12,
+      "edges": [
+        "inline-repeat",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b71de80778f2783383f5d5a3028af84eab2f18a4eb38968172ca41724dd4b3f4",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-2-16": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "a6a59443dc136c1087af9c4ae97200195ed54571c822b77c0c46f7ff3ca1c44d",
+      "compressed_size": 12,
+      "edges": [
+        "inline-repeat",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "9ea7d257ed20ab95b5d125f31c7288d1699b31ace3dfd5c40376c9ca3d7bc441",
+      "raw_size": 32,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-3-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "90da1d731fb85c4e19dcdca3606e11959c5e10c5fc4cb7428b052a34ef04d49a",
+      "compressed_size": 12,
+      "edges": [
+        "inline-increment",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b71de80778f2783383f5d5a3028af84eab2f18a4eb38968172ca41724dd4b3f4",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-3-16": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "7f7fff8684093d80cda80cad4cc79986ea767c68b788529a9e2b8a63b8841bdb",
+      "compressed_size": 12,
+      "edges": [
+        "inline-increment",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b5ab08d2743ccce41db445012f0dab47edd2d2d5e0da2d8e9900c644cb568a16",
+      "raw_size": 32,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-4-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "6e9cac4b7505976357d47651ec2e5e72f6a096150a884cdd3bfa12a31c063cca",
+      "compressed_size": 12,
+      "edges": [
+        "inline-decrement",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d2",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-4-16": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "1c3f831d9723cf87bfbb8c87cc3cf3ec93fc2751fad740d8b96d024ad2ee62d3",
+      "compressed_size": 12,
+      "edges": [
+        "inline-decrement",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8804a3c8fe5ca4e1bffe7d6ffbb9020f6380de052b6ccf5f2bad9957cdb8a77a",
+      "raw_size": 32,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-5-1": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "ca39989d0ef7820737c8c6e07aecde98dd1ba84ba7d1dc48fb7a6fff90ec070a",
+      "compressed_size": 12,
+      "edges": [
+        "inline-literals",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+      "raw_size": 2,
+      "source": "src/asm/Enigma.asm"
+    },
+    "enigma/mode-5-15": {
+      "classification": "hand-constructed",
+      "codec": "enigma",
+      "compressed_sha256": "553433c77c234fcbb34d8dcc67d6ef30a55203f6f173ff4901df926e6564480f",
+      "compressed_size": 32,
+      "edges": [
+        "inline-literals",
+        "count-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "854703471ad7a9d9a7318f6d5f613842013c1ff5c68056deec1c7772e956ddc9",
+      "raw_size": 30,
+      "source": "src/asm/Enigma.asm"
+    },
+    "kosinski/discard-control": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "00782120add2c008c33eebafbea595189e49a0328faa715bad28c2051a5c0258",
+      "compressed_size": 9,
+      "edges": [
+        "discard-control",
+        "literal",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+      "raw_size": 1,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-1": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "7e81c8a995b00016a0dbe585e59c0486856725527c94fe2b71b9a3ab1f64eeb5",
+      "compressed_size": 6,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "raw_size": 1,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-15": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "5b023a818d94fc91b3357d42777231ec09e0027d9ba604ea313ca7c3080613e2",
+      "compressed_size": 22,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+      "raw_size": 15,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-16": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "4f001f922171292658d802588615eb3f8823f07ea676769a1b5b7e9d94bce008",
+      "compressed_size": 23,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+      "raw_size": 16,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-17": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "3d87b0e2bf225f932268131e55c0967731e99d5d7b773316bef3348ff93f0fea",
+      "compressed_size": 24,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+      "raw_size": 17,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-32": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "ded674d39888d511de580fb9a0e4665b271cb3a48e51a39b9296f4dc5d20c65d",
+      "compressed_size": 41,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
+      "raw_size": 32,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-7": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "906e7b77fde9b0daa0131b8e7ba24a1d3995698e677f28dc8ced67c596992467",
+      "compressed_size": 12,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "57355ac3303c148f11aef7cb179456b9232cde33a818dfda2c2fcb9325749a6b",
+      "raw_size": 7,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/literal-8": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "019484c402b50daf6755e761c6ebf19b4adac194db015a6807d98d641b80f85b",
+      "compressed_size": 13,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45",
+      "raw_size": 8,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-0-2": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "cef593984e57f992373557880cec748554b62bfee20b64a26366f0f52c4bad4d",
+      "compressed_size": 7,
+      "edges": [
+        "inline-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+      "raw_size": 3,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-0-5": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "9ee6e42eb3cb04d54cda1299028a6d6a4250d137588c24e357d6c44d00b7ccbb",
+      "compressed_size": 7,
+      "edges": [
+        "inline-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "69dc6c3210e25e62c5938ff4e841e81ce3c7d2cde583553478a77d7fcb389f30",
+      "raw_size": 6,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-1-3": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "f2ab3d308801b45e786854ac5a43dd3ccbbb35ab73848a6b48ea7d474c8f13b7",
+      "compressed_size": 8,
+      "edges": [
+        "short-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-1-9": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "4ca31c6a3e6bab731b4deb9dce7bab53c49bdb102e21e7d655a0b36dd96cd8e4",
+      "compressed_size": 8,
+      "edges": [
+        "short-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "1d65bf29403e4fb1767522a107c827b8884d16640cf0e3b18c4c1dd107e0d49d",
+      "raw_size": 10,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-2-256": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "bfc118ff5c2dfa9410de92387dc3152d4571a503a0532bf24ca5afade0b5b79c",
+      "compressed_size": 9,
+      "edges": [
+        "long-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "77608f24da6140277bd789efec57a179b1c1e57f44045ebd2b39e3c1e7e18d42",
+      "raw_size": 257,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosinski/match-2-3": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "fe06115268cebe1c16dd2434e4b9d251a3d0be5b3afbb411c0860686b27e928b",
+      "compressed_size": 9,
+      "edges": [
+        "long-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosplus/literal-1": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "ab6a00a6fe10c42c40c3145d2572609952cede87ed2e391056a8ee09dbae83a6",
+      "compressed_size": 5,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "raw_size": 1,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-15": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "490380e881d74e1d6857ea4b54ab5ead6e2eb26a98d45753510ebd4ca355e052",
+      "compressed_size": 21,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+      "raw_size": 15,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-16": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "365adef0d8e0283e0bd70b90641c4ade60b3575853f2b47897d70144c879dd44",
+      "compressed_size": 22,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+      "raw_size": 16,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-17": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "eee51b8294a5663d0162d23b6c4e1ea83a98c89918e39660a81dad0688eb3ac4",
+      "compressed_size": 23,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+      "raw_size": 17,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-32": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "b88c0536358c9502b44cd0eddd7b244636bd9499bae1b697585c41ed4eb08a31",
+      "compressed_size": 40,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
+      "raw_size": 32,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-7": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "d2b2933c70db0f70221e0fe82c1f79e728b0a162f5dccb24434600f64c99602f",
+      "compressed_size": 12,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "57355ac3303c148f11aef7cb179456b9232cde33a818dfda2c2fcb9325749a6b",
+      "raw_size": 7,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/literal-8": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "a18e6c8d6cca5215fb5a50fe698cc8bae6e62892d046dfeadf71d6c6195502aa",
+      "compressed_size": 13,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45",
+      "raw_size": 8,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-0-2": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "fb8ed94d3bf41326a444d3fe4f41b9aac49d39a46f7b860de60f72bcf703efae",
+      "compressed_size": 6,
+      "edges": [
+        "inline-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+      "raw_size": 3,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-0-5": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "fb055b2d73afcb1ca038220fbc6585f4e69285af483d74d5fc5af04e07964019",
+      "compressed_size": 6,
+      "edges": [
+        "inline-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "69dc6c3210e25e62c5938ff4e841e81ce3c7d2cde583553478a77d7fcb389f30",
+      "raw_size": 6,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-1-3": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "d93559343324d4bd36490d2745f180fae3321196750bc4ae1a347113a7d60fce",
+      "compressed_size": 7,
+      "edges": [
+        "short-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-1-9": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "246bbbf5d855e9c2ebcc5810df62a3b79a05248d5252ad04c698431a715037d4",
+      "compressed_size": 7,
+      "edges": [
+        "short-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "1d65bf29403e4fb1767522a107c827b8884d16640cf0e3b18c4c1dd107e0d49d",
+      "raw_size": 10,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-2-10": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "6c3f8aca185ea91542e8c49984d0fc7ed93f44829e7a2f18670fb52a8b2ad653",
+      "compressed_size": 8,
+      "edges": [
+        "long-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "dd20088919031875b7bcca29995545dd40ca994be0558183f9b942b51b3b2249",
+      "raw_size": 11,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "kosplus/match-2-264": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "06966629422a40bdffe45590def2dc3fdfdbdce480cb074b63975868f10bd505",
+      "compressed_size": 8,
+      "edges": [
+        "long-match",
+        "overlap",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "1edcd24789e1114d39b4e7923c2863fcb522e771f9d6ad77ddf1bb343f042440",
+      "raw_size": 265,
+      "source": "src/asm/KosinskiPlus_internal.asm"
+    },
+    "lzkn1/long-length-34": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "3615af50bf4284f70343ed22b28fc3a48e8411a30c6d597605688c7146bc0fda",
+      "compressed_size": 294,
+      "edges": [
+        "long-match",
+        "maximum-length",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "406c93930bdf239b23b93f7b19be92b6040a486c1672730caca94fc0fdb3adb7",
+      "raw_size": 290,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "lzkn1/overlap-2": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "d0235cfe841d65ad02f896b61478f3f2ebe4c90538192135ace9b1a9c7079802",
+      "compressed_size": 6,
+      "edges": [
+        "short-match",
+        "overlap",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+      "raw_size": 3,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "lzkn1/overlap-3": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "d8b577f72c98250271dd0af31a7504298ac8036c7b09c1d03ced0d523b0010c5",
+      "compressed_size": 7,
+      "edges": [
+        "long-match",
+        "overlap",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "lzkn1/overlap-5": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "42bb8cafed5090db4d5abe9550c10c8a5b06ad838d10899f0b2ea0387763909f",
+      "compressed_size": 6,
+      "edges": [
+        "short-match",
+        "overlap",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "69dc6c3210e25e62c5938ff4e841e81ce3c7d2cde583553478a77d7fcb389f30",
+      "raw_size": 6,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "lzkn1/packed-71": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "74991c6e7c391e604abef5c153383b6de13d83000c45e3b7516f47aaba81bf56",
+      "compressed_size": 76,
+      "edges": [
+        "packed-literal",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8189e3d54767d51e8d1942659a9e2905f9ec3ae72860c16a66e75b8cc9bd2087",
+      "raw_size": 71,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "lzkn1/packed-8": {
+      "classification": "hand-constructed",
+      "codec": "lzkn1",
+      "compressed_sha256": "a4b429817bb4a8d000a27d9a7ad48951d117651074d67af8d0ac0cb6413156db",
+      "compressed_size": 13,
+      "edges": [
+        "packed-literal",
+        "length-boundary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45",
+      "raw_size": 8,
+      "source": "src/lib/lzkn1.cc: decode_edge grammar"
+    },
+    "nemesis/empty": {
+      "classification": "hand-constructed",
+      "codec": "nemesis",
+      "compressed_sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+      "compressed_size": 2,
+      "edges": [
+        "empty"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_size": 0,
+      "source": "src/lib/nemesis.cc: decode_header/decode grammar"
+    },
+    "nemesis/inline-counts-one-through-eight": {
+      "classification": "hand-constructed",
+      "codec": "nemesis",
+      "compressed_sha256": "956ed5569fc49fe76c86742adeed7903a8bc1b974e6d7b511fa2221396f3c7b4",
+      "compressed_size": 24,
+      "edges": [
+        "inline-rle",
+        "run-length-one",
+        "run-length-eight",
+        "nibble-boundary",
+        "normal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "ef2214c9c6874a62d025c05a922ff300bd759024094423b7c2908eea6425088e",
+      "raw_size": 32,
+      "source": "src/lib/nemesis.cc: decode_header/decode grammar"
+    },
+    "nemesis/inline-normal": {
+      "classification": "hand-constructed",
+      "codec": "nemesis",
+      "compressed_sha256": "01cfe1df9ade0b9688898154b67991c2ebeda5ce1e0d804b5b2cfc55863c3d25",
+      "compressed_size": 17,
+      "edges": [
+        "inline-rle",
+        "run-length-eight",
+        "normal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e0e77a507412b120f6ede61f62295b1a7b2ff19d3dcc8f7253e51663470c888e",
+      "raw_size": 32,
+      "source": "src/lib/nemesis.cc: decode_header/decode grammar"
+    },
+    "nemesis/inline-xor": {
+      "classification": "hand-constructed",
+      "codec": "nemesis",
+      "compressed_sha256": "593ab694cd295098fb67d1ce740341534eb1e61a7320d0e26fd6ec24f43b9d04",
+      "compressed_size": 17,
+      "edges": [
+        "inline-rle",
+        "run-length-eight",
+        "progressive-xor"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "ec725dab020ce4ac4cfa8f18dd935ae9b86e94370164902c143b303afb5b5c58",
+      "raw_size": 32,
+      "source": "src/lib/nemesis.cc: decode_header/decode grammar"
+    },
+    "nemesis/table-code": {
+      "classification": "hand-constructed",
+      "codec": "nemesis",
+      "compressed_sha256": "e7ffbd599713e6e25a03dd7559ce4118cff1ea6912420384ef35dc6d3d788fd5",
+      "compressed_size": 8,
+      "edges": [
+        "table-code",
+        "run-length-eight",
+        "normal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e0e77a507412b120f6ede61f62295b1a7b2ff19d3dcc8f7253e51663470c888e",
+      "raw_size": 32,
+      "source": "src/lib/nemesis.cc: decode_header/decode grammar"
+    },
+    "rocket/overlap-2": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "eb3877ab4d31b24e86746c499d11e312a8b96269c5bbe9e92be26fe58b6dd114",
+      "compressed_size": 8,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+      "raw_size": 3,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/overlap-64": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "85dfcc3dfe86fdb7c2ebe242ea5696a6d41fdc8cb92847428854e20060933c33",
+      "compressed_size": 8,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "836203944f4c0280461ad73d31457c22ba19d1d99e232dc231000085899e00a2",
+      "raw_size": 65,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/seed-2": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "4dc7a9fb3358fe1f69fc6ddfc999c745f12b881cfbe5dffa0b5d7a486dd74494",
+      "compressed_size": 7,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "6c179f21e6f62b629055d8ab40f454ed02e48b68563913473b857d3638e23b28",
+      "raw_size": 2,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/seed-64": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "55a917592775ca2c12d7081a85f564741d04020fec9cde02b8709e8888d0e7b0",
+      "compressed_size": 7,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "ce4153b0147c2a863ed4298ee0676bc879fc77a12abe1f49b2b055df1069523e",
+      "raw_size": 64,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/seed-to-output": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "52b705741e278d6a25ee477e7b10cfa9c3b5b79acf66a41db8090f5deb9682d5",
+      "compressed_size": 7,
+      "edges": [
+        "seeded-fill",
+        "seed-to-output",
+        "maximum-length"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "ce4153b0147c2a863ed4298ee0676bc879fc77a12abe1f49b2b055df1069523e",
+      "raw_size": 64,
+      "source": "src/asm/Rocket.asm"
+    },
+    "saxman/overlap-18": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "aa72d9d6a0f556e9f8178ccbea012ca2278524f35675711c6ddb44a974c072f8",
+      "compressed_size": 6,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "size-bound",
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "234b7f9389f9b521f407805760775940d79a48188338d02a1fe654e826a83f69",
+      "raw_size": 19,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/overlap-18-headerless": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "15d71cb0835d517d87b379667a4fb87a7892128624395bbae1ae932aebc3ee74",
+      "compressed_size": 4,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "size-bound",
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "234b7f9389f9b521f407805760775940d79a48188338d02a1fe654e826a83f69",
+      "raw_size": 19,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/overlap-3": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "3fca6ad9d00f7d92020a1c1b6d571569e7256d6bc263ea8073ac3f14dc19d45d",
+      "compressed_size": 6,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "size-bound",
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/overlap-3-headerless": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "3760e44b34bd830ca1207e1a4612cc2ccd6c638145f9974664fc7584fc23d484",
+      "compressed_size": 4,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary",
+        "size-bound",
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+      "raw_size": 4,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/seed-18": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "3af84ecc88f7db688b64f9f809ee030f0f14bf4008abcfa225f9600766c6908e",
+      "compressed_size": 5,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "60daa3a5f7dbfa200f8c82840ecf5b42640b70f3b7218a4c6bbd67db542e75a4",
+      "raw_size": 18,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/seed-18-headerless": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "6eee8d86db08ce9e4427248ed6b0a8fac1ad1ed0a2a86ba30da736eddeceb972",
+      "compressed_size": 3,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "60daa3a5f7dbfa200f8c82840ecf5b42640b70f3b7218a4c6bbd67db542e75a4",
+      "raw_size": 18,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/seed-3": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "3a4a3a407ab7c3b19b18a29e3d343cc7d0b344e5b6b67c7ca008cf849d097098",
+      "compressed_size": 5,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+      "raw_size": 3,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/seed-3-headerless": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "b8631742a092223a0c4db489ca883673d3df88ac77ad6f2e2a68702dafe20aed",
+      "compressed_size": 3,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+      "raw_size": 3,
+      "source": "src/asm/Saxman.asm"
+    },
+    "snkrle/continuation": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "63a489650998fdb34e623edaa840c442a1218f44d947df8a620ef3be087c251a",
+      "compressed_size": 6,
+      "edges": [
+        "run",
+        "count-255-continuation",
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "62c6276625adf63da1c717806031ac636f84d9f5cb936c6dcf2d11d1d88ee312",
+      "raw_size": 258,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    },
+    "snkrle/empty": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+      "compressed_size": 2,
+      "edges": [
+        "empty"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_size": 0,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    },
+    "snkrle/literals": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "97f905ba0270ecfffc47359f0d8483be3b77a51932695a35886a02443982944c",
+      "compressed_size": 5,
+      "edges": [
+        "literal"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78",
+      "raw_size": 3,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    },
+    "snkrle/run-2": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "a4a59c1c43b420583befe8ffdb28694bd7ce64e22975715fc068af469f85be2e",
+      "compressed_size": 5,
+      "edges": [
+        "run",
+        "count-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "58bb119c35513a451d24dc20ef0e9031ec85b35bfc919d263e7e5d9868909cb5",
+      "raw_size": 2,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    },
+    "snkrle/run-257": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "99ef1bf9bd20f138ae7d01020f7b314a67978a742669a7935479d718950c2c43",
+      "compressed_size": 5,
+      "edges": [
+        "run",
+        "count-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "77608f24da6140277bd789efec57a179b1c1e57f44045ebd2b39e3c1e7e18d42",
+      "raw_size": 257,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    },
+    "snkrle/run-3": {
+      "classification": "hand-constructed",
+      "codec": "snkrle",
+      "compressed_sha256": "d3f0b4e09de829c0456bc02b2894f6b6719a8f97ba970d7a6febc9cc0bf04f54",
+      "compressed_size": 5,
+      "edges": [
+        "run",
+        "count-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+      "raw_size": 3,
+      "source": "src/asm/SNKRLE.asm; C++ odd-byte counts from src/lib/snkrle.cc"
+    }
+  },
+  "generator": "tests/fixtures/known_answers.cc",
+  "independence": "No encoder is called. Assembly/decoder grammar was read, not executed as an independent oracle.",
+  "padding": "Bit sequences include zero read-ahead guards; descriptor sequences insert early-refill placeholders explicitly.",
+  "required_decoder_forms": {
+    "comper": [
+      "literal",
+      "dictionary",
+      "terminator"
+    ],
+    "comperx": [
+      "literal",
+      "dictionary",
+      "rle",
+      "terminator"
+    ],
+    "enigma": [
+      "incrementing",
+      "common",
+      "inline-repeat",
+      "inline-increment",
+      "inline-decrement",
+      "inline-literals",
+      "all-flags",
+      "terminator"
+    ],
+    "kosinski": [
+      "literal",
+      "inline-match",
+      "short-match",
+      "long-match",
+      "discard-control",
+      "terminator"
+    ],
+    "kosplus": [
+      "literal",
+      "inline-match",
+      "short-match",
+      "long-match",
+      "terminator"
+    ],
+    "lzkn1": [
+      "packed-literal",
+      "short-match",
+      "long-match",
+      "maximum-length",
+      "terminator"
+    ],
+    "nemesis": [
+      "table-code",
+      "inline-rle",
+      "normal",
+      "progressive-xor",
+      "run-length-one",
+      "run-length-eight",
+      "empty"
+    ],
+    "rocket": [
+      "dictionary",
+      "seeded-fill",
+      "seed-to-output"
+    ],
+    "saxman": [
+      "literal",
+      "dictionary",
+      "seeded-fill",
+      "size-bound"
+    ],
+    "snkrle": [
+      "literal",
+      "run",
+      "count-255-continuation",
+      "empty"
+    ]
+  },
+  "schema_version": 1
+}

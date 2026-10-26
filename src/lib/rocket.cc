@@ -177,7 +177,8 @@ struct rocket_adaptor {
                 edge_type::dictionary);
     }
 
-    constexpr static size_t output_edge(std::iostream& dest, adj_list_node const& edge) {
+    constexpr static size_t output_edge(
+            std::iostream& dest, adj_list_node const& edge, std::streamoff origin = 0) {
         using diff_t = std::make_signed_t<size_t>;
         switch (edge.get_type()) {
             using enum edge_type;
@@ -187,7 +188,7 @@ struct rocket_adaptor {
         case dictionary: {
             auto       distance = static_cast<diff_t>(edge.get_distance());
             auto       length   = static_cast<diff_t>(edge.get_length());
-            auto const base     = static_cast<diff_t>(dest.tellp());
+            auto const base     = static_cast<diff_t>(dest.tellp()) - origin;
             auto const delta    = distance - base;
             if (delta > 0) {
                 diff_t const count = std::min(length, delta);
@@ -258,8 +259,9 @@ struct rocket_internal {
             }
         }
 
+        auto const origin = static_cast<std::streamoff>(dest.tellp());
         for (auto const& edge : list) {
-            adaptor_t::output_edge(dest, edge);
+            adaptor_t::output_edge(dest, edge, origin);
         }
 
         if (output_size != uncompressed_size) {
@@ -319,3 +321,4 @@ bool rocket::encode(std::ostream& dest, std::span<char const> data) {
     }
     return true;
 }
+

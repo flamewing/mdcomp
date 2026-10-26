@@ -258,7 +258,9 @@ struct lzkn1_adaptor {
         case dictionary_long: {
             auto const distance = static_cast<diff_t>(edge.get_distance());
             auto const length   = static_cast<diff_t>(edge.get_length());
-            lzss::copy<lzkn1_adaptor>(dest, distance, length);
+            // Five length bits permit 34 bytes when the distance high bits
+            // distinguish the parameter from the standalone 0x1f terminator.
+            lzss::copy<lzkn1_adaptor, 34>(dest, distance, length);
             break;
         }
         case terminator: {

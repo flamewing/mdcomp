@@ -71,7 +71,7 @@ namespace codec_test {
 
     result run(
             operation function, std::string const& input, options const& settings = {},
-            size_t offset = 0);
+            size_t offset = 0, std::string_view output_prefix = {});
     std::string padded(api const& codec, std::string input);
     std::string corpus(size_t size, unsigned pattern, uint32_t seed = 0x12345678);
     void        save_failure(

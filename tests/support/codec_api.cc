@@ -104,13 +104,18 @@ namespace codec_test {
 
     result run(
             operation function, std::string const& input, options const& settings,
-            size_t offset) {
+            size_t offset, std::string_view output_prefix) {
         if (!function || offset > input.size()) {
             throw std::invalid_argument("Invalid codec test operation");
         }
         std::istringstream source(input, std::ios::in | std::ios::binary);
         source.seekg(static_cast<std::streamoff>(offset));
-        std::stringstream  output(std::ios::in | std::ios::out | std::ios::binary);
+        std::stringstream output(std::ios::in | std::ios::out | std::ios::binary);
+        if (!output_prefix.empty()) {
+            output.write(
+                    output_prefix.data(),
+                    static_cast<std::streamsize>(output_prefix.size()));
+        }
         std::ostringstream diagnostics;
 
         struct redirect {
@@ -136,7 +141,8 @@ namespace codec_test {
         value.output_state = output.rdstate();
         if (!source.fail()) {
             auto const position = source.tellg();
-            if (position != std::streampos{-1}) {
+            if (position != std::streampos{-1}
+                && position >= std::streampos{static_cast<std::streamoff>(offset)}) {
                 value.consumed = static_cast<size_t>(position) - offset;
             }
         }
@@ -171,6 +177,9 @@ namespace codec_test {
                 break;
             case 5:
                 bytes[i] = ' ';
+                break;
+            case 6:
+                bytes[i] = i < 4096 ? static_cast<char>(0xa5) : ' ';
                 break;
             default:
                 seed ^= seed << 13;
