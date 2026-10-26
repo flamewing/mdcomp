@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation started. Catch2 v3, CTest/CI integration, shared low-level runtime/constexpr regressions, initial codec cases, and pinned master-binary comparisons are implemented. Full format-edge, moduled, and assembly coverage remain pending; the refactor gate remains blocked.
+Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 86 hand-constructed fixtures, 20 qualified external encodings, and pinned binary/source comparisons are implemented. Complete format-edge inventories, encoder-selection coverage, all option combinations, and assembly execution remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -37,11 +37,17 @@ complete. Documentation deliverables and their validation are tracked in
 
 ## Current Baseline
 
-The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and nine codec cases; full codec contracts and format-edge coverage remain pending. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), and [pinned master-binary comparisons](../tests/references/README.md).
+The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and 67 codec/fixture cases. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), [pinned master-binary comparisons](../tests/references/README.md), and [external codec qualification](../tests/references/external.md).
 
 The first implementation checkpoint contains 17 unit cases, including exhaustive 16-bit byte swapping and a deterministic 64-bit corpus. These pass with GCC 16.2, Clang 23.1, and MSVC 19.44 in C++20 mode; GCC also passes in C++23 mode and with 128-bit support disabled after loading its platform headers. Full GCC and MSVC library/tool builds pass, and a separate `BUILD_TESTING=OFF` configuration builds without Catch2. These checks establish the endian utility baseline, not codec compatibility or the assembly oracle gate.
 
 A second checkpoint adds seven LZSS codec round-trip cases, hand-authored ComperX vectors, and Enigma boundary/reference checks. Default CLI comparisons against both published Windows binaries and frozen current master cover 160 cases per reference and compare both encodings and all self/cross-decodes. They exposed pre-test ComperX/Rocket failures and Enigma size regressions; the repaired branch matches both references byte-for-byte on that corpus. These references share mdcomp lineage and do not replace independent format/assembly oracles. The MSVC CI job imports the hash-pinned published snapshot and runs the comparison; other builds can opt in through `MDCOMP_REFERENCE_BIN_DIR`.
+
+A third checkpoint adds a shared stream adapter, deterministic basic/padding contracts for all ten codecs, 86 hand-constructed decoder vectors, and module-boundary/maximum-header checks for all eight moduled APIs. Fixtures exercise embedded sources and existing output prefixes. These exposed empty Nemesis encoding, LZKN1's legal 34-byte match, Rocket's seeded-history transition/output origin, and missing Rocket module history; the resulting fixes are covered. Saxman sized/headerless paths and both Nemesis encoder modes have explicit cases. Failure artifacts record the seed, input, encoding, decoded output, and diagnostics; automatic shrinking is still pending.
+
+External qualification now includes the primary original KENS 1.4 RC3 distribution, the SourceForge 1.4.22/1.5 alpha archive, KENSSharp, and kirjavascript's RLE. The alpha's rewritten codecs and KENSSharp share flamewing/mdcomp ancestry; original KENS remains a separate reference. Twenty encodings that passed all self/cross-checks are retained as reference-generated fixtures. Reference failures are recorded rather than blessed, including original KENS encoder/decoder discrepancies and KENSSharp's reversed Saxman size calculation. The RLE header adaptation is explicit; its assembly decoder has not yet been executed. This checkpoint does not complete the assembly or 100% format-edge gate.
+
+The expanded checkpoint passes all 109 offline CTest cases with GCC 16.2, Clang 23.1, and MSVC 19.44. GCC and MSVC also pass the optional 160-case frozen-master audit, for 110 CTest entries each. External-reference disagreements remain visible in the separate qualification report; they are not converted into passing oracle checks.
 
 The current implemented C++ codec set to baseline is:
 
@@ -126,12 +132,11 @@ preserve behaviour.
 
 Checklist:
 
-- [ ] Define a common test-only adapter for basic encode and decode operations.
-- [ ] Add optional moduled encode and decode operations.
-- [ ] Normalize successful results and diagnostics for assertions.
-- [ ] Allow a fixture to express codec options, padding, expected consumed
-      input, and expected produced output.
-- [ ] Run the same contract suite against every applicable codec.
+- [x] Define a common test-only adapter for basic encode and decode operations.
+- [x] Add optional moduled encode and decode operations.
+- [x] Normalize successful results and diagnostics for assertions.
+- [x] Allow a fixture to express codec options, padding, expected consumed input, and expected produced output.
+- [x] Run the same contract suite against every applicable codec.
 - [ ] During the buffer refactor, run equivalent stream and buffer operations
       over the same fixtures.
 - [ ] Add installed-package smoke tests separately from internal library tests.
@@ -164,10 +169,10 @@ Each codec should include:
 
 Checklist:
 
-- [ ] Add basic round-trip cases for every working C++ codec.
-- [ ] Add moduled round-trip cases for every codec exposing moduled APIs.
+- [x] Add basic round-trip cases for every working C++ codec.
+- [x] Add moduled round-trip cases for every codec exposing moduled APIs.
 - [ ] Test all public encoder options and format variants.
-- [ ] Record deterministic random seeds and print the seed on failure.
+- [x] Record deterministic random seeds and print the seed on failure.
 - [ ] Save a minimal reproduction artifact below the build directory when a
       generated case fails.
 - [ ] Add size and runtime limits so malformed behaviour cannot hang CI.
@@ -191,17 +196,14 @@ presented as independent confirmation of the shared algorithm.
 
 Checklist:
 
-- [ ] Add at least one independent known-answer vector for every decoder.
-- [ ] Add hand-constructed vectors for token forms not selected naturally by
-      the current encoder.
-- [ ] Record provenance, license, format variant, and any transformation for
-      every fixture.
-- [ ] Verify exact decompressed length and bytes.
+- [x] Add at least one independent known-answer vector for every decoder.
+- [x] Add hand-constructed vectors for token forms not selected naturally by the current encoder.
+- [x] Record provenance, license, format variant, and any transformation for every fixture.
+- [x] Verify exact decompressed length and bytes.
 - [ ] Verify compressed input consumption where the API exposes it.
 - [ ] Add truncated and malformed variants once structured errors are
       available.
-- [ ] Do not require byte-for-byte encoded output except for a separately
-      documented compatibility or accurate-encoding mode.
+- [x] Do not require byte-for-byte encoded output except for a separately documented compatibility or accurate-encoding mode.
 
 ### Reference encoders and current-branch audit
 
@@ -784,16 +786,16 @@ Checklist:
 ### 0. Framework skeleton
 
 - [x] Add CTest and Catch2.
-- [ ] Create the common C++ codec test adapter.
+- [x] Create the common C++ codec test adapter.
 - [x] Add one round-trip and one known-answer smoke test.
-- [ ] Establish fixture provenance conventions.
-- [ ] Establish reference-tool pinning and shared-lineage classifications.
+- [x] Establish fixture provenance conventions.
+- [x] Establish reference-tool pinning and shared-lineage classifications.
 
 ### 1. Existing C++ regression baseline
 
-- [ ] Add round-trip tests for every working basic codec.
-- [ ] Add round-trip tests for every working moduled codec.
-- [ ] Add at least one independent known-answer vector per decoder.
+- [x] Add round-trip tests for every working basic codec.
+- [x] Add round-trip tests for every working moduled codec.
+- [x] Add at least one independent known-answer vector per decoder.
 - [ ] Generate the synthetic reference-encoder corpus and audit every
       current-branch encoder and option.
 - [ ] Complete the format-edge manifests.
