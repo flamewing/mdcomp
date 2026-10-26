@@ -1,9 +1,11 @@
 #pragma once
 
+#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -322,6 +324,7 @@ namespace std23 {
         template <class F, class T = std::remove_reference_t<F>>
         explicit(false) constexpr function_ref(F&& callable) noexcept
         requires(!std::is_same_v<std::remove_cvref_t<F>, function_ref>
+                 && !std::is_pointer_v<T> && !std::is_function_v<T>
                  && !std::is_member_pointer_v<T> && is_invocable_using<cvref<T>>)
                 : fun_pointer(
                           [](storage func,
@@ -359,7 +362,7 @@ namespace std23 {
 
         template <auto f, class U, class T = std::remove_reference_t<U>>
         constexpr function_ref(nontype_t<f>, U&& obj) noexcept
-        requires(!std::is_rvalue_reference_v<U &&>
+        requires(!std::is_rvalue_reference_v<U&&>
                  && is_invocable_using<decltype(f), cvref<T>>)
                 : fun_pointer(
                           [](storage self,
@@ -380,14 +383,14 @@ namespace std23 {
         // NOLINTEND(google-explicit-constructor,hicpp-explicit-conversions,cppcoreguidelines-missing-std-forward)
 
         template <auto f, class T>
-        constexpr function_ref(nontype_t<f>, cv<T>* obj) noexcept
-        requires is_invocable_using<decltype(f), decltype(obj)>
+        constexpr function_ref(nontype_t<f>, T* obj) noexcept
+        requires is_invocable_using<decltype(f), cv<T>*>
                 : fun_pointer(
                           [](storage self,
                              param_t<Args>... args) noexcept(no_except) -> R {
+                              cv<T>* cobj = get<T>(self);
                               return std23::invoke_r<R>(
-                                      f, get<cv<T>>(self),
-                                      static_cast<decltype(args)>(args)...);
+                                      f, cobj, static_cast<decltype(args)>(args)...);
                           }),
                   object(obj) {
             using func_t = decltype(f);
@@ -403,7 +406,7 @@ namespace std23 {
         }
 
         constexpr R operator()(Args... args) const noexcept(no_except) {
-            return fun_pointer(object, args...);
+            return fun_pointer(object, std::forward<Args>(args)...);
         }
     };
 

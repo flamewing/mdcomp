@@ -18,6 +18,8 @@
 #ifndef LIB_UNREACHABLE_HH
 #define LIB_UNREACHABLE_HH
 
+#include <utility>
+
 namespace utils {
 #if defined(_MSC_VER)
 #    define INLINE [[msvc::forceinline]] inline
@@ -27,10 +29,11 @@ namespace utils {
 #    define INLINE inline
 #endif
 #if defined(__cpp_lib_unreachable) && __cpp_lib_unreachable >= 202202L
-#    include <utility>
-    using std::unreachable;
+    [[noreturn]] INLINE void unreachable() noexcept {
+        std::unreachable();
+    }
 #else
-    [[noreturn]] INLINE void unreachable() {
+    [[noreturn]] INLINE void unreachable() noexcept {
         // Uses compiler specific extensions if possible.
         // Even if no extension is used, undefined behavior is still raised by
         // an empty function body and the noreturn attribute.
@@ -42,7 +45,7 @@ namespace utils {
     }
 #endif
 
-    INLINE void assume(bool condition) {
+    INLINE constexpr void assume(bool condition) noexcept {
         // Uses compiler specific extensions if possible.
         // Even if no extension is used, undefined behavior is still raised by
         // an empty function body and the noreturn attribute.

@@ -22,6 +22,8 @@
 #include <cstddef>
 #include <iterator>
 #include <span>
+#include <stdexcept>
+#include <utility>
 
 // Workaround for the single dumbest most useless warning in the world. This is literally
 // the whole point of this constructor: to bundle a C-style array plus size into a
@@ -32,10 +34,13 @@
 
 template <std::contiguous_iterator T>
 constexpr auto unsafe_forge_span(T iter, ptrdiff_t size) {
+    if (size < 0) {
+        throw std::invalid_argument("Span size must not be negative");
+    }
 #ifdef __clang__
 #    pragma clang unsafe_buffer_usage begin
 #endif
-    return std::span(iter, std::next(iter, size));
+    return std::span(iter, static_cast<size_t>(size));
 #ifdef __clang__
 #    pragma clang unsafe_buffer_usage end
 #endif
@@ -43,6 +48,9 @@ constexpr auto unsafe_forge_span(T iter, ptrdiff_t size) {
 
 template <std::contiguous_iterator T>
 constexpr auto unsafe_forge_span(T iter, std::unsigned_integral auto size) {
+    if (!std::in_range<ptrdiff_t>(size)) {
+        throw std::length_error("Span size exceeds ptrdiff_t");
+    }
     return unsafe_forge_span(iter, static_cast<ptrdiff_t>(size));
 }
 
