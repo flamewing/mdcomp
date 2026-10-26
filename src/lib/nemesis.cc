@@ -165,8 +165,7 @@ public:
 
     // Sorting operator.
     [[nodiscard]] constexpr std::strong_ordering operator<=>(
-            nibble_run const& other) const noexcept
-            = default;
+            nibble_run const& other) const noexcept = default;
 
     // Getters/setters for all properties.
     [[nodiscard]] constexpr std::byte get_nibble() const noexcept {
@@ -1097,6 +1096,13 @@ bool nemesis::decode(std::istream& source, std::ostream& dest) {
 }
 
 bool nemesis::encode(std::istream& source, std::ostream& dest) {
+    if (!source) {
+        return false;
+    }
+    if (source.rdbuf()->sgetc() == std::istream::traits_type::eof()) {
+        big_endian::write2(dest, uint16_t{0});
+        return bool(dest);
+    }
     // We will use these as output buffers, as well as an input/output
     // buffers for the padded Nemesis input.
     std::stringstream str_source(std::ios::in | std::ios::out | std::ios::binary);

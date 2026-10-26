@@ -193,7 +193,8 @@ struct rocket_adaptor {
                 diff_t const count = std::min(length, delta);
                 lzss::fill<rocket_adaptor>(dest, 0x20, count);
                 length -= count;
-                distance -= count;
+                // Advancing both source and destination preserves the distance
+                // when the match crosses from seeded history into real output.
             }
             if (length > 0) {
                 lzss::copy<rocket_adaptor>(dest, distance, length);
