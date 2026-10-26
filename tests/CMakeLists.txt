@@ -38,6 +38,7 @@ add_executable(mdcomp-codec-smoke-tests
     codec/lzss_smoke.cc
     codec/contracts.cc
     codec/known_answers.cc
+    codec/moduled.cc
     fixtures/known_answers.cc
     support/codec_api.cc)
 target_include_directories(mdcomp-codec-smoke-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

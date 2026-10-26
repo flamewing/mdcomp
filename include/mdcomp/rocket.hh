@@ -33,6 +33,7 @@ class rocket : public basic_rocket, public moduled_rocket {
     friend basic_rocket;
     friend moduled_rocket;
     static bool encode(std::ostream& dest, std::span<char const> data);
+    static bool encode_module(std::ostream& dest, std::span<char const> data);
 
 public:
     static bool encode(std::istream& source, std::ostream& dest);

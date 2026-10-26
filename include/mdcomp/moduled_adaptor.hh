@@ -120,8 +120,15 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
     big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
     std::span         input_span(data);
+    auto              encode_module = [&](std::span<char const> module) {
+        if constexpr (requires { Format::encode_module(buffer, module); }) {
+            return Format::encode_module(buffer, module);
+        } else {
+            return Format::encode(buffer, module);
+        }
+    };
     while (input_span.size() > ModuleSize) {
-        if (!Format::encode(buffer, input_span.subspan(0, ModuleSize)) || !buffer) {
+        if (!encode_module(input_span.subspan(0, ModuleSize)) || !buffer) {
             return false;
         }
         input_span = input_span.subspan(ModuleSize);
@@ -129,7 +136,7 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         utils::pad_to_multiple(buffer, module_padding);
     }
 
-    if (!Format::encode(buffer, input_span) || !buffer) {
+    if (!encode_module(input_span) || !buffer) {
         return false;
     }
 

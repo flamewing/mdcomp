@@ -322,3 +322,8 @@ bool rocket::encode(std::ostream& dest, std::span<char const> data) {
     return true;
 }
 
+bool rocket::encode_module(std::ostream& dest, std::span<char const> data) {
+    std::vector<char> input(rocket_adaptor::first_match_position, ' ');
+    input.insert(input.end(), data.begin(), data.end());
+    return encode(dest, std::span<char const>(input));
+}
