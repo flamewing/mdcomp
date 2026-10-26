@@ -1,0 +1,796 @@
+{
+  "candidate_commit": "36af642f274b930e8505c431b8a656cd733f8867",
+  "comparisons": {
+    "master-vs-current": {
+      "candidate_commit": "36af642f274b930e8505c431b8a656cd733f8867",
+      "codecs": {
+        "comper": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "comperx": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "enigma": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosinski": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosplus": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "lzkn1": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "nemesis": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "rocket": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "saxman": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "snkrle": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        }
+      },
+      "executables": {
+        "comper": {
+          "candidate_sha256": "e91b1251a8225ccb70e53acdbcc174184d2617f41773c34ff1d2a44a3a958af9",
+          "reference_sha256": "cb724eefb34ee35cac1b1fbc9d3f65fc14d0e6bdf4eeebb18805a91fe28bc639"
+        },
+        "comperx": {
+          "candidate_sha256": "28422b6d7ddfd42850b69415f1b532304482a28e5bfdb4c3f57b36cf1037f5b6",
+          "reference_sha256": "670a0131ecccff9760a36b8d250854612fddd772f1c5253da7a8be74e6f721ce"
+        },
+        "enigma": {
+          "candidate_sha256": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+          "reference_sha256": "fc7868f3f6d131228198392b7a9fb6d62c12f3af78c0e5d218cf162fceb44715"
+        },
+        "kosinski": {
+          "candidate_sha256": "3b1ae0322c8b54898f4db5cb7eaf1ab66b3125f79cdb3d3a10afd0eb9bc99c02",
+          "reference_sha256": "d5963ba6f881dc7e6df11222435304fd9d91781d24ce3bbf4db9684ac26cd2b1"
+        },
+        "kosplus": {
+          "candidate_sha256": "8238d52482690aa7ec48ac98ad83ee8d42739cdcb40022ba9967d967bb71a85e",
+          "reference_sha256": "7631df9f7a1074cb07a140341f9174af3520e1b6a4c0dba3435ae3b4918a7de2"
+        },
+        "lzkn1": {
+          "candidate_sha256": "99a352cf897d749dc24e980ce4770359d204353bf8bc8ea1709c6855dfe60f25",
+          "reference_sha256": "72ea88855e87a54923a9dc5209ceca06a8adaa92c3dcb3d3896ca183b10458f1"
+        },
+        "nemesis": {
+          "candidate_sha256": "6a140ba29a3043396e32e229b83901e95b02c69c15483a69be2431fc32efe43c",
+          "reference_sha256": "1338b1146ecf1be374d9702868002fdc131fbc6248cefe84268d5f175382f4d9"
+        },
+        "rocket": {
+          "candidate_sha256": "edcc3c3f473db1adf6d77a4db854140c418125305ef5112420059ed16f330b73",
+          "reference_sha256": "28f9bf2c814876cd1f746563e0dc379ff05dc01e27b227944904297abf41c876"
+        },
+        "saxman": {
+          "candidate_sha256": "216b8c42a851aa05c3bcc93c44b403b3b6790261388c8ef57fa853caf3a8597d",
+          "reference_sha256": "654a4078e448eaba433678ba1291fce8789a85dcf43bf0551808aff1d74c4cfd"
+        },
+        "snkrle": {
+          "candidate_sha256": "fdce9ce0c066972bac7edb08bba13c6962913e5652aaca8625b4ce70d514a573",
+          "reference_sha256": "c9dc7b1bba7ff6eb8b36201cd46388987ed23e9aea967188ecdeef819465fc1d"
+        }
+      },
+      "raw_report_sha256": "f3288bf2c9ccbc32345ff4735d33b1d11cf8265031fe5f6a0465f7fb749b7b43",
+      "reference_commit": "72c6df405a75d322c5b3722da46c3abb864d3793",
+      "summary": {
+        "candidate_failures": 0,
+        "cases": 160,
+        "discrepancies": 0,
+        "encoded_differences": 0,
+        "reference_failures": 0,
+        "size_regressions": 0
+      }
+    },
+    "master-vs-pretests": {
+      "candidate_commit": "a8b9a26c1494446902192fda9527f6543d04d059",
+      "codecs": {
+        "comper": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "comperx": {
+          "candidate_failure_cases": [
+            "zeros-32",
+            "repeat-32",
+            "zeros-64",
+            "repeat-64",
+            "zeros-256",
+            "repeat-256",
+            "zeros-512",
+            "repeat-512",
+            "ascending-512"
+          ],
+          "candidate_failures": 9,
+          "cases": 16,
+          "cross_discrepancies": 9,
+          "encoded_differences": 9,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "enigma": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 7,
+          "reference_failures": 0,
+          "size_regressions": 4
+        },
+        "kosinski": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosplus": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "lzkn1": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "nemesis": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "rocket": {
+          "candidate_failure_cases": [
+            "zeros-32",
+            "repeat-32",
+            "ascending-32",
+            "random-seed-12345678-32",
+            "zeros-64",
+            "repeat-64",
+            "ascending-64",
+            "random-seed-12345678-64",
+            "zeros-256",
+            "repeat-256",
+            "ascending-256",
+            "random-seed-12345678-256",
+            "zeros-512",
+            "repeat-512",
+            "ascending-512",
+            "random-seed-12345678-512"
+          ],
+          "candidate_failures": 16,
+          "cases": 16,
+          "cross_discrepancies": 16,
+          "encoded_differences": 16,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "saxman": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "snkrle": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        }
+      },
+      "executables": {
+        "comper": {
+          "candidate_sha256": "0037da41810cfd57cd6c5a64290d5e32070ee88520d596a0190ad5d4abf37c69",
+          "reference_sha256": "cb724eefb34ee35cac1b1fbc9d3f65fc14d0e6bdf4eeebb18805a91fe28bc639"
+        },
+        "comperx": {
+          "candidate_sha256": "6b68e489a712a45bb18862ef71afd6c47c63fae111bb45777312c60e7ee676e6",
+          "reference_sha256": "670a0131ecccff9760a36b8d250854612fddd772f1c5253da7a8be74e6f721ce"
+        },
+        "enigma": {
+          "candidate_sha256": "cbea0ec7eb817c6843dd3185c29927d9751296928a4005c920700e45a961e92e",
+          "reference_sha256": "fc7868f3f6d131228198392b7a9fb6d62c12f3af78c0e5d218cf162fceb44715"
+        },
+        "kosinski": {
+          "candidate_sha256": "4bb9241b339a734a7378fef456b1ad681cf80f1bce6799d46d44d17c4faa50c9",
+          "reference_sha256": "d5963ba6f881dc7e6df11222435304fd9d91781d24ce3bbf4db9684ac26cd2b1"
+        },
+        "kosplus": {
+          "candidate_sha256": "85b7873ee188ba80595eabf9b9c45c62af7e8bf6bc7501287f9bf390ff3c25cc",
+          "reference_sha256": "7631df9f7a1074cb07a140341f9174af3520e1b6a4c0dba3435ae3b4918a7de2"
+        },
+        "lzkn1": {
+          "candidate_sha256": "8b2040215500693be0e0a0de4c1e5d89af379a2de67f2ccd1f59ef0669972bdd",
+          "reference_sha256": "72ea88855e87a54923a9dc5209ceca06a8adaa92c3dcb3d3896ca183b10458f1"
+        },
+        "nemesis": {
+          "candidate_sha256": "a94cc6d427ffaa0edf6bbf69e615ba13861ed410ca6f98bc27aa069cd36760c0",
+          "reference_sha256": "1338b1146ecf1be374d9702868002fdc131fbc6248cefe84268d5f175382f4d9"
+        },
+        "rocket": {
+          "candidate_sha256": "e09f6330f7ff314be8bb4b65e29d4b251d4567728b67d0ad39376113d6cb938b",
+          "reference_sha256": "28f9bf2c814876cd1f746563e0dc379ff05dc01e27b227944904297abf41c876"
+        },
+        "saxman": {
+          "candidate_sha256": "21c6bf0e7a87af3ffa6a6941400ea0031da2e4127cbe008cc26f2b1269afa070",
+          "reference_sha256": "654a4078e448eaba433678ba1291fce8789a85dcf43bf0551808aff1d74c4cfd"
+        },
+        "snkrle": {
+          "candidate_sha256": "e0ae55c100f31e3787170e910fbc3d9f9ff3c044487ea6dd282bd908b506c46d",
+          "reference_sha256": "c9dc7b1bba7ff6eb8b36201cd46388987ed23e9aea967188ecdeef819465fc1d"
+        }
+      },
+      "raw_report_sha256": "b1c7c882348eb81a5554e5dc9d6c63ccc59dbf551f82b69e334182813ed3a7c5",
+      "reference_commit": "72c6df405a75d322c5b3722da46c3abb864d3793",
+      "summary": {
+        "candidate_failures": 25,
+        "cases": 160,
+        "discrepancies": 25,
+        "encoded_differences": 32,
+        "reference_failures": 0,
+        "size_regressions": 4
+      }
+    },
+    "published-vs-current": {
+      "candidate_commit": "36af642f274b930e8505c431b8a656cd733f8867",
+      "codecs": {
+        "comper": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "comperx": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "enigma": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosinski": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosplus": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "lzkn1": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "nemesis": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "rocket": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "saxman": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "snkrle": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        }
+      },
+      "executables": {
+        "comper": {
+          "candidate_sha256": "e91b1251a8225ccb70e53acdbcc174184d2617f41773c34ff1d2a44a3a958af9",
+          "reference_sha256": "ac936b7414a93c8ef7f2237b58e19d9e700872299e758faf0a26a805a2cf956f"
+        },
+        "comperx": {
+          "candidate_sha256": "28422b6d7ddfd42850b69415f1b532304482a28e5bfdb4c3f57b36cf1037f5b6",
+          "reference_sha256": "e39445da9161a4dff4840c532023eb06b12c869224b5dcaebbabba57afb2b51a"
+        },
+        "enigma": {
+          "candidate_sha256": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+          "reference_sha256": "1e9905f5b63e73fc5da4402797c2cb97b19bd520a360aa8dcca7026825ccf5bc"
+        },
+        "kosinski": {
+          "candidate_sha256": "3b1ae0322c8b54898f4db5cb7eaf1ab66b3125f79cdb3d3a10afd0eb9bc99c02",
+          "reference_sha256": "cc71134be609d3b624d1660b005a55f31e94e1b58ffe400a64a7a755ab17b080"
+        },
+        "kosplus": {
+          "candidate_sha256": "8238d52482690aa7ec48ac98ad83ee8d42739cdcb40022ba9967d967bb71a85e",
+          "reference_sha256": "3de772b2ab713b54c49aad6ff138b7e41b9a7ac654c729a0c75e5f718282481d"
+        },
+        "lzkn1": {
+          "candidate_sha256": "99a352cf897d749dc24e980ce4770359d204353bf8bc8ea1709c6855dfe60f25",
+          "reference_sha256": "cf41c93c792684f7debc4d215cdfdadebb681766310ebc79520facd527ba54a2"
+        },
+        "nemesis": {
+          "candidate_sha256": "6a140ba29a3043396e32e229b83901e95b02c69c15483a69be2431fc32efe43c",
+          "reference_sha256": "6b8f55ac5c65aa3687734d3fea51345d62942d7782bf733aa994b9e9d947c5f7"
+        },
+        "rocket": {
+          "candidate_sha256": "edcc3c3f473db1adf6d77a4db854140c418125305ef5112420059ed16f330b73",
+          "reference_sha256": "b1031494c98929f637fd0ba0ec7dbf8b7920d96e86be9828d228981698b0afd5"
+        },
+        "saxman": {
+          "candidate_sha256": "216b8c42a851aa05c3bcc93c44b403b3b6790261388c8ef57fa853caf3a8597d",
+          "reference_sha256": "157a34b25f0205c6c552b728b0465dfa1b2ebb1795f30ff93b0d4982cb0b858a"
+        },
+        "snkrle": {
+          "candidate_sha256": "fdce9ce0c066972bac7edb08bba13c6962913e5652aaca8625b4ce70d514a573",
+          "reference_sha256": "60a18e40ea225b3879243200d809121c691061d21963734f79e59eb8a35ec2b4"
+        }
+      },
+      "raw_report_sha256": "648053ea88f7340cbd3603c63eee67e8c5af81f3bf2374ab962e5324efd6786b",
+      "reference_commit": "83ddc58527637d193b883606f8b94625574d2e0c",
+      "summary": {
+        "candidate_failures": 0,
+        "cases": 160,
+        "discrepancies": 0,
+        "encoded_differences": 0,
+        "reference_failures": 0,
+        "size_regressions": 0
+      }
+    },
+    "published-vs-msvc": {
+      "candidate_commit": "36af642f274b930e8505c431b8a656cd733f8867",
+      "codecs": {
+        "comper": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "comperx": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "enigma": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosinski": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosplus": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "lzkn1": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "nemesis": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "rocket": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "saxman": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "snkrle": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        }
+      },
+      "executables": {
+        "comper": {
+          "candidate_sha256": "6f30b2d83d150333fda24746acfa601251579926cc4eda81e2590e654804e7bf",
+          "reference_sha256": "ac936b7414a93c8ef7f2237b58e19d9e700872299e758faf0a26a805a2cf956f"
+        },
+        "comperx": {
+          "candidate_sha256": "a6f1ac2eac5347671602247cbb7da0723981b6d486c1c294dbe1ca1f336634b4",
+          "reference_sha256": "e39445da9161a4dff4840c532023eb06b12c869224b5dcaebbabba57afb2b51a"
+        },
+        "enigma": {
+          "candidate_sha256": "5b3e85b01d6965325b292e7f46996b6ba559c261b9e5cc9d06e513b19a414a27",
+          "reference_sha256": "1e9905f5b63e73fc5da4402797c2cb97b19bd520a360aa8dcca7026825ccf5bc"
+        },
+        "kosinski": {
+          "candidate_sha256": "54a64b47cd92da675233b483acb377d2bb661d953801f86a9b2fca4954950957",
+          "reference_sha256": "cc71134be609d3b624d1660b005a55f31e94e1b58ffe400a64a7a755ab17b080"
+        },
+        "kosplus": {
+          "candidate_sha256": "41d33c63c42202e959fc06ce59d69cca85d3790b505b26c409d2e92701d8d631",
+          "reference_sha256": "3de772b2ab713b54c49aad6ff138b7e41b9a7ac654c729a0c75e5f718282481d"
+        },
+        "lzkn1": {
+          "candidate_sha256": "5ef13fee2b184c33fcb364cb6a6b948ff86d117e01c00a2e6e7f1b0f7a98a8d5",
+          "reference_sha256": "cf41c93c792684f7debc4d215cdfdadebb681766310ebc79520facd527ba54a2"
+        },
+        "nemesis": {
+          "candidate_sha256": "f9169775da267d4ecdf2e37039790bbe335bf6b42d451494d659930d4f77977c",
+          "reference_sha256": "6b8f55ac5c65aa3687734d3fea51345d62942d7782bf733aa994b9e9d947c5f7"
+        },
+        "rocket": {
+          "candidate_sha256": "89d9773446c5ae2d47857c286eb61026cfdf5464ede245ddaad10bfc1b5ffbce",
+          "reference_sha256": "b1031494c98929f637fd0ba0ec7dbf8b7920d96e86be9828d228981698b0afd5"
+        },
+        "saxman": {
+          "candidate_sha256": "f879c6d92cbe41502caf8acd10fb6ccdc793af878c56e8414f62468c11da63af",
+          "reference_sha256": "157a34b25f0205c6c552b728b0465dfa1b2ebb1795f30ff93b0d4982cb0b858a"
+        },
+        "snkrle": {
+          "candidate_sha256": "dbe7a3a7624fef42fa85841f4859694be9ed9019969d5e4655ee8a22abd4e6c6",
+          "reference_sha256": "60a18e40ea225b3879243200d809121c691061d21963734f79e59eb8a35ec2b4"
+        }
+      },
+      "raw_report_sha256": "ad6efb45b32837b74831ec39554b60bac75e119eb6cd8b0d50af05b0c72f1da2",
+      "reference_commit": "83ddc58527637d193b883606f8b94625574d2e0c",
+      "summary": {
+        "candidate_failures": 0,
+        "cases": 160,
+        "discrepancies": 0,
+        "encoded_differences": 0,
+        "reference_failures": 0,
+        "size_regressions": 0
+      }
+    },
+    "published-vs-pretests": {
+      "candidate_commit": "a8b9a26c1494446902192fda9527f6543d04d059",
+      "codecs": {
+        "comper": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "comperx": {
+          "candidate_failure_cases": [
+            "zeros-32",
+            "repeat-32",
+            "zeros-64",
+            "repeat-64",
+            "zeros-256",
+            "repeat-256",
+            "zeros-512",
+            "repeat-512",
+            "ascending-512"
+          ],
+          "candidate_failures": 9,
+          "cases": 16,
+          "cross_discrepancies": 9,
+          "encoded_differences": 9,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "enigma": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 7,
+          "reference_failures": 0,
+          "size_regressions": 4
+        },
+        "kosinski": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "kosplus": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "lzkn1": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "nemesis": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "rocket": {
+          "candidate_failure_cases": [
+            "zeros-32",
+            "repeat-32",
+            "ascending-32",
+            "random-seed-12345678-32",
+            "zeros-64",
+            "repeat-64",
+            "ascending-64",
+            "random-seed-12345678-64",
+            "zeros-256",
+            "repeat-256",
+            "ascending-256",
+            "random-seed-12345678-256",
+            "zeros-512",
+            "repeat-512",
+            "ascending-512",
+            "random-seed-12345678-512"
+          ],
+          "candidate_failures": 16,
+          "cases": 16,
+          "cross_discrepancies": 16,
+          "encoded_differences": 16,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "saxman": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        },
+        "snkrle": {
+          "candidate_failure_cases": [],
+          "candidate_failures": 0,
+          "cases": 16,
+          "cross_discrepancies": 0,
+          "encoded_differences": 0,
+          "reference_failures": 0,
+          "size_regressions": 0
+        }
+      },
+      "executables": {
+        "comper": {
+          "candidate_sha256": "0037da41810cfd57cd6c5a64290d5e32070ee88520d596a0190ad5d4abf37c69",
+          "reference_sha256": "ac936b7414a93c8ef7f2237b58e19d9e700872299e758faf0a26a805a2cf956f"
+        },
+        "comperx": {
+          "candidate_sha256": "6b68e489a712a45bb18862ef71afd6c47c63fae111bb45777312c60e7ee676e6",
+          "reference_sha256": "e39445da9161a4dff4840c532023eb06b12c869224b5dcaebbabba57afb2b51a"
+        },
+        "enigma": {
+          "candidate_sha256": "cbea0ec7eb817c6843dd3185c29927d9751296928a4005c920700e45a961e92e",
+          "reference_sha256": "1e9905f5b63e73fc5da4402797c2cb97b19bd520a360aa8dcca7026825ccf5bc"
+        },
+        "kosinski": {
+          "candidate_sha256": "4bb9241b339a734a7378fef456b1ad681cf80f1bce6799d46d44d17c4faa50c9",
+          "reference_sha256": "cc71134be609d3b624d1660b005a55f31e94e1b58ffe400a64a7a755ab17b080"
+        },
+        "kosplus": {
+          "candidate_sha256": "85b7873ee188ba80595eabf9b9c45c62af7e8bf6bc7501287f9bf390ff3c25cc",
+          "reference_sha256": "3de772b2ab713b54c49aad6ff138b7e41b9a7ac654c729a0c75e5f718282481d"
+        },
+        "lzkn1": {
+          "candidate_sha256": "8b2040215500693be0e0a0de4c1e5d89af379a2de67f2ccd1f59ef0669972bdd",
+          "reference_sha256": "cf41c93c792684f7debc4d215cdfdadebb681766310ebc79520facd527ba54a2"
+        },
+        "nemesis": {
+          "candidate_sha256": "a94cc6d427ffaa0edf6bbf69e615ba13861ed410ca6f98bc27aa069cd36760c0",
+          "reference_sha256": "6b8f55ac5c65aa3687734d3fea51345d62942d7782bf733aa994b9e9d947c5f7"
+        },
+        "rocket": {
+          "candidate_sha256": "e09f6330f7ff314be8bb4b65e29d4b251d4567728b67d0ad39376113d6cb938b",
+          "reference_sha256": "b1031494c98929f637fd0ba0ec7dbf8b7920d96e86be9828d228981698b0afd5"
+        },
+        "saxman": {
+          "candidate_sha256": "21c6bf0e7a87af3ffa6a6941400ea0031da2e4127cbe008cc26f2b1269afa070",
+          "reference_sha256": "157a34b25f0205c6c552b728b0465dfa1b2ebb1795f30ff93b0d4982cb0b858a"
+        },
+        "snkrle": {
+          "candidate_sha256": "e0ae55c100f31e3787170e910fbc3d9f9ff3c044487ea6dd282bd908b506c46d",
+          "reference_sha256": "60a18e40ea225b3879243200d809121c691061d21963734f79e59eb8a35ec2b4"
+        }
+      },
+      "raw_report_sha256": "f0a63a9335966248b3ceda72e7ae93c10cdb862032c45dc9a1cadea4ff4f2c7c",
+      "reference_commit": "83ddc58527637d193b883606f8b94625574d2e0c",
+      "summary": {
+        "candidate_failures": 25,
+        "cases": 160,
+        "discrepancies": 25,
+        "encoded_differences": 32,
+        "reference_failures": 0,
+        "size_regressions": 4
+      }
+    }
+  },
+  "schema_version": 1,
+  "scope": "default basic CLI modes, synthetic data only; no moduled or malformed-input coverage"
+}

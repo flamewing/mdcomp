@@ -44,3 +44,26 @@ catch_discover_tests(mdcomp-codec-smoke-tests
     PROPERTIES LABELS "codec" TIMEOUT 30
     DISCOVERY_MODE PRE_TEST
 )
+
+set(MDCOMP_REFERENCE_BIN_DIR "" CACHE PATH "Optional pinned reference CLI binary directory")
+set(MDCOMP_REFERENCE_COMMIT "unspecified" CACHE STRING "Commit identifying the reference binaries")
+if(MDCOMP_REFERENCE_BIN_DIR)
+    find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter)
+    set(reference_runtime_args)
+    if(MSVC)
+        get_target_property(getopt_library_type unofficial::getopt-win32::getopt TYPE)
+        if(getopt_library_type STREQUAL "SHARED_LIBRARY")
+            list(APPEND reference_runtime_args --candidate-runtime-dir
+                "$<TARGET_FILE_DIR:unofficial::getopt-win32::getopt>")
+        endif()
+    endif()
+    add_test(NAME regression::master-binaries
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/support/compare_binaries.py"
+            --reference-dir "${MDCOMP_REFERENCE_BIN_DIR}"
+            --candidate-dir "$<TARGET_FILE_DIR:kosinskicmp>"
+            --reference-commit "${MDCOMP_REFERENCE_COMMIT}"
+            ${reference_runtime_args}
+            --output-dir "${CMAKE_CURRENT_BINARY_DIR}/master-comparison")
+    set_tests_properties(regression::master-binaries PROPERTIES
+        LABELS "codec;reference" TIMEOUT 600 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+endif()

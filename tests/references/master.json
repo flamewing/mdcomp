@@ -1,0 +1,75 @@
+{
+  "classification": "shared-lineage cross-version reference; not an independent format oracle",
+  "corpus": {
+    "cases_per_reference": 160,
+    "original_assets": "none; synthetic bytes only",
+    "patterns": [
+      "zeros",
+      "repeat-A",
+      "ascending",
+      "xorshift32-seed-0x12345678"
+    ],
+    "sizes": [
+      32,
+      64,
+      256,
+      512
+    ]
+  },
+  "license": "LGPL-3.0-or-later; original mdcomp project and release",
+  "master_source_build": {
+    "commit": "72c6df405a75d322c5b3722da46c3abb864d3793",
+    "compiler": "GCC 16.2.0, MSYS2 UCRT64, x86_64 Windows, Release",
+    "configure": [
+      "cmake",
+      "-S",
+      "build-reference/master-source",
+      "-B",
+      "build-reference/master-build",
+      "-G",
+      "Ninja",
+      "-DCMAKE_CXX_COMPILER=D:/msys64/ucrt64/bin/g++.exe",
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DFORCE_COLORED_OUTPUT=OFF",
+      "-DCMAKE_POLICY_DEFAULT_CMP0167=NEW"
+    ],
+    "executable_sha256": {
+      "compcmp.exe": "cb724eefb34ee35cac1b1fbc9d3f65fc14d0e6bdf4eeebb18805a91fe28bc639",
+      "comperx.exe": "670a0131ecccff9760a36b8d250854612fddd772f1c5253da7a8be74e6f721ce",
+      "enicmp.exe": "fc7868f3f6d131228198392b7a9fb6d62c12f3af78c0e5d218cf162fceb44715",
+      "koscmp.exe": "d5963ba6f881dc7e6df11222435304fd9d91781d24ce3bbf4db9684ac26cd2b1",
+      "kosplus.exe": "7631df9f7a1074cb07a140341f9174af3520e1b6a4c0dba3435ae3b4918a7de2",
+      "lzkn1cmp.exe": "72ea88855e87a54923a9dc5209ceca06a8adaa92c3dcb3d3896ca183b10458f1",
+      "nemcmp.exe": "1338b1146ecf1be374d9702868002fdc131fbc6248cefe84268d5f175382f4d9",
+      "rockcmp.exe": "28f9bf2c814876cd1f746563e0dc379ff05dc01e27b227944904297abf41c876",
+      "saxcmp.exe": "654a4078e448eaba433678ba1291fce8789a85dcf43bf0551808aff1d74c4cfd",
+      "snkcmp.exe": "c9dc7b1bba7ff6eb8b36201cd46388987ed23e9aea967188ecdeef819465fc1d"
+    },
+    "source_url": "https://github.com/flamewing/mdcomp/tree/72c6df405a75d322c5b3722da46c3abb864d3793"
+  },
+  "pre_test_branch": {
+    "commit": "a8b9a26c1494446902192fda9527f6543d04d059",
+    "description": "refactor branch immediately before Catch2 and regression fixes"
+  },
+  "published_snapshot": {
+    "archive_name": "mdcomp-v0.2.0.20211206.zip",
+    "archive_sha256": "8238c26b475196ae8e098831260019503055363246ea8c8534322e639c621501",
+    "commit": "83ddc58527637d193b883606f8b94625574d2e0c",
+    "download_url": "https://github.com/flamewing/mdcomp/releases/download/snapshot-v0.2.0.20211206/mdcomp-v0.2.0.20211206.zip",
+    "executable_sha256": {
+      "compcmp.exe": "ac936b7414a93c8ef7f2237b58e19d9e700872299e758faf0a26a805a2cf956f",
+      "comperx.exe": "e39445da9161a4dff4840c532023eb06b12c869224b5dcaebbabba57afb2b51a",
+      "enicmp.exe": "1e9905f5b63e73fc5da4402797c2cb97b19bd520a360aa8dcca7026825ccf5bc",
+      "koscmp.exe": "cc71134be609d3b624d1660b005a55f31e94e1b58ffe400a64a7a755ab17b080",
+      "kosplus.exe": "3de772b2ab713b54c49aad6ff138b7e41b9a7ac654c729a0c75e5f718282481d",
+      "lzkn1cmp.exe": "cf41c93c792684f7debc4d215cdfdadebb681766310ebc79520facd527ba54a2",
+      "nemcmp.exe": "6b8f55ac5c65aa3687734d3fea51345d62942d7782bf733aa994b9e9d947c5f7",
+      "rockcmp.exe": "b1031494c98929f637fd0ba0ec7dbf8b7920d96e86be9828d228981698b0afd5",
+      "saxcmp.exe": "157a34b25f0205c6c552b728b0465dfa1b2ebb1795f30ff93b0d4982cb0b858a",
+      "snkcmp.exe": "60a18e40ea225b3879243200d809121c691061d21963734f79e59eb8a35ec2b4"
+    },
+    "release_url": "https://github.com/flamewing/mdcomp/releases/tag/snapshot-v0.2.0.20211206",
+    "tag": "snapshot-v0.2.0.20211206"
+  },
+  "schema_version": 1
+}
