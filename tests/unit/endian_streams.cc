@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <iterator>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -49,6 +50,39 @@ namespace {
     class short_output_buffer : public std::stringbuf {
         std::streamsize xsputn(char const* data, std::streamsize count) override {
             return std::stringbuf::xsputn(data, std::min(count, std::streamsize{1}));
+        }
+    };
+
+    struct qualified_stream {
+        qualified_stream& read(char*, std::streamsize) & noexcept {
+            return *this;
+        }
+
+        qualified_stream& read(char*, std::streamsize) && {
+            throw std::runtime_error("rvalue read failure");
+        }
+
+        qualified_stream& write(char const*, std::streamsize) & noexcept {
+            return *this;
+        }
+
+        qualified_stream& write(char const*, std::streamsize) && {
+            throw std::runtime_error("rvalue write failure");
+        }
+    };
+
+    static_assert(noexcept(big_endian::read2(std::declval<qualified_stream&>())));
+    static_assert(!noexcept(big_endian::read2(std::declval<qualified_stream>())));
+    static_assert(noexcept(big_endian::write2(std::declval<qualified_stream&>(), 0)));
+    static_assert(!noexcept(big_endian::write2(std::declval<qualified_stream>(), 0)));
+
+    class throwing_streambuf : public std::streambuf {
+        std::streamsize xsgetn(char*, std::streamsize) override {
+            throw std::runtime_error("streambuf read failure");
+        }
+
+        std::streamsize xsputn(char const*, std::streamsize) override {
+            throw std::runtime_error("streambuf write failure");
         }
     };
 }    // namespace
@@ -143,4 +177,18 @@ TEST_CASE(
     std::ostream        output(&buffer);
     big_endian::write2(output, 0x1234);
     CHECK(output.bad());
+}
+
+TEST_CASE(
+        "Stream forwarding preserves ref-qualified exception behavior",
+        "[endian][stream]") {
+    qualified_stream stream;
+    CHECK(big_endian::read2(stream) == 0);
+    CHECK_NOTHROW(big_endian::write2(stream, 0x1234));
+    CHECK_THROWS_AS(big_endian::read2(std::move(stream)), std::runtime_error);
+    CHECK_THROWS_AS(big_endian::write2(std::move(stream), 0x1234), std::runtime_error);
+
+    throwing_streambuf buffer;
+    CHECK_THROWS_AS(big_endian::read2(buffer), std::runtime_error);
+    CHECK_THROWS_AS(big_endian::write2(buffer, 0x1234), std::runtime_error);
 }

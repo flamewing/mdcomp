@@ -102,17 +102,58 @@ namespace utils {
     template <typename T>
     concept unsigned_integral = integral<T> && !signed_integral<T>;
 
+    template <typename T>
+    concept byte = std::same_as<std::remove_cv_t<T>, char>
+                   || std::same_as<std::remove_cv_t<T>, signed char>
+                   || std::same_as<std::remove_cv_t<T>, unsigned char>;
+
+    namespace detail {
+        template <typename Iter, typename = void>
+        struct output_value {};
+
+        template <typename Iter>
+        struct output_value<Iter, std::void_t<std::iter_value_t<Iter>>> {
+            using type = std::iter_value_t<Iter>;
+        };
+
+        // Standard output-only iterators expose void as their value_type.
+        template <typename Cont>
+        struct output_value<std::back_insert_iterator<Cont>> {
+            using type = typename Cont::value_type;
+        };
+
+        template <typename Cont>
+        struct output_value<std::front_insert_iterator<Cont>> {
+            using type = typename Cont::value_type;
+        };
+
+        template <typename Cont>
+        struct output_value<std::insert_iterator<Cont>> {
+            using type = typename Cont::value_type;
+        };
+
+        template <typename T, typename Char, typename Traits>
+        struct output_value<std::ostream_iterator<T, Char, Traits>> {
+            using type = T;
+        };
+
+        template <typename Char, typename Traits>
+        struct output_value<std::ostreambuf_iterator<Char, Traits>> {
+            using type = Char;
+        };
+    }    // namespace detail
+
     template <typename Iter>
     concept byte_input_iterator = requires() {
         requires std::input_iterator<Iter>;
-        requires(
-                std::is_same_v<std::iter_value_t<Iter>, char>
-                || std::is_same_v<std::iter_value_t<Iter>, uint8_t>);
+        requires byte<std::iter_value_t<Iter>>;
     };
 
     template <typename Iter>
-    concept byte_output_iterator
-            = std::output_iterator<Iter, uint8_t> || std::output_iterator<Iter, char>;
+    concept byte_output_iterator = std::output_iterator<Iter, unsigned char> && requires {
+        typename detail::output_value<Iter>::type;
+        requires byte<typename detail::output_value<Iter>::type>;
+    };
 
     template <typename T>
     concept container = std::regular<T> && std::swappable<T>
@@ -167,9 +208,8 @@ namespace utils {
         template <typename T>
         using uint_for_t = decltype(uint_for_size<sizeof(T)>());
 
-        // Note: fails for stupid stuff like
-        // std::reverse_iterator<std::reverse_iterator<T>>. This failure is
-        // intentional.
+        // Only reverse iterators directly wrapping contiguous iterators use the
+        // contiguous fast path; nested adaptors use ordinary iterator traversal.
         template <typename T>
         struct is_reverse_iterator : std::false_type {};
 
@@ -230,9 +270,9 @@ namespace utils {
 
         template <typename Stream>
         concept has_read_bytes_function
-                = requires(Stream stream, char* pointer, std::streamsize count) {
+                = requires(Stream&& stream, char* pointer, std::streamsize count) {
                       {
-                          stream.read(pointer, count)
+                          std::forward<Stream>(stream).read(pointer, count)
                       } -> std::common_reference_with<Stream>;
                   };
 
@@ -244,9 +284,9 @@ namespace utils {
 
         template <typename Stream>
         concept has_write_bytes_function
-                = requires(Stream stream, char* pointer, std::streamsize count) {
+                = requires(Stream&& stream, char const* pointer, std::streamsize count) {
                       {
-                          stream.write(pointer, count)
+                          std::forward<Stream>(stream).write(pointer, count)
                       } -> std::common_reference_with<Stream>;
                   };
 
@@ -380,7 +420,8 @@ namespace utils {
         template <unsigned_integral To, typename Stream>
         requires detail::has_read_bytes_function<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
-                noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
+                noexcept(std::forward<Stream>(input).read(
+                        std::declval<char*>(), sizeof(To)))) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
             std::forward<Stream>(input).read(buffer.data(), sizeof(To));
             if constexpr (endian != std::endian::native) {
@@ -462,7 +503,8 @@ namespace utils {
         template <unsigned_integral From, typename Stream>
         requires detail::has_write_bytes_function<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
-                noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
+                noexcept(std::forward<Stream>(output).write(
+                        std::declval<char const*>(), sizeof(From)))) {
             using buffer_t = std::array<char, sizeof(From)>;
             if constexpr (endian != std::endian::native) {
                 value = byteswap(value);
@@ -486,11 +528,15 @@ namespace utils {
         }
 
         template <contiguous_container Cont, unsigned_integral From>
+        requires byte<typename Cont::value_type>
         INLINE constexpr static void write_impl(Cont& output, From value) noexcept(
-                noexcept(output.resize(std::declval<size_t>()))) {
+                noexcept(output.size()) && noexcept(output.resize(std::declval<size_t>()))
+                && noexcept(output.data())
+                && noexcept(write_impl(output.data(), value))) {
             auto const size = output.size();
             output.resize(size + sizeof(From));
-            write_impl(std::addressof(output[size]), value);
+            auto* destination = output.data() + size;
+            write_impl(destination, value);
         }
 
         template <typename IterRef, unsigned_integral From>
@@ -526,6 +572,11 @@ namespace utils {
                 }
             }
         }
+
+        template <typename Dst, typename From>
+        constexpr static bool writable_to = requires(Dst&& output, From value) {
+            write_impl(std::forward<Dst>(output), value);
+        };
 
     public:
         template <typename Src>
@@ -593,24 +644,28 @@ namespace utils {
         }
 
         template <typename Dst>
+        requires writable_to<Dst, uint8_t>
         INLINE constexpr static void write1(Dst&& output, uint8_t value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
+        requires writable_to<Dst, uint16_t>
         INLINE constexpr static void write2(Dst&& output, uint16_t value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
+        requires writable_to<Dst, uint32_t>
         INLINE constexpr static void write4(Dst&& output, uint32_t value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
         }
 
         template <typename Dst>
+        requires writable_to<Dst, uint64_t>
         INLINE constexpr static void write8(Dst&& output, uint64_t value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
@@ -618,6 +673,7 @@ namespace utils {
 
 #if MDCOMP_HAS_INT128
         template <typename Dst>
+        requires writable_to<Dst, uint128_t>
         INLINE constexpr static void write16(Dst&& output, uint128_t value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             write_impl(std::forward<Dst>(output), value);
@@ -625,6 +681,7 @@ namespace utils {
 #endif
 
         template <size_t Size, typename Dst>
+        requires writable_to<Dst, detail::uint_for_size_t<Size>>
         INLINE constexpr static void
                 write_n(Dst&& output, detail::uint_for_size_t<Size> value) noexcept(
                         noexcept(write_impl(std::forward<Dst>(output), value))) {
@@ -632,7 +689,7 @@ namespace utils {
         }
 
         template <typename Dst, unsigned_integral From>
-        requires(!std::same_as<From, bool>)
+        requires(!std::same_as<From, bool> && writable_to<Dst, From>)
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             static_assert(
@@ -643,6 +700,7 @@ namespace utils {
         }
 
         template <typename Dst, signed_integral From>
+        requires writable_to<Dst, detail::uint_for_t<From>>
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(
                         std::forward<Dst>(output),
@@ -669,6 +727,9 @@ INLINE constexpr uint8_t read1(Src& input) noexcept(
 }
 
 template <typename Dst>
+requires requires(Dst& output, uint8_t value) {
+    utils::endian_base<std::endian::native>::write(output, value);
+}
 INLINE constexpr void write1(Dst& output, uint8_t const value) noexcept(
         noexcept(utils::endian_base<std::endian::native>::write(output, value))) {
     utils::endian_base<std::endian::native>::write(output, value);
@@ -680,6 +741,7 @@ using big_endian     = utils::endian_base<std::endian::big>;
 using little_endian  = utils::endian_base<std::endian::little>;
 
 template <typename endian_t, utils::unsigned_integral stream_t>
+requires(!std::same_as<std::remove_cv_t<stream_t>, bool>)
 struct endian_input_iterator {
     using pointer          = stream_t const*;
     using reference        = stream_t const&;
@@ -746,9 +808,12 @@ struct endian_input_iterator {
 static_assert(std::input_iterator<endian_input_iterator<big_endian, uint8_t>>);
 
 template <typename endian_t, utils::unsigned_integral stream_t>
+requires(!std::same_as<std::remove_cv_t<stream_t>, bool>)
 struct endian_output_iterator {
-    using reference       = endian_output_iterator&;
-    using difference_type = ptrdiff_t;
+    using reference         = endian_output_iterator&;
+    using difference_type   = ptrdiff_t;
+    using value_type        = stream_t;
+    using iterator_category = std::output_iterator_tag;
 
     constexpr endian_output_iterator() noexcept                              = default;
     constexpr ~endian_output_iterator() noexcept                             = default;
