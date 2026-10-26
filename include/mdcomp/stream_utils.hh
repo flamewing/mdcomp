@@ -302,10 +302,7 @@ namespace utils {
         requires(range_adaptor_closure_object<Right> && std::ranges::range<Left>)
         [[nodiscard]] constexpr decltype(auto) operator|(
                 Left&&  left,
-                Right&& right) noexcept(noexcept(std::
-                                                         forward<Right>(right)(
-                                                                 std::forward<Left>(
-                                                                         left))))
+                Right&& right) noexcept(std::is_nothrow_invocable_v<Right, Left>)
         requires requires { static_cast<Right&&>(right)(static_cast<Left&&>(left)); }
         {
             return std::forward<Right>(right)(std::forward<Left>(left));
@@ -314,7 +311,10 @@ namespace utils {
 
     template <typename derived>
     requires std::is_class_v<derived> && std::same_as<derived, std::remove_cv_t<derived>>
-    class range_adaptor_closure : public pipe::base<derived> {};
+    class range_adaptor_closure : public pipe::base<derived> {
+    public:
+        constexpr range_adaptor_closure() noexcept = default;
+    };
 
     template <typename Fn, typename... Types>
     class range_closure : public pipe::base<range_closure<Fn, Types...>> {
