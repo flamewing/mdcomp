@@ -28,3 +28,5 @@ cmake -S . -B build-tests -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$PWD/build-dep
 ```
 
 The initial suite covers endian I/O. Codec adapters, independent fixtures, and assembly harnesses remain tracked in [the testing plan](../docs/testing-framework-plan.md); passing these unit tests does not complete the pre-refactor baseline gate.
+
+Endian stream operations preserve ordinary `istream`/`ostream` state and exception-mask behavior. Direct `streambuf` transfers throw `std::ios_base::failure` when `sgetn` or `sputn` transfers fewer bytes than requested; an underlying exception propagates. A failed transfer can consume or produce a prefix and does not roll back. Endian input iterators yield complete values only, read their first value during construction, and become end iterators on an incomplete read when the stream does not throw.

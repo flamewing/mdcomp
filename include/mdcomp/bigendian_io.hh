@@ -353,10 +353,14 @@ namespace utils {
 
         template <std::unsigned_integral To, typename Stream>
         requires detail::is_input_streambuf<Stream>
-        [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
-                noexcept(input.sgetn(std::declval<char*>(), sizeof(To)))) {
+        [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
-            std::forward<Stream>(input).sgetn(buffer.data(), sizeof(To));
+            // streambuf has no state flags: report short transfers explicitly.
+            // Bytes already transferred are consumed; no rollback is attempted.
+            if (std::forward<Stream>(input).sgetn(buffer.data(), sizeof(To))
+                != sizeof(To)) {
+                throw std::ios_base::failure("Short endian streambuf read");
+            }
             if constexpr (endian != std::endian::native) {
                 return byteswap(std::bit_cast<To>(buffer));
             } else {
@@ -430,14 +434,16 @@ namespace utils {
 
         template <std::unsigned_integral From, typename Stream>
         requires detail::is_output_streambuf<Stream>
-        INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
-                noexcept(output.sputn(std::declval<char const*>(), sizeof(From)))) {
+        INLINE constexpr static void write_impl(Stream&& output, From value) {
             using buffer_t = std::array<char, sizeof(From)>;
             if constexpr (endian != std::endian::native) {
                 value = byteswap(value);
             }
             alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
-            std::forward<Stream>(output).sputn(buffer.data(), sizeof(From));
+            if (std::forward<Stream>(output).sputn(buffer.data(), sizeof(From))
+                != sizeof(From)) {
+                throw std::ios_base::failure("Short endian streambuf write");
+            }
         }
 
         template <contiguous_container Cont, std::unsigned_integral From>
@@ -514,12 +520,14 @@ namespace utils {
         }
 
         template <typename Src, std::integral To>
+        requires(!std::same_as<To, bool>)
         INLINE constexpr static auto read(Src&& input, To& value) noexcept(
-                noexcept(read_impl<To>(std::forward<Src>(input)))) {
-            value = read_impl<To>(std::forward<Src>(input));
+                noexcept(read<To>(std::forward<Src>(input)))) {
+            value = read<To>(std::forward<Src>(input));
         }
 
         template <std::unsigned_integral To, typename Src>
+        requires(!std::same_as<std::remove_cv_t<To>, bool>)
         [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
                 noexcept(read_impl<To>(std::forward<Src>(input)))) {
             static_assert(
@@ -569,6 +577,7 @@ namespace utils {
         }
 
         template <typename Dst, std::unsigned_integral From>
+        requires(!std::same_as<From, bool>)
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
             static_assert(
@@ -632,8 +641,11 @@ struct endian_input_iterator {
     constexpr endian_input_iterator& operator=(endian_input_iterator&&) noexcept
             = default;
 
-    constexpr explicit endian_input_iterator(std::istream& input)
-            : source(std::addressof(input)) {}
+    constexpr explicit endian_input_iterator(std::istream& input) noexcept(
+            noexcept(++std::declval<endian_input_iterator&>()))
+            : source(std::addressof(input)) {
+        ++*this;
+    }
 
     [[nodiscard]] constexpr stream_t const& operator*() const noexcept {
         return value;
@@ -643,15 +655,20 @@ struct endian_input_iterator {
         return std::addressof(operator*());
     }
 
-    constexpr endian_input_iterator& operator++() noexcept {
+    constexpr endian_input_iterator& operator++() noexcept(
+            noexcept(endian_t::template read<stream_t>(*source))
+            && noexcept(static_cast<bool>(*source))) {
         value = endian_t::template read<stream_t>(*source);
+        if (!*source) {
+            source = nullptr;
+        }
         return *this;
     }
 
-    constexpr endian_input_iterator operator++(int unused) noexcept {
+    constexpr endian_input_iterator operator++(int unused) noexcept(noexcept(++*this)) {
         ignore_unused_variable_warning(unused);
         endian_input_iterator tmp = *this;
-        value                     = endian_t::template read<stream_t>(*source);
+        ++*this;
         return tmp;
     }
 
@@ -663,7 +680,7 @@ struct endian_input_iterator {
 
     [[nodiscard]] friend bool operator==(
             endian_input_iterator const& iter, std::default_sentinel_t) noexcept {
-        return iter.source != nullptr;
+        return iter.source == nullptr;
     }
 
     std::istream* source = nullptr;
@@ -702,7 +719,8 @@ struct endian_output_iterator {
         return *this;
     }
 
-    constexpr endian_output_iterator& operator=(stream_t value) noexcept {
+    constexpr endian_output_iterator& operator=(stream_t value) noexcept(
+            noexcept(endian_t::write(*dest, value))) {
         endian_t::write(*dest, value);
         return *this;
     }
