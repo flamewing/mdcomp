@@ -38,6 +38,7 @@ add_executable(mdcomp-codec-smoke-tests
     codec/lzss_smoke.cc
     codec/contracts.cc
     codec/known_answers.cc
+    codec/external_answers.cc
     codec/moduled.cc
     fixtures/known_answers.cc
     support/codec_api.cc)
