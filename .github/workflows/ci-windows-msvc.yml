@@ -48,7 +48,9 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON
       - name: Build
         run: |
           cmake --build build --config Release -j2
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure

@@ -53,11 +53,14 @@ jobs:
             mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-binutils
             mingw-w64-${{ matrix.arch }}-ntldd mingw-w64-${{ matrix.arch }}-boost
             mingw-w64-${{ matrix.arch }}-cmake
+            mingw-w64-${{ matrix.arch }}-catch
       - name: Checkout code
         uses: actions/checkout@master
       - name: Configure
         run: |
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON
       - name: Build
         run: |
           cmake --build build -j2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

@@ -8,5 +8,13 @@
   "dependencies": [
     "boost-container",
     "getopt"
-  ]
+  ],
+  "features": {
+    "tests": {
+      "description": "Build the CTest regression suite with Catch2 v3",
+      "dependencies": [
+        "catch2"
+      ]
+    }
+  }
 }

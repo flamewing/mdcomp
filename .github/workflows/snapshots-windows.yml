@@ -42,7 +42,7 @@ jobs:
       - name: Configure
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles'
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G 'Unix Makefiles' -DBUILD_TESTING=OFF
       - name: Build
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |

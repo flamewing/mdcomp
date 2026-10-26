@@ -6,6 +6,8 @@ project(mdcomp
     LANGUAGES CXX ASM
 )
 
+include(CTest)
+
 # Joins arguments and places the results in ${result_var}.
 function(join result_var)
     set(result "")
@@ -276,6 +278,12 @@ set_target_properties(bigendian_io
     PROPERTIES
     PUBLIC_HEADER "${BIG_ENDIAN_IO_HEADERS}"
 )
+target_compile_features(bigendian_io INTERFACE cxx_std_20)
+
+if(BUILD_TESTING)
+    enable_language(C)
+    add_subdirectory(tests)
+endif()
 
 # Dummy library for generating compile_commands.json that
 # sets flags for headers without corresponding cc files.

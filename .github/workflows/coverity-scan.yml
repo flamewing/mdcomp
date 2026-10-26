@@ -67,7 +67,7 @@ jobs:
         run: |
           export CC=gcc-13
           export CXX=g++-13
-          cmake -S . -B build -G 'Unix Makefiles'
+          cmake -S . -B build -G 'Unix Makefiles' -DBUILD_TESTING=OFF
       - name: Build with cov-build
         if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
         run: |

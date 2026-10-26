@@ -43,6 +43,12 @@ jobs:
           brew install boost make ninja llvm
       - name: Checkout code
         uses: actions/checkout@master
+      - name: Install Catch2 v3
+        run: |
+          git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
+          cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
+          cmake --build "$RUNNER_TEMP/catch-build" -j2
+          cmake --install "$RUNNER_TEMP/catch-build"
       - name: Configure
         run: |
           export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib $LDFLAGS"
@@ -50,7 +56,9 @@ jobs:
           export CXXFLAGS="-isystem $(brew --prefix boost)/include -isystem $(brew --prefix llvm)/include $CXXFLAGS"
           export CC="$(brew --prefix llvm)/bin/clang"
           export CXX="$(brew --prefix llvm)/bin/clang++"
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install"
       - name: Build
         run: |
           cmake --build build -j2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
