@@ -36,6 +36,16 @@
 #include <type_traits>
 #include <utility>
 
+#if defined(__SIZEOF_INT128__)
+#    define MDCOMP_HAS_INT128 1
+#elif defined(_MSVC_STL_VERSION) && __has_include(<__msvc_int128.hpp>)
+// MSVC has no native 128-bit scalar. Its STL supplies integer-class equivalents.
+#    include <__msvc_int128.hpp>
+#    define MDCOMP_HAS_INT128 1
+#else
+#    define MDCOMP_HAS_INT128 0
+#endif
+
 #ifdef _MSC_VER
 #    include <stdlib.h>
 #    pragma intrinsic(_byteswap_ushort)
@@ -65,6 +75,32 @@
 
 namespace utils {
     // Meta-programming stuff.
+
+#if defined(__SIZEOF_INT128__)
+    using int128_t  = __int128_t;
+    using uint128_t = __uint128_t;
+#elif MDCOMP_HAS_INT128
+    using int128_t  = std::_Signed128;
+    using uint128_t = std::_Unsigned128;
+#endif
+
+    template <typename T>
+    concept integral = std::integral<T>
+#if MDCOMP_HAS_INT128
+                       || std::same_as<std::remove_cv_t<T>, int128_t>
+                       || std::same_as<std::remove_cv_t<T>, uint128_t>
+#endif
+            ;
+
+    template <typename T>
+    concept signed_integral = std::signed_integral<T>
+#if MDCOMP_HAS_INT128
+                              || std::same_as<std::remove_cv_t<T>, int128_t>
+#endif
+            ;
+
+    template <typename T>
+    concept unsigned_integral = integral<T> && !signed_integral<T>;
 
     template <typename Iter>
     concept byte_input_iterator = requires() {
@@ -99,16 +135,28 @@ namespace utils {
         template <size_t Size>
         CONST_INLINE constexpr auto uint_for_size() noexcept {
             static_assert(std::has_single_bit(Size), "Size must be a power of 2");
+#if MDCOMP_HAS_INT128
+            static_assert(
+                    Size > 0 && Size <= sizeof(uint128_t),
+                    "Size must be between 1 and sizeof(uint128_t)");
+#else
             static_assert(
                     Size > 0 && Size <= sizeof(uint64_t),
                     "Size must be between 1 and sizeof(uint64_t)");
+#endif
             if constexpr (Size == sizeof(uint8_t)) {
                 return uint8_t{};
             } else if constexpr (Size == sizeof(uint16_t)) {
                 return uint16_t{};
             } else if constexpr (Size == sizeof(uint32_t)) {
                 return uint32_t{};
-            } else {
+            }
+#if MDCOMP_HAS_INT128
+            else if constexpr (Size == sizeof(uint128_t)) {
+                return uint128_t{};
+            }
+#endif
+            else {
                 return uint64_t{};
             }
         }
@@ -218,32 +266,20 @@ namespace utils {
     template <class... Ts>
     overloaded(Ts...) -> overloaded<Ts...>;
 
-    template <std::unsigned_integral T>
+    template <unsigned_integral T>
     [[nodiscard]] CONST_INLINE constexpr T fallback_byteswap(T value) noexcept {
         if constexpr (sizeof(T) == 1) {
             return value;    // No-op for 8-bit values.
         } else {
-            using uint_t = std::make_unsigned_t<std::remove_cvref_t<T>>;
-            // Fallback implementation that handles even __int24 etc.
-            constexpr size_t const nbits = CHAR_BIT;
-            constexpr size_t const delta = 2ULL * nbits;
-
-            uint_t low_byte_mask  = std::numeric_limits<uint8_t>::max();
-            uint_t high_byte_mask = std::rotr(low_byte_mask, nbits);
-            uint_t new_value      = value;
-            size_t bit_offset     = nbits * (sizeof(T) + 1);
-            for (size_t ii = 0; ii < sizeof(T) / 2; ++ii) {
-                bit_offset -= delta;
-                uint_t const low_byte  = new_value & low_byte_mask;
-                uint_t const high_byte = new_value & high_byte_mask;
-                new_value ^= low_byte;
-                new_value ^= high_byte;
-                new_value ^= static_cast<uint_t>(low_byte << bit_offset);
-                new_value ^= static_cast<uint_t>(high_byte >> bit_offset);
-                low_byte_mask  = std::rotl(low_byte_mask, nbits);
-                high_byte_mask = std::rotr(high_byte_mask, nbits);
+            // Avoid standard integer traits/rotations: strict-mode __int128 and
+            // MSVC's integer classes are not necessarily standard integral types.
+            T result{};
+            for (size_t ii = 0; ii < sizeof(T); ++ii) {
+                result = static_cast<T>(
+                        (result << CHAR_BIT) | (value & static_cast<T>(UCHAR_MAX)));
+                value >>= CHAR_BIT;
             }
-            return uint_t(new_value & std::numeric_limits<uint_t>::max());
+            return result;
         }
     }
 
@@ -253,13 +289,15 @@ namespace utils {
     static_assert(fallback_byteswap(0x0123456789abcdefULL) == 0xefcdab8967452301ULL);
 
     // Mashed together implementation based on libstdc++/libc++/MS STL.
-    // GCC/clang both have a 128-bit integer type, which this implementation
-    // supports; but MSVC compiler does not support a 128-bit integer, so this
-    // is not portable.
-    template <std::unsigned_integral T>
+    // Use native 128-bit integers or MSVC STL integer classes when available.
+    template <unsigned_integral T>
     [[nodiscard]] CONST_INLINE constexpr T byteswap_impl(T value) noexcept {
 #if defined(__cpp_lib_byteswap) && __cpp_lib_byteswap >= 202110L
-        return std::byteswap(value);
+        if constexpr (std::unsigned_integral<T>) {
+            return std::byteswap(value);
+        } else {
+            return fallback_byteswap(value);
+        }
 #else
         if constexpr (CHAR_BIT == 8) {
             if (!std::is_constant_evaluated()) {
@@ -292,13 +330,13 @@ namespace utils {
                             return fallback_byteswap(val);
                         });
                 if constexpr (sizeof(T) == 16) {
-                    if constexpr (__has_builtin(__builtin_bswap128)) {
-                        return __builtin_bswap128(value);
-                    } else {
-                        T high = builtin_bswap(static_cast<uint64_t>(value >> 64U));
-                        T low  = builtin_bswap(static_cast<uint64_t>(value));
-                        return high | (low << 64U);
-                    }
+#    if defined(__SIZEOF_INT128__) && __has_builtin(__builtin_bswap128)
+                    return __builtin_bswap128(value);
+#    else
+                    T high = builtin_bswap(static_cast<uint64_t>(value >> 64U));
+                    T low  = builtin_bswap(static_cast<uint64_t>(value));
+                    return high | (low << 64U);
+#    endif
                 } else {
                     return builtin_bswap(value);
                 }
@@ -316,7 +354,8 @@ namespace utils {
     static_assert(byteswap_impl(0x01234567U) == 0x67452301U);
     static_assert(byteswap_impl(0x0123456789abcdefULL) == 0xefcdab8967452301ULL);
 
-    template <std::integral T>
+    template <integral T>
+    requires(!std::same_as<std::remove_cv_t<T>, bool>)
     [[nodiscard]] CONST_INLINE constexpr T byteswap(T value) noexcept {
         // Need this to handle "(unsigned)? long long" and "(unsigned)? long".
         // They can be both 64-bit depending on platform, and which one is used
@@ -328,7 +367,7 @@ namespace utils {
     template <std::endian endian>
     struct endian_base {
     private:
-        template <std::unsigned_integral To, std::unsigned_integral From>
+        template <unsigned_integral To, unsigned_integral From>
         requires(std::same_as<std::remove_cvref_t<From>, std::remove_cvref_t<To>>)
         [[nodiscard]] INLINE constexpr static To read_impl(From const input) noexcept {
             if constexpr (endian != std::endian::native) {
@@ -338,7 +377,7 @@ namespace utils {
             }
         }
 
-        template <std::unsigned_integral To, typename Stream>
+        template <unsigned_integral To, typename Stream>
         requires detail::has_read_bytes_function<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) noexcept(
                 noexcept(input.read(std::declval<char*>(), sizeof(To)))) {
@@ -351,7 +390,7 @@ namespace utils {
             }
         }
 
-        template <std::unsigned_integral To, typename Stream>
+        template <unsigned_integral To, typename Stream>
         requires detail::is_input_streambuf<Stream>
         [[nodiscard]] INLINE constexpr static To read_impl(Stream&& input) {
             alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
@@ -368,7 +407,7 @@ namespace utils {
             }
         }
 
-        template <std::unsigned_integral To, typename IterRef>
+        template <unsigned_integral To, typename IterRef>
         requires(byte_input_iterator<std::remove_cvref_t<IterRef>>)
         // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
         [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept(
@@ -411,7 +450,7 @@ namespace utils {
             return value;
         }
 
-        template <std::unsigned_integral T>
+        template <unsigned_integral T>
         INLINE constexpr static void write_impl(T& input, T value) noexcept {
             if constexpr (endian != std::endian::native) {
                 input = byteswap(value);
@@ -420,7 +459,7 @@ namespace utils {
             }
         }
 
-        template <std::unsigned_integral From, typename Stream>
+        template <unsigned_integral From, typename Stream>
         requires detail::has_write_bytes_function<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(output.write(std::declval<char const*>(), sizeof(From)))) {
@@ -432,7 +471,7 @@ namespace utils {
             std::forward<Stream>(output).write(buffer.data(), sizeof(From));
         }
 
-        template <std::unsigned_integral From, typename Stream>
+        template <unsigned_integral From, typename Stream>
         requires detail::is_output_streambuf<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) {
             using buffer_t = std::array<char, sizeof(From)>;
@@ -446,7 +485,7 @@ namespace utils {
             }
         }
 
-        template <contiguous_container Cont, std::unsigned_integral From>
+        template <contiguous_container Cont, unsigned_integral From>
         INLINE constexpr static void write_impl(Cont& output, From value) noexcept(
                 noexcept(output.resize(std::declval<size_t>()))) {
             auto const size = output.size();
@@ -454,7 +493,7 @@ namespace utils {
             write_impl(std::addressof(output[size]), value);
         }
 
-        template <typename IterRef, std::unsigned_integral From>
+        template <typename IterRef, unsigned_integral From>
         requires(byte_output_iterator<std::remove_cvref_t<IterRef>>)
         // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
         INLINE constexpr static void write_impl(IterRef&& output, From value) noexcept(
@@ -513,20 +552,28 @@ namespace utils {
             return read_impl<uint64_t>(std::forward<Src>(input));
         }
 
+#if MDCOMP_HAS_INT128
+        template <typename Src>
+        [[nodiscard]] INLINE constexpr static uint128_t read16(Src&& input) noexcept(
+                noexcept(read_impl<uint128_t>(std::forward<Src>(input)))) {
+            return read_impl<uint128_t>(std::forward<Src>(input));
+        }
+#endif
+
         template <size_t Size, typename Src>
         [[nodiscard]] INLINE constexpr static auto read_n(Src&& input) noexcept(noexcept(
                 read_impl<detail::uint_for_size_t<Size>>(std::forward<Src>(input)))) {
             return read_impl<detail::uint_for_size_t<Size>>(std::forward<Src>(input));
         }
 
-        template <typename Src, std::integral To>
+        template <typename Src, integral To>
         requires(!std::same_as<To, bool>)
         INLINE constexpr static auto read(Src&& input, To& value) noexcept(
                 noexcept(read<To>(std::forward<Src>(input)))) {
             value = read<To>(std::forward<Src>(input));
         }
 
-        template <std::unsigned_integral To, typename Src>
+        template <unsigned_integral To, typename Src>
         requires(!std::same_as<std::remove_cv_t<To>, bool>)
         [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
                 noexcept(read_impl<To>(std::forward<Src>(input)))) {
@@ -537,12 +584,12 @@ namespace utils {
             return read_impl<To>(std::forward<Src>(input));
         }
 
-        template <std::signed_integral To, typename Src>
+        template <signed_integral To, typename Src>
         [[nodiscard]] INLINE constexpr static auto read(Src&& input) noexcept(
                 noexcept(std::bit_cast<To>(
-                        read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input))))) {
+                        read_impl<detail::uint_for_t<To>>(std::forward<Src>(input))))) {
             return std::bit_cast<To>(
-                    read_impl<std::make_unsigned_t<To>>(std::forward<Src>(input)));
+                    read_impl<detail::uint_for_t<To>>(std::forward<Src>(input)));
         }
 
         template <typename Dst>
@@ -569,6 +616,14 @@ namespace utils {
             write_impl(std::forward<Dst>(output), value);
         }
 
+#if MDCOMP_HAS_INT128
+        template <typename Dst>
+        INLINE constexpr static void write16(Dst&& output, uint128_t value) noexcept(
+                noexcept(write_impl(std::forward<Dst>(output), value))) {
+            write_impl(std::forward<Dst>(output), value);
+        }
+#endif
+
         template <size_t Size, typename Dst>
         INLINE constexpr static void
                 write_n(Dst&& output, detail::uint_for_size_t<Size> value) noexcept(
@@ -576,7 +631,7 @@ namespace utils {
             write_impl(std::forward<Dst>(output), value);
         }
 
-        template <typename Dst, std::unsigned_integral From>
+        template <typename Dst, unsigned_integral From>
         requires(!std::same_as<From, bool>)
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(std::forward<Dst>(output), value))) {
@@ -587,14 +642,14 @@ namespace utils {
             write_impl(std::forward<Dst>(output), value);
         }
 
-        template <typename Dst, std::signed_integral From>
+        template <typename Dst, signed_integral From>
         INLINE constexpr static auto write(Dst&& output, From value) noexcept(
                 noexcept(write_impl(
                         std::forward<Dst>(output),
-                        std::bit_cast<std::make_unsigned_t<From>>(value)))) {
+                        std::bit_cast<detail::uint_for_t<From>>(value)))) {
             write_impl(
                     std::forward<Dst>(output),
-                    std::bit_cast<std::make_unsigned_t<From>>(value));
+                    std::bit_cast<detail::uint_for_t<From>>(value));
         }
     };
 
@@ -624,7 +679,7 @@ using reverse_endian = utils::endian_base<utils::reverse(std::endian::native)>;
 using big_endian     = utils::endian_base<std::endian::big>;
 using little_endian  = utils::endian_base<std::endian::little>;
 
-template <typename endian_t, std::unsigned_integral stream_t>
+template <typename endian_t, utils::unsigned_integral stream_t>
 struct endian_input_iterator {
     using pointer          = stream_t const*;
     using reference        = stream_t const&;
@@ -665,7 +720,8 @@ struct endian_input_iterator {
         return *this;
     }
 
-    constexpr endian_input_iterator operator++(int unused) noexcept(noexcept(++*this)) {
+    constexpr endian_input_iterator operator++(int unused) noexcept(
+            noexcept(++std::declval<endian_input_iterator&>())) {
         ignore_unused_variable_warning(unused);
         endian_input_iterator tmp = *this;
         ++*this;
@@ -689,7 +745,7 @@ struct endian_input_iterator {
 
 static_assert(std::input_iterator<endian_input_iterator<big_endian, uint8_t>>);
 
-template <typename endian_t, std::unsigned_integral stream_t>
+template <typename endian_t, utils::unsigned_integral stream_t>
 struct endian_output_iterator {
     using reference       = endian_output_iterator&;
     using difference_type = ptrdiff_t;
