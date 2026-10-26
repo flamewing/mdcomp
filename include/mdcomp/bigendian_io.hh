@@ -142,6 +142,44 @@ namespace utils {
                 = is_reverse_iterator_v<T>
                   && std::contiguous_iterator<typename T::iterator_type>;
 
+        template <typename Iter>
+        consteval bool nothrow_byte_read() {
+            if constexpr (contiguous_reverse_iterator<Iter>) {
+                return noexcept(std::declval<Iter&>() += std::iter_difference_t<Iter>{})
+                       && noexcept(std::to_address(std::declval<Iter&>().base()))
+                       && noexcept(static_cast<unsigned char>(
+                               *std::to_address(std::declval<Iter&>().base())));
+            } else if constexpr (std::contiguous_iterator<Iter>) {
+                return noexcept(std::declval<Iter&>() += std::iter_difference_t<Iter>{})
+                       && noexcept(std::to_address(std::declval<Iter&>()))
+                       && noexcept(static_cast<unsigned char>(
+                               *std::to_address(std::declval<Iter&>())));
+            } else {
+                return noexcept(static_cast<unsigned char>(*std::declval<Iter&>()))
+                       && noexcept(++std::declval<Iter&>());
+            }
+        }
+
+        template <typename Iter>
+        consteval bool nothrow_byte_write() {
+            if constexpr (contiguous_reverse_iterator<Iter>) {
+                return noexcept(std::declval<Iter&>() += std::iter_difference_t<Iter>{})
+                       && noexcept(std::to_address(std::declval<Iter&>().base()))
+                       && noexcept(
+                               *std::to_address(std::declval<Iter&>().base())
+                               = std::declval<unsigned char>());
+            } else if constexpr (std::contiguous_iterator<Iter>) {
+                return noexcept(std::declval<Iter&>() += std::iter_difference_t<Iter>{})
+                       && noexcept(std::to_address(std::declval<Iter&>()))
+                       && noexcept(
+                               *std::to_address(std::declval<Iter&>())
+                               = std::declval<unsigned char>());
+            } else {
+                return noexcept(*std::declval<Iter&>() = std::declval<unsigned char>())
+                       && noexcept(++std::declval<Iter&>());
+            }
+        }
+
         template <typename Stream>
         concept has_read_bytes_function
                 = requires(Stream stream, char* pointer, std::streamsize count) {
@@ -329,21 +367,27 @@ namespace utils {
         template <std::unsigned_integral To, typename IterRef>
         requires(byte_input_iterator<std::remove_cvref_t<IterRef>>)
         // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-        [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept {
+        [[nodiscard]] INLINE constexpr static To read_impl(IterRef&& input) noexcept(
+                detail::nothrow_byte_read<std::remove_cvref_t<IterRef>>()) {
             using iterator = std::remove_cvref_t<IterRef>;
-            alignas(alignof(To)) std::array<char, sizeof(To)> buffer{};
+            alignas(alignof(To)) std::array<unsigned char, sizeof(To)> buffer{};
             if constexpr (detail::contiguous_reverse_iterator<iterator>) {
-                std::advance(input, sizeof(To));
+                input += sizeof(To);
             }
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
-            if constexpr (
-                    (std::contiguous_iterator<iterator>)
-                    || (detail::contiguous_reverse_iterator<iterator>)) {
+            if constexpr (detail::contiguous_reverse_iterator<iterator>) {
+                std::ranges::copy_n(
+                        std::to_address(input.base()), sizeof(To), buffer.data());
+            } else if constexpr (std::contiguous_iterator<iterator>) {
                 std::ranges::copy_n(std::to_address(input), sizeof(To), buffer.data());
+                input += sizeof(To);
             } else {
-                std::ranges::copy_n(input, sizeof(To), std::ranges::begin(buffer));
+                for (auto& byte : buffer) {
+                    byte = static_cast<unsigned char>(*input);
+                    ++input;
+                }
             }
             To const value = [&]() {
                 if constexpr (detail::contiguous_reverse_iterator<iterator>) {
@@ -360,16 +404,11 @@ namespace utils {
                     }
                 }
             }();
-            if constexpr (
-                    (std::forward_iterator<iterator>)
-                    && (!detail::contiguous_reverse_iterator<iterator>)) {
-                std::advance(input, sizeof(To));
-            }
             return value;
         }
 
         template <std::unsigned_integral T>
-        [[nodiscard]] INLINE constexpr static T write_impl(T& input, T value) noexcept {
+        INLINE constexpr static void write_impl(T& input, T value) noexcept {
             if constexpr (endian != std::endian::native) {
                 input = byteswap(value);
             } else {
@@ -404,9 +443,6 @@ namespace utils {
         template <contiguous_container Cont, std::unsigned_integral From>
         INLINE constexpr static void write_impl(Cont& output, From value) noexcept(
                 noexcept(output.resize(std::declval<size_t>()))) {
-            if constexpr (endian != std::endian::native) {
-                value = byteswap(value);
-            }
             auto const size = output.size();
             output.resize(size + sizeof(From));
             write_impl(std::addressof(output[size]), value);
@@ -415,14 +451,15 @@ namespace utils {
         template <typename IterRef, std::unsigned_integral From>
         requires(byte_output_iterator<std::remove_cvref_t<IterRef>>)
         // NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-        INLINE constexpr static void write_impl(IterRef&& output, From value) noexcept {
+        INLINE constexpr static void write_impl(IterRef&& output, From value) noexcept(
+                detail::nothrow_byte_write<std::remove_cvref_t<IterRef>>()) {
             // Both of these versions generate optimal code in GCC and
             // clang. I am splitting these cases because MSVC compiler does
             // cannot see through the iterator abstraction.
             using iterator = std::remove_cvref_t<IterRef>;
-            using buffer_t = std::array<char, sizeof(From)>;
+            using buffer_t = std::array<unsigned char, sizeof(From)>;
             if constexpr (detail::contiguous_reverse_iterator<iterator>) {
-                std::advance(output, sizeof(From));
+                output += sizeof(From);
                 if constexpr (endian == std::endian::native) {
                     value = byteswap(value);
                 }
@@ -432,17 +469,16 @@ namespace utils {
                 }
             }
             alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
-            if constexpr (
-                    (std::contiguous_iterator<iterator>)
-                    || (detail::contiguous_reverse_iterator<iterator>)) {
+            if constexpr (detail::contiguous_reverse_iterator<iterator>) {
+                std::ranges::copy(buffer, std::to_address(output.base()));
+            } else if constexpr (std::contiguous_iterator<iterator>) {
                 std::ranges::copy(buffer, std::to_address(output));
+                output += sizeof(From);
             } else {
-                std::ranges::copy(buffer, output);
-            }
-            if constexpr (
-                    (std::forward_iterator<iterator>)
-                    && (!detail::contiguous_reverse_iterator<iterator>)) {
-                std::advance(output, sizeof(From));
+                for (auto byte : buffer) {
+                    *output = byte;
+                    ++output;
+                }
             }
         }
 
