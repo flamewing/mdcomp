@@ -4,6 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <set>
 #include <string>
 
 namespace {
@@ -16,7 +17,8 @@ namespace {
                                       ? codec_test::run(codec.decode, encoded.bytes)
                                       : codec_test::result{};
         auto const expected = codec_test::padded(codec, input);
-        CAPTURE(std::string(codec.name), size, pattern, seed, encoded.diagnostic, decoded.diagnostic);
+        CAPTURE(std::string(codec.name), size, pattern, seed, encoded.diagnostic,
+                decoded.diagnostic);
         if (!encoded.success || !decoded.success || decoded.bytes != expected) {
             codec_test::save_failure(
                     codec.name,
@@ -87,4 +89,23 @@ TEST_CASE(
             CHECK(decoded.bytes == input);
         }
     }
+}
+
+TEST_CASE("Nemesis selects both normal and XOR modes", "[codec][options][nemesis]") {
+    auto const&    codec = codec_test::for_codec<nemesis>();
+    std::set<bool> modes;
+    std::string    repeated_words;
+    for (size_t i = 0; i < 64; ++i) {
+        repeated_words += "\x12\x34\x56\x78";
+    }
+    for (auto const& input : {std::string(256, '\0'), repeated_words}) {
+        auto const encoded = codec_test::run(codec.encode, input);
+        REQUIRE(encoded.success);
+        REQUIRE(encoded.bytes.size() >= 2);
+        modes.insert((static_cast<unsigned char>(encoded.bytes[0]) & 0x80) != 0);
+        auto const decoded = codec_test::run(codec.decode, encoded.bytes);
+        REQUIRE(decoded.success);
+        CHECK(decoded.bytes == input);
+    }
+    CHECK(modes == std::set<bool>{false, true});
 }

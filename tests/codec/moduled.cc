@@ -27,8 +27,8 @@ TEMPLATE_TEST_CASE(
                                                                codec.moduled_decode,
                                                                encoded.bytes, settings)
                                                      : codec_test::result{};
-                CAPTURE(std::string(codec.name), size, pattern, padding, encoded.diagnostic,
-                        decoded.diagnostic);
+                CAPTURE(std::string(codec.name), size, pattern, padding,
+                        encoded.diagnostic, decoded.diagnostic);
                 if (!encoded.success || !decoded.success || decoded.bytes != input) {
                     codec_test::save_failure(
                             codec.name,
@@ -64,14 +64,15 @@ TEMPLATE_TEST_CASE(
     CHECK_FALSE(encoded.success);
     CHECK(encoded.bytes.empty());
     codec_test::options settings;
-    settings.module_padding = 0;
+    settings.module_padding   = 0;
     auto const invalid_encode = codec_test::run(codec.moduled_encode, "xx", settings);
     CHECK_FALSE(invalid_encode.success);
     CHECK(invalid_encode.bytes.empty());
     CHECK_FALSE(invalid_encode.diagnostic.empty());
     auto const valid = codec_test::run(codec.moduled_encode, "xx");
     REQUIRE(valid.success);
-    auto const invalid_decode = codec_test::run(codec.moduled_decode, valid.bytes, settings);
+    auto const invalid_decode
+            = codec_test::run(codec.moduled_decode, valid.bytes, settings);
     CHECK_FALSE(invalid_decode.success);
     CHECK(invalid_decode.bytes.empty());
     CHECK_FALSE(invalid_decode.diagnostic.empty());

@@ -23,8 +23,8 @@ class snkrle;
 
 namespace codec_test {
     struct options {
-        bool   size_header     = true;
-        size_t compressed_size = 0;
+        bool                  size_header     = true;
+        size_t                compressed_size = 0;
         std::optional<size_t> module_padding;
     };
 
