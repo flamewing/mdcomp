@@ -32,6 +32,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <ranges>
 #include <span>
@@ -129,6 +130,7 @@ namespace optionlib {
     }
 
     template <std::integral T>
+    requires(!std::same_as<T, bool>)
     inline void read_value(std::string_view parameter, T& value) {
         bool const starts_with_minus = parameter.starts_with('-');
         if (starts_with_minus || parameter.starts_with('+')) {
@@ -156,16 +158,34 @@ namespace optionlib {
             }
             return 10;
         }();
+        if (parameter.empty()) {
+            print_error(std::errc::invalid_argument, "value", parameter);
+        }
+        using magnitude_t = std::make_unsigned_t<T>;
+        magnitude_t       magnitude{};
         auto const* const start = std::to_address(std::ranges::cbegin(parameter));
         auto const* const end   = std::to_address(std::ranges::cend(parameter));
-        if (auto [ptr, ec] = std::from_chars(start, end, value, base);
+        if (auto [ptr, ec] = std::from_chars(start, end, magnitude, base);
             ec != std::errc{} || ptr != end) {
-            print_error(ec, "value", parameter);
+            print_error(
+                    ec == std::errc{} ? std::errc::invalid_argument : ec, "value",
+                    parameter);
         }
         if constexpr (std::is_signed_v<T>) {
-            if (starts_with_minus) {
-                value = -value;
+            auto const maximum = static_cast<magnitude_t>(std::numeric_limits<T>::max());
+            auto const limit
+                    = static_cast<magnitude_t>(maximum + (starts_with_minus ? 1U : 0U));
+            if (magnitude > limit) {
+                print_error(std::errc::result_out_of_range, "value", parameter);
             }
+            if (starts_with_minus) {
+                value = magnitude == limit ? std::numeric_limits<T>::min()
+                                           : -static_cast<T>(magnitude);
+            } else {
+                value = static_cast<T>(magnitude);
+            }
+        } else {
+            value = magnitude;
         }
     }
 
@@ -323,23 +343,43 @@ namespace optionlib {
         }
     }
 
+    template <typename Fn, typename Tuple>
+    inline void invoke_codec(Fn&& function, Tuple&& arguments) {
+        if constexpr (
+                std::same_as<
+                        decltype(std::apply(
+                                std::forward<Fn>(function),
+                                std::forward<Tuple>(arguments))),
+                        bool>) {
+            if (!std::apply(std::forward<Fn>(function), std::forward<Tuple>(arguments))) {
+                std::cerr << "Codec operation failed.\n";
+                throw 5;
+            }
+        } else {
+            std::apply(std::forward<Fn>(function), std::forward<Tuple>(arguments));
+        }
+    }
+
     template <typename instream, typename outstream, typename options_t>
     inline void do_decode(instream& input, outstream& output, options_t const& options) {
         auto const do_print_end = [&]() {
             if constexpr (has_print_end<options_t>) {
-                std::cout << std::format("0x{:06x}", static_cast<size_t>(input.tellg()));
+                if (options.print_end) {
+                    std::cout << std::format(
+                            "0x{:06x}", static_cast<size_t>(input.tellg()));
+                }
             }
         };
         if constexpr (has_moduled<options_t>) {
             if (options.moduled) {
-                std::apply(
+                invoke_codec(
                         OVERLOADS_OF(options_t::format_t::moduled_decode),
                         get_moduled_decode_args(options, input, output));
                 do_print_end();
                 return;
             }
         }
-        std::apply(
+        invoke_codec(
                 OVERLOADS_OF(options_t::format_t::decode),
                 get_decode_args(options, input, output));
         do_print_end();
@@ -349,13 +389,13 @@ namespace optionlib {
     inline void do_encode(instream& input, outstream& output, options_t const& options) {
         if constexpr (has_moduled<options_t>) {
             if (options.moduled) {
-                std::apply(
+                invoke_codec(
                         OVERLOADS_OF(options_t::format_t::moduled_encode),
                         get_moduled_encode_args(options, input, output));
                 return;
             }
         }
-        std::apply(
+        invoke_codec(
                 OVERLOADS_OF(options_t::format_t::encode),
                 get_encode_args(options, input, output));
     }
@@ -387,7 +427,8 @@ namespace optionlib {
             return 3;
         }
         optionlib::do_encode(buffer, output, options);
-        return 0;
+        output.flush();
+        return output ? 0 : 3;
     }
 
     template <typename options_t>
@@ -399,6 +440,11 @@ namespace optionlib {
             std::cerr << std::format(
                     "Input file '{}' could not be opened.\n", infile.string());
             return 2;
+        }
+        std::error_code same_file_error;
+        if (std::filesystem::equivalent(infile, outfile, same_file_error)) {
+            std::cerr << "Input and output refer to the same file.\n";
+            return 3;
         }
         std::fstream output(
                 outfile,
@@ -412,7 +458,8 @@ namespace optionlib {
             input.seekg(options.pointer);
         }
         optionlib::do_decode(input, output, options);
-        return 0;
+        output.flush();
+        return output ? 0 : 3;
     }
 
     template <typename options_t>
@@ -425,6 +472,11 @@ namespace optionlib {
                     "Input file '{}' could not be opened.\n", infile.string());
             return 2;
         }
+        std::error_code same_file_error;
+        if (std::filesystem::equivalent(infile, outfile, same_file_error)) {
+            std::cerr << "Input and output refer to the same file.\n";
+            return 3;
+        }
         std::fstream output(
                 outfile,
                 std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
@@ -434,11 +486,15 @@ namespace optionlib {
             return 3;
         }
         optionlib::do_encode(input, output, options);
-        return 0;
+        output.flush();
+        return output ? 0 : 3;
     }
 
     template <typename options_t>
     inline void command_argument_parser(options_t& options) {
+        if (options.arguments.empty()) {
+            throw 1;
+        }
         options.program  = options.arguments.front();
         auto const count = static_cast<int>(std::ssize(options.arguments));
         while (true) {
@@ -472,6 +528,9 @@ namespace optionlib {
             case 'S':
                 parse_with_size(options);
                 break;
+            case '?':
+            case ':':
+                throw 1;
             default:
                 break;
             }

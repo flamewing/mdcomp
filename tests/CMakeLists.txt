@@ -11,9 +11,13 @@ add_executable(mdcomp-unit-tests
     unit/stream_utils.cc
     unit/decoder_wrappers.cc
     unit/lzss.cc
+    unit/options.cc
 )
 target_link_libraries(mdcomp-unit-tests PRIVATE mdcomp::bigendian_io Catch2::Catch2WithMain)
 target_include_directories(mdcomp-unit-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+if(MSVC)
+    target_link_libraries(mdcomp-unit-tests PRIVATE unofficial::getopt-win32::getopt)
+endif()
 
 add_library(mdcomp-header-checks OBJECT support/header_checks.cc)
 target_link_libraries(mdcomp-header-checks PRIVATE mdcomp::bigendian_io)
