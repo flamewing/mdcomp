@@ -10,12 +10,13 @@ from compare_binaries import corpus, digest, executable, run
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reference-dir", type=Path, required=True)
-    parser.add_argument("--reference-kind", choices=("kens", "kens15", "kenssharp", "snkrle"), required=True)
+    parser.add_argument("--reference-kind", choices=("kens", "kens15", "kenssharp", "snkrle", "accurate-kosinski", "original-saxman", "clownlzss", "clownnemesis", "clownnemesis-accurate"), required=True)
     parser.add_argument("--candidate-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--candidate-runtime-dir", type=Path, action="append", default=[])
     parser.add_argument("--reference-runtime-dir", type=Path, action="append", default=[])
     parser.add_argument("--timeout", type=float, default=5)
+    parser.add_argument("--boundaries", action="store_true", help="Add Kosinski/Saxman descriptor, history and window boundary cases")
     args = parser.parse_args()
     if os.name != "nt" and args.reference_kind == "kens":
         parser.error("Original KENS DLLs require Windows and an x86 .NET Framework wrapper")
@@ -23,7 +24,7 @@ def main():
         import ctypes
         ctypes.windll.kernel32.SetErrorMode(0x8003)
     reference = executable(args.reference_dir.resolve(),
-                           {"kens": "kens", "kens15": "koscmp", "kenssharp": "KensSharp", "snkrle": "rle"}[args.reference_kind])
+                           {"kens": "kens", "kens15": "koscmp", "kenssharp": "KensSharp", "snkrle": "rle", "accurate-kosinski": "kosinski-compress", "original-saxman": "original-saxman", "clownlzss": "clownlzss", "clownnemesis": "clownnemesis-tool", "clownnemesis-accurate": "clownnemesis-tool"}[args.reference_kind])
     if reference is None:
         parser.error("Missing reference executable")
     reference_dir = args.reference_dir.resolve()
@@ -40,8 +41,29 @@ def main():
         codecs += [("Comper", "compcmp"), ("KosinskiPlus", "kosplus")]
     elif args.reference_kind == "snkrle":
         codecs = [("SnKRLE", "snkcmp")]
+    elif args.reference_kind == "accurate-kosinski":
+        codecs = [("Kosinski", "koscmp")]
+    elif args.reference_kind == "original-saxman":
+        codecs = [("Saxman", "saxcmp")]
+    elif args.reference_kind.startswith("clownnemesis"):
+        codecs = [("Nemesis", "nemcmp")]
+    elif args.reference_kind == "clownlzss":
+        codecs = [("Kosinski", "koscmp"), ("Saxman", "saxcmp"), ("Comper", "compcmp"), ("KosinskiPlus", "kosplus"), ("Rocket", "rockcmp")]
 
     def reference_command(codec, encode, source, output):
+        if args.reference_kind == "accurate-kosinski":
+            tool = executable(reference_dir, "kosinski-compress" if encode else "kosinski-decompress")
+            if tool is None:
+                parser.error("Missing accurate Kosinski tool")
+            report["hashes"]["reference-" + tool.name] = digest(tool)
+            return [tool, source, output]
+        if args.reference_kind == "original-saxman":
+            return [reference, "encode" if encode else "decode", source, output]
+        if args.reference_kind.startswith("clownnemesis"):
+            return [reference, ("-ca" if args.reference_kind.endswith("-accurate") else "-c") if encode else "-d", source, output]
+        if args.reference_kind == "clownlzss":
+            option = {"Kosinski": "-k", "Saxman": "-s", "Comper": "-c", "KosinskiPlus": "-kp", "Rocket": "-r"}[codec]
+            return [reference] + ([] if encode else ["-d"]) + [option, source, output]
         if args.reference_kind == "kens":
             return [reference, reference_dir, codec, "encode" if encode else "decode", source, output]
         if args.reference_kind == "kenssharp":
@@ -60,6 +82,13 @@ def main():
             parser.error("Missing candidate tool: " + name)
         report["hashes"][candidate.name] = digest(candidate)
         inputs = list(corpus())
+        if args.boundaries and codec in ("Kosinski", "Saxman"):
+            inputs += list(corpus((1, 7, 8, 9, 15, 16, 17, 255, 257)))
+            inputs += [("seed-crossing", b"A\0A\0" + bytes(28)),
+                       ("seed-crossing-distinct", b"A\0A\0B\0" + bytes(26))]
+            random_window = dict(corpus((8192,)))["random-seed-12345678-8192"]
+            for window in (4096, 8192):
+                inputs.append(("window-{}-copy".format(window), random_window[:window] + random_window[:256]))
         if args.reference_kind == "snkrle":
             inputs += [("run-257-then-literals", b"A" * 257 + bytes(range(31))),
                        ("run-258-then-literals", b"A" * 258 + bytes(range(30))),

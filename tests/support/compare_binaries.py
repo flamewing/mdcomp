@@ -23,8 +23,8 @@ def executable(directory, name):
     return path if path.is_file() else None
 
 
-def corpus():
-    for size in (32, 64, 256, 512):
+def corpus(sizes=(32, 64, 256, 512)):
+    for size in sizes:
         state = 0x12345678
         random_bytes = bytearray()
         for _ in range(size):

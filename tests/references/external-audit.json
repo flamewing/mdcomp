@@ -416,5 +416,168 @@
         ]
       }
     }
+  },
+  "accurate-kosinski-boundaries": {
+    "summary": {
+      "cases": 56,
+      "passed": 56,
+      "directions": {
+        "reference_to_reference": 56,
+        "reference_to_candidate": 56,
+        "candidate_to_reference": 56,
+        "candidate_to_candidate": 56
+      }
+    },
+    "binary_hashes": {
+      "kosinski-compress.exe": "2c39aa0b1466849be09319706cc9590a4bdbe00f93531840471c4b47dcfccf0c",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "reference-kosinski-compress.exe": "2c39aa0b1466849be09319706cc9590a4bdbe00f93531840471c4b47dcfccf0c",
+      "reference-kosinski-decompress.exe": "d2846c732da4ff6c62e5299d53910019a11256b7ae133d34116bfe3ecab3cb01"
+    }
+  },
+  "original-saxman-boundaries": {
+    "summary": {
+      "cases": 56,
+      "passed": 54,
+      "directions": {
+        "reference_to_reference": 56,
+        "reference_to_candidate": 54,
+        "candidate_to_reference": 56,
+        "candidate_to_candidate": 56
+      }
+    },
+    "binary_hashes": {
+      "original-saxman.exe": "cdb51748f8a97677dee79efda18c09ea2d98387b121ceb9eda1d76d9297dc9b6",
+      "saxcmp.exe": "8cfd856ef12abeb85f4dd9ff108c1e76ab158310cdf0de417fc4b5eac1cc6e5e"
+    }
+  },
+  "clownlzss-boundaries": {
+    "summary": {
+      "cases": 160,
+      "passed": 160,
+      "directions": {
+        "reference_to_reference": 160,
+        "reference_to_candidate": 160,
+        "candidate_to_reference": 160,
+        "candidate_to_candidate": 160
+      }
+    },
+    "binary_hashes": {
+      "clownlzss.exe": "78aba5641996aaefc3b32eea8760069d25f2e9a1cd560da04843995fb4d856c8",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "saxcmp.exe": "8cfd856ef12abeb85f4dd9ff108c1e76ab158310cdf0de417fc4b5eac1cc6e5e",
+      "compcmp.exe": "158d370cc2a69bc431c956b11cd249ca5e9b6cbe0e511fa927c11d1c8c436cb8",
+      "kosplus.exe": "fb40e564322f5c7190d9e8c21d0ac6c3894a788b95dfc4b6089ec717167a6f5a",
+      "rockcmp.exe": "bdd023aee382d9f84c26231955efaa637b3ae5b189b60605afd837782355504d"
+    }
+  },
+  "clownnemesis-comparison": {
+    "summary": {
+      "cases": 16,
+      "passed": 16,
+      "directions": {
+        "reference_to_reference": 16,
+        "reference_to_candidate": 16,
+        "candidate_to_reference": 16,
+        "candidate_to_candidate": 16
+      }
+    },
+    "binary_hashes": {
+      "clownnemesis-tool.exe": "d9d81a0e35d01a3bbcec306eb06a5ca5bd7e5e65c21b9eabd688c9743404359a",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6"
+    }
+  },
+  "clownnemesis-accurate-comparison": {
+    "summary": {
+      "cases": 16,
+      "passed": 16,
+      "directions": {
+        "reference_to_reference": 16,
+        "reference_to_candidate": 16,
+        "candidate_to_reference": 16,
+        "candidate_to_candidate": 16
+      }
+    },
+    "binary_hashes": {
+      "clownnemesis-tool.exe": "d9d81a0e35d01a3bbcec306eb06a5ca5bd7e5e65c21b9eabd688c9743404359a",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6"
+    }
+  },
+  "kens-rc3-after-saxman": {
+    "summary": {
+      "cases": 64,
+      "passed": 36,
+      "directions": {
+        "reference_to_reference": 36,
+        "reference_to_candidate": 52,
+        "candidate_to_reference": 48,
+        "candidate_to_candidate": 64
+      }
+    },
+    "binary_hashes": {
+      "kens.exe": "dfa96ae35128c95d13acc22710aa19cca48c9179479566f60b01ab6ca42bdb7a",
+      "Enigma.dll": "e3a2f71e755b6b347257cc68627b9f962f833558a414944808461a147f3b45f4",
+      "Kosinski.dll": "7bb7d7a8dd7505c5addbeb4cf10f430b95b29ff62857fafd32334346cddd87b2",
+      "Nemesis.dll": "c5a0dcaa50f03c29871697d94d27681c3a425f48d40e9506f1f598778d6b0ea9",
+      "Saxman.dll": "bf39485d13b7a159e7c7b5f1a647593ee369b8af3100dd1ed6778b1a40aa29cb",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "saxcmp.exe": "8cfd856ef12abeb85f4dd9ff108c1e76ab158310cdf0de417fc4b5eac1cc6e5e"
+    }
+  },
+  "kens15-after-saxman": {
+    "summary": {
+      "cases": 64,
+      "passed": 40,
+      "directions": {
+        "reference_to_reference": 40,
+        "reference_to_candidate": 56,
+        "candidate_to_reference": 48,
+        "candidate_to_candidate": 64
+      }
+    },
+    "binary_hashes": {
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "reference-runtime/kens/libenigma.dll": "d40b49bb093eb376a689644b96b41862e107e9256ffcb82310ef42093e5cb891",
+      "reference-runtime/kens/libkosinski.dll": "a4554b28f33bbc1275bec19962d89a2d5f90c1038ec97a69d5baa37fbe64512f",
+      "reference-runtime/kens/libnemesis.dll": "43001ee7215690cf657c319a19de0793beb5cc96a3a43cfdfc2c75ca9b5b96f0",
+      "reference-runtime/kens/libsaxman.dll": "e17bc3f8bf3b1bfc3274a3cf1c45430e67423551fabc259d26095918abccda0d",
+      "reference-koscmp.exe": "653b97937149297077a9be09ef725c8260a137e7bddfcbedbfa746e61490e31c",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "reference-enicmp.exe": "4edf886a13801d6c6c589c27b6fb40cca29c89aa11c07b69812f8afff00dfec0",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "reference-nemcmp.exe": "b9f332cb05b86e749ebdae76eddb6485e2b66a554ae65c3ad54cf2e4b80dfb8e",
+      "saxcmp.exe": "8cfd856ef12abeb85f4dd9ff108c1e76ab158310cdf0de417fc4b5eac1cc6e5e",
+      "reference-saxcmp.exe": "4c33cd9cd50e62b4adc717433411cd4b3e2e6ab4bfaddb2a475f34934f52c0ad"
+    }
+  },
+  "kenssharp-after-saxman": {
+    "summary": {
+      "cases": 96,
+      "passed": 80,
+      "directions": {
+        "reference_to_reference": 80,
+        "reference_to_candidate": 80,
+        "candidate_to_reference": 96,
+        "candidate_to_candidate": 96
+      }
+    },
+    "binary_hashes": {
+      "KensSharp.exe": "0422e3765011fda17ca16c807f1e2c1ba6136af03cbe91a94d3957b80f191aa0",
+      "SonicRetro.KensSharp.Common.dll": "5ea2a1526dff4f4afe111d7813795f6065c1a54448bc502d1426ffa03ce64ca9",
+      "SonicRetro.KensSharp.Comper.dll": "12c30c136bae7dca70e3ee29bb53cc6eb042fd80d14af4475d1df3e13332b92e",
+      "SonicRetro.KensSharp.Enigma.dll": "2561720906dda73292bdf29a15e316b26b1b322483aaee57d8cc2e206cb048ea",
+      "SonicRetro.KensSharp.Kosinski+.dll": "a945a35e04d670bc40a3129d51fe48475d16694f0fc51c28816cf521c4c1d986",
+      "SonicRetro.KensSharp.Kosinski.dll": "aabf0b3e158db66f247e877f632d3f61cb1371b4b3af5208a10c3025c5f7da39",
+      "SonicRetro.KensSharp.Nemesis.dll": "f10c262f0ebbf7d72ad78ac11f820b643b743b07b38d2d98a74b8eedb0840629",
+      "SonicRetro.KensSharp.Saxman.dll": "5a40f35d46f652bb3a54080cd790bd9282c111c9ef099e3b7b8eb7a14747e052",
+      "koscmp.exe": "abf20a314e79f9567460b22cabeb3f3ec585cd55735e900235931fa436e45431",
+      "enicmp.exe": "d63e47290854c4146245399b9e0c91e7b68d0872d1d43635d371e0bdb170fada",
+      "nemcmp.exe": "a91c0746d231573de3dde202feb476e9c7fc01883bf2169f05f5cb14c37218b6",
+      "saxcmp.exe": "8cfd856ef12abeb85f4dd9ff108c1e76ab158310cdf0de417fc4b5eac1cc6e5e",
+      "compcmp.exe": "158d370cc2a69bc431c956b11cd249ca5e9b6cbe0e511fa927c11d1c8c436cb8",
+      "kosplus.exe": "fb40e564322f5c7190d9e8c21d0ac6c3894a788b95dfc4b6089ec717167a6f5a"
+    }
   }
 }

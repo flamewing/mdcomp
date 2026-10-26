@@ -49,6 +49,60 @@
       "commit": "b35f41327bda9a26a755bb321a317a32cd13d652",
       "lineage": "Supplementary mirror DLLs rebuilt in 2015; hashes differ from the primary 2004 RC3 distribution. Not used for committed fixtures.",
       "license": "LGPL-2.1-or-later (headers)"
+    },
+    "accurate-kosinski": {
+      "source_url": "https://github.com/Clownacy/accurate-kosinski",
+      "commit": "45abe26a5882ef27a18f3f0052b6ef063bbbc3a8",
+      "archive_url": "https://codeload.github.com/Clownacy/accurate-kosinski/zip/45abe26a5882ef27a18f3f0052b6ef063bbbc3a8",
+      "archive_sha256": "24e3ce0944968c55d003ecc4452f9680c8e55a04dcce94bdf229d21be9168d7e",
+      "license": "0BSD (LICENCE.txt)",
+      "build": "Unmodified codec source; GCC 16.2, CMake/Ninja, C90; ClownLZSS frontend/header codecs use C++20",
+      "lineage": "Reimplementation intended to reproduce Sega compressor output, including historical match-selection quirks; not the released original LZEXE source.",
+      "clowncommon": {
+        "commit": "8e5b225477f743df98c1a630a2a0482ef37f0f1d",
+        "archive_url": "https://codeload.github.com/Clownacy/clowncommon/zip/8e5b225477f743df98c1a630a2a0482ef37f0f1d",
+        "archive_sha256": "041a19bc7dd8ce25dd484b37621e1cc79c5ab4b5df7a32a60eda56c5e948950c"
+      }
+    },
+    "clownlzss": {
+      "source_url": "https://github.com/Clownacy/clownlzss",
+      "commit": "8055bd2e2d258dab604ea26ded9e42144562db54",
+      "archive_url": "https://codeload.github.com/Clownacy/clownlzss/zip/8055bd2e2d258dab604ea26ded9e42144562db54",
+      "archive_sha256": "f7d69aefd6ccdd260c0ee2f02b8be530022b187bee407c1ab6e29ba044000f6a",
+      "license": "0BSD (LICENCE.txt)",
+      "build": "Unmodified codec source; GCC 16.2, CMake/Ninja, C90; ClownLZSS frontend/header codecs use C++20",
+      "lineage": "Separate implementation informed by mdcomp optimal-parsing design; current pinned frontend and codec headers are C++20, compression core is C90."
+    },
+    "clownnemesis": {
+      "source_url": "https://github.com/Clownacy/clownnemesis",
+      "commit": "7abcddc7e220f33c1e03ccaecb46a0c0323182c8",
+      "archive_url": "https://codeload.github.com/Clownacy/clownnemesis/zip/7abcddc7e220f33c1e03ccaecb46a0c0323182c8",
+      "archive_sha256": "a90b873ac42e42c35c79bc1b99e1807fc75191be94ab6e881fb7da08e68ffa9a",
+      "license": "0BSD (LICENCE.txt)",
+      "build": "Unmodified codec source; GCC 16.2, CMake/Ninja, C90; ClownLZSS frontend/header codecs use C++20",
+      "lineage": "Separate Nemesis implementation; tested both improved and Sega-accurate modes.",
+      "clowncommon": {
+        "commit": "37d1efd90725a7c30dce5f38ea14f1bc3c29a52f",
+        "archive_url": "https://codeload.github.com/Clownacy/clowncommon/zip/37d1efd90725a7c30dce5f38ea14f1bc3c29a52f",
+        "archive_sha256": "52fe35ddb05040ed6019cdcdaf3d7507a2e363e1a93da6fd5e0c1551f2c139a5"
+      }
+    },
+    "clownnemesis-accurate": {
+      "reference": "clownnemesis",
+      "mode": "-ca, Sega-accurate encoding; same source/dependency pins"
+    },
+    "original-saxman": {
+      "source_url": "https://github.com/Clownacy/p2bin/tree/396d050fb0d127fe9fcac9801598543b4a5d8930/lz_comp2",
+      "commit": "396d050fb0d127fe9fcac9801598543b4a5d8930",
+      "file_sha256": {
+        "LZSS.c": "650860fade68e3258b227aa4e58e64a046043ef611a64fbd3651523e060bdae1",
+        "LZSS.h": "c6569e9b9115fd8edf3757a64241c223a2eeb2868da1b0b8bf98132d13060c83",
+        "readme.txt": "6a85ab4b241ecd18672fdc908015ac04a7036f852465e5b46f4a0f9bf30b3f4e"
+      },
+      "license": "Haruhiko Okumura permissive use/distribute/modify grant in LZSS.c; see source for modifications/attribution",
+      "lineage": "Okumura 1989 LZSS with Clownacy Saxman zero-history modifications. Upstream describes Sega-output reproduction; not a recovered Sega-specific source release. Ring-copy behavior differs from documented Sega zero-fill for origin-crossing matches.",
+      "adapter": "tests/support/original_saxman.c supplies LE16 compressed-body length and bounds decode reads; codec body unchanged",
+      "build": "GCC 16.2 -std=c90 -O2"
     }
   }
 }
