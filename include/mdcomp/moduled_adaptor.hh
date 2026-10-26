@@ -34,6 +34,8 @@
 
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
+    static_assert(ModuleSize > 0, "Module size must be positive");
+    static_assert(DefaultModulePadding > 0, "Module padding must be positive");
     moduled_adaptor() = default;
     friend Format;
 
@@ -52,17 +54,39 @@ public:
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
         std::istream& source, std::iostream& dest, size_t const module_padding) {
-    using diff_t                = std::make_signed_t<size_t>;
-    int64_t const     full_size = big_endian::read2(source);
+    if (module_padding == 0) {
+        throw std::invalid_argument("Module padding must be positive");
+    }
+    using diff_t = std::make_signed_t<size_t>;
+    if (!std::in_range<diff_t>(module_padding)) {
+        throw std::overflow_error("Module padding exceeds stream offset range");
+    }
+    int64_t const full_size = big_endian::read2(source);
+    auto const    start     = dest.tellp();
+    if (!source || start == std::streampos{-1}) {
+        return false;
+    }
     std::stringstream input(std::ios::in | std::ios::out | std::ios::binary);
-    input << source.rdbuf();
+    if (source.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
+        input << source.rdbuf();
+    }
     utils::pad_to_even(input);
     input.seekg(0);
 
     while (true) {
-        Format::decode(input, dest);
-        if (dest.tellp() >= full_size) {
+        auto const before = dest.tellp();
+        if (!Format::decode(input, dest) || !dest) {
+            return false;
+        }
+        auto const after = dest.tellp();
+        if (after == std::streampos{-1}) {
+            return false;
+        }
+        if (after - start >= full_size) {
             break;
+        }
+        if (after <= before || !input || input.tellg() == std::streampos{-1}) {
+            return false;
         }
 
         // Skip padding between modules
@@ -70,6 +94,9 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
                 utils::round_up(
                         static_cast<diff_t>(input.tellg()),
                         static_cast<diff_t>(module_padding)));
+        if (!input) {
+            return false;
+        }
     }
 
     return true;
@@ -78,23 +105,39 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_decode(
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         std::istream& source, std::ostream& dest, size_t const module_padding) {
+    if (module_padding == 0) {
+        throw std::invalid_argument("Module padding must be positive");
+    }
     auto full_size = utils::size(source);
-    auto data      = utils::read_from_bytes<std::vector<char>>(source, full_size);
+    if (full_size > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
+    auto data = utils::read_from_bytes<std::vector<char>>(source, full_size);
+    if (!source) {
+        return false;
+    }
 
     big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
     std::span         input_span(data);
     while (input_span.size() > ModuleSize) {
-        Format::encode(buffer, input_span.subspan(0, ModuleSize));
+        if (!Format::encode(buffer, input_span.subspan(0, ModuleSize)) || !buffer) {
+            return false;
+        }
         input_span = input_span.subspan(ModuleSize);
         // Padding between modules
         utils::pad_to_multiple(buffer, module_padding);
     }
 
-    Format::encode(buffer, input_span);
+    if (!Format::encode(buffer, input_span) || !buffer) {
+        return false;
+    }
 
     // Pad to even size.
     dest << buffer.rdbuf();
+    if (!dest) {
+        return false;
+    }
     utils::pad_to_even(dest);
     return true;
 }

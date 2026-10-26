@@ -9,6 +9,7 @@ add_executable(mdcomp-unit-tests
     unit/small_utilities.cc
     unit/bitstream.cc
     unit/stream_utils.cc
+    unit/decoder_wrappers.cc
 )
 target_link_libraries(mdcomp-unit-tests PRIVATE mdcomp::bigendian_io Catch2::Catch2WithMain)
 target_include_directories(mdcomp-unit-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

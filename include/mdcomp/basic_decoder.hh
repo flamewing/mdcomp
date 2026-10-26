@@ -22,6 +22,7 @@
 
 #include "mdcomp/stream_utils.hh"
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -51,6 +52,8 @@ struct aligned_allocator : std::allocator<T> {
             Align >= alignof(T),
             "Beware that types like int have minimum alignment requirements "
             "or access will result in crashes.");
+    static_assert(
+            std::has_single_bit(Align), "Allocator alignment must be a power of two");
 
 public:
     using std::allocator<T>::allocator;
@@ -72,11 +75,17 @@ public:
         return static_cast<T*>(::operator new[](size_bytes, std::align_val_t{Align}));
     }
 
-    void deallocate(T* pointer, [[maybe_unused]] std::size_t count_bytes) {
+    void deallocate(T* pointer, [[maybe_unused]] std::size_t count_bytes) noexcept {
         ignore_unused_variable_warning(count_bytes);
         ::operator delete[](pointer, std::align_val_t{Align});
     }
 };
+
+template <typename T, size_t Left, typename U, size_t Right>
+constexpr bool operator==(
+        aligned_allocator<T, Left> const&, aligned_allocator<U, Right> const&) noexcept {
+    return Left == Right;
+}
 
 template <typename Format, pad_mode Pad, typename... Args>
 bool basic_decoder<Format, Pad, Args...>::encode(
@@ -87,7 +96,13 @@ bool basic_decoder<Format, Pad, Args...>::encode(
     auto full_size = utils::size(source);
     auto padding   = Pad == pad_mode::pad_even ? 2U : 1U;
     auto data      = utils::read_from_bytes<cont_t>(source, full_size, padding);
+    if (!source) {
+        return false;
+    }
     if (Format::encode(dest, data, args...)) {
+        if (!dest) {
+            return false;
+        }
         utils::pad_to_even(dest);
         return true;
     }
@@ -97,9 +112,14 @@ bool basic_decoder<Format, Pad, Args...>::encode(
 template <typename Format, pad_mode Pad, typename... Args>
 void basic_decoder<Format, Pad, Args...>::extract(
         std::istream& source, std::iostream& dest) {
-    dest << source.rdbuf();
+    if (!source) {
+        throw std::ios_base::failure("Cannot extract a failed input stream");
+    }
+    if (source.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
+        dest << source.rdbuf();
+    }
     utils::pad_to_even(dest);
     dest.seekg(0);
 }
 
-#endif    // LIB_MODULED_ADAPTOR_H
+#endif    // LIB_BASIC_DECODER_H
