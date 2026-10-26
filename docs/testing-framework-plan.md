@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 86 hand-constructed fixtures, 20 qualified external encodings, and pinned binary/source comparisons are implemented. Complete format-edge inventories, encoder-selection coverage, all option combinations, and assembly execution remain pending; the refactor gate remains blocked.
+Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 hand-constructed fixtures, 38 qualified external encodings, and pinned binary/source comparisons are implemented. Complete format-edge inventories, encoder-selection coverage, all option combinations, and assembly execution remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -37,7 +37,7 @@ complete. Documentation deliverables and their validation are tracked in
 
 ## Current Baseline
 
-The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and 67 codec/fixture cases. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), [pinned master-binary comparisons](../tests/references/README.md), and [external codec qualification](../tests/references/external.md).
+The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and 69 codec/fixture cases. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), [pinned master-binary comparisons](../tests/references/README.md), and [external codec qualification](../tests/references/external.md).
 
 The first implementation checkpoint contains 17 unit cases, including exhaustive 16-bit byte swapping and a deterministic 64-bit corpus. These pass with GCC 16.2, Clang 23.1, and MSVC 19.44 in C++20 mode; GCC also passes in C++23 mode and with 128-bit support disabled after loading its platform headers. Full GCC and MSVC library/tool builds pass, and a separate `BUILD_TESTING=OFF` configuration builds without Catch2. These checks establish the endian utility baseline, not codec compatibility or the assembly oracle gate.
 
@@ -48,6 +48,8 @@ A third checkpoint adds a shared stream adapter, deterministic basic/padding con
 External qualification now includes the primary original KENS 1.4 RC3 distribution, the SourceForge 1.4.22/1.5 alpha archive, KENSSharp, and kirjavascript's RLE. The alpha's rewritten codecs and KENSSharp share flamewing/mdcomp ancestry; original KENS remains a separate reference. Twenty encodings that passed all self/cross-checks are retained as reference-generated fixtures. Reference failures are recorded rather than blessed, including original KENS encoder/decoder discrepancies and KENSSharp's reversed Saxman size calculation. The RLE header adaptation is explicit; its assembly decoder has not yet been executed. This checkpoint does not complete the assembly or 100% format-edge gate.
 
 The expanded checkpoint passes all 109 offline CTest cases with GCC 16.2, Clang 23.1, and MSVC 19.44. GCC and MSVC also pass the optional 160-case frozen-master audit, for 110 CTest entries each. External-reference disagreements remain visible in the separate qualification report; they are not converted into passing oracle checks.
+
+A format-based follow-up adds pinned Accurate Kosinski, Okumura-derived Saxman, ClownLZSS, and both ClownNemesis modes. Bounded test-only interpreters reproduce two published examples and 38 applicable hand-constructed fixtures. The audit establishes a mdcomp Saxman boundary defect (now fixed), reference framing and encoder defects, and the distinction between Okumura ring copying and Sega whole-token zero filling. Direct fixtures also expose ClownLZSS differences that its encoder-generated corpus misses; noncanonical full-window aliases are explicitly qualified against the rebasing/68k target rather than the original Z80 routine. See [format-based verdicts](../tests/references/format-verdicts.md). The current 111 offline tests pass with all three compilers, and GCC/MSVC retain passing frozen-master comparisons; saved coverage is now 88 hand-constructed and 38 external encodings. Assembly execution and complete format-edge coverage remain pending.
 
 The current implemented C++ codec set to baseline is:
 

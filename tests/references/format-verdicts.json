@@ -1,0 +1,880 @@
+{
+  "schema_version": 1,
+  "published_examples": 2,
+  "format_models": [
+    "kosinski",
+    "saxman",
+    "enigma",
+    "nemesis"
+  ],
+  "model_fixture_cases": 38,
+  "model_fixture_failures": [],
+  "decoder_fixtures": {
+    "accurate-kosinski": [
+      {
+        "id": "kosinski/literal-1",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 1,
+        "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-7",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 7,
+        "sha256": "57355ac3303c148f11aef7cb179456b9232cde33a818dfda2c2fcb9325749a6b",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-8",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 8,
+        "sha256": "8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-15",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 15,
+        "sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-16",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 16,
+        "sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-17",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 17,
+        "sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-32",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-0-2",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 3,
+        "sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-0-5",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 6,
+        "sha256": "69dc6c3210e25e62c5938ff4e841e81ce3c7d2cde583553478a77d7fcb389f30",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-1-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-1-9",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 10,
+        "sha256": "1d65bf29403e4fb1767522a107c827b8884d16640cf0e3b18c4c1dd107e0d49d",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-2-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-2-256",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 257,
+        "sha256": "77608f24da6140277bd789efec57a179b1c1e57f44045ebd2b39e3c1e7e18d42",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/discard-control",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 1,
+        "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+        "matches_expected": true
+      }
+    ],
+    "original-saxman": [
+      {
+        "id": "saxman/overlap-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/overlap-18",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 19,
+        "sha256": "234b7f9389f9b521f407805760775940d79a48188338d02a1fe654e826a83f69",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/seed-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 3,
+        "sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/seed-18",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 18,
+        "sha256": "60daa3a5f7dbfa200f8c82840ecf5b42640b70f3b7218a4c6bbd67db542e75a4",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/zero-fill-crossing-origin",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "f34907bdee7c67576c789740b145ed1a1a001219e15f6f90d5f5f933f16e7b9e",
+        "matches_expected": false
+      },
+      {
+        "id": "saxman/unused-final-descriptor",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 16,
+        "sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+        "matches_expected": true
+      }
+    ],
+    "clownlzss": [
+      {
+        "id": "kosinski/literal-1",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 1,
+        "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-7",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 7,
+        "sha256": "57355ac3303c148f11aef7cb179456b9232cde33a818dfda2c2fcb9325749a6b",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-8",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 8,
+        "sha256": "8a851ff82ee7048ad09ec3847f1ddf44944104d2cbd17ef4e3db22c6785a0d45",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-15",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 15,
+        "sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-16",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 16,
+        "sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-17",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 17,
+        "sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/literal-32",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-0-2",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 3,
+        "sha256": "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-0-5",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 6,
+        "sha256": "69dc6c3210e25e62c5938ff4e841e81ce3c7d2cde583553478a77d7fcb389f30",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-1-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-1-9",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 10,
+        "sha256": "1d65bf29403e4fb1767522a107c827b8884d16640cf0e3b18c4c1dd107e0d49d",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-2-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/match-2-256",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 257,
+        "sha256": "77608f24da6140277bd789efec57a179b1c1e57f44045ebd2b39e3c1e7e18d42",
+        "matches_expected": true
+      },
+      {
+        "id": "kosinski/discard-control",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 1,
+        "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/overlap-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/overlap-18",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 19,
+        "sha256": "234b7f9389f9b521f407805760775940d79a48188338d02a1fe654e826a83f69",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/seed-3",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 3,
+        "sha256": "be04df759ccd2129c7baac3b305604080d61da505077f58898d9051830963c88",
+        "matches_expected": false
+      },
+      {
+        "id": "saxman/seed-18",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 18,
+        "sha256": "52e2597e09c539a02aedfc243ed70e76f694af72f57ba4c465fe0e093ac0d30f",
+        "matches_expected": false
+      },
+      {
+        "id": "saxman/zero-fill-crossing-origin",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 4,
+        "sha256": "daaf62de76f04e09a55d751f98b97c440bd2dba3f4d9d55a6e93ce8446266f92",
+        "matches_expected": true
+      },
+      {
+        "id": "saxman/unused-final-descriptor",
+        "status": "completed",
+        "exit_code": 1,
+        "size": 16,
+        "sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+        "diagnostic": "Error: File IO failure with description 'basic_ios::clear: iostream error'\r\n",
+        "matches_expected": false
+      }
+    ],
+    "clownnemesis": [
+      {
+        "id": "nemesis/inline-normal",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "e0e77a507412b120f6ede61f62295b1a7b2ff19d3dcc8f7253e51663470c888e",
+        "matches_expected": true
+      },
+      {
+        "id": "nemesis/inline-xor",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "ec725dab020ce4ac4cfa8f18dd935ae9b86e94370164902c143b303afb5b5c58",
+        "matches_expected": true
+      },
+      {
+        "id": "nemesis/table-code",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "e0e77a507412b120f6ede61f62295b1a7b2ff19d3dcc8f7253e51663470c888e",
+        "matches_expected": true
+      },
+      {
+        "id": "nemesis/inline-counts-one-through-eight",
+        "status": "completed",
+        "exit_code": 0,
+        "size": 32,
+        "sha256": "ef2214c9c6874a62d025c05a922ff300bd759024094423b7c2908eea6425088e",
+        "matches_expected": true
+      }
+    ]
+  },
+  "comparisons": {
+    "kens-rc3-after-saxman": {
+      "enigma": {
+        "cases": 16,
+        "reference_encodings_match_format": 12,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 12,
+          "reference_to_candidate": 12,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": [
+          {
+            "case": "zeros-32",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 34,
+            "expected_size": 32
+          },
+          {
+            "case": "zeros-64",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 66,
+            "expected_size": 64
+          },
+          {
+            "case": "zeros-256",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 258,
+            "expected_size": 256
+          },
+          {
+            "case": "zeros-512",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 514,
+            "expected_size": 512
+          }
+        ]
+      },
+      "kosinski": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "nemesis": {
+        "cases": 16,
+        "reference_encodings_match_format": 8,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 8,
+          "reference_to_candidate": 8,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": [
+          {
+            "case": "ascending-32",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "random-seed-12345678-32",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "ascending-64",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "random-seed-12345678-64",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "ascending-256",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "random-seed-12345678-256",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "ascending-512",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 512
+          },
+          {
+            "case": "random-seed-12345678-512",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 512
+          }
+        ]
+      },
+      "saxman": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 0,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    },
+    "kens15-after-saxman": {
+      "enigma": {
+        "cases": 16,
+        "reference_encodings_match_format": 8,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 8,
+          "reference_to_candidate": 8,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": [
+          {
+            "case": "ascending-32",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "random-seed-12345678-32",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "ascending-64",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "random-seed-12345678-64",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "ascending-256",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "random-seed-12345678-256",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "ascending-512",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 512
+          },
+          {
+            "case": "random-seed-12345678-512",
+            "category": "reference encoder execution failure",
+            "reason": "truncated input at byte 0",
+            "model_decoded_size": null,
+            "expected_size": 512
+          }
+        ]
+      },
+      "kosinski": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "nemesis": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "saxman": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 0,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    },
+    "kenssharp-after-saxman": {
+      "enigma": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "kosinski": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "nemesis": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "saxman": {
+        "cases": 16,
+        "reference_encodings_match_format": 0,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 0,
+          "reference_to_candidate": 0,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": [
+          {
+            "case": "zeros-32",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "repeat-32",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "ascending-32",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "random-seed-12345678-32",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 32
+          },
+          {
+            "case": "zeros-64",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "repeat-64",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "ascending-64",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "random-seed-12345678-64",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 64
+          },
+          {
+            "case": "zeros-256",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "repeat-256",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "ascending-256",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "random-seed-12345678-256",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 256
+          },
+          {
+            "case": "zeros-512",
+            "category": "reference encoder execution failure",
+            "reason": null,
+            "model_decoded_size": null,
+            "expected_size": 512
+          },
+          {
+            "case": "repeat-512",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 512
+          },
+          {
+            "case": "ascending-512",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 512
+          },
+          {
+            "case": "random-seed-12345678-512",
+            "category": "reference encoder produced malformed stream",
+            "reason": "Saxman declared body length exceeds available bytes",
+            "model_decoded_size": null,
+            "expected_size": 512
+          }
+        ]
+      }
+    },
+    "accurate-kosinski-boundaries": {
+      "kosinski": {
+        "cases": 56,
+        "reference_encodings_match_format": 56,
+        "mdcomp_encodings_match_format": 56,
+        "cross_decodes": {
+          "reference_to_reference": 56,
+          "reference_to_candidate": 56,
+          "candidate_to_reference": 56,
+          "candidate_to_candidate": 56
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    },
+    "original-saxman-boundaries": {
+      "saxman": {
+        "cases": 56,
+        "reference_encodings_match_format": 54,
+        "mdcomp_encodings_match_format": 56,
+        "cross_decodes": {
+          "reference_to_reference": 56,
+          "reference_to_candidate": 54,
+          "candidate_to_reference": 56,
+          "candidate_to_candidate": 56
+        },
+        "encoding_failures_or_mdcomp_disagreements": [
+          {
+            "case": "seed-crossing",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 32,
+            "expected_size": 32
+          },
+          {
+            "case": "seed-crossing-distinct",
+            "category": "reference encoder produced wrong data under documented format",
+            "reason": null,
+            "model_decoded_size": 32,
+            "expected_size": 32
+          }
+        ]
+      }
+    },
+    "clownlzss-boundaries": {
+      "kosinski": {
+        "cases": 56,
+        "reference_encodings_match_format": 56,
+        "mdcomp_encodings_match_format": 56,
+        "cross_decodes": {
+          "reference_to_reference": 56,
+          "reference_to_candidate": 56,
+          "candidate_to_reference": 56,
+          "candidate_to_candidate": 56
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      },
+      "saxman": {
+        "cases": 56,
+        "reference_encodings_match_format": 56,
+        "mdcomp_encodings_match_format": 56,
+        "cross_decodes": {
+          "reference_to_reference": 56,
+          "reference_to_candidate": 56,
+          "candidate_to_reference": 56,
+          "candidate_to_candidate": 56
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    },
+    "clownnemesis-comparison": {
+      "nemesis": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    },
+    "clownnemesis-accurate-comparison": {
+      "nemesis": {
+        "cases": 16,
+        "reference_encodings_match_format": 16,
+        "mdcomp_encodings_match_format": 16,
+        "cross_decodes": {
+          "reference_to_reference": 16,
+          "reference_to_candidate": 16,
+          "candidate_to_reference": 16,
+          "candidate_to_candidate": 16
+        },
+        "encoding_failures_or_mdcomp_disagreements": []
+      }
+    }
+  }
+}
