@@ -27,7 +27,9 @@ cmake --install build-deps/catch-build --config Release
 cmake -S . -B build-tests -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$PWD/build-deps/catch-install"
 ```
 
-The initial suite covers endian I/O. Codec adapters, independent fixtures, and assembly harnesses remain tracked in [the testing plan](../docs/testing-framework-plan.md); passing these unit tests does not complete the pre-refactor baseline gate.
+The suite covers the shared low-level headers and includes initial codec smoke/reference cases. [The low-level review](../docs/low-level-review.md) records fixes and remaining risks; [master-binary comparisons](references/README.md) document optional cross-version checks. Full codec adapters, fixtures, and assembly harnesses remain tracked in [the testing plan](../docs/testing-framework-plan.md); the pre-refactor baseline gate remains blocked.
+
+Bit reads/writes accept counts from zero through the word width. Zero counts leave the buffer unchanged; larger counts throw `std::out_of_range`. Callback construction and stream errors propagate. LZSS writers provide an explicit, idempotent `finish()` for final write failures; their noexcept destructor fallback records stream failure instead of throwing during cleanup.
 
 Endian stream operations preserve ordinary `istream`/`ostream` state and exception-mask behavior. Direct `streambuf` transfers throw `std::ios_base::failure` when `sgetn` or `sputn` transfers fewer bytes than requested; an underlying exception propagates. A failed transfer can consume or produce a prefix and does not roll back. Endian input iterators yield complete values only, read their first value during construction, and become end iterators on an incomplete read when the stream does not throw.
 

@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation started. Catch2 v3, CTest registration, CI test jobs, and endian I/O runtime/constexpr regressions are implemented. Codec baseline and assembly work remain pending; the refactor gate remains blocked.
+Status: implementation started. Catch2 v3, CTest/CI integration, shared low-level runtime/constexpr regressions, initial codec cases, and pinned master-binary comparisons are implemented. Full format-edge, moduled, and assembly coverage remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -37,9 +37,11 @@ complete. Documentation deliverables and their validation are tracked in
 
 ## Current Baseline
 
-The project now has a Catch2 v3 unit target registered with CTest. Endian I/O regressions exercise byte order, scalar and iterator transfers, stream adapters, failure propagation, and available 128-bit types at runtime and, where possible, through `static_assert`s. Existing header assertions remain compiled. Codec operations and format compatibility are not yet covered by this initial suite. See [the test workflow](../tests/README.md) for dependency setup and local commands.
+The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and nine codec cases; full codec contracts and format-edge coverage remain pending. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), and [pinned master-binary comparisons](../tests/references/README.md).
 
 The first implementation checkpoint contains 17 unit cases, including exhaustive 16-bit byte swapping and a deterministic 64-bit corpus. These pass with GCC 16.2, Clang 23.1, and MSVC 19.44 in C++20 mode; GCC also passes in C++23 mode and with 128-bit support disabled after loading its platform headers. Full GCC and MSVC library/tool builds pass, and a separate `BUILD_TESTING=OFF` configuration builds without Catch2. These checks establish the endian utility baseline, not codec compatibility or the assembly oracle gate.
+
+A second checkpoint adds seven LZSS codec round-trip cases, hand-authored ComperX vectors, and Enigma boundary/reference checks. Default CLI comparisons against both published Windows binaries and frozen current master cover 160 cases per reference and compare both encodings and all self/cross-decodes. They exposed pre-test ComperX/Rocket failures and Enigma size regressions; the repaired branch matches both references byte-for-byte on that corpus. These references share mdcomp lineage and do not replace independent format/assembly oracles. The MSVC CI job imports the hash-pinned published snapshot and runs the comparison; other builds can opt in through `MDCOMP_REFERENCE_BIN_DIR`.
 
 The current implemented C++ codec set to baseline is:
 
@@ -783,7 +785,7 @@ Checklist:
 
 - [x] Add CTest and Catch2.
 - [ ] Create the common C++ codec test adapter.
-- [ ] Add one round-trip and one known-answer smoke test.
+- [x] Add one round-trip and one known-answer smoke test.
 - [ ] Establish fixture provenance conventions.
 - [ ] Establish reference-tool pinning and shared-lineage classifications.
 
