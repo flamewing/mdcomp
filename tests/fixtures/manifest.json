@@ -1313,6 +1313,40 @@
       "raw_size": 3,
       "source": "src/asm/Saxman.asm"
     },
+    "saxman/unused-final-descriptor": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "852344045ff632cdbab4aa04e80172f0031f49cb36adac773de0ede0fc470dec",
+      "compressed_size": 21,
+      "edges": [
+        "literal",
+        "descriptor-reload",
+        "unused-descriptor",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+      "raw_size": 16,
+      "source": "src/asm/Saxman.asm"
+    },
+    "saxman/zero-fill-crossing-origin": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "328370b8e2092091e13ae808afec0b6bb02286d3d2cb747753db5840d9e2388a",
+      "compressed_size": 6,
+      "edges": [
+        "literal",
+        "seeded-fill",
+        "source-before-start",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "daaf62de76f04e09a55d751f98b97c440bd2dba3f4d9d55a6e93ce8446266f92",
+      "raw_size": 4,
+      "source": "src/asm/Saxman.asm"
+    },
     "snkrle/continuation": {
       "classification": "hand-constructed",
       "codec": "snkrle",

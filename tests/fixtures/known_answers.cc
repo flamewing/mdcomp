@@ -392,7 +392,31 @@ namespace codec_test {
                     }
                 }
             }
-            if (!sax) {
+            if (sax) {
+                out.push_back({
+                        "saxman/zero-fill-crossing-origin",
+                        "saxman",
+                        bytes({4, 0, 1, 'A', 0xed, 0xf0}
+                        ),
+                        std::string("A\0\0\0", 4),
+                        {"literal", "seeded-fill", "source-before-start", "size-bound"}
+                });
+                std::string body, expected;
+                for (unsigned group = 0; group < 2; ++group) {
+                    byte(body, 0xff);
+                    for (unsigned i = 0; i < 8; ++i) {
+                        byte(body, group * 8 + i);
+                        byte(expected, group * 8 + i);
+                    }
+                }
+                byte(body, 0);
+                out.push_back({
+                        "saxman/unused-final-descriptor", "saxman",
+                        bytes({19, 0}) + body, expected,
+                        {"literal", "descriptor-reload", "unused-descriptor", "size-bound"},
+                        {}, size_t{21}
+                });
+            } else {
                 descriptors wire(8, true, true, false);
                 wire.bit(0);
                 wire.put(0xff);

@@ -48,7 +48,8 @@ def main():
     if args.comparison_root is None:
         parser.error("Capture requires --comparison-root")
     fixtures = []
-    for reference in ("kens-rc3", "kenssharp", "snkrle"):
+    for reference in ("kens-rc3", "kenssharp", "snkrle", "accurate-kosinski",
+                      "original-saxman", "clownlzss", "clownnemesis", "clownnemesis-accurate"):
         directory = args.comparison_root / (reference + "-comparison")
         report = json.loads((directory / "report.json").read_text())
         for row in report["cases"]:
