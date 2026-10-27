@@ -65,7 +65,7 @@ jobs:
         run: |
           cmake --build build -j2
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure --no-tests=error
       - name: Preserve assembly failure evidence
         if: failure()
         uses: actions/upload-artifact@v4

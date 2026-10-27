@@ -66,10 +66,11 @@ foreach(index RANGE ${codec_last})
     endforeach()
 endforeach()
 target_include_directories(mdcomp-codec-smoke-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(mdcomp-codec-smoke-tests PRIVATE Catch2::Catch2WithMain
+set(codec_test_libraries Catch2::Catch2WithMain
     mdcomp::comperStatic mdcomp::comperxStatic mdcomp::kosinskiStatic
     mdcomp::kosplusStatic mdcomp::lzkn1Static mdcomp::rocketStatic mdcomp::saxmanStatic
     mdcomp::enigmaStatic mdcomp::nemesisStatic mdcomp::snkrleStatic)
+target_link_libraries(mdcomp-codec-smoke-tests PRIVATE ${codec_test_libraries})
 catch_discover_tests(mdcomp-codec-smoke-tests
     TEST_PREFIX "codec::"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -77,6 +78,16 @@ catch_discover_tests(mdcomp-codec-smoke-tests
     DISCOVERY_MODE PRE_TEST
     ADD_TAGS_AS_LABELS
 )
+
+option(MDCOMP_STRESS_TESTS "Run the larger deterministic synthetic codec sweep" OFF)
+if(MDCOMP_STRESS_TESTS)
+    add_executable(mdcomp-codec-stress-tests codec/stress.cc support/codec_api.cc support/format_observer.cc)
+    target_include_directories(mdcomp-codec-stress-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(mdcomp-codec-stress-tests PRIVATE ${codec_test_libraries})
+    catch_discover_tests(mdcomp-codec-stress-tests TEST_PREFIX "stress::"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        PROPERTIES LABELS stress TIMEOUT 600 DISCOVERY_MODE PRE_TEST ADD_TAGS_AS_LABELS)
+endif()
 
 add_executable(mdcomp-fixture-export support/export_fixtures.cc fixtures/known_answers.cc)
 target_include_directories(mdcomp-fixture-export PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

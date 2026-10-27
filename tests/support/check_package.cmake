@@ -25,4 +25,4 @@ run("${CMAKE_COMMAND}" -S "${SOURCE}" -B "${stage}/build" -G "${GENERATOR}"
     "-DBoost_DIR=${BOOST_CONFIG}"
     "-DPACKAGE_CONFIG_DIR=${stage}/install/${LIBDIR}/cmake/mdcomp" ${extra})
 run("${CMAKE_COMMAND}" --build "${stage}/build" --config "${CONFIG}" --parallel 2)
-run("${CTEST}" --test-dir "${stage}/build" -C "${CONFIG}" --output-on-failure)
+run("${CTEST}" --test-dir "${stage}/build" -C "${CONFIG}" --output-on-failure --no-tests=error)

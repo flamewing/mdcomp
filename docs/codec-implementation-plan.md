@@ -827,3 +827,5 @@ Optimal encoders additionally require:
 - Whether UFTC15 encoding is supported or only UFTC15 decoding.
 - Whether a practical Nemesis optimizer can be proven global or is documented
   as oracle-tested and strictly improving.
+
+The concrete [test contribution workflow](../tests/CONTRIBUTING.md) and [edge manifest](../tests/fixtures/edges.json) define the fixture, observer, and regression gates for additions. New variants must declare their own obligations and provide independent expected results before implementation. Checked-buffer safety and constexpr inverse gates still depend on the buffer prerequisites above.

@@ -1,6 +1,9 @@
 name: ci-linux
 
 on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
   push:
     paths:
       - "**"
@@ -29,6 +32,8 @@ on:
 jobs:
   ci-linux:
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/build-ccache
     strategy:
       matrix:
         compiler: [gcc, clang]
@@ -60,7 +65,7 @@ jobs:
           else
             sudo apt-fast update
           fi
-          sudo apt-fast install -y libboost-all-dev ninja-build
+          sudo apt-fast install -y libboost-all-dev ninja-build ccache
       - name: Set up GCC
         if: ${{ matrix.compiler == 'gcc' }}
         uses: egor-tensin/setup-gcc@v1
@@ -75,6 +80,12 @@ jobs:
         uses: actions/checkout@master
         with:
           submodules: recursive
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: linux-${{ matrix.compiler }}-${{ matrix.generator }}-${{ matrix.sanitize }}-ccache-${{ github.sha }}
+          restore-keys: linux-${{ matrix.compiler }}-${{ matrix.generator }}-${{ matrix.sanitize }}-ccache-
       - name: Install Catch2 v3
         run: |
           git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
@@ -88,6 +99,7 @@ jobs:
           OVERRIDE_CC: ${{ matrix.cc }}
           OVERRIDE_CXX: ${{ matrix.cxx }}
           SANITIZE: ${{ matrix.sanitize }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           export CC=$(which $OVERRIDE_CC)
           export CXX=$(which $OVERRIDE_CXX)
@@ -95,10 +107,13 @@ jobs:
           if [ "$SANITIZE" = true ]; then
             extra_flags+=(-DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer")
           fi
+          if [[ "$SANITIZE" = true && ( "$EVENT_NAME" = schedule || "$EVENT_NAME" = workflow_dispatch ) ]]; then
+            extra_flags+=(-DMDCOMP_STRESS_TESTS=ON)
+          fi
           git submodule status --recursive
           "$CXX" --version
           cmake --version
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders" "${extra_flags[@]}"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders" "${extra_flags[@]}"
       - name: Build
         run: |
           cmake --build build -j2
@@ -106,7 +121,7 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure --no-tests=error
       - name: Preserve assembly failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
@@ -117,4 +132,5 @@ jobs:
             build/tests/asm/*.tsv
             build/tests/asm/decoder_images.json
             build/tests/*-edges.tsv
+            build/tests/failures/
             build/Testing/Temporary/LastTest.log

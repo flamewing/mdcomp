@@ -316,18 +316,15 @@ and do not expose instrumentation through the installed public ABI.
 
 Checklist:
 
-- [ ] Inventory the edge/token forms for each existing codec.
-- [ ] Define a stable test-only edge identifier for each form.
-- [ ] Add a per-codec manifest distinguishing encoder, decoder, and boundary
-      obligations.
-- [ ] Add test-only observation at a shared layer where possible.
-- [ ] Add codec-specific inspectors for formats that do not use the shared
-      LZSS layer.
-- [ ] Verify that encoded output actually contains every claimed encoder edge.
-- [ ] Use hand-authored streams to cover legal decoder-only edge forms.
-- [ ] Fail the suite when a manifest obligation has no covering fixture.
-- [ ] Require the manifest and initial failing fixtures before implementing a
-      new codec.
+- [x] Inventory the initial wire forms for every existing codec in `tests/fixtures/edges.json`.
+- [x] Define stable test-only wire-form identifiers.
+- [x] Add separate per-codec encoder, decoder, and semantic-boundary obligations.
+- [x] Add shared test-owned readers and descriptor observers.
+- [x] Add independent Enigma, Nemesis, and SnKRLE wire interpreters.
+- [x] Verify every claimed encoder form in actual emitted bytes.
+- [x] Use hand-authored decoder-only forms, including the Kosinski discard control.
+- [x] Fail with codec/mode/form context for an uncovered obligation.
+- [x] Require manifests and initial failing fixtures in the test contribution workflow.
 - [ ] Optionally collect line and branch coverage as a diagnostic, but do not
       substitute it for format-edge coverage.
 
@@ -407,7 +404,7 @@ Checklist:
       alignment.
 - [ ] Verify owned and mapped destinations resize to the exact prepared size.
 - [ ] Verify failed prepare operations do not mutate the destination.
-- [ ] Run suitable jobs under AddressSanitizer and UndefinedBehaviorSanitizer.
+- [x] Run the available C++ and emulator contracts under Linux ASan/UBSan.
 
 ## Assembly Decoder Tests
 
@@ -757,12 +754,11 @@ Before production code for a new codec is accepted:
 
 Checklist:
 
-- [ ] Add this workflow to the contributor documentation.
-- [ ] Make the codec implementation plan link to the required fixture and edge
-      manifest gates.
-- [ ] Provide a copyable test adapter and fixture skeleton.
-- [ ] Require new format variants to add their own manifest obligations.
-- [ ] Require every fixed bug to add a regression fixture or generated case.
+- [x] Add the concrete test-first workflow to `tests/CONTRIBUTING.md`.
+- [x] Link the codec implementation plan to fixture and edge-manifest gates.
+- [x] Provide an adapter example and fixture skeleton in the contribution workflow.
+- [x] Require variant-specific manifest obligations.
+- [x] Require a regression fixture or generated case for each fix.
 
 ## CI and Reproducibility
 
@@ -773,14 +769,13 @@ Checklist:
       macOS after the submodule toolchains are verified there.
 - [x] Add a Linux Clang/Ninja ASan/UBSan job for C++ codecs and emulator harness/cores; local GCC 15.2 Linux qualification passes 123 cases, remote CI still needs observation.
 - [ ] Add an optional compiler line/branch coverage job.
-- [ ] Run slow randomized and exhaustive tests on a scheduled or explicitly
-      requested job.
-- [ ] Cache submodule builds without allowing unpinned network downloads.
+- [x] Add a scheduled/manual deterministic randomized sweep; exhaustive legal-parameter sweeps remain future expansion.
+- [x] Cache compiler outputs in Linux CI, including the pinned ASL host build; source retrieval remains the existing pinned submodule/import workflow. Remote cache hits still need observation.
 - [x] Print configure-time dependency commit IDs in assembly-test diagnostics, fault artifacts, and runner output; source archives report unknown.
 - [ ] Make all pseudo-random tests deterministic and reproducible by seed.
 - [ ] Prevent emulator tests from hanging through both CTest timeouts and
       internal execution budgets.
-- [ ] Document how to run one codec, one architecture, or one fixture locally.
+- [x] Document focused codec, fixture, and architecture commands in the contribution workflow.
 
 ## Milestone Checklist
 
@@ -892,3 +887,5 @@ Independent wire observers now validate all eight current module encoders across
 The per-source [assembly inventory](../tests/references/assembly-inventory.json) now distinguishes header attribution, maintainer evidence, edited original-derived routines, and imported game-disassembly provenance. Audit generation rejects an unclassified staged source. Exact shipped-revision deployment histories remain unknown; this inventory records that limitation rather than asserting no field use or borrowing game deployment claims for optimized replacements. Dependency commit IDs are now included in test startup, machine fault diagnostics, and runner JSON/human output.
 
 The installed-package check exposed and fixed missing installed CMake exports and transitive Boost header metadata. The package configuration now works from both the build tree and an installation. Fresh installed consumers pass with all four local configurations; the full totals are 126 tests, or 127 with the optional published-binary comparison.
+
+The optional stress sweep adds 2,560 deterministic encode/decode/independent-observer comparisons across four seeds and all ten codecs. It passes on GCC, Clang, MSVC, and Linux ASan/UBSan and is enabled for scheduled/manual Clang/Ninja CI. CI now rejects empty test selections and caches compilation through ccache, including the pinned ASL host tools. The [contribution workflow](../tests/CONTRIBUTING.md) records TDD gates and focused commands. Exhaustive parameter sweeps, optional compiler line/branch coverage, complete external full-module generation, and remote CI observation remain explicit follow-ups.
