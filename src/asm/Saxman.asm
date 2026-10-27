@@ -54,11 +54,7 @@ _SaxDec_GetByte macro dst
 	else
 		subq.w	#ARGCOUNT,d6		; decrement remaining number of bytes
 	endif
-	if ARGCOUNT>1
-		bhi.s	.continue
-	else
-		bne.s	.continue
-	endif
+		bcc.s	.continue		; zero remaining still permits this final read
 	rts								; exit the decompressor by meddling with the stack
 .continue:
 	_SaxDec_ReadByte ALLARGS

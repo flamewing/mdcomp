@@ -98,8 +98,11 @@ zKosPlusDec:
 	ld	c, a
 	ld	b, 0							; bc = number of copies-2
 
+	or	a
+	jr	z, .CopyLastTwo			; LDIR with BC=0 would copy 65536 bytes
 	ldir
 	; Always copy at least two bytes.
+.CopyLastTwo:
 	ldi
 	ldi
 	pop	hl								; Restore input position

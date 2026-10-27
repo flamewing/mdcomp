@@ -92,7 +92,10 @@ zKosDec:
 	ld	c, a
 	ld	b, 0							; bc = number of copies-2
 
+	or	a
+	jr	z, .CopyLastTwo			; LDIR with BC=0 would copy 65536 bytes
 	ldir
+.CopyLastTwo:
 	ldi
 	ldi
 	pop	hl								; Restore input position
@@ -126,7 +129,7 @@ zKosDec:
 	jr	nz, .StreamCopy					; if cnt>1, branch.
 
 	pop	bc								; Stack cleanup
-	jr	.FetchNewCode					; cnt=1, so fetch a new code.
+	jp	.FetchNewCode					; cnt=1, so fetch a new code.
 ; ---------------------------------------------------------------------------
 .Quit:
 	pop	bc								; Stack cleanup

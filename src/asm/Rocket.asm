@@ -44,12 +44,14 @@ _Rocket_ReadBit macro
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; ---------------------------------------------------------------------------
 RocketDec:
-	move.w	(a0)+,d0				; Read uncompressed file length, and discard it
+	addq.l	#2,a0					; Skip uncompressed file length
+	moveq	#0,d0
 	move.w	(a0)+,d0				; Read compressed data length
-	lea	(a0,d0.w),a3				; End of compression pointer
+	movea.l	a0,a3
+	adda.l	d0,a3					; Length is unsigned, including values >= $8000
 	move.w	#-$3C0,d0				; Position bias
 	lea	(a1),a4						; Copy of start position
-	lea	(a1,d1.w),a6				; Apply also position bias
+	lea	(a1,d0.w),a6				; Apply position bias from d0
 	moveq	#$20,d1
 	move.w	#$FC00,d3
 	if _Rocket_UseLUT==1
@@ -108,17 +110,23 @@ RocketDec:
 	add.w	d5,d5					; d5 = %000000ddcccccc00
 	move.b	(a0)+,d5				; d5 is now base offset
 	; Rebase offset
-	sub.w	a6,d5
-	add.w	a4,d5					; d5 -= number of bytes decompressed - position bias
+	sub.w	a1,d5
+	add.w	a6,d5					; d5 -= bytes decompressed + $3C0 bias
 	or.w	d3,d5					; d5 = (d5 & $3FF) - $400
 	lea	(a1,d5.w),a5
 	move.l	a5,d5
 	sub.l	a4,d5					; Is rebased offset is before start?
 	bhs.s	.just_copy				; Branch if not
 	; Need to copy some spaces. -d5 is how many.
-	add.w	d5,d4					; d4 is number of copies-1 to do after
+	move.w	d4,d6					; Preserve requested length-1
+	add.w	d5,d4					; Remaining copies-1 after seeded history
+	bpl.s	.seed_to_output
+	move.w	d6,d5					; Entire match is seeded: clamp fill to requested length
+	bra.s	.emit_spaces
+.seed_to_output:
 	sub.w	d5,a5					; Seek source of copy by as many 0x20's as we will write
 	not.w	d5						; d5 = -d5-1, a loop index
+.emit_spaces:
 	if _Rocket_LoopUnroll>0
 		move.w	d5,d6
 		not.w	d6

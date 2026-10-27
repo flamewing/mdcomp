@@ -22,7 +22,7 @@
 ;		d0-d4, a2
 ; -----------------------------------------------------------------------------
 	set comperx_jump_to_reg_on_end,0			; rts on end
-ComperXDec:
+	; ComperX_internal.asm defines the public ComperXDec entry label.
 	include "ComperX_internal.asm"
 	; ComperX never returns by falling off the end of ComperX_internal.asm.
 	; Therefore, no need for an 'rts' instruction here.
