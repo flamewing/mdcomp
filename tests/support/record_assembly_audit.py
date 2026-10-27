@@ -45,13 +45,16 @@ def main():
                                 "hand-crafted/reference-derived mdcomp routine; see source authorship")
         record["deployment"] = "Not independently surveyed; no new field-use claim"
         record["verification"] = ["emulator", "hand-constructed expectations", "C++ encoder interoperability"]
-        record["configuration"] = "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+        record["configuration"] = record.get("configuration", "default")
+        record["source_alignment"] = "odd" if record["payload"] & 1 else "even"
         if record["self_modifying"]:
-            record["configuration"] = "OptimiseDriver=0; only the two exported instruction words are writable"
+            record["configuration"] += "; OptimiseDriver=0; only the two exported instruction words are writable"
     total, failed = 0, []
-    for filename, mode in (("bootstrap.tsv", "known-answer"), ("external.tsv", "external-encoding"),
+    for filename, mode in (("bootstrap.tsv", "known-answer"), ("optimization.tsv", "optimization-known-answer"), ("external.tsv", "external-encoding"),
                             ("encode.tsv", "cpp-encoding"), ("rocket-large.tsv", "cpp-encoding"),
                             ("negative.tsv", "containment")):
+        if filename == "optimization.tsv" and not (root / filename).exists():
+            continue  # Compatibility with earlier default-only runs.
         rows = (root / filename).read_text().splitlines()
         for line in rows:
             fields = line.split("\t")
@@ -82,7 +85,7 @@ def main():
             raise ValueError("Missing bootstrap/encoder coverage: " + name)
         if record["cases"].get("external-encoding"):
             record["verification"].append("qualified external encodings; lineage retained in external manifest")
-    summary = {"schema_version": 1, "scope": "Default direct decoder configurations only; no moduled hardware queues or real hardware",
+    summary = {"schema_version": 2, "scope": "Direct decoder defaults and declared optimization matrices; no moduled hardware queues or real hardware",
                "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
                "recorded_cases": total, "failed_cases": failed, "decoders": list(records.values())}
     args.output.write_bytes((json.dumps(summary, indent=2) + "\n").encode("utf-8"))

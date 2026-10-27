@@ -12,6 +12,8 @@ namespace asm_test {
         cpu              architecture;
         bool             original, self_modifying;
         size_t           readable_padding;
+        std::string_view configuration;
+        size_t           stack_scratch_bytes;
     };
 
     constexpr inline decoder compiled_decoders[]{

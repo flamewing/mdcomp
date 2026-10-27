@@ -1,3 +1,4 @@
+#include "decoder_registry.hh"
 #include "machine.hh"
 
 #include <catch2/catch_test_macros.hpp>
@@ -80,4 +81,30 @@ TEST_CASE("68000 word accesses enforce original CPU alignment", "[asm][machine]"
             asm_test::cpu::m68000);
     config.output_size = 4;
     CHECK(asm_test::execute(copy, "test", config).completed);
+}
+
+TEST_CASE("Saxman byte headers need only their declared scratch word", "[asm][machine]") {
+    for (auto const& d : asm_test::decoder_images()) {
+        if (!d.stack_scratch_bytes) {
+            continue;
+        }
+        auto const image = asm_test::load_image(
+                asm_test::image_directory() / (std::string(d.name) + ".bin"),
+                d.architecture);
+        std::string const  input("\x02\0\x01\x41", 4);    // Sized body: one literal A.
+        asm_test::settings config;
+        config.output_size      = 1;
+        config.readable_padding = 0;
+        auto const guarded      = asm_test::execute(image, input, config);
+        CHECK_FALSE(guarded.completed);
+        CHECK(guarded.diagnostic.find("unwritten") != std::string::npos);
+        config.stack_scratch_bytes = d.stack_scratch_bytes;
+        for (uint8_t poison : {uint8_t{0xa5}, uint8_t{0x5a}}) {
+            config.stack_scratch_fill = poison;
+            auto const decoded        = asm_test::execute(image, input, config);
+            INFO(decoded.diagnostic);
+            CHECK(decoded.completed);
+            CHECK(decoded.bytes == "A");
+        }
+    }
 }

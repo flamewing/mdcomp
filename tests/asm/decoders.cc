@@ -1,6 +1,7 @@
 #include "decoder_registry.hh"
 #include "fixtures/known_answers.hh"
 #include "machine.hh"
+#include "support/wire_builder.hh"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -41,14 +42,24 @@ namespace {
             decoder const& d, codec_test::fixture const& f, std::ostream& report,
             uint16_t art_base = 0) {
         asm_test::settings settings;
-        settings.output_size      = f.expected.size();
-        settings.art_base         = art_base;
-        settings.readable_padding = d.readable_padding;
-        settings.self_modifying   = d.self_modifying;
-        auto const result         = asm_test::execute(image(d), f.compressed, settings);
+        settings.output_size         = f.expected.size();
+        settings.art_base            = art_base;
+        settings.readable_padding    = d.readable_padding;
+        settings.self_modifying      = d.self_modifying;
+        settings.stack_scratch_bytes = d.stack_scratch_bytes;
+        auto const result = asm_test::execute(image(d), f.compressed, settings);
         INFO(d.name << '/' << f.id << "\n" << result.diagnostic);
         INFO(asm_test::timing(d.architecture, result));
         CHECK((result.completed && result.bytes == f.expected));
+        if (d.stack_scratch_bytes) {
+            // Saxman's byte-swapping header discards one scratch stack byte.
+            // A second poison pattern must not affect the decompressed data.
+            settings.stack_scratch_fill = 0x5a;
+            auto const changed = asm_test::execute(image(d), f.compressed, settings);
+            CHECK(changed.completed);
+            CHECK(changed.bytes == result.bytes);
+            CHECK(changed.cycles == result.cycles);
+        }
         report << d.name << '\t' << f.id << '\t' << result.completed << '\t'
                << (result.bytes == f.expected) << '\t' << result.instructions << '\t'
                << result.cycles << '\t' << result.input_high_water << '\t'
@@ -117,6 +128,176 @@ TEST_CASE("Assembly decoders accept qualified external encodings", "[asm][extern
     for (auto const& d : decoders) {
         for (auto const& f : fixtures) {
             if (compatible(d, f)) {
+                check(d, f, report);
+            }
+        }
+    }
+}
+
+TEST_CASE(
+        "Assembly optimization configurations preserve every small match tail",
+        "[asm][bootstrap][optimization]") {
+    using codec_test::fixture;
+    using codec_test::wire::descriptors;
+    std::vector<fixture> fixtures;
+    // Every tail modulo 2, 4, and 8, plus larger loop/counter boundaries.
+    std::vector<unsigned> lengths;
+    for (unsigned n = 2; n <= 17; ++n) {
+        lengths.push_back(n);
+    }
+    for (unsigned n : {63U, 64U, 65U, 127U, 128U, 129U, 254U, 255U, 256U}) {
+        lengths.push_back(n);
+    }
+    for (bool x : {false, true}) {
+        for (unsigned n : lengths) {
+            if (x && n == 256) {
+                continue;
+            }
+            for (unsigned distance = 1; distance <= (x ? 2U : 1U); ++distance) {
+                descriptors wire(16, false, false, false);
+                std::string expected;
+                for (unsigned i = 0; i < distance; ++i) {
+                    wire.bit(0);
+                    wire.put_word(i ? 0x1234 : 0xabcd);
+                    codec_test::wire::word(expected, i ? 0x1234 : 0xabcd);
+                }
+                wire.bit(1);
+                wire.put(x && distance == 1 ? 0 : 0x100 - distance + unsigned(x));
+                wire.put(x ? (0x80 - (n >> 1)) | ((n & 1) << 7) : n - 1);
+                for (unsigned i = 0; i < n; ++i) {
+                    codec_test::wire::word(
+                            expected, distance == 2 && (i & 1) ? 0x1234 : 0xabcd);
+                }
+                wire.bit(1);
+                // Exercise both ComperX exit slots (RLE and ordinary copy).
+                wire.put(x && distance == 1 ? 0 : 0xff);
+                wire.put(0);
+                fixtures.push_back({
+                        "optimization/" + std::string(x ? "comperx" : "comper") + "-"
+                                + std::to_string(distance) + "-" + std::to_string(n),
+                        x ? "comperx" : "comper",
+                        wire.data,
+                        expected,
+                        {"unroll-tail", "overlap", "terminator"},
+                        {},
+                        {}
+                });
+            }
+        }
+    }
+    for (bool plus : {false, true}) {
+        for (unsigned kind = 0; kind < 3; ++kind) {
+            std::vector<unsigned> counts;
+            if (kind == 0) {
+                counts = {2, 3, 4, 5};
+            }
+            if (kind == 1) {
+                counts = {3, 4, 5, 6, 7, 8, 9};
+            }
+            if (kind == 2) {
+                for (unsigned n = plus ? 10U : 3U; n <= (plus ? 26U : 19U); ++n) {
+                    counts.push_back(n);
+                }
+                counts.insert(counts.end(), {63, 64, 65, 127, 128, 129, 254, 255, 256});
+                if (plus) {
+                    counts.insert(counts.end(), {263, 264});
+                }
+            }
+            for (unsigned n : counts) {
+                descriptors wire(plus ? 8 : 16, !plus, true, !plus);
+                wire.bit(1);
+                wire.put('A');
+                wire.bits(kind == 0 ? 0 : 1, 2);
+                if (kind == 0) {
+                    if (plus) {
+                        wire.put(0xff);
+                    }
+                    wire.bits(n - 2, 2);
+                    if (!plus) {
+                        wire.put(0xff);
+                    }
+                } else {
+                    auto const high
+                            = 0xf8U | (kind == 1 ? (plus ? 10U - n : n - 2U) : 0U);
+                    wire.put(plus ? high : 0xff);
+                    wire.put(plus ? 0xff : high);
+                    if (kind == 2) {
+                        wire.put(plus ? n - 9 : n - 1);
+                    }
+                }
+                wire.bits(1, 2);
+                wire.put(0);
+                wire.put(0);
+                wire.put(0);
+                fixtures.push_back({
+                        "optimization/" + std::string(plus ? "kosplus" : "kosinski") + "-"
+                                + std::to_string(kind) + "-" + std::to_string(n),
+                        plus ? "kosplus" : "kosinski",
+                        wire.data,
+                        std::string(n + 1, 'A'),
+                        {"unroll-tail", "overlap", "terminator"},
+                        {},
+                        {}
+                });
+            }
+        }
+    }
+    for (bool sax : {false, true}) {
+        for (unsigned n = sax ? 3U : 2U; n <= (sax ? 18U : 64U); ++n) {
+            for (bool seed : {false, true}) {
+                descriptors wire(8, true, true, false);
+                if (!seed) {
+                    wire.bit(1);
+                    wire.put('A');
+                }
+                wire.bit(0);
+                if (sax) {
+                    wire.put(0xee);
+                    wire.put(0xf0 | (n - 3));
+                } else {
+                    auto const offset = seed ? 0U : 0x3c0U;
+                    wire.put(((n - 1) << 2) | (offset >> 8));
+                    wire.put(offset);
+                }
+                std::string expected(
+                        n + unsigned(!seed), seed ? (sax ? '\0' : ' ') : 'A');
+                std::string header;
+                if (sax) {
+                    codec_test::wire::byte(header, unsigned(wire.data.size()));
+                    codec_test::wire::byte(header, 0);
+                } else {
+                    codec_test::wire::word(header, unsigned(expected.size()));
+                    codec_test::wire::word(header, unsigned(wire.data.size()));
+                }
+                fixtures.push_back({
+                        "optimization/" + std::string(sax ? "saxman" : "rocket") + "-"
+                                + std::to_string(unsigned(seed)) + "-"
+                                + std::to_string(n),
+                        sax ? "saxman" : "rocket",
+                        header + wire.data,
+                        expected,
+                        {"unroll-tail", seed ? "seeded-fill" : "overlap"},
+                        {},
+                        {}
+                });
+            }
+        }
+    }
+    std::ofstream report("optimization.tsv");
+    for (auto const& f : fixtures) {
+        // This is corroboration, not the source of the expected bytes above.
+        for (auto const& api : codec_test::codecs()) {
+            if (api.name == f.codec) {
+                auto const decoded = codec_test::run(api.decode, f.compressed);
+                INFO(f.id);
+                REQUIRE(decoded.success);
+                REQUIRE(decoded.bytes == f.expected);
+            }
+        }
+        for (auto const& d : decoders) {
+            // These target the shipped optimization implementations; Sega's
+            // original Saxman aliases have separately qualified semantics.
+            if (!d.original && compatible(d, f)) {
                 check(d, f, report);
             }
         }

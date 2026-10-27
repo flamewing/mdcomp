@@ -1,5 +1,7 @@
 #include "known_answers.hh"
 
+#include "support/wire_builder.hh"
+
 #include <array>
 #include <cstdint>
 #include <initializer_list>
@@ -32,57 +34,7 @@ namespace codec_test {
             return result;
         }
 
-        // Test-only wire assembly. No production endian, bitstream, or encoder
-        // helper is used. Descriptor placeholders are patched in event order.
-        class descriptors {
-            unsigned width;
-            bool     low_bits, low_bytes, early;
-            size_t   start = 0;
-            unsigned used = 0, value = 0;
-            bool     active = false;
-
-            void begin() {
-                start = data.size();
-                data.append(width / 8, '\0');
-                used = value = 0;
-                active       = true;
-            }
-
-        public:
-            std::string data;
-
-            descriptors(unsigned bits, bool lsb_bits, bool lsb_bytes, bool prefetch)
-                    : width(bits), low_bits(lsb_bits), low_bytes(lsb_bytes),
-                      early(prefetch) {}
-
-            void bit(unsigned input) {
-                if (!active || used == width) {
-                    begin();
-                }
-                value |= (input & 1) << (low_bits ? used : width - used - 1);
-                for (unsigned i = 0; i < width / 8; ++i) {
-                    unsigned shift  = low_bytes ? 8 * i : width - 8 * (i + 1);
-                    data[start + i] = static_cast<char>((value >> shift) & 0xff);
-                }
-                if (++used == width && early) {
-                    begin();
-                }
-            }
-
-            void bits(unsigned value_in, unsigned count) {
-                while (count) {
-                    bit(value_in >> --count);
-                }
-            }
-
-            void put(unsigned value_in) {
-                byte(data, value_in);
-            }
-
-            void put_word(unsigned value_in) {
-                word(data, value_in);
-            }
-        };
+        using wire::descriptors;
 
         class bit_sequence {
             unsigned used = 0;
@@ -411,10 +363,15 @@ namespace codec_test {
                 }
                 byte(body, 0);
                 out.push_back({
-                        "saxman/unused-final-descriptor", "saxman",
-                        bytes({19, 0}) + body, expected,
-                        {"literal", "descriptor-reload", "unused-descriptor", "size-bound"},
-                        {}, size_t{21}
+                        "saxman/unused-final-descriptor",
+                        "saxman",
+                        bytes({19, 0}
+                        ) + body,
+                        expected,
+                        {"literal", "descriptor-reload", "unused-descriptor",
+                               "size-bound"},
+                        {},
+                        size_t{21}
                 });
             } else {
                 descriptors wire(8, true, true, false);

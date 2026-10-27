@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
                 std::cout << decoder.name << '\t'
                           << (decoder.architecture == asm_test::cpu::m68000 ? "68000"
                                                                             : "z80")
-                          << '\n';
+                          << '\t' << decoder.configuration << '\n';
             }
             return 0;
         }
@@ -90,13 +90,14 @@ int main(int argc, char** argv) {
         auto const&        decoder = *found;
         auto const         is68k   = decoder.architecture == asm_test::cpu::m68000;
         asm_test::settings config;
-        auto const capacity      = is68k                               ? size_t{0x80000}
-                                   : decoder.name == "sega-saxman-z80" ? size_t{0x800}
-                                                                       : size_t{0x6000};
-        config.output_size       = capacity;
-        config.exact_output_size = false;
-        config.readable_padding  = decoder.readable_padding;
-        config.self_modifying    = decoder.self_modifying;
+        auto const capacity        = is68k                               ? size_t{0x80000}
+                                     : decoder.name == "sega-saxman-z80" ? size_t{0x800}
+                                                                         : size_t{0x6000};
+        config.output_size         = capacity;
+        config.exact_output_size   = false;
+        config.readable_padding    = decoder.readable_padding;
+        config.self_modifying      = decoder.self_modifying;
+        config.stack_scratch_bytes = decoder.stack_scratch_bytes;
         auto                  directory = asm_test::image_directory();
         std::filesystem::path custom_image;
         bool                  json = false, have_output_bound = false;
@@ -181,6 +182,7 @@ int main(int argc, char** argv) {
             std::cout << "{\"decoder\":\"" << decoder.name << "\",\"cpu\":\""
                       << (is68k ? "68000" : "z80")
                       << "\",\"output_bytes\":" << result.bytes.size()
+                      << ",\"configuration\":\"" << decoder.configuration << '"'
                       << ",\"instructions\":" << result.instructions
                       << ",\"cycles\":" << result.cycles << ",\"timing\":\""
                       << asm_test::timing(decoder.architecture, result)

@@ -24,13 +24,15 @@ namespace asm_test {
             bool self_modifying = false);
 
     struct settings {
-        size_t   output_size       = 0;
-        size_t   readable_padding  = 4;
-        size_t   instruction_limit = 2000000;
-        uint64_t cycle_limit       = 50000000;
-        uint16_t art_base          = 0;
-        bool     self_modifying    = false;
-        bool     exact_output_size = true;
+        size_t   output_size         = 0;
+        size_t   readable_padding    = 4;
+        size_t   instruction_limit   = 2000000;
+        uint64_t cycle_limit         = 50000000;
+        uint16_t art_base            = 0;
+        bool     self_modifying      = false;
+        bool     exact_output_size   = true;
+        size_t   stack_scratch_bytes = 0;
+        uint8_t  stack_scratch_fill  = 0xa5;
     };
 
     struct result {

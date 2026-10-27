@@ -260,7 +260,7 @@ namespace asm_test {
         auto const output      = program.architecture == cpu::m68000 ? 0x40000U : 0x8000U;
         auto const stack       = program.architecture == cpu::m68000 ? 0xf0000U : 0xe000U;
         auto const input_limit = program.architecture == cpu::z80 ? 0x4000U : 0x20000U;
-        if (config.readable_padding > input_limit
+        if (config.stack_scratch_bytes > 0xffc || config.readable_padding > input_limit
             || input.size() > input_limit - config.readable_padding
             || config.output_size
                        > (program.architecture == cpu::z80 ? 0x6000U : 0x80000U)) {
@@ -326,6 +326,13 @@ namespace asm_test {
             z.e          = static_cast<uint8_t>(output);
             mem.write(z.sp, 1, program.completion & 255);
             mem.write(z.sp + 1, 1, program.completion >> 8);
+        }
+        auto const initial_sp
+                = stack + 0x1000 - (program.architecture == cpu::m68000 ? 4U : 2U);
+        for (size_t i = 0; i < config.stack_scratch_bytes; ++i) {
+            mem.write(
+                    initial_sp - 1U - static_cast<uint32_t>(i), 1,
+                    config.stack_scratch_fill);
         }
         // Reset vectors and the host-installed return sentinel are setup, not
         // decoder traffic. The final emulated RET/RTS is included.
