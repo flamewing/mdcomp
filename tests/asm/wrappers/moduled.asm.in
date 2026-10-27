@@ -1,0 +1,84 @@
+	cpu 68000
+	org $1000
+	dc.b "MDM6"
+	dc.l DriverEntry,$20000,$100
+	dc.l VInt,Process_Kos_Queue.decompress,Process_Kos_Queue.done
+	dc.l @DMA_WORDS@
+Kos_module_queue equ $FFFF8000
+Kos_module_queue_End equ Kos_module_queue+4*6
+Kos_module_source equ Kos_module_queue
+Kos_module_destination equ Kos_module_queue+4
+Kos_modules_left equ $FFFF8020
+Kos_last_module_size equ $FFFF8022
+Kos_decomp_queue equ $FFFF8030
+Kos_decomp_queue_End equ Kos_decomp_queue+4*8
+Kos_decomp_source equ Kos_decomp_queue
+Kos_decomp_destination equ Kos_decomp_queue+4
+Kos_decomp_queue_count equ $FFFF8050
+Kos_decomp_bookmark equ $FFFF8054
+Kos_decomp_stored_SR equ $FFFF8058
+Kos_decomp_stored_Wregisters equ $FFFF8060
+Kos_decomp_stored_Lregisters equ $FFFF8070
+Kos_decomp_buffer equ $FFFF9000
+disableInts macro
+	ori.w #$700,sr
+	endm
+	if @DMA_WORDS@
+DMAfunctions_defined equ 1
+AssumeSourceAddressInBytes equ 0
+dmaSource function address,address>>1
+	endif
+
+DriverEntry:
+	move.w #$2300,sr
+	movea.l a0,a6
+	bsr.w Clear_Kos_Queue
+	move.w (a6)+,d7
+	move.w (a6)+,($FFFF80A0).w
+	subq.w #1,d7
+	bmi.s .queued
+.enqueue:
+	movea.l (a6)+,a1
+	move.w (a6)+,d2
+	bsr.w Queue_Kos_Module
+	dbra d7,.enqueue
+.queued:
+	btst #0,($FFFF80A1).w
+	beq.s .process
+	bclr #0,($FFFF80A1).w
+	movea.l ($20004).l,a4
+	addq.l #2,a4
+	lea ($FFFFA000).w,a5
+	moveq #3,d7
+.fill_raw:
+	movea.l a4,a1
+	movea.l a5,a2
+	bsr.w Queue_Kos
+	adda.w #16,a5
+	dbra d7,.fill_raw
+.process:
+	move.w #1,($E0000A).l
+	bsr.w Process_Kos_Module_Queue
+	bsr.w Process_Kos_Queue
+	tst.l (Kos_module_queue).w
+	bne.s .process
+	tst.w (Kos_decomp_queue_count).w
+	bne.s .process
+	move.w #1,($E0000A).l
+	rts
+
+VInt:
+	movem.l d0-a6,-(sp)
+	bsr.w Set_Kos_Bookmark
+	movem.l (sp)+,d0-a6
+	rte
+
+QueueDMATransfer:
+	move.l d1,($E00000).l
+	move.w d2,($E00004).l
+	move.w d3,($E00006).l
+	move.w #1,($E00008).l
+	rts
+
+@DIRECT_INCLUDE@
+	include "@MODULE_SOURCE@"

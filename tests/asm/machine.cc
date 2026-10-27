@@ -5,6 +5,7 @@ extern "C" {
 }
 #include <algorithm>
 #include <array>
+#include <deque>
 #include <fstream>
 #include <iomanip>
 #include <iterator>
@@ -19,7 +20,8 @@ namespace asm_test {
             payload,
             output,
             stack,
-            scratch
+            scratch,
+            module_buffer
         };
 
         struct region {
@@ -36,15 +38,21 @@ namespace asm_test {
         };
 
         struct memory {
-            std::vector<region>    regions;
-            settings               config;
-            result                 state;
-            cpu                    architecture;
-            uint32_t               pc = 0;
-            std::array<access, 16> recent{};
-            size_t                 accesses = 0;
-            std::vector<uint32_t>  patch_words;
-            bool                   measuring = false;
+            std::vector<region>      regions;
+            settings                 config;
+            result                   state;
+            cpu                      architecture;
+            uint32_t                 pc = 0;
+            std::array<access, 16>   recent{};
+            size_t                   accesses = 0;
+            std::vector<uint32_t>    patch_words;
+            bool                     measuring       = false;
+            image const*             program         = nullptr;
+            uint32_t                 dma_source      = 0;
+            uint16_t                 dma_destination = 0, dma_words = 0;
+            std::deque<dma_transfer> pending_dma;
+            std::vector<bool>        allowed_vram;
+            size_t                   buffer_high_water = 0, flushes = 0;
 
             void add(uint32_t start, size_t size, kind type) {
                 auto const end = uint64_t(start) + size;
@@ -101,7 +109,9 @@ namespace asm_test {
                             fail("write to read-only memory");
                             return nullptr;
                         }
-                        if (!write && (r.type == kind::output || r.type == kind::stack)) {
+                        if (!write
+                            && (r.type == kind::output || r.type == kind::stack
+                                || r.type == kind::module_buffer)) {
                             for (unsigned i = 0; i < width; ++i) {
                                 if (!r.written[address - r.start + i]) {
                                     fail("read from unwritten output/stack");
@@ -143,12 +153,26 @@ namespace asm_test {
                 if (architecture == cpu::m68000) {
                     address &= 0xffffff;
                 }
+                if (config.modules && address >= 0xe00000 && address < 0xe00010) {
+                    if (measuring) {
+                        state.bus_writes += (width + 1U) / 2U;
+                    }
+                    device_write(address, width, value);
+                    return;
+                }
                 auto* r = locate(address, width, true);
                 if (!r) {
                     return;
                 }
                 if (measuring && architecture == cpu::m68000) {
                     state.bus_writes += (width + 1U) / 2U;
+                }
+                if (r->type == kind::module_buffer && !pending_dma.empty()) {
+                    fail("DMA buffer overwritten before drain");
+                    return;
+                }
+                if (config.modules && address == 0xff8054 && width == 4) {
+                    state.bookmarks.push_back(value);
                 }
                 for (unsigned i = 0; i < width; ++i) {
                     auto const offset = address - r->start + i;
@@ -159,10 +183,104 @@ namespace asm_test {
                         state.output_high_water
                                 = std::max(state.output_high_water, size_t(offset + 1));
                     }
+                    if (r->type == kind::module_buffer) {
+                        buffer_high_water
+                                = std::max(buffer_high_water, size_t(offset + 1));
+                    }
                     r->data[offset]
                             = static_cast<uint8_t>(value >> (8 * (width - i - 1)));
                     r->written[offset] = true;
                 }
+            }
+
+            void device_write(uint32_t address, unsigned width, uint32_t value) {
+                if (!state.diagnostic.empty()) {
+                    return;
+                }
+                if (address == 0xe00000 && width == 4) {
+                    dma_source = value;
+                    return;
+                }
+                if (address == 0xe00004 && width == 2) {
+                    dma_destination = static_cast<uint16_t>(value);
+                    return;
+                }
+                if (address == 0xe00006 && width == 2) {
+                    dma_words = static_cast<uint16_t>(value);
+                    return;
+                }
+                if (address == 0xe00008 && width == 2 && value == 1) {
+                    auto const source
+                            = (program->dma_source_words ? dma_source << 1 : dma_source)
+                              & 0xffffffU;
+                    if ((m68k_get_reg(nullptr, M68K_REG_SR) & 0x700) != 0x700) {
+                        fail("DMA insertion without masked interrupts");
+                        return;
+                    }
+                    if (source != 0xff9000 || !dma_words || dma_words > 0x800
+                        || (dma_destination & 1)) {
+                        fail("Invalid DMA descriptor");
+                        return;
+                    }
+                    if (buffer_high_water != size_t(dma_words) * 2) {
+                        fail("DMA size differs from decompressed module extent");
+                        return;
+                    }
+                    if (!pending_dma.empty()) {
+                        fail("Shared DMA buffer queued twice before drain");
+                        return;
+                    }
+                    pending_dma.push_back({source, dma_destination, dma_words});
+                    return;
+                }
+                if (address == 0xe0000a && width == 2 && value == 1) {
+                    if (++flushes > config.modules->frame_limit) {
+                        fail("Module frame budget exhausted");
+                        return;
+                    }
+                    if (flushes <= config.modules->defer_dma_flushes) {
+                        return;
+                    }
+                    auto const was_measuring = measuring;
+                    auto const drained       = !pending_dma.empty();
+                    measuring = false;    // DMA memory reads are not CPU bus cycles.
+                    for (auto const& dma : pending_dma) {
+                        for (unsigned i = 0; i < unsigned(dma.words) * 2; ++i) {
+                            auto const destination
+                                    = (unsigned(dma.destination) + i) & 0xffffU;
+                            if (!allowed_vram[destination]) {
+                                fail("DMA outside declared VRAM range");
+                                break;
+                            }
+                            state.vram[destination]
+                                    = static_cast<uint8_t>(read(dma.source + i, 1));
+                        }
+                        state.dma.push_back(dma);
+                    }
+                    measuring = was_measuring;
+                    pending_dma.clear();
+                    if (drained && buffer_high_water) {
+                        for (auto& r : regions) {
+                            if (r.type == kind::module_buffer) {
+                                std::fill(r.written.begin(), r.written.end(), false);
+                                std::fill(r.data.begin(), r.data.end(), uint8_t{0xa5});
+                            }
+                        }
+                        buffer_high_water = 0;
+                    }
+                    return;
+                }
+                fail("Unexpected test DMA device access");
+            }
+
+            uint16_t module_queue_count() const {
+                for (auto const& r : regions) {
+                    if (r.start == 0xff8000) {
+                        return static_cast<uint16_t>(
+                                (unsigned(r.data[0x50]) << 8) | r.data[0x51]);
+                    }
+                }
+                return 0;
             }
 
             void dump(std::string const& registers) {
@@ -214,8 +332,11 @@ namespace asm_test {
         }
         auto const width = architecture == cpu::m68000 ? 4U : 2U;
         auto const magic = architecture == cpu::m68000 ? "MD68" : "MDZ8";
+        program.moduled  = architecture == cpu::m68000 && program.bytes.size() >= 32
+                           && std::equal("MDM6", "MDM6" + 4, program.bytes.begin());
         if (program.bytes.size() < 4 + 3 * width
-            || !std::equal(magic, magic + 4, program.bytes.begin())) {
+            || (!program.moduled
+                && !std::equal(magic, magic + 4, program.bytes.begin()))) {
             throw std::runtime_error("Invalid assembly image header: " + path.string());
         }
         auto field = [&](unsigned index) {
@@ -229,6 +350,22 @@ namespace asm_test {
         program.entry      = field(0);
         program.payload    = field(1);
         program.completion = field(2);
+        if (program.moduled) {
+            program.interrupt_entry  = field(3);
+            program.decoder_begin    = field(4);
+            program.decoder_end      = field(5);
+            program.dma_source_words = field(6) != 0;
+            for (auto address :
+                 {program.interrupt_entry, program.decoder_begin, program.decoder_end}) {
+                if (address < program.origin
+                    || address >= program.origin + program.bytes.size()) {
+                    throw std::runtime_error("Module export outside image");
+                }
+            }
+            if (program.decoder_begin >= program.decoder_end) {
+                throw std::runtime_error("Invalid module decoder range");
+            }
+        }
         if (self_modifying) {
             if (architecture != cpu::z80 || program.bytes.size() < 14) {
                 throw std::runtime_error("Missing Z80 self-modification exports");
@@ -254,9 +391,26 @@ namespace asm_test {
         std::lock_guard lock(
                 machine_mutex);    // Musashi has a process-global CPU context.
         memory mem;
-        mem.architecture       = program.architecture;
-        mem.config             = config;
-        mem.patch_words        = program.patch_words;
+        mem.architecture = program.architecture;
+        mem.config       = config;
+        mem.patch_words  = program.patch_words;
+        mem.program      = &program;
+        if (program.moduled != bool(config.modules)) {
+            throw std::runtime_error(
+                    "Module image requires module machine configuration");
+        }
+        if (config.modules) {
+            mem.state.vram.assign(0x10000, 0xa5);
+            mem.allowed_vram.assign(0x10000, false);
+            for (auto const& range : config.modules->ranges) {
+                if (range.bytes > 0x10000) {
+                    throw std::runtime_error("VRAM range exceeds address space");
+                }
+                for (size_t i = 0; i < range.bytes; ++i) {
+                    mem.allowed_vram[(range.address + i) & 0xffff] = true;
+                }
+            }
+        }
         auto const output      = program.architecture == cpu::m68000 ? 0x40000U : 0x8000U;
         auto const stack       = program.architecture == cpu::m68000 ? 0xf0000U : 0xe000U;
         auto const input_limit = program.architecture == cpu::z80 ? 0x4000U : 0x20000U;
@@ -281,14 +435,27 @@ namespace asm_test {
         mem.add(output, config.output_size, kind::output);
         mem.add(stack, 0x1000, kind::stack);
         if (program.architecture == cpu::m68000) {
-            mem.add(0xff8000, 0x1000, kind::scratch);
-            mem.add(0, 8,
+            mem.add(0xff8000, config.modules ? 0x100 : 0x1000, kind::scratch);
+            if (config.modules) {
+                mem.add(0xff9000, 0x1000, kind::module_buffer);
+                mem.add(0xffa000, 0x1000, kind::scratch);
+            }
+            mem.add(0, config.modules ? 0x400 : 8,
                     kind::code);    // Read-only reset vectors for a fresh CPU each run.
+            std::fill(
+                    mem.regions.back().data.begin(), mem.regions.back().data.end(),
+                    uint8_t{0});
             for (unsigned i = 0; i < 4; ++i) {
                 mem.regions.back().data[i]
                         = static_cast<uint8_t>((stack + 0x1000) >> (24 - 8 * i));
                 mem.regions.back().data[i + 4]
                         = static_cast<uint8_t>(program.entry >> (24 - 8 * i));
+            }
+            if (config.modules) {
+                for (unsigned i = 0; i < 4; ++i) {
+                    mem.regions.back().data[0x78 + i] = static_cast<uint8_t>(
+                            program.interrupt_entry >> (24 - 8 * i));
+                }
             }
         }
         active = &mem;
@@ -349,6 +516,10 @@ namespace asm_test {
                     mem.fail("returned with an unbalanced stack");
                 } else {
                     mem.state.completed = true;
+                    if (config.modules && !mem.pending_dma.empty()) {
+                        mem.state.completed = false;
+                        mem.fail("Returned with pending DMA");
+                    }
                 }
                 break;
             }
@@ -364,6 +535,36 @@ namespace asm_test {
             }
             ++mem.state.instructions;
             if (program.architecture == cpu::m68000) {
+                bool const inside_decoder
+                        = mem.pc >= program.decoder_begin && mem.pc < program.decoder_end;
+                bool const candidate
+                        = config.modules
+                          && (config.modules->interrupt_outside_decoder
+                                      ? !inside_decoder
+                                                && (m68k_get_reg(nullptr, M68K_REG_SR)
+                                                    & 0x700)
+                                                           < 0x600
+                                      : inside_decoder
+                                                && (mem.module_queue_count() & 0x8000));
+                if (candidate) {
+                    // Counter/trace probes are host observations, not bus traffic.
+                    ++mem.state.decoder_visits;
+                    if (config.modules->trace_decoder_pcs) {
+                        mem.state.decoder_pcs.push_back(mem.pc);
+                    }
+                    auto const first  = config.modules->interrupt_after;
+                    auto const period = config.modules->interrupt_period;
+                    auto const visit  = mem.state.decoder_visits;
+                    if (first && visit >= first
+                        && (visit == first || (period && (visit - first) % period == 0))
+                        && mem.state.interrupted_pcs.size()
+                                   < config.modules->max_interrupts
+                        && (m68k_get_reg(nullptr, M68K_REG_SR) & 0x700) < 0x600) {
+                        mem.state.interrupted_pcs.push_back(mem.pc);
+                        m68k_set_irq(
+                                6);    // The pinned core auto-acknowledges/clears it.
+                    }
+                }
                 mem.state.cycles += static_cast<unsigned>(m68k_execute(1));
             } else {
                 auto const before = z.cyc;
@@ -375,6 +576,9 @@ namespace asm_test {
             }
         }
         for (auto const& r : mem.regions) {
+            if (config.modules && r.start == 0xff8000) {
+                mem.state.control_ram = r.data;
+            }
             if (r.type == kind::output) {
                 auto const size = config.exact_output_size ? r.data.size()
                                                            : mem.state.output_high_water;
