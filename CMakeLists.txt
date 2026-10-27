@@ -412,7 +412,15 @@ define_exe(rocketcmp "src/tools/rockcmp.cc" rocket rockcmp)
 define_exe(saxmancmp "src/tools/saxcmp.cc" saxman saxcmp)
 define_exe(snkrlecmp "src/tools/snkcmp.cc" snkrle snkcmp)
 
-file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
+file(GLOB_RECURSE ALL_SOURCE_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
+foreach(test_directory asm codec fixtures support unit)
+    file(GLOB_RECURSE test_sources
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/${test_directory}/*.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/${test_directory}/*.hh")
+    list(APPEND ALL_SOURCE_FILES ${test_sources})
+endforeach()
 
 add_custom_target(
     mdcomp-format
