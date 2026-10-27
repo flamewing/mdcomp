@@ -1,5 +1,9 @@
 find_package(Catch2 3 REQUIRED CONFIG)
 include(Catch)
+option(MDCOMP_ASSEMBLY_TESTS "Build ASL and emulator tests (requires pinned submodules)" OFF)
+if(MDCOMP_ASSEMBLY_TESTS)
+    add_subdirectory(asm)
+endif()
 
 add_executable(mdcomp-unit-tests
     unit/bigendian_io.cc
