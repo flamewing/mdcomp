@@ -58,7 +58,29 @@ MSVC 19.44 x64 `/O2` miscompiles the unsigned-short bit-pattern accumulation in 
 
 ## Reports and remaining work
 
-The five TSV files below `build-tests/tests/asm` record each decoder/case, success flags, instruction/cycle counts, input high-water mark, compressed size, and read-ahead allowance. `failures/asm/<decoder>/<fixture>` contains compressed input, expected/actual output, PC/register dumps, and the recent memory accesses. CI preserves synthetic failure data and reports, without publishing imported original source or decoder binaries.
+### Running files and measuring decoder timing
+
+The `mdcomp-asm-run` executable uses the same registry, ASL images, memory guards, and CPU cores as the fixtures. Build it with `cmake --build build-tests --target mdcomp-asm-run` (add `--config Release` for Visual Studio). The executable is under `build-tests/tests/asm`, or its `Release` subdirectory with Visual Studio. It does not require Catch2 at runtime. List the available compiled-in decoders with `--list`:
+
+```sh
+build-tests/tests/asm/mdcomp-asm-run --list
+build-tests/tests/asm/mdcomp-asm-run kosinski art.kos art.bin
+build-tests/tests/asm/mdcomp-asm-run kosinski-z80 art.kos art-z80.bin --output-size 4096
+build-tests/tests/asm/mdcomp-asm-run rocket art.roc art.bin --json
+build-tests/tests/asm/mdcomp-asm-run enigma map.eni map.bin --art-base 0x1000
+```
+
+Normal output includes decoded size, instruction count, and timing: `112(19/4)` for the 68000 calibration program or `99 T-states` for Z80. JSON output contains numeric `cycles`, `instructions`, `output_bytes`, and `input_high_water` fields, a formatted `timing` string, and a `timing_model` identifier; the 68000 also includes `bus_reads` and `bus_writes`. Counts cover the decoder entry through its final RET/RTS. Host memory initialization, reset-vector reads, reset clocks, and installation of the synthetic return address are excluded. They are emulated CPU counts, not elapsed host time. The models assume no memory wait states, bus contention, interrupts, or Mega Drive DMA effects.
+
+**68000 bus qualification:** `m` is Musashi's instruction clock count. `r` and `w` count successful logical memory transfers exposed by its callbacks, including opcode/extension fetches, data, and emulated stack accesses. Byte/word callbacks count once; longword callbacks count twice for the 16-bit bus. Musashi is not a cycle-exact bus emulator: some speculative prefetches, discarded extension fetches, and dummy reads are absent. These counts therefore do not reproduce the Motorola manual's physical bus totals for every instruction. For example, the copy calibration gives modeled `112(19/4)`, whereas summing the manual's instruction timings gives `112(22/4)`; its expired DBRA and RTS account for the missing reads. JSON labels this model `musashi-logical-16-bit-transfers`, and human output explicitly identifies the limitation. The Z80 value is the core's T-state counter (`z80-core-tstates`). A complete hardware-accurate bus model remains future work.
+
+The instruction clock and bus-count convention is documented in [MC68000 User's Manual, section 8](https://www.nxp.com/docs/en/reference-manual/MC68000UM.pdf). The calibration fixes expected totals independently: MOVEQ 4, four MOVE.B copies 48, three taken DBRAs 30, one expired DBRA 14, and RTS 16 give 112 clocks; LD BC 10, three repeated LDIR iterations 63, its final iteration 16, and RET 10 give 99 T-states. A separate longword copy checks that each longword transfer counts as two word-bus accesses. Setup exclusion and repeatability are also tested.
+
+By default, the runner returns the contiguous output actually written, with a cap of 512 KiB on the 68000 and 24 KiB on Z80; original Sonic 2 Saxman is capped at its 2 KiB music buffer. `--output-limit N` lowers the cap; `--output-size N` additionally requires exactly N bytes. Decoding failures leave an existing output file unchanged. Input/output and decoder-image/output aliases are rejected. Bounds and cycle/instruction budgets remain active; `--instruction-limit N` and `--cycle-limit N` can raise them for larger inputs. The compressed input limit is 128 KiB on the 68000 or 16 KiB on Z80, less the decoder's readable-padding allowance. Format-specific empty/alignment/framing preconditions still apply.
+
+For optimization experiments, `--image FILE` replaces the selected decoder's image with a newly assembled wrapper using the same header and calling convention. The selected registry entry still supplies CPU, read-ahead, and self-modification rules. `--image-dir DIR` selects a different directory of built images; it also lets the executable run after moving the images away from the original build directory. Existing ASL listings and wrapper sources under `tests/asm/images` provide starting points. Re-run with the same input, art base, output constraints, and core version when comparing routines, and verify decoded bytes before interpreting timing changes.
+
+The five TSV files below `build-tests/tests/asm` record each decoder/case, success flags, instruction/cycle counts, input high-water mark, compressed size, and read-ahead allowance. They now append three columns: modeled bus reads, modeled bus writes, and formatted timing. The complete column order is `decoder`, `case`, `success`, `byte_match`, `instructions`, `cycles`, `input_high_water`, `compressed_size`, `readable_padding`, `bus_reads`, `bus_writes`, `timing`; files remain headerless. Z80 bus columns are zero because its reported performance metric is T-states. Timing is also included in Catch2 assertion context; run `mdcomp-asm-tests "[bootstrap]" --success` to print passing fixture context. The audit recorder accepts both the older nine-column and new twelve-column reports. `failures/asm/<decoder>/<fixture>` contains compressed input, expected/actual output, PC/register dumps, and the recent memory accesses. CI preserves synthetic failure data and reports, without publishing imported original source or decoder binaries.
 
 After a reviewed complete run, update the committed summary explicitly:
 
@@ -66,6 +88,6 @@ After a reviewed complete run, update the committed summary explicitly:
 python tests/support/record_assembly_audit.py --test-dir build-tests/tests/asm --output tests/references/assembly-audit.json
 ```
 
-This checkpoint is verified locally with GCC 16.2, Clang 23.1, and MSVC 19.44 on Windows. CI is configured to exercise the suite on Linux, macOS, MinGW, and MSVC; those remote jobs were not run in this local session. The ordinary suite remains 111 CTest cases; assembly adds five groups, for 116 entries with original sources enabled and 117 when the optional master-binary comparison is also enabled.
+This checkpoint is verified locally with GCC 16.2, Clang 23.1, and MSVC 19.44 on Windows. CI is configured to exercise the suite on Linux, macOS, MinGW, and MSVC; those remote jobs were not run in this local session. The ordinary suite remains 111 CTest cases; assembly adds six groups including CLI checks, for 117 entries with original sources enabled and 118 when the optional master-binary comparison is also enabled.
 
 Remaining work includes alternative LUT/unroll/alignment configurations, complete semantic encoder/decoder edge inventories, broader malformed-input cases, and real-hardware confirmation. The common moduled queue/DMA/interrupt framework still needs its hardware shim; this CPU-only checkpoint does not test those wrappers. The refactor gate remains blocked until the remaining testing-plan obligations are complete.
