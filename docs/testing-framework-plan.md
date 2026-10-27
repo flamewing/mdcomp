@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 saved hand-constructed fixtures, 38 qualified external encodings, pinned binary/source comparisons, and direct MC68000/Z80 decoder execution with a declared optimization matrix are implemented. Complete format-edge inventories, encoder-selection coverage, remaining C++ option combinations, and remaining assembly ABI/negative cases remain pending; the refactor gate remains blocked.
+Status: the local stream-based regression baseline is implemented and passes on GCC, Clang, MSVC, and Linux ASan/UBSan. It includes 96 hand-constructed fixtures, 38 external basic encodings, 24 external full-block/tail bodies, all initial declared edge obligations, direct MC68000/Z80 matrices, moduled DMA/interrupt checks, option/header/output-failure regressions, installed static/shared consumers, and optional stress/coverage jobs. The [baseline review](../tests/references/baseline.md) records qualifications and remaining gates. Remote CI execution has not yet been observed; the buffer refactor remains blocked on that confirmation. Exhaustive parameter sweeps and checked-memory/constexpr migration tests remain separately scoped follow-ups.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -37,7 +37,7 @@ complete. Documentation deliverables and their validation are tracked in
 
 ## Current Baseline
 
-The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The normal suite has 42 utility cases and 69 codec/fixture cases. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), [pinned master-binary comparisons](../tests/references/README.md), and [external codec qualification](../tests/references/external.md).
+The project now has Catch2 v3 utility and codec targets registered with CTest. The shared-header review expands the endian baseline to bit buffers, callable references, stream/range utilities, spans, decoder wrappers, LZSS helpers, and CLI helpers. Existing and new `static_assert`s remain compiled. The current normal suite has 43 utility cases, 81 codec/fixture cases, and one installed-package case. Assembly adds eight groups, stress adds one case, and the optional binary comparison adds one case. The following checkpoints retain their historical counts. See [the test workflow](../tests/README.md), [the low-level review](low-level-review.md), [pinned master-binary comparisons](../tests/references/README.md), and [external codec qualification](../tests/references/external.md).
 
 The first implementation checkpoint contains 17 unit cases, including exhaustive 16-bit byte swapping and a deterministic 64-bit corpus. These pass with GCC 16.2, Clang 23.1, and MSVC 19.44 in C++20 mode; GCC also passes in C++23 mode and with 128-bit support disabled after loading its platform headers. Full GCC and MSVC library/tool builds pass, and a separate `BUILD_TESTING=OFF` configuration builds without Catch2. These checks establish the endian utility baseline, not codec compatibility or the assembly oracle gate.
 
@@ -99,8 +99,7 @@ Checklist:
 - [x] Add `include(CTest)` and make all runtime tests conditional on `BUILD_TESTING`.
 - [x] Add Catch2 v3 through a test-only vcpkg manifest feature.
 - [x] Enable the C language when testing is enabled, ready for test-only emulator targets.
-- [ ] Create `tests/` with separate support, unit, codec, assembly, and fixture
-      directories.
+- [x] Create `tests/` with separate support, unit, codec, assembly, and fixture directories.
 - [x] Add a shared Catch2 unit executable linked only to the endian interface library; codec executables will follow as their coverage is added.
 - [x] Register test cases with CTest using `catch_discover_tests`.
 - [x] Apply deterministic per-test timeouts and CTest labels.
@@ -141,7 +140,7 @@ Checklist:
 - [x] Run the same contract suite against every applicable codec.
 - [ ] During the buffer refactor, run equivalent stream and buffer operations
       over the same fixtures.
-- [x] Add an installed-package smoke test that configures an isolated consumer, links all ten static codec targets, and runs without Catch2.
+- [x] Add an installed-package smoke test with isolated static/shared consumers for all ten codecs, without Catch2; verify loaded DLLs on Windows.
 
 ## C++ Codec Tests
 
@@ -177,7 +176,7 @@ Checklist:
 - [x] Record deterministic random seeds and print the seed on failure.
 - [ ] Save a minimal reproduction artifact below the build directory when a
       generated case fails.
-- [ ] Add size and runtime limits so malformed behaviour cannot hang CI.
+- [x] Bound generated corpora and individual CTest execution; emulator and reference processes also have internal execution/output budgets. General structured malformed-input contracts await checked cursors.
 
 ### Known-answer decoding
 
@@ -202,7 +201,7 @@ Checklist:
 - [x] Add hand-constructed vectors for token forms not selected naturally by the current encoder.
 - [x] Record provenance, license, format variant, and any transformation for every fixture.
 - [x] Verify exact decompressed length and bytes.
-- [ ] Verify compressed input consumption where the API exposes it.
+- [x] Verify compressed input consumption for unambiguous stream fixtures, explicit Saxman bounds, and emulator semantic/read-ahead limits; broader consumption contracts await checked cursors.
 - [ ] Add truncated and malformed variants once structured errors are
       available.
 - [x] Do not require byte-for-byte encoded output except for a separately documented compatibility or accurate-encoding mode.
@@ -278,20 +277,15 @@ a shared KENSSharp/mdcomp bug into expected behaviour.
 
 Checklist:
 
-- [ ] Pin exact KENSSharp, accurate Kosinski, and recovered Saxman reference
-      versions and record licenses.
-- [ ] Define a deterministic synthetic source corpus from the edge manifests.
-- [ ] Generate and review reference-compressed basic and moduled fixtures.
-- [ ] Record generator commands, options, versions, lineage, and hashes in each
-      fixture manifest.
-- [ ] Cross-decode generated streams with the current C++ and shipped assembly
-      decoders.
-- [ ] Audit every current-branch encoder and public option against applicable
-      reference fixtures.
-- [ ] Compare exact bytes only where reference-accurate behaviour is promised.
-- [ ] Triage and minimize every mismatch before accepting or updating expected
-      data.
-- [ ] Publish the audit matrix and known failures in the test documentation.
+- [x] Pin KENSSharp, original KENS, Accurate Kosinski, the qualified Okumura-derived Saxman source, Clownacy codecs, and kirjavascript RLE; record licenses and lineage without calling the Saxman adaptation recovered Sega source.
+- [x] Define deterministic source recipes and independent observed edge obligations for every working encoder.
+- [x] Review external basic/full-block/tail bodies and canonical test-owned module containers; no independent external module-container encoder is claimed.
+- [x] Record generator commands, options, versions, lineage, transformations, and hashes in fixture/reference manifests.
+- [x] Cross-decode qualified generated streams with applicable C++ and shipped assembly decoders.
+- [x] Audit all ten encoders and the current public library option surface against applicable reference fixtures, wire models, and assembly paths; retain unavailable external ComperX/LZKN1 and exhaustive-parameter qualifications.
+- [x] Compare exact bytes only where reference-accurate behaviour is promised.
+- [x] Keep observed reference failures isolated from accepted fixtures, with format-based verdicts and small reproductions for resolved discrepancies; historical reference crashes/timeouts retain explicit limitations.
+- [x] Publish audit matrices, declared obligations, provenance, and known limitations in the test documentation.
 
 ### Format-edge coverage
 
@@ -325,8 +319,7 @@ Checklist:
 - [x] Use hand-authored decoder-only forms, including the Kosinski discard control.
 - [x] Fail with codec/mode/form context for an uncovered obligation.
 - [x] Require manifests and initial failing fixtures in the test contribution workflow.
-- [ ] Optionally collect line and branch coverage as a diagnostic, but do not
-      substitute it for format-edge coverage.
+- [x] Add optional diagnostic compiler line/branch coverage without replacing format-edge coverage or imposing a percentage threshold.
 
 ### Constexpr LZSS adaptor inverse tests
 
@@ -487,10 +480,8 @@ Checklist:
 - [ ] Identify hand-crafted routines and record which have sustained field use
       and which have little or none.
 - [ ] Record named downstream uses and known bug reports where available.
-- [ ] Replace the maintainer's grouped assessment with per-file evidence and
-      resolve the absent Nemesis assembly source.
-- [ ] Bootstrap every provisional routine with non-current-encoder vectors
-      before treating it as a differential oracle.
+- [x] Replace the grouped assessment with per-file attribution/provenance evidence, explicit unknown deployment status, and a documented imported Nemesis source.
+- [x] Bootstrap every provisional routine in the declared matrix with non-current-encoder vectors before using it for differential checks.
 - [x] Add optimization-boundary cases for every enabled assembly configuration in the declared direct-decoder matrix (unroll levels 0..3, LUT/extreme choices, Saxman even/odd sources, and ComperX return modes).
 - [x] Keep field-use evidence distinct from independently verified test evidence in reports and fixture manifests.
 
@@ -671,8 +662,7 @@ is sufficient.
 
 Checklist:
 
-- [ ] Classify every direct decoder's provenance, authorship/design lineage,
-      field-use history, and existing validation evidence.
+- [x] Classify every direct decoder's provenance, authorship/design lineage, validation evidence, and explicitly unknown exact-revision field-use history.
 - [x] Locate the original-derived Nemesis routine or document why it remains outside the shipped assembly inventory.
 - [x] Bootstrap decoders with little or no field use before using their results to audit C++ encoders.
 - [x] Add C++ encode plus assembly decode tests for every direct MC68000 decoder.
@@ -725,18 +715,14 @@ Each codec's fixture descriptor should record:
 
 Checklist:
 
-- [ ] Choose a manifest representation that requires no heavyweight runtime
-      parser.
-- [ ] Add a provenance README for every codec fixture directory.
+- [x] Use JSON manifests and generated C++/CMake checks without a heavyweight runtime parser.
+- [x] Document provenance and limitations in the shared fixture directory README and per-fixture metadata.
 - [ ] Reject fixtures whose redistribution terms are unknown.
-- [ ] Prefer synthetic, hand-authored, or published examples over ROM-derived
-      data.
-- [ ] Preserve the deterministic source generator or raw input for every
-      reference-generated compressed fixture.
-- [ ] Validate fixture checksums so accidental edits are obvious.
-- [ ] Add a coverage-summary test that reports missing edge obligations by
-      codec.
-- [ ] Keep fixtures small enough for normal source control and fast CI.
+- [x] Use synthetic and hand-authored data, without ROM assets.
+- [x] Preserve deterministic source recipes/raw expectations for every retained reference-generated fixture.
+- [x] Validate fixture checksums so accidental edits are obvious.
+- [x] Report missing declared encoder/decoder/boundary obligations by codec.
+- [x] Keep fixtures small enough for normal source control and fast CI.
 
 ## TDD Workflow for New Codecs
 
@@ -764,17 +750,15 @@ Checklist:
 
 Checklist:
 
-- [ ] Run fast C++ tests on every supported compiler/platform CI job.
-- [ ] Run assembly tests on at least Linux initially, then enable Windows and
-      macOS after the submodule toolchains are verified there.
-- [x] Add a Linux Clang/Ninja ASan/UBSan job for C++ codecs and emulator harness/cores; local GCC 15.2 Linux qualification passes 123 cases, remote CI still needs observation.
-- [ ] Add an optional compiler line/branch coverage job.
+- [x] Configure C++ tests on every supported compiler/platform CI job; remote execution still needs observation.
+- [x] Configure assembly tests on Linux, Windows, and macOS; Linux/Windows toolchains pass locally, macOS and remote jobs remain unobserved.
+- [x] Add a Linux Clang/Ninja ASan/UBSan job for C++ codecs and emulator harness/cores; local GCC 15.2 qualification passes 134 cases, remote CI still needs observation.
+- [x] Add an optional manual compiler line/branch coverage job, with a locally verified nonempty report.
 - [x] Add a scheduled/manual deterministic randomized sweep; exhaustive legal-parameter sweeps remain future expansion.
 - [x] Cache compiler outputs in Linux CI, including the pinned ASL host build; source retrieval remains the existing pinned submodule/import workflow. Remote cache hits still need observation.
 - [x] Print configure-time dependency commit IDs in assembly-test diagnostics, fault artifacts, and runner output; source archives report unknown.
-- [ ] Make all pseudo-random tests deterministic and reproducible by seed.
-- [ ] Prevent emulator tests from hanging through both CTest timeouts and
-      internal execution budgets.
+- [x] Make pseudo-random tests deterministic and reproducible by seed.
+- [x] Bound emulator tests through CTest timeouts and internal instruction/cycle/output budgets.
 - [x] Document focused codec, fixture, and architecture commands in the contribution workflow.
 
 ## Milestone Checklist
@@ -792,10 +776,9 @@ Checklist:
 - [x] Add round-trip tests for every working basic codec.
 - [x] Add round-trip tests for every working moduled codec.
 - [x] Add at least one independent known-answer vector per decoder.
-- [ ] Generate the synthetic reference-encoder corpus and audit every
-      current-branch encoder and option.
+- [x] Generate the qualified synthetic reference corpus and audit every working encoder and current public library option, with the qualifications in the baseline review.
 - [x] Complete the initial wire-form and semantic-boundary manifests; exhaustive legal-parameter matrices remain a separate follow-up.
-- [x] Reach 100% of the initial manifest’s declared encoder, decoder, and boundary obligations (50/50/43).
+- [x] Reach 100% of the initial manifest’s declared encoder, decoder, and boundary obligations (50/51/44).
 
 ### 1a. Buffer-migration constexpr checks
 
@@ -830,10 +813,11 @@ Checklist:
 
 ### 5. Blocking gate
 
-- [ ] Run the full baseline suite on the current pre-refactor code.
-- [ ] Complete the reference-encoder audit of the current branch.
-- [ ] Record any known failures explicitly; do not silently bless them.
+- [x] Run the full local baseline suite on the current pre-refactor code across GCC, Clang, MSVC, and Linux ASan/UBSan.
+- [x] Complete the initial reference/option/wire audit with explicit unavailable-oracle and non-exhaustive-parameter qualifications.
+- [x] Record known reference failures and remaining limitations explicitly; do not silently bless them.
 - [x] Enable the suite in CI (configuration committed; remote runs still need observation).
+- [ ] Observe passing remote CI jobs, including macOS, before lifting the baseline gate.
 - [ ] Mark the buffer refactor unblocked.
 - [ ] Mark codec implementation unblocked once its buffer prerequisites also
       land.
@@ -895,3 +879,7 @@ The optional stress sweep adds 2,560 deterministic encode/decode/independent-obs
 The external module corpus now retains 24 qualified 4,096-byte/full and 64-byte/tail bodies across six reference-codec families, with executable/source pins, recipes, transformations, and hashes. C++ tests check 48 canonical two-full-module-plus-tail archive combinations, and applicable bodies add 212 direct assembly checks and 24 queue executions with/without periodic interrupts. Audits now record 4,336 direct checks and 1,168 moduled checks, with 3,000 IRQs and 1,510 transfers. The current 128-case baseline plus the optional stress case passes locally; MSVC adds the passing 160-case binary comparison. The padding option audit also fixed encode/decode disagreement for unrepresentable values. ClownLZSS long repeated full-block encodes exceeded the declared reference budget; these timeouts are retained without treating them as format defects. Original KENS limitations remain visible. No independent external encoder is claimed for ComperX or LZKN1.
 
 The accepted ComperX `0x80` one-word/end form exposed another C++ decoder defect: it copied the word but continued into trailing input. Separate ordinary and RLE fixtures pass under both assembly return conventions; C++ decoding now terminates at the same bound. This raises the hand-authored set to 96 fixtures and the edge obligations to 50 encoder, 51 decoder, and 44 selected boundary forms. The direct audit records 4,340 checks; decoder-only aliases remain separate from encoder selection.
+
+## Local baseline review
+
+The [reviewed baseline](../tests/references/baseline.md) records the final local compiler matrix, encoder/oracle coverage, source and fixture qualifications, known external failures, and deferred dependencies. All 134 cases pass on GCC, Clang, and Linux ASan/UBSan; MSVC passes 135 with its published-binary comparison. A fresh frozen-master comparison passes 160 cases with no size regressions. Header-limit/output-capacity tests fixed unrepresentable wire fields, silent partial transfers, and Enigma source-position/odd-word handling. Installed static/shared consumers exposed and fixed MSVC DLL export, import-library installation, and filename-collision defects. Optional compiler coverage is now configured and locally measured. Remote CI confirmation remains required before lifting the refactor gate; buffer-dependent tests are explicitly migration-stage work.

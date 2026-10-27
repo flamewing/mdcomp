@@ -2,6 +2,8 @@
 
 Configure with CMake 3.30 or newer and an installed Catch2 v3 package. Catch2 is a test-only dependency; use `-DBUILD_TESTING=OFF` for a library/tool build without it. Tests are never installed or exported with mdcomp.
 
+The [local baseline review](references/baseline.md) is the current record of compiler results, per-codec oracles, qualifications, and the remaining remote-CI gate. Earlier checkpoint counts below are retained as implementation history.
+
 ```sh
 cmake -S . -B build-tests -DBUILD_TESTING=ON
 cmake --build build-tests --parallel
