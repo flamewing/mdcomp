@@ -54,7 +54,7 @@ Some C++ cases intentionally do not apply to every assembly target. SnKRLE requi
 - Both Z80 Kosinski variants executed `LDIR` with BC=0 for a two-byte short match, which means 65536 copies. They now skip that bulk copy and perform the required two `LDI`s. The added code required one formerly short Kosinski branch to become `JP`.
 - Rocket used an uninitialized register for its position bias, failed to rebase matches around the current destination, and filled more seeded spaces than short matches requested. Those paths are corrected and cover seeded-only, overlap, and seed-to-output transitions. Its compressed length is also treated as unsigned; a deterministic 32768-byte random input exercises the high bit.
 
-MSVC 19.44 `/O2` produced incorrect masks in the pinned Musashi build-time opcode generator, causing calibration to crash. Only that generator is compiled with `/Od`; its normalized generated source then matches GCC exactly. The emulator core remains optimized in Release. Upstream source is not patched for this workaround.
+MSVC 19.44 x64 `/O2` miscompiles the unsigned-short bit-pattern accumulation in the pinned Musashi build-time opcode generator, causing calibration to crash. The [root-cause investigation](../references/musashi-msvc/README.md) includes a standalone reproducer, instruction-level evidence, and a one-line source workaround whose full generated output matches GCC. Only the generator is compiled with `/Od` locally; the emulator core remains optimized in Release. The pinned upstream source is not patched.
 
 ## Reports and remaining work
 

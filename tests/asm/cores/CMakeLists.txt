@@ -5,7 +5,8 @@ set(generated "${CMAKE_CURRENT_BINARY_DIR}/musashi-generated")
 file(MAKE_DIRECTORY "${generated}")
 add_executable(mdcomp-m68kmake "${musashi}/m68kmake.c")
 if(MSVC)
-    # MSVC 19.44 /O2 produces incorrect opcode masks in this generator.
+    # MSVC 19.44 x64 /O2 loses bit 14 in the unsigned-short OR reduction.
+    # Standalone reproducer and upstream workaround: references/musashi-msvc.
     # This affects only the build-time tool, not the emulator core.
     target_compile_options(mdcomp-m68kmake PRIVATE /Od)
 endif()
