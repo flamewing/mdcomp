@@ -44,6 +44,7 @@ namespace asm_test {
             std::array<access, 16> recent{};
             size_t                 accesses = 0;
             std::vector<uint32_t>  patch_words;
+            bool                   measuring = false;
 
             void add(uint32_t start, size_t size, kind type) {
                 auto const end = uint64_t(start) + size;
@@ -124,6 +125,9 @@ namespace asm_test {
                 if (!r) {
                     return 0;
                 }
+                if (measuring && architecture == cpu::m68000) {
+                    state.bus_reads += (width + 1U) / 2U;
+                }
                 if (r->type == kind::payload) {
                     state.input_high_water = std::max(
                             state.input_high_water, size_t(address - r->start + width));
@@ -143,10 +147,17 @@ namespace asm_test {
                 if (!r) {
                     return;
                 }
+                if (measuring && architecture == cpu::m68000) {
+                    state.bus_writes += (width + 1U) / 2U;
+                }
                 for (unsigned i = 0; i < width; ++i) {
                     auto const offset = address - r->start + i;
                     if (r->type == kind::output && !r->written[offset]) {
                         ++state.bytes_written;
+                    }
+                    if (r->type == kind::output) {
+                        state.output_high_water
+                                = std::max(state.output_high_water, size_t(offset + 1));
                     }
                     r->data[offset]
                             = static_cast<uint8_t>(value >> (8 * (width - i - 1)));
@@ -243,13 +254,14 @@ namespace asm_test {
         std::lock_guard lock(
                 machine_mutex);    // Musashi has a process-global CPU context.
         memory mem;
-        mem.architecture  = program.architecture;
-        mem.config        = config;
-        mem.patch_words   = program.patch_words;
-        auto const output = program.architecture == cpu::m68000 ? 0x40000U : 0x8000U;
-        auto const stack  = program.architecture == cpu::m68000 ? 0xf0000U : 0xe000U;
-        if (input.size() + config.readable_padding
-                    > (program.architecture == cpu::z80 ? 0x4000U : 0x20000U)
+        mem.architecture       = program.architecture;
+        mem.config             = config;
+        mem.patch_words        = program.patch_words;
+        auto const output      = program.architecture == cpu::m68000 ? 0x40000U : 0x8000U;
+        auto const stack       = program.architecture == cpu::m68000 ? 0xf0000U : 0xe000U;
+        auto const input_limit = program.architecture == cpu::z80 ? 0x4000U : 0x20000U;
+        if (config.readable_padding > input_limit
+            || input.size() > input_limit - config.readable_padding
             || config.output_size
                        > (program.architecture == cpu::z80 ? 0x6000U : 0x80000U)) {
             throw std::runtime_error("Assembly case exceeds machine layout");
@@ -315,6 +327,9 @@ namespace asm_test {
             mem.write(z.sp, 1, program.completion & 255);
             mem.write(z.sp + 1, 1, program.completion >> 8);
         }
+        // Reset vectors and the host-installed return sentinel are setup, not
+        // decoder traffic. The final emulated RET/RTS is included.
+        mem.measuring = true;
         while (mem.state.diagnostic.empty()) {
             mem.pc = program.architecture == cpu::m68000
                              ? m68k_get_reg(nullptr, M68K_REG_PC)
@@ -354,10 +369,17 @@ namespace asm_test {
         }
         for (auto const& r : mem.regions) {
             if (r.type == kind::output) {
-                mem.state.bytes.assign(r.data.begin(), r.data.end());
+                auto const size = config.exact_output_size ? r.data.size()
+                                                           : mem.state.output_high_water;
+                mem.state.bytes.assign(
+                        r.data.begin(),
+                        r.data.begin() + static_cast<std::ptrdiff_t>(size));
             }
         }
-        if (mem.state.completed && mem.state.bytes_written != config.output_size) {
+        auto const required_output = config.exact_output_size
+                                             ? config.output_size
+                                             : mem.state.output_high_water;
+        if (mem.state.completed && mem.state.bytes_written != required_output) {
             mem.state.completed = false;
             mem.fail("returned with incomplete output");
         }
@@ -383,6 +405,15 @@ namespace asm_test {
         }
         active = nullptr;
         return mem.state;
+    }
+
+    std::string timing(cpu architecture, result const& execution) {
+        auto text = std::to_string(execution.cycles);
+        if (architecture == cpu::z80) {
+            return text + " T-states";
+        }
+        return text + '(' + std::to_string(execution.bus_reads) + '/'
+               + std::to_string(execution.bus_writes) + ')';
     }
 }    // namespace asm_test
 

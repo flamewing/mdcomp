@@ -17,7 +17,27 @@ TEST_CASE("ASL images execute and return through both CPU sentinels", "[asm][mac
         REQUIRE(result.completed);
         CHECK(result.bytes == "test");
         CHECK(result.input_high_water == 4);
-        config.output_size = 3;
+        if (architecture == asm_test::cpu::m68000) {
+            // MOVEQ 4; four MOVE.B copies 48; DBRA 30+14; RTS 16.
+            CHECK(result.cycles == 112);
+            CHECK(result.bus_reads == 19);
+            CHECK(result.bus_writes == 4);
+            CHECK(asm_test::timing(architecture, result) == "112(19/4)");
+        } else {
+            // LD BC 10; LDIR 3*21+16; RET 10.
+            CHECK(result.cycles == 99);
+            CHECK(asm_test::timing(architecture, result) == "99 T-states");
+        }
+        config.output_size       = 64;
+        config.exact_output_size = false;
+        auto const capped        = asm_test::execute(image, "test", config);
+        REQUIRE(capped.completed);
+        CHECK(capped.bytes == "test");
+        CHECK(capped.cycles == result.cycles);
+        CHECK(capped.bus_reads == result.bus_reads);
+        CHECK(capped.bus_writes == result.bus_writes);
+        config.exact_output_size = true;
+        config.output_size       = 3;
         CHECK_FALSE(asm_test::execute(image, "test", config).completed);
         config.output_size = 4;
         CHECK_FALSE(asm_test::execute(image, "tes", config).completed);
@@ -26,6 +46,23 @@ TEST_CASE("ASL images execute and return through both CPU sentinels", "[asm][mac
         CHECK_FALSE(bounded.completed);
         CHECK(bounded.diagnostic.find("budget") != std::string::npos);
     }
+}
+
+TEST_CASE("68000 longword transfers count two 16-bit bus accesses", "[asm][machine]") {
+    auto const image = asm_test::load_image(
+            std::filesystem::path(MDCOMP_ASM_IMAGES) / "long68k.bin",
+            asm_test::cpu::m68000);
+    asm_test::settings config;
+    config.output_size      = 4;
+    config.readable_padding = 0;
+    auto const result       = asm_test::execute(image, "test", config);
+    INFO(result.diagnostic);
+    REQUIRE(result.completed);
+    CHECK(result.bytes == "test");
+    CHECK(result.cycles == 36);
+    // Two opcodes, two input word transfers, two return-address word reads.
+    CHECK(result.bus_reads == 6);
+    CHECK(result.bus_writes == 2);
 }
 
 TEST_CASE("68000 word accesses enforce original CPU alignment", "[asm][machine]") {

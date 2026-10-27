@@ -54,8 +54,17 @@ def main():
                             ("negative.tsv", "containment")):
         rows = (root / filename).read_text().splitlines()
         for line in rows:
-            name, case, status, matches, instructions, cycles, high, size, allowance = line.split("\t")
+            fields = line.split("\t")
+            if len(fields) not in (9, 12):
+                raise ValueError("Unexpected assembly report columns: " + filename)
+            name, case, status, matches, instructions, cycles, high, size, allowance = fields[:9]
             record = records[name]
+            if len(fields) == 12:
+                reads, writes, timing = fields[9:]
+                expected = (cycles + " T-states" if record["architecture"] == "z80" else
+                            cycles + "(" + reads + "/" + writes + ")")
+                if min(int(cycles), int(reads), int(writes)) < 0 or timing != expected:
+                    raise ValueError("Invalid assembly timing: " + name + "/" + case)
             total += 1
             record["cases"][mode] = record["cases"].get(mode, 0) + 1
             passed = status == "1" and matches == "1"
