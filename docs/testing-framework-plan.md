@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 saved hand-constructed fixtures, 38 qualified external encodings, pinned binary/source comparisons, and direct MC68000/Z80 decoder execution with a declared optimization matrix are implemented. Complete format-edge inventories, encoder-selection coverage, remaining C++ option combinations, and moduled assembly hardware tests remain pending; the refactor gate remains blocked.
+Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 saved hand-constructed fixtures, 38 qualified external encodings, pinned binary/source comparisons, and direct MC68000/Z80 decoder execution with a declared optimization matrix are implemented. Complete format-edge inventories, encoder-selection coverage, remaining C++ option combinations, and remaining assembly ABI/negative cases remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -411,6 +411,8 @@ Checklist:
 
 ## Assembly Decoder Tests
 
+The moduled checkpoint executes all four shipped queues under byte/word DMA address conventions: 1,112 recorded cases, 2,392 actual level-6 CPU exceptions, and 1,406 completed transfers. The [hardware contract and fixes](../tests/asm/moduled-hardware.md) describe the test boundary and newly exposed build/resume/empty-archive defects. Full suites pass with 119 entries on GCC/Clang and 120 on MSVC including frozen-master comparisons. VDP contention and real-hardware behavior remain unclaimed.
+
 The optimization follow-up expands execution to 48 images and 3,807 recorded decoder/case checks: 477 existing known-answer checks, 2,220 additional hand-authored tail checks, 243 external encodings, 818 C++ encoder interoperability checks, and 49 containment checks. The matrix covers unroll levels 0..3, LUT/extreme-unroll choices, Saxman even/odd source and byte-header paths, and ComperX RTS/register-return paths. All fourteen original default images remain byte-identical. The new vectors cover small unroll residues and larger counter boundaries; they are additional to the 88 saved fixture manifest entries. Saxman's legitimate discarded stack-byte read required a narrowly declared scratch word in the harness, validated with two poison patterns; no decoder data defect was exposed by this matrix. See [the matrix and qualifications](../tests/asm/README.md#optimization-configuration-matrix). Deployment research, complete semantic edge inventories, headerless assembly entry coverage, and the moduled hardware shim remain open.
 
 The first executable checkpoint is implemented in [tests/asm](../tests/asm/README.md): pinned ASL builds only M68K/Z80 backends; bounded Musashi and superzazu/z80 harnesses execute ten shipped direct decoders and four optional original-derived Sega routines. The initial audit recorded 446 passing decoder/case checks: 133 known-answer checks, 65 saved external encodings, 233 C++ encoder interoperability checks, and 15 containment checks. Calibration gates bootstrap checks, which gate encoder interoperability. GCC 16.2, Clang 23.1, and MSVC 19.44 pass locally on Windows. With the timing/CLI follow-up, the full suite has 117 CTest entries, or 118 with the optional frozen-master comparison. Fixture TSVs now include formatted timing and modeled 68000 bus transfers; `mdcomp-asm-run` executes supplied files and alternative ASL images with text/JSON timing. Bus counts are explicitly qualified as logical Musashi transfers, not hardware-accurate prefetch/dummy cycles. CI is configured for Linux, macOS, MinGW, and MSVC; remote results remain to be observed.
@@ -682,10 +684,9 @@ Checklist:
 - [x] Add both test modes for the Kosinski Z80 decoder.
 - [x] Add both test modes for the Kosinski Plus Z80 decoder.
 - [x] Run shared Kosinski fixtures through both architectures.
-- [ ] Inventory the memory-mapped hardware used by the moduled queue sources.
-- [ ] Implement only the minimal Mega Drive hardware shim needed by those
-      sources.
-- [ ] Add moduled Comper, ComperX, Kosinski, and Kosinski Plus assembly tests.
+- [x] Inventory the memory-mapped hardware used by the moduled queue sources.
+- [x] Implement only the minimal Mega Drive hardware shim needed by those sources.
+- [x] Add moduled Comper, ComperX, Kosinski, and Kosinski Plus assembly tests.
 
 ## Fixtures and Coverage Manifests
 
@@ -830,9 +831,9 @@ Checklist:
 
 ### 4. Moduled assembly decoders
 
-- [ ] Document the required Mega Drive hardware interactions.
-- [ ] Add the minimal deterministic hardware shim.
-- [ ] Test every shipped moduled assembly decoder.
+- [x] Document the required Mega Drive hardware interactions.
+- [x] Add the minimal deterministic hardware shim.
+- [x] Test every shipped moduled assembly decoder (the two DMA address ABIs and representative interrupt/FIFO/module boundaries).
 
 ### 5. Blocking gate
 

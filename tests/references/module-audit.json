@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "recorded_cases": 1112,
+  "scope": "Shipped moduled queues with deterministic deferred DMA and real level-6 CPU exceptions; two source address ABIs",
+  "qualification": "Logical queue/interrupt integration, not cycle-exact VDP/DMA or real-hardware validation",
+  "images": [
+    {
+      "name": "module-comper-dma0",
+      "codec": "comper",
+      "source": "Comper_Moduled.asm",
+      "dma_source_words": 0,
+      "cases": {
+        "bootstrap": 65,
+        "encoder": 24
+      },
+      "interruptions": 193,
+      "transfers": 123,
+      "negative_cases": 3,
+      "image_sha256": "815390396e584e52947245080c9ca58a593173e550404f7cc09f5bd2c31f42df",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4698,
+      "decoder_end": 4826,
+      "dma_word_abi": 0,
+      "source_sha256": {
+        "module-comper-dma0.driver.asm": "ad788f179689b9d55f271bf190537b18033b4a4b15d93d94c37d6a8f1e030e5c",
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "Comper_Moduled.asm": "565fa7ddc09f4e6ea3279de411d39dccefccf44f414ea266f12874e0fcb52024",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-comper-dma1",
+      "codec": "comper",
+      "source": "Comper_Moduled.asm",
+      "dma_source_words": 1,
+      "cases": {
+        "bootstrap": 65,
+        "encoder": 22
+      },
+      "interruptions": 193,
+      "transfers": 123,
+      "negative_cases": 1,
+      "image_sha256": "54a4f09ed43e09278ab5d8f60c4957c028b4a320ee613e0c2366d8e5d6bd45f6",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4698,
+      "decoder_end": 4826,
+      "dma_word_abi": 1,
+      "source_sha256": {
+        "module-comper-dma1.driver.asm": "92755d7ca334aa6723904be2633f6de1603a1e7a34097fafc3552a347f8ab863",
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "Comper_Moduled.asm": "565fa7ddc09f4e6ea3279de411d39dccefccf44f414ea266f12874e0fcb52024",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-comperx-dma0",
+      "codec": "comperx",
+      "source": "ComperX_Moduled.asm",
+      "dma_source_words": 0,
+      "cases": {
+        "bootstrap": 195,
+        "encoder": 24
+      },
+      "interruptions": 251,
+      "transfers": 253,
+      "negative_cases": 3,
+      "image_sha256": "cd39c8c8cf4c660f2c7c36a3043f11edea1c53f045ed198bafd99bb50c51046d",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4622,
+      "decoder_end": 5272,
+      "dma_word_abi": 0,
+      "source_sha256": {
+        "module-comperx-dma0.driver.asm": "02b6cea960759846546e778771ed1b01be0570cee2fefc495bcad8bb8645efdb",
+        "ComperX_Moduled.asm": "110406363a730bc832899f4455a1afd60c3be6028c4ae9f4389bd3a67ff4b6d2",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "ComperX_internal.asm": "bd570dc377c8cbd99780a71c10468bb5d5325fa2381cce2c1ba22e8f63ed5eeb",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-comperx-dma1",
+      "codec": "comperx",
+      "source": "ComperX_Moduled.asm",
+      "dma_source_words": 1,
+      "cases": {
+        "bootstrap": 195,
+        "encoder": 22
+      },
+      "interruptions": 251,
+      "transfers": 253,
+      "negative_cases": 1,
+      "image_sha256": "d3f4a563697c49290c6765ffed464d7304b355c9abf109ca94055d31eebaa6d8",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4622,
+      "decoder_end": 5272,
+      "dma_word_abi": 1,
+      "source_sha256": {
+        "module-comperx-dma1.driver.asm": "14d413fe6da67e55fb35518d2b7ad817901c0e829a68778be5f501f3f673eecb",
+        "ComperX_Moduled.asm": "110406363a730bc832899f4455a1afd60c3be6028c4ae9f4389bd3a67ff4b6d2",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "ComperX_internal.asm": "bd570dc377c8cbd99780a71c10468bb5d5325fa2381cce2c1ba22e8f63ed5eeb",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-kosinski-dma0",
+      "codec": "kosinski",
+      "source": "Kosinki_Moduled.asm",
+      "dma_source_words": 0,
+      "cases": {
+        "bootstrap": 111,
+        "encoder": 25
+      },
+      "interruptions": 388,
+      "transfers": 177,
+      "negative_cases": 3,
+      "image_sha256": "c5e80fb2642e847d12a0b045a9ef1db0957b7e8186523352e37f5e592fd50e70",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 5360,
+      "decoder_end": 5868,
+      "dma_word_abi": 0,
+      "source_sha256": {
+        "module-kosinski-dma0.driver.asm": "0ad199560df3bafa3f8e2a15d1648e7441c7d6c2a6497777939f732e4fea1e35",
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "Kosinki_Moduled.asm": "fd2e6afff33708016781b7a07331dc1cc8d5bad0eee97cd658ade3205c19cb73",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-kosinski-dma1",
+      "codec": "kosinski",
+      "source": "Kosinki_Moduled.asm",
+      "dma_source_words": 1,
+      "cases": {
+        "bootstrap": 111,
+        "encoder": 23
+      },
+      "interruptions": 388,
+      "transfers": 177,
+      "negative_cases": 1,
+      "image_sha256": "0d5114ca0515a1d27735612bf5667944898d11148c4855280fd81e1c769873c5",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 5360,
+      "decoder_end": 5868,
+      "dma_word_abi": 1,
+      "source_sha256": {
+        "module-kosinski-dma1.driver.asm": "1a83d3af924e2b61c4debf1277d83596af509d8b6796b359dbc563cb86ac67f0",
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "Kosinki_Moduled.asm": "fd2e6afff33708016781b7a07331dc1cc8d5bad0eee97cd658ade3205c19cb73",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-kosplus-dma0",
+      "codec": "kosplus",
+      "source": "KosinkiPlus_Moduled.asm",
+      "dma_source_words": 0,
+      "cases": {
+        "bootstrap": 92,
+        "encoder": 24
+      },
+      "interruptions": 364,
+      "transfers": 150,
+      "negative_cases": 3,
+      "image_sha256": "b8bc8e9a1d62f04bce767e3b46425a456d2280514e499dba9e2295d0801aa5a2",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4784,
+      "decoder_end": 4998,
+      "dma_word_abi": 0,
+      "source_sha256": {
+        "module-kosplus-dma0.driver.asm": "83cc04f8c9335080876cd5ef65d483a151713eb296ae12ef38561ef2537a794e",
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "KosinkiPlus_Moduled.asm": "615678d17ec42a65f6c8bd752f58d358b43e9516bb2aa03be0f9279a3a5b7678",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    },
+    {
+      "name": "module-kosplus-dma1",
+      "codec": "kosplus",
+      "source": "KosinkiPlus_Moduled.asm",
+      "dma_source_words": 1,
+      "cases": {
+        "bootstrap": 92,
+        "encoder": 22
+      },
+      "interruptions": 364,
+      "transfers": 150,
+      "negative_cases": 1,
+      "image_sha256": "472bbc4dfae8ada168c5ef58774521f4762656ccf209cfb84a8ccc60cafaaca8",
+      "entry": 4128,
+      "payload": 131072,
+      "completion": 256,
+      "interrupt_entry": 4242,
+      "decoder_begin": 4784,
+      "decoder_end": 4998,
+      "dma_word_abi": 1,
+      "source_sha256": {
+        "module-kosplus-dma1.driver.asm": "65eb38f1ada647bc67c9e834f38011f9f3c2ea114a2118c3a928b6df7c1dee4c",
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "KosinkiPlus_Moduled.asm": "615678d17ec42a65f6c8bd752f58d358b43e9516bb2aa03be0f9279a3a5b7678",
+        "Moduled_common_header.asm": "8ffec6ea3ba3693d9e2bcea74c762c216d1a43fc1c9fe3960fe7c036f6947dd7",
+        "Moduled_common_footer.asm": "7ff400050e3a723cdb9eae022510aa2d6a26268e179923dcddae62e61115422e"
+      }
+    }
+  ]
+}
