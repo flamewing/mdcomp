@@ -237,9 +237,57 @@ class PackagingTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 package.package(stage, stage, "v0.2.0", "linux-x86_64", bundle=False)
 
-    def test_pe_import_parser(self):
-        self.assertEqual(package.runtime_names(" DLL Name: KERNEL32.dll\n DLL Name: libstdc++-6.dll\n"),
-                         ["KERNEL32.dll", "libstdc++-6.dll"])
+    def test_ntldd_parser_preserves_resolved_paths_with_spaces(self):
+        output = ("\tKERNEL32.dll => C:\\Windows\\System32\\KERNEL32.dll (0x1234)\n"
+                  "\tlibstdc++-6.dll => C:\\Tool Chain\\bin\\libstdc++-6.dll (0xABCDEF)\n"
+                  "\tmissing.dll => not found\n")
+        self.assertEqual(package.windows_dependencies(output), [
+            ("KERNEL32.dll", r"C:\Windows\System32\KERNEL32.dll"),
+            ("libstdc++-6.dll", r"C:\Tool Chain\bin\libstdc++-6.dll"), ("missing.dll", None)])
+
+    def test_ntldd_parser_rejects_unrecognized_diagnostics(self):
+        with self.assertRaises(RuntimeError):
+            package.windows_dependencies("Error opening executable")
+
+    def test_ntldd_copies_transitive_runtimes_and_excludes_system_subtrees(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            stage, system, runtime = root / "stage", root / "Windows", root / "Tool Chain"
+            for directory in (stage / "bin", system / "System32", runtime):
+                directory.mkdir(parents=True)
+            (stage / "bin/tool.exe").write_bytes(b"app")
+            (runtime / "runtime.dll").write_bytes(b"runtime")
+            (runtime / "helper.dll").write_bytes(b"helper")
+            (system / "System32/KERNEL32.dll").write_bytes(b"system")
+
+            def scan(*args):
+                self.assertEqual(args[:4], ("ntldd", "-D", str(stage / "bin"), "--"))
+                name = Path(args[-1]).name
+                if name == "tool.exe":
+                    return (f"runtime.dll => {runtime / 'runtime.dll'} (0x1234)\n"
+                            f"KERNEL32.dll => {system / 'System32/KERNEL32.dll'} (0x5678)\n"
+                            "api-ms-win-crt-runtime-l1-1-0.dll => not found\n")
+                if name == "runtime.dll":
+                    return f"helper.dll => {runtime / 'helper.dll'} (0xABCD)\n"
+                self.assertEqual(name, "helper.dll")
+                return ""
+
+            with patch.dict(os.environ, {"SystemRoot": str(system)}), patch("package.command", side_effect=scan) as scanner:
+                package.windows_runtime(stage)
+                self.assertEqual(scanner.call_count, 3)
+            self.assertEqual((stage / "bin/runtime.dll").read_bytes(), b"runtime")
+            self.assertEqual((stage / "bin/helper.dll").read_bytes(), b"helper")
+            self.assertFalse((stage / "bin/KERNEL32.dll").exists())
+
+    def test_ntldd_missing_application_runtime_and_emulation_dlls_fail(self):
+        with tempfile.TemporaryDirectory() as temp:
+            stage = Path(temp)
+            (stage / "bin").mkdir()
+            (stage / "bin/tool.exe").write_bytes(b"app")
+            for output in ("missing.dll => not found", "msys-2.0.dll => not found", "cygwin1.dll => not found"):
+                with self.subTest(output=output), patch.dict(os.environ, {"SystemRoot": str(stage / "Windows")}), \
+                        patch("package.command", return_value=output), self.assertRaises(RuntimeError):
+                    package.windows_runtime(stage)
 
 
 

@@ -17,32 +17,46 @@ def command(*args):
     return subprocess.check_output(args, text=True)
 
 
-def runtime_names(text):
-    return re.findall(r"DLL Name:\s*(\S+)", text)
+def windows_dependencies(text):
+    dependencies = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        missing = re.fullmatch(r"\s*(.+?)\s+=>\s+not found\s*", line)
+        resolved = re.fullmatch(r"\s*(.+?)\s+=>\s+(.+?)\s+\(0x[0-9a-fA-F]+\)\s*", line)
+        if missing:
+            dependencies.append((missing[1], None))
+        elif resolved:
+            dependencies.append((resolved[1], resolved[2]))
+        else:
+            raise RuntimeError("Unrecognized ntldd output: " + line)
+    return dependencies
 
 
 def windows_runtime(stage):
     pending = list((stage / "bin").glob("*.exe")) + list((stage / "bin").glob("*.dll"))
     searched = set()
     system = Path(os.environ["SystemRoot"]).resolve()
-    paths = [stage / "bin"] + [Path(p) for p in os.get_exec_path()]
     while pending:
         binary = pending.pop()
         if binary.name.lower() in searched:
             continue
         searched.add(binary.name.lower())
-        for name in runtime_names(command("objdump", "-p", str(binary))):
+        # Traverse application DLLs ourselves so optional dependencies inside
+        # Windows system libraries do not enter the package dependency graph.
+        output = command("ntldd", "-D", str(stage / "bin"), "--", str(binary))
+        for name, resolved in windows_dependencies(output):
             if name.lower().startswith(("api-ms-", "ext-ms-")):
                 continue
             if name.lower() in ("msys-2.0.dll", "cygwin1.dll"):
                 raise RuntimeError("Native package depends on a POSIX emulation DLL: " + name)
-            found = next((p / name for p in paths if (p / name).is_file()), None)
-            if found is None:
-                if any((system / sub / name).is_file() for sub in ("System32", "SysWOW64")):
-                    continue
+            if resolved is None:
                 raise RuntimeError("Cannot locate runtime dependency: " + name)
+            found = Path(resolved)
             if system in found.resolve().parents:
                 continue
+            if not found.is_file():
+                raise RuntimeError("ntldd resolved a missing runtime: " + resolved)
             target = stage / "bin" / name
             if not target.exists():
                 shutil.copy2(found, target)

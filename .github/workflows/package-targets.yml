@@ -47,7 +47,7 @@ jobs:
           msystem: ${{ matrix.msystem }}
           suppress-deprecation-warnings: msystem-mingw32
           install: base-devel git
-          pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p
+          pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p ntldd:p
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.sha }}
