@@ -2,6 +2,11 @@ name: ci-linux
 
 on:
   workflow_dispatch:
+    inputs:
+      coverage:
+        description: Collect diagnostic GCC line/branch coverage
+        type: boolean
+        default: false
   schedule:
     - cron: "17 4 * * 1"
   push:
@@ -30,6 +35,52 @@ on:
       - ".github/workflows/ci-linux.yml"
 
 jobs:
+  coverage:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.coverage }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Install coverage dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13 ninja-build libboost-all-dev python3-venv
+          python3 -m venv "$RUNNER_TEMP/coverage-venv"
+          "$RUNNER_TEMP/coverage-venv/bin/pip" install -r tests/support/coverage-requirements.txt
+      - name: Install Catch2 v3
+        run: |
+          git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
+          cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
+          cmake --build "$RUNNER_TEMP/catch-build" -j2
+          cmake --install "$RUNNER_TEMP/catch-build"
+      - name: Configure coverage
+        run: |
+          cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=OFF -DMDCOMP_STRESS_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install"
+      - name: Build
+        id: build
+        run: cmake --build build -j2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Collect diagnostic coverage
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          "$RUNNER_TEMP/coverage-venv/bin/gcovr" --gcov-executable gcov-13 --root . --filter 'src/lib/' --filter 'include/mdcomp/' --xml-pretty --output build/coverage.xml build
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('build/coverage.xml').getroot()
+          for name in ('lines-valid', 'lines-covered', 'branches-valid', 'branches-covered'):
+              if int(root.attrib[name]) <= 0:
+                  raise SystemExit(f'Empty coverage measurement: {name}')
+          print({key: root.attrib[key] for key in ('line-rate', 'branch-rate')})
+          PY
+      - name: Preserve coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcc-coverage
+          path: |
+            build/coverage.xml
+            build/Testing/Temporary/LastTest.log
+            build/tests/failures/
   ci-linux:
     runs-on: ubuntu-latest
     env:

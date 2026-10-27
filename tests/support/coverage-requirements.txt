@@ -1,0 +1,7 @@
+# Isolated diagnostic reporter; the normal test suite has no Python dependency.
+gcovr==8.7
+colorlog==6.12.0
+Jinja2==3.1.6
+lxml==6.1.3
+MarkupSafe==3.0.4
+Pygments==2.21.0
