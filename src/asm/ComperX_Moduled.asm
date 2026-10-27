@@ -12,21 +12,22 @@
 ; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
-	set module_remap_A000_to_8000 0			; 0 for anything but Kosinski
-	set module_padding 0					; 0 for anything but Kosinski
+	set module_remap_A000_to_8000,0			; 0 for anything but Kosinski
+	set module_padding,0					; 0 for anything but Kosinski
 
 	reg comperx_return_reg,a5				; Return here at the end of the ComperX decompression.
 	set comperx_jump_to_reg_on_end,1		; Jump to (comperx_return_reg) on end
 
 KosMRestoreRegs macro addrW,addrL
-	movem.w	addrW,d0-d4
-	movem.l	addrL,a0-a2
+	movem.w	addrW,d0-d3
+	movem.l	addrL,d4/a0-a2
 	lea ComperX_done(pc),comperx_return_reg	; Set comperx_return_reg to the end of the ComperX code
 	endm
 
 KosMSaveRegs macro addrW,addrL
-	movem.w	d0-d4,addrW
-	movem.l	a0-a2,addrL
+	movem.w	d0-d3,addrW
+	movem.l	d4/a0-a2,addrL
+	; d4 holds both words of the RLE pattern and must survive in full.
 	; comperx_return_reg has a fixed, known, values, so no need to save it
 	endm
 

@@ -34,14 +34,14 @@
 	move.l	a1,(Kos_decomp_destination).w	; end of decompressed output
 	andi.w	#$7FFF,(Kos_decomp_queue_count).w	; clear decoder-execution flag
 	subq.w	#1,(Kos_decomp_queue_count).w
-	beq.s	.done								; queue is now empty
+	beq.s	Process_Kos_Queue.done		; queue is now empty
 	lea	(Kos_decomp_queue).w,a0
 	lea	(Kos_decomp_queue+8).w,a1				; promote the remaining FIFO entries
 	rept (Kos_decomp_queue_End-(Kos_decomp_queue+8))/4
 		move.l	(a1)+,(a0)+
 	endm
 
-.done:
+Process_Kos_Queue.done:
 	rts
 ; ---------------------------------------------------------------------------
 Restore_Kos_Bookmark:

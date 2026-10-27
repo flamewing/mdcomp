@@ -12,8 +12,8 @@
 ; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 ; OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ; ---------------------------------------------------------------------------
-	set module_remap_A000_to_8000 0			; 0 for anything but Kosinski
-	set module_padding 0					; 0 for anything but Kosinski
+	set module_remap_A000_to_8000,0			; 0 for anything but Kosinski
+	set module_padding,0					; 0 for anything but Kosinski
 
 KosMRestoreRegs macro addrW,addrL
 	movem.w	addrW,d0-d4

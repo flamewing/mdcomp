@@ -128,10 +128,12 @@ Clear_Kos_Queue:
 ;  d2.w = destination VRAM byte address
 ; ---------------------------------------------------------------------------
 Queue_Kos_Module:
+	tst.w	(a1)							; empty archives need no queue slot or DMA
+	beq.s	.empty_archive
 	lea	(Kos_module_queue).w,a2
 	tst.l	(a2)							; is the active record free?
 	beq.s	Process_Kos_Module_Queue_Init	; if so, initialize this archive directly
-	move.w	#Kos_module_queue_End,d3
+	move.w	#Kos_module_queue_End&$FFFF,d3
 
 .find_free_slot:
 	addq.w	#6,a2						; otherwise, inspect the next FIFO record
@@ -142,6 +144,7 @@ Queue_Kos_Module:
 
 	move.l	a1,(a2)+					; archive address
 	move.w	d2,(a2)+					; destination VRAM address
+.empty_archive:
 	rts
 ; ---------------------------------------------------------------------------
 .queue_full:
