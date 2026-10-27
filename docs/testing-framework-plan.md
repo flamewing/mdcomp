@@ -868,6 +868,10 @@ This prerequisite plan is complete when:
   execution;
 - fixture and third-party dependency provenance is documented.
 
+## Queued upstream reports
+
+- [ ] File the MSVC 19.44 x64 `/O2` miscompilation with Microsoft later. Use the [28-line standalone reproducer, instruction-level diagnosis, compiler matrix, and tested workaround](../tests/references/musashi-msvc/README.md). Recheck it with the newest available MSVC before filing, preserve the failing 19.44 evidence, and distinguish this compiler defect from Musashi's separate portability concerns. Keep the generator-only `/Od` workaround until a compiler fix or reviewed upstream workaround is adopted. The earlier attempt to notify Musashi was rejected by the GitHub integration with HTTP 403; no report has been posted by this session.
+
 ## Deferred Decisions
 
 - Whether Catch2 remains the long-term framework after the initial spike.
