@@ -361,7 +361,14 @@ TEST_CASE("C++ encoders interoperate with assembly decoders", "[asm][encode]") {
                 REQUIRE(encoded.success);
                 f.compressed = encoded.bytes;
                 if (d.headerless) {
-                    f.settings.compressed_size = f.compressed.size();
+                    auto const framed = codec_test::run(api->encode, input);
+                    REQUIRE(framed.success);
+                    REQUIRE(framed.bytes.size() >= 2);
+                    REQUIRE((f.compressed == framed.bytes.substr(2)));
+                    f.settings.compressed_size
+                            = static_cast<unsigned char>(framed.bytes[0])
+                              | (size_t(static_cast<unsigned char>(framed.bytes[1]))
+                                 << 8);
                 }
                 check(d, f, report);
             }

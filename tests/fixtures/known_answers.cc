@@ -203,6 +203,28 @@ namespace codec_test {
                     });
                 }
             }
+            {
+                auto        wire = make();
+                std::string expected;
+                for (unsigned i = 0; i < 8192; ++i) {
+                    wire.bit(1);
+                    wire.put(i);
+                    byte(expected, i);
+                }
+                wire.bits(1, 2);
+                wire.put(plus ? 7 : 0);
+                wire.put(plus ? 0 : 1);
+                expected.append(expected.substr(0, 3));
+                terminate(wire);
+                out.push_back({
+                        std::string(codec) + "/distance-8192",
+                        codec,
+                        wire.data,
+                        expected,
+                        {"dictionary", "maximum-distance", "descriptor-reload",
+                          "terminator"}
+                });
+            }
             if (!plus) {
                 auto wire = make();
                 wire.bits(1, 2);
@@ -293,9 +315,44 @@ namespace codec_test {
         }
 
         void byte_lz_vectors(std::vector<fixture>& out, bool sax) {
+            {
+                descriptors    wire(8, true, true, false);
+                std::string    expected;
+                unsigned const distance = sax ? 4096 : 1024;
+                for (unsigned i = 0; i < distance; ++i) {
+                    wire.bit(1);
+                    wire.put(i);
+                    byte(expected, i);
+                }
+                wire.bit(0);
+                if (sax) {
+                    wire.put(0xee);
+                    wire.put(0xf0);
+                } else {
+                    wire.put(3);
+                    wire.put(0xc0);
+                }
+                expected.append(expected.substr(0, sax ? 3 : 1));
+                std::string header;
+                if (sax) {
+                    byte(header, static_cast<unsigned>(wire.data.size()));
+                    byte(header, static_cast<unsigned>(wire.data.size() >> 8));
+                } else {
+                    word(header, static_cast<unsigned>(expected.size()));
+                    word(header, static_cast<unsigned>(wire.data.size()));
+                }
+                out.push_back({
+                        std::string(sax ? "saxman" : "rocket") + "/maximum-distance",
+                        sax ? "saxman" : "rocket",
+                        header + wire.data,
+                        expected,
+                        {"dictionary", "maximum-distance", "descriptor-reload",
+                          "size-bound"}
+                });
+            }
             for (bool seed : {false, true}) {
                 for (unsigned length :
-                     (sax ? std::array{3U, 18U} : std::array{2U, 64U})) {
+                     (sax ? std::vector{3U, 18U} : std::vector{1U, 2U, 64U})) {
                     descriptors wire(8, true, true, false);
                     if (!seed) {
                         wire.bit(1);

@@ -343,8 +343,9 @@ namespace lzss {
             if (find_extra_matches(matches)) {
                 return;
             }
-            // This is what we produce.
-            matches.clear();
+            // Keep supplemental matches when the adaptor also requests the
+            // normal dictionary search. find_extra_matches already cleared
+            // the previous position's results.
             // First node is special.
             if (get_search_buffer_size() == 0) {
                 return;

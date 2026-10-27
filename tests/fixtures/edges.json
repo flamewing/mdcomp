@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "qualification": "Wire forms and selected semantic boundaries, observed by a separate test-only interpreter. Encoder requirements concern actual emitted forms; decoder and boundary requirements concern independently constructed fixtures. Exhaustive parameter matrices and malformed-input contracts remain separate obligations.",
+  "codecs": {
+    "comper": {
+      "encoder": [
+        "literal",
+        "dictionary",
+        "terminator"
+      ],
+      "decoder": [
+        "literal",
+        "dictionary",
+        "terminator"
+      ],
+      "boundary": [
+        "descriptor-reload",
+        "minimum-length",
+        "maximum-length",
+        "maximum-distance",
+        "overlap"
+      ]
+    },
+    "comperx": {
+      "encoder": [
+        "literal",
+        "dictionary",
+        "rle",
+        "terminator"
+      ],
+      "decoder": [
+        "literal",
+        "dictionary",
+        "rle",
+        "terminator"
+      ],
+      "boundary": [
+        "descriptor-reload",
+        "minimum-length",
+        "maximum-length",
+        "maximum-distance",
+        "overlap"
+      ]
+    },
+    "kosinski": {
+      "encoder": [
+        "literal",
+        "inline",
+        "medium",
+        "long",
+        "terminator"
+      ],
+      "decoder": [
+        "literal",
+        "inline",
+        "medium",
+        "long",
+        "discard-control",
+        "terminator"
+      ],
+      "boundary": [
+        "descriptor-reload",
+        "minimum-length",
+        "maximum-length",
+        "maximum-distance",
+        "overlap"
+      ]
+    },
+    "kosplus": {
+      "encoder": [
+        "literal",
+        "inline",
+        "medium",
+        "long",
+        "terminator"
+      ],
+      "decoder": [
+        "literal",
+        "inline",
+        "medium",
+        "long",
+        "terminator"
+      ],
+      "boundary": [
+        "descriptor-reload",
+        "minimum-length",
+        "maximum-length",
+        "maximum-distance",
+        "overlap"
+      ]
+    },
+    "lzkn1": {
+      "encoder": [
+        "literal",
+        "packed-literals",
+        "short",
+        "long",
+        "terminator",
+        "minimum-packed",
+        "maximum-packed"
+      ],
+      "decoder": [
+        "literal",
+        "packed-literals",
+        "short",
+        "long",
+        "terminator"
+      ],
+      "boundary": [
+        "minimum-packed",
+        "maximum-packed",
+        "minimum-length",
+        "maximum-length",
+        "overlap"
+      ]
+    },
+    "saxman": {
+      "encoder": [
+        "literal",
+        "dictionary",
+        "seed",
+        "sized",
+        "headerless",
+        "body-end"
+      ],
+      "decoder": [
+        "literal",
+        "dictionary",
+        "seed",
+        "sized",
+        "headerless",
+        "body-end"
+      ],
+      "boundary": [
+        "minimum-length",
+        "maximum-length",
+        "overlap",
+        "maximum-distance",
+        "descriptor-reload"
+      ]
+    },
+    "rocket": {
+      "encoder": [
+        "literal",
+        "dictionary",
+        "seed",
+        "body-end"
+      ],
+      "decoder": [
+        "literal",
+        "dictionary",
+        "seed",
+        "seed-to-output",
+        "body-end"
+      ],
+      "boundary": [
+        "minimum-length",
+        "maximum-length",
+        "overlap",
+        "maximum-distance",
+        "descriptor-reload"
+      ]
+    },
+    "enigma": {
+      "encoder": [
+        "packet-0",
+        "packet-1",
+        "packet-4",
+        "packet-5",
+        "packet-6",
+        "packet-7",
+        "tile-flags",
+        "terminator"
+      ],
+      "decoder": [
+        "packet-0",
+        "packet-1",
+        "packet-4",
+        "packet-5",
+        "packet-6",
+        "packet-7",
+        "tile-flags",
+        "terminator"
+      ],
+      "boundary": [
+        "minimum-packet",
+        "maximum-packet"
+      ]
+    },
+    "nemesis": {
+      "encoder": [
+        "normal",
+        "xor",
+        "inline",
+        "table"
+      ],
+      "decoder": [
+        "normal",
+        "xor",
+        "inline",
+        "table"
+      ],
+      "boundary": [
+        "empty",
+        "minimum-run",
+        "maximum-run"
+      ]
+    },
+    "snkrle": {
+      "encoder": [
+        "literal",
+        "run",
+        "continuation",
+        "size-end"
+      ],
+      "decoder": [
+        "literal",
+        "run",
+        "continuation",
+        "size-end"
+      ],
+      "boundary": [
+        "empty",
+        "minimum-run",
+        "maximum-run"
+      ]
+    }
+  }
+}

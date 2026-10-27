@@ -2,7 +2,7 @@
   "schema_version": 2,
   "scope": "Direct decoder defaults and declared optimization matrices; no moduled hardware queues or real hardware",
   "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
-  "recorded_cases": 4067,
+  "recorded_cases": 4124,
   "failed_cases": [],
   "decoders": [
     {
@@ -91,7 +91,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -129,7 +129,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 13,
+        "known-answer": 14,
         "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -203,7 +203,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -240,7 +240,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -313,7 +313,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -350,7 +350,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 13,
+        "known-answer": 14,
         "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -387,7 +387,7 @@
       "stack_scratch_bytes": 0,
       "headerless": true,
       "cases": {
-        "known-answer": 11,
+        "known-answer": 12,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -424,7 +424,7 @@
       "stack_scratch_bytes": 0,
       "headerless": true,
       "cases": {
-        "known-answer": 11,
+        "known-answer": 12,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -461,7 +461,7 @@
       "stack_scratch_bytes": 0,
       "headerless": true,
       "cases": {
-        "known-answer": 11,
+        "known-answer": 12,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -498,7 +498,7 @@
       "stack_scratch_bytes": 0,
       "headerless": true,
       "cases": {
-        "known-answer": 11,
+        "known-answer": 12,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -573,7 +573,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 13,
+        "known-answer": 14,
         "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -611,7 +611,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -648,7 +648,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -686,7 +686,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -724,7 +724,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -761,7 +761,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -799,7 +799,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -875,7 +875,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 13,
+        "known-answer": 14,
         "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -913,7 +913,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -950,7 +950,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -988,7 +988,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1026,7 +1026,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -1063,7 +1063,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1101,7 +1101,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1177,7 +1177,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 13,
+        "known-answer": 14,
         "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1215,7 +1215,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -1252,7 +1252,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1290,7 +1290,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1328,7 +1328,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -1365,7 +1365,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1403,7 +1403,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1441,7 +1441,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 5,
+        "known-answer": 8,
         "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
@@ -1478,7 +1478,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1516,7 +1516,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1554,7 +1554,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
@@ -1592,7 +1592,7 @@
       "stack_scratch_bytes": 2,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1629,7 +1629,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1666,7 +1666,7 @@
       "stack_scratch_bytes": 2,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1703,7 +1703,7 @@
       "stack_scratch_bytes": 2,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1740,7 +1740,7 @@
       "stack_scratch_bytes": 2,
       "headerless": false,
       "cases": {
-        "known-answer": 6,
+        "known-answer": 7,
         "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
@@ -1813,7 +1813,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 14,
+        "known-answer": 15,
         "external-encoding": 8,
         "cpp-encoding": 17,
         "containment": 1

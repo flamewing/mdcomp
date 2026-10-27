@@ -124,13 +124,13 @@ struct lzkn1_adaptor {
     static bool extra_matches(
             std::span<stream_t const> data, size_t const base_node, size_t const ubound,
             size_t const lbound, std::vector<adj_list_node>& matches) noexcept {
-        ignore_unused_variable_warning(data, lbound);
+        ignore_unused_variable_warning(ubound, lbound);
         // Add packed symbolwise matches.
-        size_t const end = std::min(ubound - base_node, size_t{72});
-        for (size_t ii = 8; ii < end; ii++) {
+        size_t const end = std::min(data.size() - base_node, size_t{71});
+        for (size_t ii = 8; ii <= end; ii++) {
             lzss::symbolwise_info<lzkn1_adaptor>(
                     matches, static_cast<std::make_signed_t<size_t>>(base_node),
-                    data.data(), ii, edge_type::packed_symbolwise);
+                    data.data() + base_node, ii, edge_type::packed_symbolwise);
         }
         // Do normal matches.
         return false;

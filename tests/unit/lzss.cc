@@ -81,6 +81,18 @@ namespace {
 
     static_assert(lzss::adaptor_t<adaptor<>>);
 
+    struct supplemental_adaptor : adaptor<> {
+        using adj_list_node = lzss::adj_list_node<supplemental_adaptor>;
+        static bool extra_matches(
+                std::span<uint8_t const> data, size_t position, size_t upper, size_t,
+                std::vector<adj_list_node>& matches) noexcept {
+            matches.emplace_back(
+                    position, data.subspan(position, upper - position),
+                    edge_type::symbolwise);
+            return false;    // Retain this edge and also search the dictionary.
+        }
+    };
+
     struct throwing_nodes {
         using node = adaptor<>::adj_list_node;
         node value;
@@ -95,6 +107,27 @@ namespace {
         }
     };
 }    // namespace
+
+TEST_CASE("LZSS retains supplemental edges alongside dictionary matches", "[lzss]") {
+    std::array<uint8_t, 3> const               data{7, 7, 7};
+    lzss::sliding_window<supplemental_adaptor> window(
+            data, 8, 2, 3, adaptor<>::edge_type::dictionary);
+    std::vector<supplemental_adaptor::adj_list_node> matches;
+    window.find_matches(matches);
+    REQUIRE(matches.size() == 1);
+    CHECK(matches[0].get_length() == 3);
+    CHECK(matches[0].get_data().data() == data.data());
+    REQUIRE(window.slide_window());
+    window.find_matches(matches);
+    REQUIRE(matches.size() == 2);
+    CHECK(matches[0].get_position() == 1);
+    CHECK(matches[0].get_data().data() == data.data() + 1);
+    CHECK(matches[1].get_type() == adaptor<>::edge_type::dictionary);
+    CHECK(matches[1].get_distance() == 1);
+    CHECK(matches[1].get_length() == 2);
+    window.find_matches(matches);
+    CHECK(matches.size() == 2);    // Previous-call results must still be cleared.
+}
 
 TEST_CASE("LZSS owns packed literals without a second allocation", "[lzss]") {
     using node = adaptor<>::adj_list_node;

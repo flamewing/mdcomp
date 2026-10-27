@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "qualification": "Wire forms and selected semantic boundaries, observed by a separate test-only interpreter. Encoder requirements concern actual emitted forms; decoder and boundary requirements concern independently constructed fixtures. Exhaustive parameter matrices and malformed-input contracts remain separate obligations.",
+  "source_sha256": {
+    "tests/fixtures/edges.json": "7f606fa9f322dc9131d0245f396ce28cd3e7441e832778c0054089c768c44e2a",
+    "tests/fixtures/manifest.json": "77f477c4ad7f6a5ded4f31973bbf5e8d627532194f1596fb63ae1887667f637f",
+    "tests/support/format_observer.cc": "c34be0913b9a5bf074849a36f7741682a443c66b3d36109daa734270f5d2953b",
+    "tests/codec/edge_coverage.cc": "d5de215ecb6424099e77575ae61c43a5dcb161d6a89a3cca54452f1bb5580249"
+  },
+  "covered_obligations": {
+    "encoder": 50,
+    "decoder": 50,
+    "boundary": 43
+  },
+  "missing": [],
+  "codecs": {
+    "comper": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "dictionary": "corpus-8-0",
+        "terminator": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "comper/literal-1",
+        "dictionary": "comper/overlap-2",
+        "terminator": "comper/literal-1"
+      },
+      "boundary": {
+        "descriptor-reload": "comper/literal-16",
+        "minimum-length": "comper/overlap-2",
+        "maximum-length": "comper/overlap-256",
+        "maximum-distance": "comper/distance-256",
+        "overlap": "comper/overlap-2"
+      }
+    },
+    "comperx": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "dictionary": "corpus-8-0",
+        "rle": "corpus-8-0",
+        "terminator": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "comperx/literal-1",
+        "dictionary": "comperx/overlap-2",
+        "rle": "comperx/overlap-2",
+        "terminator": "comperx/literal-1"
+      },
+      "boundary": {
+        "descriptor-reload": "comperx/literal-16",
+        "minimum-length": "comperx/overlap-2",
+        "maximum-length": "comperx/overlap-255",
+        "maximum-distance": "comperx/distance-256",
+        "overlap": "comperx/overlap-2"
+      }
+    },
+    "kosinski": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "inline": "corpus-4-0",
+        "medium": "corpus-8-0",
+        "long": "corpus-16-0",
+        "terminator": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "kosinski/literal-1",
+        "inline": "kosinski/match-0-2",
+        "medium": "kosinski/match-1-3",
+        "long": "kosinski/match-2-3",
+        "discard-control": "kosinski/discard-control",
+        "terminator": "kosinski/literal-1"
+      },
+      "boundary": {
+        "descriptor-reload": "kosinski/literal-15",
+        "minimum-length": "kosinski/match-0-2",
+        "maximum-length": "kosinski/match-2-256",
+        "maximum-distance": "kosinski/distance-8192",
+        "overlap": "kosinski/match-0-2"
+      }
+    },
+    "kosplus": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "inline": "corpus-4-0",
+        "medium": "corpus-8-0",
+        "long": "corpus-16-0",
+        "terminator": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "kosplus/literal-1",
+        "inline": "kosplus/match-0-2",
+        "medium": "kosplus/match-1-3",
+        "long": "kosplus/match-2-10",
+        "terminator": "kosplus/literal-1"
+      },
+      "boundary": {
+        "descriptor-reload": "kosplus/literal-7",
+        "minimum-length": "kosplus/match-0-2",
+        "maximum-length": "kosplus/match-2-264",
+        "maximum-distance": "kosplus/distance-8192",
+        "overlap": "kosplus/match-0-2"
+      }
+    },
+    "lzkn1": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "packed-literals": "corpus-8-2",
+        "short": "corpus-4-0",
+        "long": "corpus-8-0",
+        "terminator": "corpus-0-0",
+        "minimum-packed": "corpus-8-2",
+        "maximum-packed": "corpus-72-2"
+      },
+      "decoder": {
+        "literal": "lzkn1/overlap-2",
+        "packed-literals": "lzkn1/packed-8",
+        "short": "lzkn1/overlap-2",
+        "long": "lzkn1/overlap-3",
+        "terminator": "lzkn1/packed-8"
+      },
+      "boundary": {
+        "minimum-packed": "lzkn1/packed-8",
+        "maximum-packed": "lzkn1/packed-71",
+        "minimum-length": "lzkn1/overlap-2",
+        "maximum-length": "lzkn1/long-length-34",
+        "overlap": "lzkn1/overlap-2"
+      }
+    },
+    "saxman": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "dictionary": "corpus-4-1",
+        "seed": "corpus-4-0",
+        "sized": "corpus-0-0",
+        "headerless": "corpus-0-0-headerless",
+        "body-end": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "saxman/maximum-distance",
+        "dictionary": "saxman/maximum-distance",
+        "seed": "saxman/seed-3",
+        "sized": "saxman/maximum-distance",
+        "headerless": "saxman/overlap-3-headerless",
+        "body-end": "saxman/maximum-distance"
+      },
+      "boundary": {
+        "minimum-length": "saxman/maximum-distance",
+        "maximum-length": "saxman/overlap-18",
+        "overlap": "saxman/overlap-3",
+        "maximum-distance": "saxman/maximum-distance",
+        "descriptor-reload": "saxman/maximum-distance"
+      }
+    },
+    "rocket": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "dictionary": "corpus-4-0",
+        "seed": "corpus-2-5",
+        "body-end": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "rocket/maximum-distance",
+        "dictionary": "rocket/maximum-distance",
+        "seed": "rocket/seed-1",
+        "seed-to-output": "rocket/seed-to-output",
+        "body-end": "rocket/maximum-distance"
+      },
+      "boundary": {
+        "minimum-length": "rocket/maximum-distance",
+        "maximum-length": "rocket/overlap-64",
+        "overlap": "rocket/overlap-2",
+        "maximum-distance": "rocket/maximum-distance",
+        "descriptor-reload": "rocket/maximum-distance"
+      }
+    },
+    "enigma": {
+      "encoder": {
+        "packet-0": "corpus-2-0",
+        "packet-1": "corpus-4-0",
+        "packet-4": "corpus-32-3",
+        "packet-5": "tile-packet-choices",
+        "packet-6": "tile-packet-choices",
+        "packet-7": "corpus-4-2",
+        "tile-flags": "corpus-2-1",
+        "terminator": "corpus-0-0"
+      },
+      "decoder": {
+        "packet-0": "enigma/mode-0-1",
+        "packet-1": "enigma/mode-1-1",
+        "packet-4": "enigma/mode-2-1",
+        "packet-5": "enigma/mode-3-1",
+        "packet-6": "enigma/mode-4-1",
+        "packet-7": "enigma/mode-5-1",
+        "tile-flags": "enigma/all-flags",
+        "terminator": "enigma/mode-0-1"
+      },
+      "boundary": {
+        "minimum-packet": "enigma/mode-0-1",
+        "maximum-packet": "enigma/mode-0-16"
+      }
+    },
+    "nemesis": {
+      "encoder": {
+        "normal": "corpus-0-0",
+        "xor": "corpus-16-1",
+        "inline": "corpus-2-1",
+        "table": "corpus-2-0"
+      },
+      "decoder": {
+        "normal": "nemesis/inline-normal",
+        "xor": "nemesis/inline-xor",
+        "inline": "nemesis/inline-normal",
+        "table": "nemesis/table-code"
+      },
+      "boundary": {
+        "empty": "nemesis/empty",
+        "minimum-run": "nemesis/inline-counts-one-through-eight",
+        "maximum-run": "nemesis/inline-normal"
+      }
+    },
+    "snkrle": {
+      "encoder": {
+        "literal": "corpus-2-0",
+        "run": "corpus-2-0",
+        "continuation": "corpus-258-0",
+        "size-end": "corpus-0-0"
+      },
+      "decoder": {
+        "literal": "snkrle/literals",
+        "run": "snkrle/run-2",
+        "continuation": "snkrle/continuation",
+        "size-end": "snkrle/empty"
+      },
+      "boundary": {
+        "empty": "snkrle/empty",
+        "minimum-run": "snkrle/run-2",
+        "maximum-run": "snkrle/run-257"
+      }
+    }
+  }
+}

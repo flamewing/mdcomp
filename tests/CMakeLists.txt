@@ -44,9 +44,28 @@ add_executable(mdcomp-codec-smoke-tests
     codec/known_answers.cc
     codec/external_answers.cc
     codec/moduled.cc
+    codec/edge_coverage.cc
     fixtures/known_answers.cc
-    support/codec_api.cc)
-target_include_directories(mdcomp-codec-smoke-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    support/codec_api.cc
+    support/format_observer.cc)
+
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/edges.json")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/edges.json" edge_manifest)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/edge_obligations.inc" "// Generated from fixtures/edges.json.\n")
+string(JSON codec_count LENGTH "${edge_manifest}" codecs)
+math(EXPR codec_last "${codec_count} - 1")
+foreach(index RANGE ${codec_last})
+    string(JSON codec MEMBER "${edge_manifest}" codecs ${index})
+    foreach(mode encoder decoder boundary)
+        string(JSON count LENGTH "${edge_manifest}" codecs "${codec}" "${mode}")
+        math(EXPR last "${count} - 1")
+        foreach(edge_index RANGE ${last})
+            string(JSON edge GET "${edge_manifest}" codecs "${codec}" "${mode}" ${edge_index})
+            file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/edge_obligations.inc" "{\"${codec}\", \"${mode}\", \"${edge}\"},\n")
+        endforeach()
+    endforeach()
+endforeach()
+target_include_directories(mdcomp-codec-smoke-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(mdcomp-codec-smoke-tests PRIVATE Catch2::Catch2WithMain
     mdcomp::comperStatic mdcomp::comperxStatic mdcomp::kosinskiStatic
     mdcomp::kosplusStatic mdcomp::lzkn1Static mdcomp::rocketStatic mdcomp::saxmanStatic

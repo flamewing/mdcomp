@@ -488,6 +488,23 @@
       "raw_size": 1,
       "source": "src/asm/Kosinski_internal.asm"
     },
+    "kosinski/distance-8192": {
+      "classification": "hand-constructed",
+      "codec": "kosinski",
+      "compressed_sha256": "71c018b2d597db2678041458e856e4f7b8b282f741d3114484db5dbd9c530755",
+      "compressed_size": 9223,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "aeb5000e5f0d5144ec958b073a61c0a829f85d1dc7f614f386920710fa48b447",
+      "raw_size": 8195,
+      "source": "src/asm/Kosinski_internal.asm"
+    },
     "kosinski/literal-1": {
       "classification": "hand-constructed",
       "codec": "kosinski",
@@ -701,6 +718,23 @@
       "raw_sha256": "63c1dd951ffedf6f7fd968ad4efa39b8ed584f162f46e715114ee184f8de9201",
       "raw_size": 4,
       "source": "src/asm/Kosinski_internal.asm"
+    },
+    "kosplus/distance-8192": {
+      "classification": "hand-constructed",
+      "codec": "kosplus",
+      "compressed_sha256": "2e23ad5a9fc65f63eef91eda20bac431d3ae95b7ca95b0af6e04a1111a214c06",
+      "compressed_size": 9222,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "aeb5000e5f0d5144ec958b073a61c0a829f85d1dc7f614f386920710fa48b447",
+      "raw_size": 8195,
+      "source": "src/asm/KosinskiPlus_internal.asm"
     },
     "kosplus/literal-1": {
       "classification": "hand-constructed",
@@ -1093,6 +1127,39 @@
       "raw_size": 32,
       "source": "src/lib/nemesis.cc: decode_header/decode grammar"
     },
+    "rocket/maximum-distance": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "483b94ce75f5c6635aa77d3da24f333de7d785ce05f1d21a5412db725faaafc1",
+      "compressed_size": 1159,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "b3981d93eeb64aa900f3e48cfcd48e9bbc89b77732c49ea201c93656c62b6a09",
+      "raw_size": 1025,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/overlap-1": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "004e77012ae79f39e70ee57cf5ef5ddf6614c06085de0d10e745b35bb2c25c8a",
+      "compressed_size": 8,
+      "edges": [
+        "dictionary",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "58bb119c35513a451d24dc20ef0e9031ec85b35bfc919d263e7e5d9868909cb5",
+      "raw_size": 2,
+      "source": "src/asm/Rocket.asm"
+    },
     "rocket/overlap-2": {
       "classification": "hand-constructed",
       "codec": "rocket",
@@ -1123,6 +1190,22 @@
       "license": "LGPL-3.0-or-later",
       "raw_sha256": "836203944f4c0280461ad73d31457c22ba19d1d99e232dc231000085899e00a2",
       "raw_size": 65,
+      "source": "src/asm/Rocket.asm"
+    },
+    "rocket/seed-1": {
+      "classification": "hand-constructed",
+      "codec": "rocket",
+      "compressed_sha256": "7a65bea1d3ab4ceeebaaca79e7775b8ae67d033071f85a2fe94a835e511d8c73",
+      "compressed_size": 7,
+      "edges": [
+        "seeded-fill",
+        "overlap",
+        "length-boundary"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
+      "raw_size": 1,
       "source": "src/asm/Rocket.asm"
     },
     "rocket/seed-2": {
@@ -1172,6 +1255,23 @@
       "raw_sha256": "ce4153b0147c2a863ed4298ee0676bc879fc77a12abe1f49b2b055df1069523e",
       "raw_size": 64,
       "source": "src/asm/Rocket.asm"
+    },
+    "saxman/maximum-distance": {
+      "classification": "hand-constructed",
+      "codec": "saxman",
+      "compressed_sha256": "01dafbdbff0fe482d2ce84342baab2219209ed2520e437060051b19222dc9d27",
+      "compressed_size": 4613,
+      "edges": [
+        "dictionary",
+        "maximum-distance",
+        "descriptor-reload",
+        "size-bound"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "60a62725a6589b4c56d914f383935cf1f09fdb4c6e6814c1545d5ade78281416",
+      "raw_size": 4099,
+      "source": "src/asm/Saxman.asm"
     },
     "saxman/overlap-18": {
       "classification": "hand-constructed",

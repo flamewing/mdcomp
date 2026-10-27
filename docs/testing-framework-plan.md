@@ -800,8 +800,8 @@ Checklist:
 - [x] Add at least one independent known-answer vector per decoder.
 - [ ] Generate the synthetic reference-encoder corpus and audit every
       current-branch encoder and option.
-- [ ] Complete the format-edge manifests.
-- [ ] Reach 100% declared encoder and decoder edge coverage.
+- [x] Complete the initial wire-form and semantic-boundary manifests; exhaustive legal-parameter matrices remain a separate follow-up.
+- [x] Reach 100% of the initial manifest’s declared encoder, decoder, and boundary obligations (50/50/43).
 
 ### 1a. Buffer-migration constexpr checks
 
@@ -882,3 +882,7 @@ The headerless Saxman follow-up now qualifies `SaxDec2` with LUT on/off and even
 - Whether compiler line/branch coverage has a required threshold in addition
   to mandatory format-edge coverage.
 - Which CI platforms run assembly tests on every commit versus scheduled runs.
+
+## Wire-observer checkpoint
+
+The separate test-owned C++ interpreters now reconstruct all ten basic formats from emitted wire bytes. All 50 declared encoder forms, 50 decoder forms, and 43 selected boundary obligations pass, with validated witness names in TSV reports and the committed [edge audit](../tests/references/edge-audit.json). Six new hand-constructed fixtures bring the manifest to 94 entries and the direct assembly audit to 4,124 checks across 52 images. These observers exposed LZSS discarding supplemental matches and LZKN1 packed literals using the wrong source origin and window-limited lengths; all are fixed with regression coverage. Fresh frozen-master and published-binary matrices each pass 160 cases; eight LZKN1 encodings become smaller. The offline suite now has 115 cases, or 123 with assembly, and 124 with the optional binary comparison. Exhaustive parameter combinations, remaining public-option/reference-module audits, and structured malformed-input contracts remain open.
