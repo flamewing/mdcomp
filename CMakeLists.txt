@@ -332,6 +332,7 @@ function(define_lib_internal TYPE TARGET_NAME OUTPUT SRC_FILE HDR_FILE)
     target_link_libraries(${TARGET_NAME}
         INTERFACE
         bigendian_io
+        Boost::headers
     )
     set_target_properties(${TARGET_NAME}
         PROPERTIES
@@ -415,7 +416,7 @@ define_exe(snkrlecmp "src/tools/snkcmp.cc" snkrle snkcmp)
 file(GLOB_RECURSE ALL_SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hh"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
-foreach(test_directory asm codec fixtures support unit)
+foreach(test_directory asm codec fixtures package support unit)
     file(GLOB_RECURSE test_sources
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/${test_directory}/*.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/${test_directory}/*.hh")
@@ -445,9 +446,13 @@ endif()
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     mdcompConfigVersion.cmake
-    VERSION ${PACKAGE_VERSION}
+    VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/support/cmake/mdcompConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/mdcompConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/mdcomp")
 
 install(
     TARGETS
@@ -526,8 +531,14 @@ export(
     NAMESPACE
     mdcomp::
     FILE
-    mdcompConfig.cmake
+    mdcompTargets.cmake
 )
+
+install(EXPORT mdcompConfig FILE mdcompTargets.cmake NAMESPACE mdcomp::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/mdcomp" COMPONENT Development)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mdcompConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/mdcompConfigVersion.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/mdcomp" COMPONENT Development)
 
 set(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
 export(PACKAGE mdcomp)

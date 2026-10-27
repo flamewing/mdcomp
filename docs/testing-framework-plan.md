@@ -141,7 +141,7 @@ Checklist:
 - [x] Run the same contract suite against every applicable codec.
 - [ ] During the buffer refactor, run equivalent stream and buffer operations
       over the same fixtures.
-- [ ] Add installed-package smoke tests separately from internal library tests.
+- [x] Add an installed-package smoke test that configures an isolated consumer, links all ten static codec targets, and runs without Catch2.
 
 ## C++ Codec Tests
 
@@ -890,3 +890,5 @@ The separate test-owned C++ interpreters now reconstruct all ten basic formats f
 Independent wire observers now validate all eight current module encoders across empty, exact, partial, and multiple-module sizes and padding alignments 1, 3, 16, and 32. Every module is decoded from fresh observer state, and inter-module padding is checked relative to the payload origin. Saved external basic encodings also qualify short-final-module C++ paths; applicable Comper/Kosinski/Plus bodies add 32 assembly queue checks. This is explicitly test-owned module framing, not independent external module encoding. The module audit now records 1,144 cases, 2,392 interrupts, and 1,438 transfers. All 125 tests pass with GCC, Clang, and Linux ASan/UBSan; MSVC passes 126 including its binary comparison.
 
 The per-source [assembly inventory](../tests/references/assembly-inventory.json) now distinguishes header attribution, maintainer evidence, edited original-derived routines, and imported game-disassembly provenance. Audit generation rejects an unclassified staged source. Exact shipped-revision deployment histories remain unknown; this inventory records that limitation rather than asserting no field use or borrowing game deployment claims for optimized replacements. Dependency commit IDs are now included in test startup, machine fault diagnostics, and runner JSON/human output.
+
+The installed-package check exposed and fixed missing installed CMake exports and transitive Boost header metadata. The package configuration now works from both the build tree and an installation. Fresh installed consumers pass with all four local configurations; the full totals are 126 tests, or 127 with the optional published-binary comparison.

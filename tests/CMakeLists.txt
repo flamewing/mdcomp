@@ -88,6 +88,16 @@ add_test(NAME codec::fixture-manifest
         -P "${CMAKE_CURRENT_SOURCE_DIR}/support/check_fixtures.cmake")
 set_tests_properties(codec::fixture-manifest PROPERTIES LABELS "codec;fixtures" TIMEOUT 30)
 
+add_test(NAME package::installed-codecs COMMAND "${CMAKE_COMMAND}"
+    "-DBUILD=${PROJECT_BINARY_DIR}" "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/package"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/installed-package" "-DCONFIG=$<CONFIG>"
+    "-DGENERATOR=${CMAKE_GENERATOR}" "-DPLATFORM=${CMAKE_GENERATOR_PLATFORM}" "-DTOOLSET=${CMAKE_GENERATOR_TOOLSET}"
+    "-DCOMPILER=${CMAKE_CXX_COMPILER}" "-DMAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+    "-DTOOLCHAIN=${CMAKE_TOOLCHAIN_FILE}" "-DBOOST_CONFIG=${Boost_DIR}"
+    "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}" "-DLIBDIR=${CMAKE_INSTALL_LIBDIR}" "-DCTEST=${CMAKE_CTEST_COMMAND}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/support/check_package.cmake")
+set_tests_properties(package::installed-codecs PROPERTIES LABELS "package" TIMEOUT 180)
+
 set(MDCOMP_REFERENCE_BIN_DIR "" CACHE PATH "Optional pinned reference CLI binary directory")
 set(MDCOMP_REFERENCE_COMMIT "unspecified" CACHE STRING "Commit identifying the reference binaries")
 if(MDCOMP_REFERENCE_BIN_DIR)
