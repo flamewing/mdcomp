@@ -4,8 +4,8 @@
   "source_sha256": {
     "tests/fixtures/edges.json": "7f606fa9f322dc9131d0245f396ce28cd3e7441e832778c0054089c768c44e2a",
     "tests/fixtures/manifest.json": "77f477c4ad7f6a5ded4f31973bbf5e8d627532194f1596fb63ae1887667f637f",
-    "tests/support/format_observer.cc": "c34be0913b9a5bf074849a36f7741682a443c66b3d36109daa734270f5d2953b",
-    "tests/codec/edge_coverage.cc": "d5de215ecb6424099e77575ae61c43a5dcb161d6a89a3cca54452f1bb5580249"
+    "tests/support/format_observer.cc": "69b7047744dd84610b5da4ecd64c34769944759d1de55906e166838fb3178e48",
+    "tests/codec/edge_coverage.cc": "3d269cc2fc9d2b0d6aabd351709cd18ea1e6ffad3165b9d3284e7303a52253fa"
   },
   "covered_obligations": {
     "encoder": 50,

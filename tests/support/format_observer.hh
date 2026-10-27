@@ -11,6 +11,7 @@ namespace codec_test {
     struct observation {
         std::string           decoded;
         std::set<std::string> edges;
+        size_t                consumed = 0;
     };
 
     // Test-owned wire interpreter: no production endian, bitstream, adaptor,

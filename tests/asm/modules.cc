@@ -1,4 +1,5 @@
 #include "decoder_registry.hh"
+#include "fixtures/external_answers.hh"
 #include "fixtures/known_answers.hh"
 #include "support/wire_builder.hh"
 
@@ -178,6 +179,30 @@ namespace {
         throw std::runtime_error("Unknown module codec");
     }
 }    // namespace
+
+TEST_CASE(
+        "Qualified external encodings bootstrap module queues",
+        "[asm][module-bootstrap]") {
+    size_t count = 0;
+    for (auto const& fixture : codec_test::external_answers()) {
+        if (fixture.codec != "comper" && fixture.codec != "kosinski"
+            && fixture.codec != "kosplus") {
+            continue;
+        }
+        CAPTURE(fixture.id);
+        std::string framed;
+        codec_test::wire::word(framed, static_cast<unsigned>(fixture.expected.size()));
+        framed += fixture.compressed;
+        std::vector<archive> const archives{
+                {framed, fixture.expected}
+        };
+        for (unsigned words : {0U, 1U}) {
+            verify(run(fixture.codec, words, archives), archives);
+            ++count;
+        }
+    }
+    CHECK(count > 0);
+}
 
 TEST_CASE(
         "Moduled queues bootstrap with independent literal streams",

@@ -175,3 +175,56 @@ TEST_CASE(
     CHECK_THROWS(
             codec_test::observe("nemesis", std::string("\0\x01\x81\x11\0\x11\0\xff", 8)));
 }
+
+TEST_CASE(
+        "Moduled encoder payloads obey independent wire and padding rules",
+        "[codec][edges][moduled]") {
+    for (auto const& api : codec_test::codecs()) {
+        if (!api.moduled_encode) {
+            continue;
+        }
+        for (size_t size :
+             {size_t(0), api.module_size, api.module_size + api.input_granularity,
+              2 * api.module_size + api.input_granularity}) {
+            for (size_t padding : {size_t(1), size_t(3), size_t(16), size_t(32)}) {
+                for (unsigned pattern : {0U, 4U, 6U}) {
+                    codec_test::options settings;
+                    settings.module_padding = padding;
+                    auto const input        = codec_test::corpus(size, pattern);
+                    auto const encoded
+                            = codec_test::run(api.moduled_encode, input, settings);
+                    CAPTURE(std::string(api.name), size, padding, pattern,
+                            encoded.diagnostic);
+                    REQUIRE(encoded.success);
+                    REQUIRE(encoded.bytes.size() >= 2);
+                    REQUIRE(((static_cast<unsigned char>(encoded.bytes[0]) << 8)
+                             | static_cast<unsigned char>(encoded.bytes[1]))
+                            == size);
+                    size_t cursor = 2, produced = 0;
+                    do {
+                        auto const body = codec_test::observe(
+                                api.name, std::string_view(encoded.bytes).substr(cursor));
+                        auto const required = std::min(api.module_size, size - produced);
+                        REQUIRE(body.decoded.size() == required);
+                        REQUIRE((body.decoded == input.substr(produced, required)));
+                        REQUIRE(body.consumed > 0);
+                        produced += required;
+                        cursor += body.consumed;
+                        if (produced < size) {
+                            auto const gap = (padding - (cursor - 2) % padding) % padding;
+                            REQUIRE(cursor + gap <= encoded.bytes.size());
+                            CHECK((encoded.bytes.substr(cursor, gap)
+                                   == std::string(gap, '\0')));
+                            cursor += gap;
+                        }
+                    } while (produced < size);
+                    REQUIRE(cursor <= encoded.bytes.size());
+                    // The stream wrapper allows one final alignment byte.
+                    CHECK(encoded.bytes.size() - cursor <= 1);
+                    CHECK((encoded.bytes.substr(cursor)
+                           == std::string(encoded.bytes.size() - cursor, '\0')));
+                }
+            }
+        }
+    }
+}

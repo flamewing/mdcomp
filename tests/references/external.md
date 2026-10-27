@@ -57,3 +57,7 @@ ctest --test-dir build-tests -L external --output-on-failure
 ```
 
 Capture expects the `kens-rc3-comparison`, `kenssharp-comparison`, `snkrle-comparison`, `accurate-kosinski-comparison`, `original-saxman-comparison`, `clownlzss-comparison`, `clownnemesis-comparison`, and `clownnemesis-accurate-comparison` directories. Updating references requires reviewing pins, executable hashes, both comparison directions, and the fixture diff. Saved fixtures are reference-generated evidence for the selected cases; they do not replace full token-edge coverage or assembly execution.
+
+## Module-container qualification
+
+The offline suite retains the 38 saved basic encodings and also checks applicable bodies inside test-constructed short-final-module containers. The only added bytes are the outer big-endian uncompressed-size header; original encoded bytes and lineage remain unchanged. C++ module decoders exercise padding settings 1, 3, 16, and 32 and an existing output prefix. Applicable Comper/Kosinski/Plus bodies also execute through both assembly DMA address conventions. These are container interoperability checks, not encodings produced by an independent module encoder. A separate wire interpreter validates all eight current module encoders, including multi-module boundaries, payload-relative zero padding, and per-module history reset. Reference-generated full multi-module corpora and exhaustive reference encoder options remain open.

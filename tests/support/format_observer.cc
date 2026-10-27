@@ -491,5 +491,6 @@ codec_test::observation codec_test::observe(
     if (result.decoded.empty()) {
         edge("empty");
     }
+    result.consumed = source.pos;
     return result;
 }

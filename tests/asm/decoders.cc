@@ -1,4 +1,5 @@
 #include "decoder_registry.hh"
+#include "fixtures/external_answers.hh"
 #include "fixtures/known_answers.hh"
 #include "machine.hh"
 #include "support/wire_builder.hh"
@@ -145,9 +146,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Assembly decoders accept qualified external encodings", "[asm][external]") {
-    std::vector<codec_test::fixture> const fixtures{
-#include "fixtures/external.inc"
-    };
+    auto const&   fixtures = codec_test::external_answers();
     std::ofstream report("external.tsv");
     for (auto const& d : decoders) {
         for (auto const& f : fixtures) {
