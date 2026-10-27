@@ -1,0 +1,13 @@
+{
+  "native": [
+    {"id": "linux-i686", "os": "ubuntu-latest", "shell": "bash", "family": "linux", "flags": "-m32"},
+    {"id": "linux-x86_64", "os": "ubuntu-latest", "shell": "bash", "family": "linux", "flags": ""},
+    {"id": "linux-aarch64", "os": "ubuntu-24.04-arm", "shell": "bash", "family": "linux", "flags": ""},
+    {"id": "macos-x86_64", "os": "macos-15-intel", "shell": "bash", "family": "macos", "flags": ""},
+    {"id": "macos-arm64", "os": "macos-latest", "shell": "bash", "family": "macos", "flags": ""},
+    {"id": "windows-i686", "os": "windows-latest", "shell": "msys2", "family": "windows", "msystem": "MINGW32", "flags": ""},
+    {"id": "windows-x86_64", "os": "windows-latest", "shell": "msys2", "family": "windows", "msystem": "UCRT64", "flags": ""}
+  ],
+  "required_vm": ["freebsd-x86_64"],
+  "optional": ["android-aarch64"]
+}
