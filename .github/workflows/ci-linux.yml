@@ -127,6 +127,9 @@ jobs:
         uses: egor-tensin/setup-clang@v1
         with:
           version: 19
+      - name: Install Clang sanitizer runtimes
+        if: ${{ matrix.sanitize }}
+        run: sudo apt-fast install -y libclang-rt-19-dev
       - name: Checkout code
         uses: actions/checkout@master
         with:
