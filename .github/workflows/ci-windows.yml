@@ -49,18 +49,31 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msystem }}
-          install: base-devel git
+          install: base-devel git python
             mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-binutils
             mingw-w64-${{ matrix.arch }}-ntldd mingw-w64-${{ matrix.arch }}-boost
             mingw-w64-${{ matrix.arch }}-cmake
             mingw-w64-${{ matrix.arch }}-catch
       - name: Checkout code
         uses: actions/checkout@master
+        with:
+          submodules: recursive
+      - name: Import pinned Sega decoder sources
+        run: python tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
       - name: Configure
         run: |
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
       - name: Build
         run: |
           cmake --build build -j2
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Preserve assembly failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asm-mingw-${{ matrix.generator }}
+          path: |
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json

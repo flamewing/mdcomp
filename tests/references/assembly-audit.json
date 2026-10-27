@@ -1,0 +1,477 @@
+{
+  "schema_version": 1,
+  "scope": "Default direct decoder configurations only; no moduled hardware queues or real hardware",
+  "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
+  "recorded_cases": 446,
+  "failed_cases": [],
+  "decoders": [
+    {
+      "name": "comper",
+      "codec": "comper",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Comper.asm",
+      "cases": {
+        "known-answer": 7,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "2c8c634fa201f339768ca2a40987f3e40bcbf0065ab8af749e0d8e65dd0b3fcb",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Comper.asm": "d919e823f22a593da074f5ae46108f594c0a14bcc98e90377046bdd5f8cd8bb0",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "comper.driver.asm": "d93224ba46af6ca6c4efb91bdad7e77b6c176f0ab94971a55e106e7ea38a01c6"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "comperx",
+      "codec": "comperx",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "ComperX.asm",
+      "cases": {
+        "known-answer": 9,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "18bd164fcf57f4340c96209fdfb32a4d5211784884e12997710c1826982a7c31",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "ComperX.asm": "11b45db4d21945e364acf81cffb32cc7e4d914ce1e8341a4f1bad0d66a233a73",
+        "ComperX_internal.asm": "bd570dc377c8cbd99780a71c10468bb5d5325fa2381cce2c1ba22e8f63ed5eeb",
+        "comperx.driver.asm": "a44a4b1a45906e1d3fb18e588d93ab96c50414c00da6c2d65d36e0385acc8e46"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "kosinski",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "cases": {
+        "known-answer": 14,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "c5d42a6d81dc96946856083fb5b44301e7d6f98e5b08c92b648a249f84ac42dd",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "3502a2532a8c841077fc6e801fdb21943b554b70a5ecbf95bcb57b1bb87c1f06",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski.driver.asm": "9032e3a68f24a6af7c442afac7e9a924349e0f2a2a4d96525f18badb7124cb1a"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "kosplus",
+      "codec": "kosplus",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "KosinskiPlus.asm",
+      "cases": {
+        "known-answer": 13,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "449ae4a14ec54319d6e2f929c5a07b6ffadb28227cabe7216252f978e6dcfc36",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "KosinskiPlus.asm": "225f609fcd97382dbd8edab81106fc4e800a9edeae0460ea6f18c0a5e9898e8c",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "kosplus.driver.asm": "531fa863ef3241a91e74de572e360234a9903636acbaec34ea287bdc4c935cc0"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "enigma",
+      "codec": "enigma",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 2,
+      "source": "Enigma.asm",
+      "cases": {
+        "known-answer": 14,
+        "external-encoding": 3,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 2,
+      "image_sha256": "37b2ffc8792cb464342dadaa0cd2fc701a333ffaf1c8914cc09be220be14088b",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Enigma.asm": "c12c9b07a1960beddf0e064efbc8d00952fdc7c2bbeb16623817608a32786452",
+        "enigma.driver.asm": "9aeb8eade45700735d823f93202bbbc039ed214185bcc2337cd797af729f645e"
+      },
+      "provenance": "edited original-derived routine",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "saxman",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "cases": {
+        "known-answer": 6,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "eca6f79bc92b840cb7565ac355dc259e66662c845a66683973a5e521bfac37d1",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "77ef08e1237a5772886cf795069352ec71b5e7b2512ea7f0c793e5b4d2b80f39",
+        "saxman.driver.asm": "8570171c7f6c75461edcea219a3c1356e7394382d0b99e124ce11bc12435b82f"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "rocket",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "cases": {
+        "known-answer": 5,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "dc7281a4e3c8e13a40ccb7c0b0e27ccec184297eda4ae1e90f7e8814e3416168",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "ccf5eda9b73f74a7f3f259ab8043a3faa3f318c0ceee8a9a13648222a3dd2b12",
+        "rocket.driver.asm": "c6eb00790652e55148d4c4accf2ea1259ffbcaf6f55c9771e10b4028a7b93259"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "snkrle",
+      "codec": "snkrle",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 1,
+      "source": "SNKRLE.asm",
+      "cases": {
+        "known-answer": 2,
+        "external-encoding": 6,
+        "cpp-encoding": 16,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 1,
+      "image_sha256": "a2e4d5b5ed29532eab3624937aa050acdec93c837946e7ddb0e32a7d99a33459",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "SNKRLE.asm": "f1c2d6babaff18b3be7db8f6e0b637711c27fb9b54cc4b156637b605fe1e20d4",
+        "snkrle.driver.asm": "4a126fc3241203c558ee1fcaf7b1ee86c984aa14f7a76b84b486524cd16a6a91"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "kosinski-z80",
+      "codec": "kosinski",
+      "architecture": "z80",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.a80",
+      "cases": {
+        "known-answer": 14,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "f14c502ad30612a8e8e601298f4afebd0a15dcc994c1e7015f8376f56dcd7cd9",
+      "entry": 4106,
+      "payload": 16384,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.a80": "22259354d1a3b147fd0256743f2253f1eea40b469e0e1aaa360e830e78a36d32",
+        "kosinski-z80.driver.asm": "218442200951944666231b59a87fb0a32d35deeddf5eeccd837afbdf4e0506b5"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "kosplus-z80",
+      "codec": "kosplus",
+      "architecture": "z80",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "KosinskiPlus.a80",
+      "cases": {
+        "known-answer": 13,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "48cdb2cb7626bcc33a87b29ba0c446fde9e0ef1181678df42e48e701f853b2b3",
+      "entry": 4106,
+      "payload": 16384,
+      "completion": 256,
+      "source_sha256": {
+        "KosinskiPlus.a80": "f0a194c331eb526ae0eb218ae384473e52f7d507c4f54c752e489ca3520bd13d",
+        "kosplus-z80.driver.asm": "0b5a49a07680da108c84028257339bae46f85871bd6bbe66bb7569b478a0b238"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "sega-kosinski",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": true,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "sega-kosinski.source.asm",
+      "cases": {
+        "known-answer": 14,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "c705193916aa3c179a3a1cc823351ff00ef7a8e585e68ee43ab86b8d5758eb2c",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "sega-kosinski.source.asm": "a87b23ae116f32d040dbd8f1922542e0fc6af92a70a87d55bac12a30bc9cc64e",
+        "sega-kosinski.driver.asm": "30c6eb03ae2111172254c1c85f546a886f9f0d38eb497cf7f248bcaa123dcac8"
+      },
+      "provenance": "original-derived game disassembly",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "sega-enigma",
+      "codec": "enigma",
+      "architecture": "m68000",
+      "original_derived": true,
+      "self_modifying": false,
+      "readable_padding": 2,
+      "source": "sega-enigma.source.asm",
+      "cases": {
+        "known-answer": 14,
+        "external-encoding": 3,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 2,
+      "image_sha256": "37b2ffc8792cb464342dadaa0cd2fc701a333ffaf1c8914cc09be220be14088b",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "sega-enigma.source.asm": "76fed2de986b3e79e1f2bd517b06cc9eb64cff0a1679b77268c9a31bfee4136e",
+        "sega-enigma.driver.asm": "721576b22f21bb8a2d1ddbdd126baf81a2d85dd878b65299cc86a81527f4b061"
+      },
+      "provenance": "original-derived game disassembly",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "sega-nemesis",
+      "codec": "nemesis",
+      "architecture": "m68000",
+      "original_derived": true,
+      "self_modifying": false,
+      "readable_padding": 2,
+      "source": "sega-nemesis.source.asm",
+      "cases": {
+        "known-answer": 4,
+        "external-encoding": 7,
+        "cpp-encoding": 16,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 2,
+      "image_sha256": "cd6ee05b6ac80de6899ffc4c326353a697bf75b308d35921b21ce135110b8abb",
+      "entry": 4130,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "sega-nemesis.source.asm": "6b5d7a8ef48875b4be24f307cd99ff712b96ec7e6a40c33da94d015cfc4cdd68",
+        "sega-nemesis.driver.asm": "db1ae111eaa64a779c177e11221f9eed4c5e7415616658919c9d52d06fedaaf6"
+      },
+      "provenance": "original-derived game disassembly",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+    },
+    {
+      "name": "sega-saxman-z80",
+      "codec": "saxman",
+      "architecture": "z80",
+      "original_derived": true,
+      "self_modifying": true,
+      "readable_padding": 0,
+      "source": "sega-saxman-z80.source.asm",
+      "cases": {
+        "known-answer": 4,
+        "external-encoding": 4,
+        "cpp-encoding": 13,
+        "containment": 2
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "7b39a3dc7ca368ec4b2258d7ccc22c241488ad16bad1f4c59055ffdcc72acf6c",
+      "entry": 4110,
+      "payload": 16384,
+      "completion": 256,
+      "writable_instruction_words": [
+        4241,
+        4230
+      ],
+      "source_sha256": {
+        "sega-saxman-z80.source.asm": "41a1994498274cb8533f3925667dacc38e1520f7ef7370de1093b24774e5684d",
+        "sega-saxman-z80.driver.asm": "0bdc00029f3a536d3736d64487ab67467c77f5dda87ae1fc07426918fb07700a"
+      },
+      "provenance": "original-derived game disassembly",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "configuration": "OptimiseDriver=0; only the two exported instruction words are writable"
+    }
+  ]
+}

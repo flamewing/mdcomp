@@ -70,12 +70,16 @@ jobs:
           version: 19
       - name: Checkout code
         uses: actions/checkout@master
+        with:
+          submodules: recursive
       - name: Install Catch2 v3
         run: |
           git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
           cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
           cmake --build "$RUNNER_TEMP/catch-build" -j2
           cmake --install "$RUNNER_TEMP/catch-build"
+      - name: Import pinned Sega decoder sources
+        run: python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
       - name: Configure
         env:
           OVERRIDE_CC: ${{ matrix.cc }}
@@ -83,9 +87,18 @@ jobs:
         run: |
           export CC=$(which $OVERRIDE_CC)
           export CXX=$(which $OVERRIDE_CXX)
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install"
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
       - name: Build
         run: |
           cmake --build build -j2
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Preserve assembly failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asm-linux-${{ matrix.compiler }}-${{ matrix.generator }}
+          path: |
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json

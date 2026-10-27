@@ -1,5 +1,7 @@
 # Format-based verdicts
 
+Follow-up: the [assembly execution audit](../asm/README.md) now corroborates applicable fixtures with ten shipped MC68000/Z80 routines and four pinned original-derived Sega routines. It confirms the original Z80 Saxman initial full-window alias reads unwritten output, while the rebasing MC68000 target supplies zeros. Its 446 recorded executions cover default direct configurations; the pending assembly statements below describe the earlier source/interpreter checkpoint.
+
 The comparison matrix finds disagreements; it does not decide which implementation is correct. This audit interprets the disputed bytes using the format rules, checks independently known output, and distinguishes valid alternative encodings from incorrect output and process failures. [format-verdicts.json](format-verdicts.json) records the results; [external.json](external.json) pins source/dependency versions, licenses, and build details. No third-party codec logic was patched to obtain passing results.
 
 `tests/support/audit_formats.py` contains bounded, test-only interpreters for Kosinski, Saxman, Enigma, and Nemesis. They use no production codec, bitstream, endian, or LZSS helpers. They reproduce two published examples and all 38 applicable hand-constructed fixtures, including explicit lengths and bytes. Zero-tile Nemesis is checked as the existing C++ empty-input contract; it is not evidence that the original assembly supports that framing. These interpreters are additional evidence, not formally verified specifications or executed Sega assembly.
