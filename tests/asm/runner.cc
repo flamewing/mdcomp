@@ -49,6 +49,7 @@ namespace {
                    "  --image FILE           Run a custom ASL wrapper image\n"
                    "  --image-dir DIR        Find built decoder images in DIR\n"
                    "  --art-base N           Enigma starting tile (default 0)\n"
+                   "  --compressed-size N    SaxDec2 body length (default input size)\n"
                    "  --instruction-limit N  Instruction budget (default 2000000)\n"
                    "  --cycle-limit N        Clock/T-state budget (default 50000000)\n"
                    "  --json                 Write machine-readable timing to stdout\n"
@@ -129,6 +130,13 @@ int main(int argc, char** argv) {
                             "Art base requires Enigma and a 16-bit value");
                 }
                 config.art_base = static_cast<uint16_t>(tile);
+            } else if (option == "--compressed-size") {
+                auto const bytes = number(value);
+                if (!decoder.headerless || bytes > 0xffff) {
+                    throw std::runtime_error(
+                            "Compressed size requires SaxDec2 and a 16-bit value");
+                }
+                config.body_size = static_cast<uint16_t>(bytes);
             } else if (option == "--instruction-limit") {
                 config.instruction_limit = count(value);
             } else if (option == "--cycle-limit") {
@@ -161,6 +169,12 @@ int main(int argc, char** argv) {
         std::string const input((std::istreambuf_iterator<char>(source)), {});
         if (source.bad()) {
             throw std::runtime_error("Cannot read compressed input");
+        }
+        if (decoder.headerless && !config.body_size) {
+            if (input.size() > 0xffff) {
+                throw std::runtime_error("SaxDec2 body exceeds 65535 bytes");
+            }
+            config.body_size = static_cast<uint16_t>(input.size());
         }
         auto const image = asm_test::load_image(
                 image_path, decoder.architecture, decoder.self_modifying);

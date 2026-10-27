@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -55,6 +56,7 @@ namespace asm_test {
         size_t                      stack_scratch_bytes = 0;
         uint8_t                     stack_scratch_fill  = 0xa5;
         module_configuration const* modules             = nullptr;
+        std::optional<uint16_t>     body_size;
     };
 
     struct result {

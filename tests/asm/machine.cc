@@ -478,6 +478,9 @@ namespace asm_test {
                     M68K_REG_A4, output);    // Original Nemesis RAM entry convention.
             m68k_set_reg(M68K_REG_PC, program.entry);
             m68k_set_reg(M68K_REG_D0, config.art_base);
+            if (config.body_size) {
+                m68k_set_reg(M68K_REG_D6, *config.body_size);
+            }
         } else {
             z80_init(&z);
             z.read_byte  = zread;

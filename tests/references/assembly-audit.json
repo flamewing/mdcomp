@@ -2,7 +2,7 @@
   "schema_version": 2,
   "scope": "Direct decoder defaults and declared optimization matrices; no moduled hardware queues or real hardware",
   "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
-  "recorded_cases": 3807,
+  "recorded_cases": 4067,
   "failed_cases": [],
   "decoders": [
     {
@@ -15,6 +15,7 @@
       "source": "Comper.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 7,
         "optimization-known-answer": 25,
@@ -52,6 +53,7 @@
       "source": "ComperX.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 9,
         "optimization-known-answer": 48,
@@ -87,6 +89,7 @@
       "source": "Kosinski.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -124,6 +127,7 @@
       "source": "KosinskiPlus.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 13,
         "optimization-known-answer": 39,
@@ -161,6 +165,7 @@
       "source": "Enigma.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "external-encoding": 3,
@@ -196,6 +201,7 @@
       "source": "Saxman.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -232,6 +238,7 @@
       "source": "Rocket.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -268,6 +275,7 @@
       "source": "SNKRLE.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 2,
         "external-encoding": 6,
@@ -303,6 +311,7 @@
       "source": "Kosinski.a80",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -339,6 +348,7 @@
       "source": "KosinskiPlus.a80",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 13,
         "optimization-known-answer": 39,
@@ -366,6 +376,154 @@
       "source_alignment": "even"
     },
     {
+      "name": "saxman-body-lut0-odd0",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "entry=SaxDec2,lut=0,source-odd=0",
+      "stack_scratch_bytes": 0,
+      "headerless": true,
+      "cases": {
+        "known-answer": 11,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "2075fe57c8ac6c30ea8fb1839512a253ba85f3bc4926efd3f107f0c49c2eb564",
+      "entry": 4116,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-body-lut0-odd0.driver.asm": "eed151dcf43aa881ad3fb99a88d820e3124a45e3de26988f6577193dce99d3e4"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-body-lut0-odd1",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "entry=SaxDec2,lut=0,source-odd=1",
+      "stack_scratch_bytes": 0,
+      "headerless": true,
+      "cases": {
+        "known-answer": 11,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "7c4141c99d6877c4cd42dd10b2a43096c4d316804fc708ffc02c4b0c2315c205",
+      "entry": 4116,
+      "payload": 131073,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-body-lut0-odd1.driver.asm": "612f8603ba691d76ad5820f58d1e02e50e6424b01694dea8b5f785dafb849451"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "odd"
+    },
+    {
+      "name": "saxman-body-lut1-odd0",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "entry=SaxDec2,lut=1,source-odd=0",
+      "stack_scratch_bytes": 0,
+      "headerless": true,
+      "cases": {
+        "known-answer": 11,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "2c9e2ab2942ff3f561977753cbbbf5310626925ea1aa98eec97e747c8a995207",
+      "entry": 4116,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-body-lut1-odd0.driver.asm": "07e8421f8dee329471bc4795c154cab9f155d9bf2ae55d6029578b785c694650"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-body-lut1-odd1",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "entry=SaxDec2,lut=1,source-odd=1",
+      "stack_scratch_bytes": 0,
+      "headerless": true,
+      "cases": {
+        "known-answer": 11,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "618e3f9d0ade0dc83a55219be03fd1682e5df60cd4ff775659da399fcd19577e",
+      "entry": 4116,
+      "payload": 131073,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-body-lut1-odd1.driver.asm": "70982f29750a94e3e74da2b48ecd874e2da9b0a158482b46cc4fc371fbe7eb36"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "odd"
+    },
+    {
       "name": "comper-u0",
       "codec": "comper",
       "architecture": "m68000",
@@ -375,6 +533,7 @@
       "source": "Comper.asm",
       "configuration": "unroll=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 7,
         "optimization-known-answer": 25,
@@ -412,6 +571,7 @@
       "source": "KosinskiPlus.asm",
       "configuration": "unroll=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 13,
         "optimization-known-answer": 39,
@@ -449,6 +609,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=0,lut=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -485,6 +646,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=0,lut=0,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -522,6 +684,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=0,lut=0,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -559,6 +722,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=0,lut=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -595,6 +759,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=0,lut=1,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -632,6 +797,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=0,lut=1,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -669,6 +835,7 @@
       "source": "Comper.asm",
       "configuration": "unroll=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 7,
         "optimization-known-answer": 25,
@@ -706,6 +873,7 @@
       "source": "KosinskiPlus.asm",
       "configuration": "unroll=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 13,
         "optimization-known-answer": 39,
@@ -743,6 +911,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=1,lut=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -779,6 +948,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=1,lut=0,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -816,6 +986,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=1,lut=0,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -853,6 +1024,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=1,lut=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -889,6 +1061,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=1,lut=1,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -926,6 +1099,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=1,lut=1,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -963,6 +1137,7 @@
       "source": "Comper.asm",
       "configuration": "unroll=2",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 7,
         "optimization-known-answer": 25,
@@ -1000,6 +1175,7 @@
       "source": "KosinskiPlus.asm",
       "configuration": "unroll=2",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 13,
         "optimization-known-answer": 39,
@@ -1037,6 +1213,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=2,lut=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -1073,6 +1250,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=2,lut=0,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1110,6 +1288,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=2,lut=0,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1147,6 +1326,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=2,lut=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -1183,6 +1363,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=2,lut=1,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1220,6 +1401,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=2,lut=1,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1257,6 +1439,7 @@
       "source": "Rocket.asm",
       "configuration": "unroll=3,lut=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 5,
         "optimization-known-answer": 126,
@@ -1293,6 +1476,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=3,lut=0,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1330,6 +1514,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=3,lut=0,extreme=1",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1367,6 +1552,7 @@
       "source": "Kosinski.asm",
       "configuration": "unroll=3,lut=1,extreme=0",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "optimization-known-answer": 37,
@@ -1404,6 +1590,7 @@
       "source": "Saxman.asm",
       "configuration": "lut=0,aligned=0,source=even",
       "stack_scratch_bytes": 2,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -1440,6 +1627,7 @@
       "source": "Saxman.asm",
       "configuration": "lut=0,aligned=1,source=even",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -1476,6 +1664,7 @@
       "source": "Saxman.asm",
       "configuration": "lut=0,aligned=0,source=odd",
       "stack_scratch_bytes": 2,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -1512,6 +1701,7 @@
       "source": "Saxman.asm",
       "configuration": "lut=1,aligned=0,source=even",
       "stack_scratch_bytes": 2,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -1548,6 +1738,7 @@
       "source": "Saxman.asm",
       "configuration": "lut=1,aligned=0,source=odd",
       "stack_scratch_bytes": 2,
+      "headerless": false,
       "cases": {
         "known-answer": 6,
         "optimization-known-answer": 32,
@@ -1584,6 +1775,7 @@
       "source": "ComperX.asm",
       "configuration": "return=a5",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 9,
         "optimization-known-answer": 48,
@@ -1619,6 +1811,7 @@
       "source": "sega-kosinski.source.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "external-encoding": 8,
@@ -1654,6 +1847,7 @@
       "source": "sega-enigma.source.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 14,
         "external-encoding": 3,
@@ -1689,6 +1883,7 @@
       "source": "sega-nemesis.source.asm",
       "configuration": "default",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 4,
         "external-encoding": 7,
@@ -1724,6 +1919,7 @@
       "source": "sega-saxman-z80.source.asm",
       "configuration": "default; OptimiseDriver=0; only the two exported instruction words are writable",
       "stack_scratch_bytes": 0,
+      "headerless": false,
       "cases": {
         "known-answer": 4,
         "external-encoding": 4,

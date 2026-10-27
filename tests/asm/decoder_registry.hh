@@ -14,6 +14,7 @@ namespace asm_test {
         size_t           readable_padding;
         std::string_view configuration;
         size_t           stack_scratch_bytes;
+        bool             headerless;
     };
 
     constexpr inline decoder compiled_decoders[]{

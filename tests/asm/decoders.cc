@@ -20,7 +20,7 @@ namespace {
     }
 
     bool compatible(decoder const& d, codec_test::fixture const& f) {
-        if (d.codec != f.codec || !f.settings.size_header) {
+        if (d.codec != f.codec || (!d.headerless && !f.settings.size_header)) {
             return false;
         }
         if (d.codec == "snkrle" && (f.expected.empty() || f.expected.size() % 2)) {
@@ -39,18 +39,34 @@ namespace {
     }
 
     void check(
-            decoder const& d, codec_test::fixture const& f, std::ostream& report,
+            decoder const& d, codec_test::fixture const& supplied, std::ostream& report,
             uint16_t art_base = 0) {
+        auto f = supplied;
+        if (d.headerless && f.settings.size_header) {
+            REQUIRE(f.compressed.size() >= 2);
+            f.settings.compressed_size
+                    = static_cast<unsigned char>(f.compressed[0])
+                      | (size_t(static_cast<unsigned char>(f.compressed[1])) << 8);
+            f.settings.size_header = false;
+            f.compressed.erase(0, 2);
+        }
         asm_test::settings settings;
         settings.output_size         = f.expected.size();
         settings.art_base            = art_base;
         settings.readable_padding    = d.readable_padding;
         settings.self_modifying      = d.self_modifying;
         settings.stack_scratch_bytes = d.stack_scratch_bytes;
+        if (d.headerless) {
+            REQUIRE(f.settings.compressed_size <= 0xffff);
+            settings.body_size = static_cast<uint16_t>(f.settings.compressed_size);
+        }
         auto const result = asm_test::execute(image(d), f.compressed, settings);
         INFO(d.name << '/' << f.id << "\n" << result.diagnostic);
         INFO(asm_test::timing(d.architecture, result));
         CHECK((result.completed && result.bytes == f.expected));
+        if (d.headerless) {
+            CHECK(result.input_high_water <= *settings.body_size);
+        }
         if (d.stack_scratch_bytes) {
             // Saxman's byte-swapping header discards one scratch stack byte.
             // A second poison pattern must not affect the decompressed data.
@@ -106,6 +122,14 @@ TEST_CASE(
         }
         INFO(d.name);
         REQUIRE(count > 0);
+        if (d.headerless) {
+            codec_test::fixture empty;
+            empty.id                   = "saxman/explicit-zero-body";
+            empty.codec                = "saxman";
+            empty.settings.size_header = false;
+            empty.compressed = "TRAIL";    // Zero body size must leave this unread.
+            check(d, empty, report);
+        }
     }
     // Published Enigma example with its documented nonzero starting art tile.
     for (auto const& d : decoders) {
@@ -328,13 +352,17 @@ TEST_CASE("C++ encoders interoperate with assembly decoders", "[asm][encode]") {
                 codec_test::fixture f;
                 f.id    = "cpp-" + std::to_string(size) + "-" + std::to_string(pattern);
                 f.codec = d.codec;
-                f.expected = codec_test::padded(*api, input);
+                f.settings.size_header = !d.headerless;
+                f.expected             = codec_test::padded(*api, input);
                 if (!compatible(d, f)) {
                     continue;
                 }
-                auto const encoded = codec_test::run(api->encode, input);
+                auto const encoded = codec_test::run(api->encode, input, f.settings);
                 REQUIRE(encoded.success);
                 f.compressed = encoded.bytes;
+                if (d.headerless) {
+                    f.settings.compressed_size = f.compressed.size();
+                }
                 check(d, f, report);
             }
         }
@@ -374,7 +402,10 @@ TEST_CASE(
         settings.readable_padding  = 0;
         settings.instruction_limit = 10000;
         settings.self_modifying    = d.self_modifying;
-        auto const result          = asm_test::execute(image(d), "", settings);
+        if (d.headerless) {
+            settings.body_size = 1;
+        }
+        auto const result = asm_test::execute(image(d), "", settings);
         INFO(d.name << result.diagnostic);
         CHECK_FALSE(result.completed);
         CHECK_FALSE(result.diagnostic.empty());
