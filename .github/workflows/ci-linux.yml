@@ -44,6 +44,9 @@ jobs:
             cmake_generator: "Unix Makefiles"
           - generator: ninja
             cmake_generator: "Ninja"
+          - compiler: clang
+            generator: ninja
+            sanitize: true
     steps:
       - name: Install dependencies
         run: |
@@ -84,14 +87,25 @@ jobs:
         env:
           OVERRIDE_CC: ${{ matrix.cc }}
           OVERRIDE_CXX: ${{ matrix.cxx }}
+          SANITIZE: ${{ matrix.sanitize }}
         run: |
           export CC=$(which $OVERRIDE_CC)
           export CXX=$(which $OVERRIDE_CXX)
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+          extra_flags=()
+          if [ "$SANITIZE" = true ]; then
+            extra_flags+=(-DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer")
+          fi
+          git submodule status --recursive
+          "$CXX" --version
+          cmake --version
+          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders" "${extra_flags[@]}"
       - name: Build
         run: |
           cmake --build build -j2
       - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: ctest --test-dir build --output-on-failure
       - name: Preserve assembly failure evidence
         if: failure()
@@ -102,3 +116,5 @@ jobs:
             build/tests/asm/failures/
             build/tests/asm/*.tsv
             build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/Testing/Temporary/LastTest.log

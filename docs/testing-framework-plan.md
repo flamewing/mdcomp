@@ -772,7 +772,7 @@ Checklist:
 - [ ] Run fast C++ tests on every supported compiler/platform CI job.
 - [ ] Run assembly tests on at least Linux initially, then enable Windows and
       macOS after the submodule toolchains are verified there.
-- [ ] Add a sanitizer job for C++ codec and emulator harness code.
+- [x] Add a Linux Clang/Ninja ASan/UBSan job for C++ codecs and emulator harness/cores; local GCC 15.2 Linux qualification passes 123 cases, remote CI still needs observation.
 - [ ] Add an optional compiler line/branch coverage job.
 - [ ] Run slow randomized and exhaustive tests on a scheduled or explicitly
       requested job.

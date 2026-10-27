@@ -44,3 +44,13 @@ Endian stream operations preserve ordinary `istream`/`ostream` state and excepti
 Iterator and container transfers accept `char`, `signed char`, and `unsigned char` elements. Wider elements and `bool` are rejected. Custom output iterators must expose a byte-valued `value_type`; standard insertion and ostream iterators are recognized separately because their standard `value_type` is `void`. Scalar transfers still accept an unsigned scalar of the same width as the value being transferred.
 
 The `[edges]` cases reconstruct compressed streams through a separate test-only interpreter and require every obligation in [edges.json](fixtures/edges.json). Run `ctest --test-dir build-tests -L edges --output-on-failure` and inspect `tests/encoder-edges.tsv` and `tests/decoder-edges.tsv` under the build directory for the first validated witness of each form. These checks detected erased supplemental matches in the shared LZSS search, a wrong packed-literal source pointer in LZKN1, and its unintentionally restricted packed length. Their regression tests validate emitted tokens and reconstructed bytes.
+
+On Linux, enable AddressSanitizer and UndefinedBehaviorSanitizer for the C++ codecs, harness, and C emulator cores with the following configuration. ASL remains a separate uninstrumented host-tool build.
+
+```sh
+cmake -S . -B build-sanitize -G Ninja -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+cmake --build build-sanitize --parallel
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 ctest --test-dir build-sanitize --output-on-failure
+```
+
+The local Ubuntu/WSL GCC 15.2 build passed all 123 tests with both sanitizers, including imported originals and the complete assembly matrix. Its TSV results match the three Windows compiler builds after normalizing line endings. The Linux Clang/Ninja CI job now enables the same instrumentation and preserves edge reports and CTest diagnostics on failure; remote CI results have not been observed in this session.
