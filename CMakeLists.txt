@@ -321,6 +321,13 @@ function(define_lib_internal TYPE TARGET_NAME OUTPUT SRC_FILE HDR_FILE)
         set_target_properties(${TARGET_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
     else()
         add_library("${TARGET_NAME}" SHARED $<TARGET_OBJECTS:${OUTPUT}Obj>)
+        if(MSVC)
+            # A DLL needs exported codec entry points and an import library distinct
+            # from the existing ${OUTPUT}.lib static archive.
+            set_target_properties(${TARGET_NAME} PROPERTIES
+                WINDOWS_EXPORT_ALL_SYMBOLS ON
+                ARCHIVE_OUTPUT_NAME "${OUTPUT}-import")
+        endif()
     endif()
 
     add_library("mdcomp::${TARGET_NAME}" ALIAS "${TARGET_NAME}")
@@ -491,16 +498,19 @@ install(
     snkrlecmp
     EXPORT
     mdcompConfig
+    ARCHIVE
+    COMPONENT Development
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     LIBRARY
     COMPONENT Libraries
-    DESTINATION lib
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     NAMELINK_COMPONENT Development
     RUNTIME
     COMPONENT Tools
-    DESTINATION bin
+    DESTINATION "${CMAKE_INSTALL_BINDIR}"
     PUBLIC_HEADER
     COMPONENT Development
-    DESTINATION include/mdcomp
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mdcomp"
 )
 
 export(

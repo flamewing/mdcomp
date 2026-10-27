@@ -13,6 +13,14 @@
 #include <sstream>
 #include <string>
 
+#ifdef CHECK_LOADED_DLLS
+#    define WIN32_LEAN_AND_MEAN
+#    define NOMINMAX
+#    include "codec_dlls.hh"
+
+#    include <windows.h>
+#endif
+
 template <typename Codec>
 bool check() {
     std::string const  raw(64, char(0xa5));
@@ -29,6 +37,14 @@ bool check() {
 
 int main() {
     try {
+#ifdef CHECK_LOADED_DLLS
+        for (auto dll : codec_dlls) {
+            if (!GetModuleHandleW(dll)) {
+                std::cerr << "Shared consumer did not load every codec DLL\n";
+                return 1;
+            }
+        }
+#endif
         return check<comper>() && check<comperx>() && check<enigma>() && check<kosinski>()
                                && check<kosplus>() && check<lzkn1>() && check<nemesis>()
                                && check<rocket>() && check<saxman>() && check<snkrle>()
