@@ -14,6 +14,13 @@ extern "C" {
 #include <stdexcept>
 
 namespace asm_test {
+    std::string const& dependency_versions() {
+        static std::string const versions =
+#include "dependency_versions.inc"
+                ;
+        return versions;
+    }
+
     namespace {
         enum class kind {
             code,
@@ -285,7 +292,8 @@ namespace asm_test {
 
             void dump(std::string const& registers) {
                 std::ostringstream out;
-                out << state.diagnostic << " PC=0x" << std::hex << pc << ' ' << registers
+                out << dependency_versions() << '\n'
+                    << state.diagnostic << " PC=0x" << std::hex << pc << ' ' << registers
                     << "\nrecent accesses:";
                 auto const first
                         = accesses > recent.size() ? accesses - recent.size() : 0;

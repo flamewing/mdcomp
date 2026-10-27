@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "qualification": "Source-header and maintainer evidence. Deployment and real-hardware claims are separate from emulator verification. Per-image configuration and successful case counts are recorded in assembly-audit.json.",
+  "sources": {
+    "Comper.asm": {
+      "source": "src/asm/Comper.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "vladikcomper; improvements by Flamewing",
+      "evidence": "Source header attribution; shared design/format lineage with the C++ implementation",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "ComperX.asm": {
+      "source": "src/asm/ComperX.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "vladikcomper (2021)",
+      "evidence": "Source header attribution; the C++ wire interpretation is corroborated against these instructions",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "Kosinski.asm": {
+      "source": "src/asm/Kosinski.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "vladikcomper; MarkeyJester; Flamewing",
+      "evidence": "Source header attribution; optimized implementation of the Sega format",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "KosinskiPlus.asm": {
+      "source": "src/asm/KosinskiPlus.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Format: Flamewing and vladikcomper, with improvements by Clownacy",
+      "evidence": "Source header credits the format design; do not infer independent C++/assembly design",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "Enigma.asm": {
+      "source": "src/asm/Enigma.asm",
+      "provenance": "edited original-derived",
+      "attribution": "Maintainer identifies this as an edited original routine; header does not name an author",
+      "evidence": "Maintainer assessment in docs/testing-framework-plan.md; compared with the pinned Sonic 1 routine",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "Saxman.asm": {
+      "source": "src/asm/Saxman.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Maintainer-authored rebasing routine; no individual attribution in header",
+      "evidence": "Maintainer assessment; header declares framed SaxDec, source also exports body entry SaxDec2",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "Rocket.asm": {
+      "source": "src/asm/Rocket.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Header describes adaptation of the author\u2019s Saxman decompressor",
+      "evidence": "Header explicitly distinguishes this from the original Rocket Knight Adventures decompressor",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "SNKRLE.asm": {
+      "source": "src/asm/SNKRLE.asm",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Original by snkenjoi; faster version by Flamewing",
+      "evidence": "Source header; kirjavascript C encoder/decoder fixtures have separately recorded lineage and header adaptation",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "Kosinski.a80": {
+      "source": "src/asm/Kosinski.a80",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Header credits vladikcomper, MarkeyJester, and Flamewing",
+      "evidence": "Credit retained as written; no separate port authorship or independent algorithm claim",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "KosinskiPlus.a80": {
+      "source": "src/asm/KosinskiPlus.a80",
+      "provenance": "hand-crafted/reference-derived",
+      "attribution": "Header credits format design by Flamewing/vladikcomper and improvements by Clownacy",
+      "evidence": "Same format/design lineage as the 68000 implementation; no separate port authorship claim",
+      "deployment": "Unknown per exact source revision; no qualified named downstream deployment has been established by this audit",
+      "real_hardware": "Not exercised in this test session",
+      "license": "Permission grant and warranty disclaimer in source header"
+    },
+    "sega-kosinski.source.asm": {
+      "source": "Imported kosinski.asm; see tests/references/sega-decoders.json",
+      "provenance": "original-derived game disassembly",
+      "attribution": "Sega-derived routine in pinned Sonic 1 disassembly",
+      "evidence": "Pinned source and transformation hashes in sega-decoders.json; entry KosDec",
+      "deployment": "Located in the named game disassembly; exact exported-entry deployment and byte-identical original build provenance are not independently established",
+      "real_hardware": "Not exercised in this test session",
+      "license": "No explicit license grant in imported files; retained out of tree"
+    },
+    "sega-enigma.source.asm": {
+      "source": "Imported enigma.asm; see tests/references/sega-decoders.json",
+      "provenance": "original-derived game disassembly",
+      "attribution": "Sega-derived routine in pinned Sonic 1 disassembly",
+      "evidence": "Pinned source and transformation hashes in sega-decoders.json; entry EniDec",
+      "deployment": "Located in the named game disassembly; exact exported-entry deployment and byte-identical original build provenance are not independently established",
+      "real_hardware": "Not exercised in this test session",
+      "license": "No explicit license grant in imported files; retained out of tree"
+    },
+    "sega-nemesis.source.asm": {
+      "source": "Imported nemesis.asm; see tests/references/sega-decoders.json",
+      "provenance": "original-derived game disassembly",
+      "attribution": "Sega-derived routine in pinned Sonic 1 disassembly",
+      "evidence": "Pinned source and transformation hashes in sega-decoders.json; entry NemDecToRAM",
+      "deployment": "Located in the named game disassembly; exact exported-entry deployment and byte-identical original build provenance are not independently established",
+      "real_hardware": "Not exercised in this test session",
+      "license": "No explicit license grant in imported files; retained out of tree"
+    },
+    "sega-saxman-z80.source.asm": {
+      "source": "Imported saxman-z80.asm; see tests/references/sega-decoders.json",
+      "provenance": "original-derived game disassembly",
+      "attribution": "Sega-derived routine in pinned Sonic 2 disassembly",
+      "evidence": "Pinned source and transformation hashes in sega-decoders.json; entry zSaxmanDec",
+      "deployment": "Located in the named game disassembly; exact exported-entry deployment and byte-identical original build provenance are not independently established",
+      "real_hardware": "Not exercised in this test session",
+      "license": "No explicit license grant in imported files; retained out of tree"
+    }
+  }
+}

@@ -207,8 +207,12 @@ int main(int argc, char** argv) {
                 std::cout << ",\"bus_reads\":" << result.bus_reads
                           << ",\"bus_writes\":" << result.bus_writes;
             }
-            std::cout << ",\"input_high_water\":" << result.input_high_water << "}\n";
+            std::cout << ",\"input_high_water\":" << result.input_high_water
+                      << ",\"dependencies\":\"" << asm_test::dependency_versions()
+                      << "\"}\n";
         } else {
+            std::cout << "Assembly dependencies: " << asm_test::dependency_versions()
+                      << '\n';
             std::cout << decoder.name << ": " << result.bytes.size() << " bytes, "
                       << asm_test::timing(decoder.architecture, result) << ", "
                       << result.instructions << " instructions\n";

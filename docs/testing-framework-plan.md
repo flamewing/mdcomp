@@ -486,8 +486,7 @@ interrupt/resume points where applicable.
 
 Checklist:
 
-- [ ] Add provenance, authorship/design lineage, deployment, verification, and
-      configuration metadata for every assembly routine.
+- [x] Add per-source provenance, attribution/design lineage, explicit deployment/real-hardware status, and per-image verification/configuration metadata for every direct assembly routine.
 - [ ] Identify hand-crafted routines and record which have sustained field use
       and which have little or none.
 - [ ] Record named downstream uses and known bug reports where available.
@@ -777,7 +776,7 @@ Checklist:
 - [ ] Run slow randomized and exhaustive tests on a scheduled or explicitly
       requested job.
 - [ ] Cache submodule builds without allowing unpinned network downloads.
-- [ ] Print dependency commit IDs in assembly-test diagnostics.
+- [x] Print configure-time dependency commit IDs in assembly-test diagnostics, fault artifacts, and runner output; source archives report unknown.
 - [ ] Make all pseudo-random tests deterministic and reproducible by seed.
 - [ ] Prevent emulator tests from hanging through both CTest timeouts and
       internal execution budgets.
@@ -822,8 +821,7 @@ Checklist:
 ### 3. Direct assembly decoders
 
 - [x] Add reusable MC68000 and Z80 harnesses.
-- [ ] Complete the provenance, deployment, verification, and configuration
-      inventory.
+- [x] Record the direct-source provenance, explicit deployment status, verification, and configuration inventory. Named downstream deployment evidence remains unknown and is not inferred from emulator tests.
 - [x] Bootstrap every provisional or previously unused direct routine in the declared configuration matrix with non-current-encoder vectors.
 - [x] Add C++-encode/assembly-decode tests.
 - [x] Add independent known-answer assembly tests.
@@ -890,3 +888,5 @@ The separate test-owned C++ interpreters now reconstruct all ten basic formats f
 ## Module wire and reference-body follow-up
 
 Independent wire observers now validate all eight current module encoders across empty, exact, partial, and multiple-module sizes and padding alignments 1, 3, 16, and 32. Every module is decoded from fresh observer state, and inter-module padding is checked relative to the payload origin. Saved external basic encodings also qualify short-final-module C++ paths; applicable Comper/Kosinski/Plus bodies add 32 assembly queue checks. This is explicitly test-owned module framing, not independent external module encoding. The module audit now records 1,144 cases, 2,392 interrupts, and 1,438 transfers. All 125 tests pass with GCC, Clang, and Linux ASan/UBSan; MSVC passes 126 including its binary comparison.
+
+The per-source [assembly inventory](../tests/references/assembly-inventory.json) now distinguishes header attribution, maintainer evidence, edited original-derived routines, and imported game-disassembly provenance. Audit generation rejects an unclassified staged source. Exact shipped-revision deployment histories remain unknown; this inventory records that limitation rather than asserting no field use or borrowing game deployment claims for optimized replacements. Dependency commit IDs are now included in test startup, machine fault diagnostics, and runner JSON/human output.

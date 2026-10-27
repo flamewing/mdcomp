@@ -16,6 +16,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = args.test_dir
+    inventory_path = Path(__file__).resolve().parents[1] / "references/assembly-inventory.json"
+    inventory = json.loads(inventory_path.read_text())["sources"]
     decoders = json.loads((root / "decoder_images.json").read_text())["decoders"]
     records = {d["name"]: dict(d, cases={}, max_read_ahead_observed=0) for d in decoders}
     for name, record in records.items():
@@ -40,10 +42,9 @@ def main():
         source_hash(record["source"])
         record["source_sha256"] = hashes
         source_hash(name + ".driver.asm")
-        record["provenance"] = ("original-derived game disassembly" if record["original_derived"] else
-                                "edited original-derived routine" if record["codec"] == "enigma" else
-                                "hand-crafted/reference-derived mdcomp routine; see source authorship")
-        record["deployment"] = "Not independently surveyed; no new field-use claim"
+        evidence = inventory[record["source"]]
+        record.update({key: value for key, value in evidence.items() if key != "source"})
+        record["provenance_source"] = evidence["source"]
         record["verification"] = ["emulator", "hand-constructed expectations", "C++ encoder interoperability"]
         record["configuration"] = record.get("configuration", "default")
         record["source_alignment"] = "odd" if record["payload"] & 1 else "even"

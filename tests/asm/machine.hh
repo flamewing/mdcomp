@@ -8,6 +8,7 @@
 #include <vector>
 
 namespace asm_test {
+    std::string const& dependency_versions();
     enum class cpu {
         m68000,
         z80
