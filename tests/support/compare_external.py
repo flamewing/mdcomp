@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--reference-runtime-dir", type=Path, action="append", default=[])
     parser.add_argument("--timeout", type=float, default=5)
     parser.add_argument("--boundaries", action="store_true", help="Add Kosinski/Saxman descriptor, history and window boundary cases")
+    parser.add_argument("--module-blocks", action="store_true", help="Audit 4096-byte module bodies and 64-byte final bodies")
     args = parser.parse_args()
     if os.name != "nt" and args.reference_kind == "kens":
         parser.error("Original KENS DLLs require Windows and an x86 .NET Framework wrapper")
@@ -81,7 +82,7 @@ def main():
         if candidate is None:
             parser.error("Missing candidate tool: " + name)
         report["hashes"][candidate.name] = digest(candidate)
-        inputs = list(corpus())
+        inputs = list(corpus((64, 4096))) if args.module_blocks else list(corpus())
         if args.boundaries and codec in ("Kosinski", "Saxman"):
             inputs += list(corpus((1, 7, 8, 9, 15, 16, 17, 255, 257)))
             inputs += [("seed-crossing", b"A\0A\0" + bytes(28)),
@@ -102,7 +103,8 @@ def main():
             row = {"codec": codec, "case": case, "input_sha256": digest(raw)}
             for producer in ("reference", "candidate"):
                 encoded = directory / (producer + ".compressed")
-                encoded.unlink(missing_ok=True)
+                if encoded.exists():
+                    encoded.unlink()
                 command = (reference_command(codec, True, raw, encoded)
                            if producer == "reference" else [candidate, raw, encoded])
                 row[producer + "_encode"] = run(command, encoded, args.timeout,
@@ -111,7 +113,8 @@ def main():
                     continue
                 for consumer in ("reference", "candidate"):
                     decoded = directory / (producer + "-decoded-by-" + consumer + ".bin")
-                    decoded.unlink(missing_ok=True)
+                    if decoded.exists():
+                        decoded.unlink()
                     decode_input = encoded
                     if args.reference_kind == "snkrle" and producer != consumer:
                         payload = encoded.read_bytes()

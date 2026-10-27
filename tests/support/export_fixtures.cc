@@ -1,3 +1,4 @@
+#include "fixtures/external_answers.hh"
 #include "fixtures/known_answers.hh"
 
 #include <filesystem>
@@ -6,8 +7,9 @@
 #include <stdexcept>
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: mdcomp-fixture-export OUTPUT_DIRECTORY\n";
+    if (argc != 2 && (argc != 3 || std::string_view(argv[2]) != "--external-modules")) {
+        std::cerr
+                << "Usage: mdcomp-fixture-export OUTPUT_DIRECTORY [--external-modules]\n";
         return 1;
     }
     try {
@@ -15,7 +17,9 @@ int main(int argc, char** argv) {
         std::filesystem::create_directories(root);
         std::ofstream index(root / "index.tsv");
         index.exceptions(std::ios::failbit | std::ios::badbit);
-        for (auto const& fixture : codec_test::known_answers()) {
+        auto const& fixtures = argc == 3 ? codec_test::external_module_blocks()
+                                         : codec_test::known_answers();
+        for (auto const& fixture : fixtures) {
             auto write = [&](char const* extension, std::string const& bytes) {
                 auto path = root / (fixture.id + extension);
                 std::filesystem::create_directories(path.parent_path());

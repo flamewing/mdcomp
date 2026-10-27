@@ -202,7 +202,7 @@ list(JOIN decoder_entries ",\n" decoder_json)
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/decoder_images.json" CONTENT "{\"decoders\":[\n${decoder_json}\n]}\n" @ONLY)
 include("${CMAKE_CURRENT_SOURCE_DIR}/modules.cmake")
 add_custom_target(mdcomp-asm-images DEPENDS ${asm_images})
-add_executable(mdcomp-asm-tests main.cc spikes.cc decoders.cc modules.cc ../fixtures/known_answers.cc ../support/codec_api.cc)
+add_executable(mdcomp-asm-tests main.cc spikes.cc decoders.cc modules.cc ../fixtures/known_answers.cc ../support/codec_api.cc ../support/format_observer.cc)
 target_include_directories(mdcomp-asm-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(mdcomp-asm-tests PRIVATE mdcomp-asm-machines Catch2::Catch2)
 target_link_libraries(mdcomp-asm-tests PRIVATE

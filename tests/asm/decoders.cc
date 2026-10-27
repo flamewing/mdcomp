@@ -146,7 +146,9 @@ TEST_CASE(
 }
 
 TEST_CASE("Assembly decoders accept qualified external encodings", "[asm][external]") {
-    auto const&   fixtures = codec_test::external_answers();
+    auto        fixtures = codec_test::external_answers();
+    auto const& blocks   = codec_test::external_module_blocks();
+    fixtures.insert(fixtures.end(), blocks.begin(), blocks.end());
     std::ofstream report("external.tsv");
     for (auto const& d : decoders) {
         for (auto const& f : fixtures) {

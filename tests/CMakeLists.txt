@@ -98,6 +98,13 @@ add_test(NAME codec::fixture-manifest
         "-DMANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/manifest.json"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/support/check_fixtures.cmake")
 set_tests_properties(codec::fixture-manifest PROPERTIES LABELS "codec;fixtures" TIMEOUT 30)
+add_test(NAME codec::external-module-manifest
+    COMMAND "${CMAKE_COMMAND}" "-DEXPORTER=$<TARGET_FILE:mdcomp-fixture-export>"
+        "-DEXPORT_ARGS=--external-modules"
+        "-DOUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/external-module-export"
+        "-DMANIFEST=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/external_modules.json"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/support/check_fixtures.cmake")
+set_tests_properties(codec::external-module-manifest PROPERTIES LABELS "codec;fixtures;external" TIMEOUT 30)
 
 add_test(NAME package::installed-codecs COMMAND "${CMAKE_COMMAND}"
     "-DBUILD=${PROJECT_BINARY_DIR}" "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/package"

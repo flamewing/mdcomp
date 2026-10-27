@@ -1,6 +1,7 @@
 #include "fixtures/external_answers.hh"
 
 #include "support/format_observer.hh"
+#include "support/reference_modules.hh"
 #include "support/wire_builder.hh"
 
 #include <catch2/catch_test_macros.hpp>
@@ -12,7 +13,9 @@
 TEST_CASE(
         "Qualified external encodings decode to the original input",
         "[codec][external][known-answer]") {
-    auto const& fixtures = codec_test::external_answers();
+    auto        fixtures = codec_test::external_answers();
+    auto const& blocks   = codec_test::external_module_blocks();
+    fixtures.insert(fixtures.end(), blocks.begin(), blocks.end());
     REQUIRE_FALSE(fixtures.empty());
     for (auto const& fixture : fixtures) {
         DYNAMIC_SECTION(fixture.id) {
@@ -64,4 +67,32 @@ TEST_CASE(
         }
     }
     CHECK(count > 0);
+}
+
+TEST_CASE(
+        "Qualified external blocks form canonical multi-module archives",
+        "[codec][external][moduled]") {
+    size_t count = 0;
+    for (auto const& full : codec_test::external_module_blocks()) {
+        if (full.expected.size() != 4096) {
+            continue;
+        }
+        for (auto const& api : codec_test::codecs()) {
+            if (api.name != full.codec || !api.moduled_decode) {
+                continue;
+            }
+            for (size_t padding :
+                 {api.module_padding, size_t(1), size_t(3), size_t(32)}) {
+                auto const framed = codec_test::reference_modules(full, padding);
+                auto const result = codec_test::run(
+                        api.moduled_decode, framed.compressed, framed.settings, 0,
+                        "prefix");
+                CAPTURE(framed.id, padding, result.diagnostic);
+                REQUIRE(result.success);
+                CHECK((result.bytes == "prefix" + framed.expected));
+                ++count;
+            }
+        }
+    }
+    CHECK(count == 48);
 }

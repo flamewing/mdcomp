@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_cases": 1144,
+  "recorded_cases": 1168,
   "scope": "Shipped moduled queues with deterministic deferred DMA and real level-6 CPU exceptions; two source address ABIs",
   "qualification": "Logical queue/interrupt integration, not cycle-exact VDP/DMA or real-hardware validation",
   "images": [
@@ -10,11 +10,11 @@
       "source": "Comper_Moduled.asm",
       "dma_source_words": 0,
       "cases": {
-        "bootstrap": 69,
+        "bootstrap": 73,
         "encoder": 24
       },
-      "interruptions": 193,
-      "transfers": 127,
+      "interruptions": 250,
+      "transfers": 139,
       "negative_cases": 3,
       "image_sha256": "815390396e584e52947245080c9ca58a593173e550404f7cc09f5bd2c31f42df",
       "entry": 4128,
@@ -39,11 +39,11 @@
       "source": "Comper_Moduled.asm",
       "dma_source_words": 1,
       "cases": {
-        "bootstrap": 69,
+        "bootstrap": 73,
         "encoder": 22
       },
-      "interruptions": 193,
-      "transfers": 127,
+      "interruptions": 250,
+      "transfers": 139,
       "negative_cases": 1,
       "image_sha256": "54a4f09ed43e09278ab5d8f60c4957c028b4a320ee613e0c2366d8e5d6bd45f6",
       "entry": 4128,
@@ -124,11 +124,11 @@
       "source": "Kosinki_Moduled.asm",
       "dma_source_words": 0,
       "cases": {
-        "bootstrap": 119,
+        "bootstrap": 125,
         "encoder": 25
       },
-      "interruptions": 388,
-      "transfers": 185,
+      "interruptions": 573,
+      "transfers": 203,
       "negative_cases": 3,
       "image_sha256": "c5e80fb2642e847d12a0b045a9ef1db0957b7e8186523352e37f5e592fd50e70",
       "entry": 4128,
@@ -154,11 +154,11 @@
       "source": "Kosinki_Moduled.asm",
       "dma_source_words": 1,
       "cases": {
-        "bootstrap": 119,
+        "bootstrap": 125,
         "encoder": 23
       },
-      "interruptions": 388,
-      "transfers": 185,
+      "interruptions": 573,
+      "transfers": 203,
       "negative_cases": 1,
       "image_sha256": "0d5114ca0515a1d27735612bf5667944898d11148c4855280fd81e1c769873c5",
       "entry": 4128,
@@ -184,11 +184,11 @@
       "source": "KosinkiPlus_Moduled.asm",
       "dma_source_words": 0,
       "cases": {
-        "bootstrap": 96,
+        "bootstrap": 98,
         "encoder": 24
       },
-      "interruptions": 364,
-      "transfers": 154,
+      "interruptions": 426,
+      "transfers": 160,
       "negative_cases": 3,
       "image_sha256": "b8bc8e9a1d62f04bce767e3b46425a456d2280514e499dba9e2295d0801aa5a2",
       "entry": 4128,
@@ -213,11 +213,11 @@
       "source": "KosinkiPlus_Moduled.asm",
       "dma_source_words": 1,
       "cases": {
-        "bootstrap": 96,
+        "bootstrap": 98,
         "encoder": 22
       },
-      "interruptions": 364,
-      "transfers": 154,
+      "interruptions": 426,
+      "transfers": 160,
       "negative_cases": 1,
       "image_sha256": "472bbc4dfae8ada168c5ef58774521f4762656ccf209cfb84a8ccc60cafaaca8",
       "entry": 4128,

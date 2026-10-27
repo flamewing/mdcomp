@@ -1,6 +1,7 @@
 #include "decoder_registry.hh"
 #include "fixtures/external_answers.hh"
 #include "fixtures/known_answers.hh"
+#include "support/reference_modules.hh"
 #include "support/wire_builder.hh"
 
 #include <catch2/catch_test_macros.hpp>
@@ -202,6 +203,36 @@ TEST_CASE(
         }
     }
     CHECK(count > 0);
+}
+
+TEST_CASE(
+        "External full blocks and tails bootstrap queued archives",
+        "[asm][module-bootstrap]") {
+    size_t count = 0;
+    for (auto const& full : codec_test::external_module_blocks()) {
+        if (full.expected.size() != 4096
+            || (full.codec != "comper" && full.codec != "kosinski"
+                && full.codec != "kosplus")) {
+            continue;
+        }
+        auto const framed
+                = codec_test::reference_modules(full, api(full.codec).module_padding);
+        std::vector<archive> const archives{
+                {framed.compressed, framed.expected}
+        };
+        CAPTURE(framed.id);
+        for (unsigned words : {0U, 1U}) {
+            verify(run(full.codec, words, archives), archives);
+            asm_test::module_configuration interrupted;
+            interrupted.interrupt_after  = 1;
+            interrupted.interrupt_period = 193;
+            auto const resumed           = run(full.codec, words, archives, interrupted);
+            verify(resumed, archives);
+            CHECK_FALSE(resumed.interrupted_pcs.empty());
+            count += 2;
+        }
+    }
+    CHECK(count == 24);
 }
 
 TEST_CASE(

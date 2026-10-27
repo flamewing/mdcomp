@@ -173,7 +173,7 @@ Checklist:
 
 - [x] Add basic round-trip cases for every working C++ codec.
 - [x] Add moduled round-trip cases for every codec exposing moduled APIs.
-- [ ] Test all public encoder options and format variants.
+- [x] Audit the current library option surface: Saxman framing, all eight module APIs and representative positive/non-power-of-two padding, zero/overflow rejection, and both automatically selected Nemesis modes. Exhaustive legal-parameter combinations remain separate.
 - [x] Record deterministic random seeds and print the seed on failure.
 - [ ] Save a minimal reproduction artifact below the build directory when a
       generated case fails.
@@ -889,3 +889,7 @@ The per-source [assembly inventory](../tests/references/assembly-inventory.json)
 The installed-package check exposed and fixed missing installed CMake exports and transitive Boost header metadata. The package configuration now works from both the build tree and an installation. Fresh installed consumers pass with all four local configurations; the full totals are 126 tests, or 127 with the optional published-binary comparison.
 
 The optional stress sweep adds 2,560 deterministic encode/decode/independent-observer comparisons across four seeds and all ten codecs. It passes on GCC, Clang, MSVC, and Linux ASan/UBSan and is enabled for scheduled/manual Clang/Ninja CI. CI now rejects empty test selections and caches compilation through ccache, including the pinned ASL host tools. The [contribution workflow](../tests/CONTRIBUTING.md) records TDD gates and focused commands. Exhaustive parameter sweeps, optional compiler line/branch coverage, complete external full-module generation, and remote CI observation remain explicit follow-ups.
+
+## Full reference-module checkpoint
+
+The external module corpus now retains 24 qualified 4,096-byte/full and 64-byte/tail bodies across six reference-codec families, with executable/source pins, recipes, transformations, and hashes. C++ tests check 48 canonical two-full-module-plus-tail archive combinations, and applicable bodies add 212 direct assembly checks and 24 queue executions with/without periodic interrupts. Audits now record 4,336 direct checks and 1,168 moduled checks, with 3,000 IRQs and 1,510 transfers. The current 128-case baseline plus the optional stress case passes locally; MSVC adds the passing 160-case binary comparison. The padding option audit also fixed encode/decode disagreement for unrepresentable values. ClownLZSS long repeated full-block encodes exceeded the declared reference budget; these timeouts are retained without treating them as format defects. Original KENS limitations remain visible. No independent external encoder is claimed for ComperX or LZKN1.

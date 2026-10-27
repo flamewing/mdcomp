@@ -1,0 +1,656 @@
+{
+  "schema_version": 1,
+  "generator": "tests/support/capture_module_fixtures.py",
+  "qualification": "Synthetic 4096-byte bodies and 64-byte tails, with paired recipes and retained lineage. No source code or game assets embedded.",
+  "reports": {
+    "clownlzss": {
+      "report_sha256": "e333feeda1c9d1cf32dd5b519c406a7ef55da448582f06a5f05d78364492f160",
+      "summary": {
+        "cases": 40,
+        "passed": 36,
+        "directions": {
+          "reference_to_reference": 36,
+          "reference_to_candidate": 36,
+          "candidate_to_reference": 40,
+          "candidate_to_candidate": 40
+        }
+      },
+      "unqualified": [
+        {
+          "codec": "Kosinski",
+          "case": "zeros-4096",
+          "encode_status": "timeout"
+        },
+        {
+          "codec": "Kosinski",
+          "case": "repeat-4096",
+          "encode_status": "timeout"
+        },
+        {
+          "codec": "KosinskiPlus",
+          "case": "zeros-4096",
+          "encode_status": "timeout"
+        },
+        {
+          "codec": "KosinskiPlus",
+          "case": "repeat-4096",
+          "encode_status": "timeout"
+        }
+      ]
+    },
+    "kens": {
+      "report_sha256": "e41bdef064cf968fdefda254f149028e2824fce82a867d736a944d2917126e33",
+      "summary": {
+        "cases": 32,
+        "passed": 18,
+        "directions": {
+          "reference_to_reference": 18,
+          "reference_to_candidate": 26,
+          "candidate_to_reference": 24,
+          "candidate_to_candidate": 32
+        }
+      },
+      "unqualified": [
+        {
+          "codec": "Enigma",
+          "case": "zeros-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Enigma",
+          "case": "ascending-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Nemesis",
+          "case": "ascending-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Nemesis",
+          "case": "random-seed-12345678-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Nemesis",
+          "case": "ascending-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Nemesis",
+          "case": "random-seed-12345678-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "zeros-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "repeat-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "ascending-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "random-seed-12345678-64",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "zeros-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "repeat-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "ascending-4096",
+          "encode_status": "completed"
+        },
+        {
+          "codec": "Saxman",
+          "case": "random-seed-12345678-4096",
+          "encode_status": "completed"
+        }
+      ]
+    },
+    "snkrle": {
+      "report_sha256": "c0dedf29cc48ca4db50a32f395bb686b829ac44590e8e27794f5358b5d0ae1c9",
+      "summary": {
+        "cases": 12,
+        "passed": 12,
+        "directions": {
+          "reference_to_reference": 12,
+          "reference_to_candidate": 12,
+          "candidate_to_reference": 12,
+          "candidate_to_candidate": 12
+        }
+      },
+      "unqualified": []
+    }
+  },
+  "references": {
+    "clownlzss": {
+      "source_pin": {
+        "source_url": "https://github.com/Clownacy/clownlzss",
+        "commit": "8055bd2e2d258dab604ea26ded9e42144562db54",
+        "archive_url": "https://codeload.github.com/Clownacy/clownlzss/zip/8055bd2e2d258dab604ea26ded9e42144562db54",
+        "archive_sha256": "f7d69aefd6ccdd260c0ee2f02b8be530022b187bee407c1ab6e29ba044000f6a",
+        "license": "0BSD (LICENCE.txt)",
+        "build": "Unmodified codec source; GCC 16.2, CMake/Ninja, C90; ClownLZSS frontend/header codecs use C++20",
+        "lineage": "Separate implementation informed by mdcomp optimal-parsing design; current pinned frontend and codec headers are C++20, compression core is C90."
+      },
+      "binary_sha256": {
+        "clownlzss.exe": "78aba5641996aaefc3b32eea8760069d25f2e9a1cd560da04843995fb4d856c8"
+      }
+    },
+    "kens-rc3": {
+      "source_pin": {
+        "version": "KENS 1.4 RC3 Win32, primary SourceForge distribution",
+        "source_url": "https://sourceforge.net/projects/genesiscomp/files/kens/kens-vc%2B%2B/1.4/kens-v1.4-rc3-win32.rar/download",
+        "archive_sha256": "bbc70b0579a305fa1eace88c40a8f864918c934c64360349596b9f0082e132f1",
+        "source_archive_url": "https://sourceforge.net/projects/genesiscomp/files/kens/kens-vc%2B%2B/1.4/kens-v1.4-rc3-win32-source.rar/download",
+        "source_archive_sha256": "7282eb657a1504473c21699294b2179f8e209707b01e303ce3709d8e084950d8",
+        "license": "LGPL-2.1-or-later (library headers)",
+        "lineage": "Original 2002-2004 KENS; predates the flamewing rewrite; separate algorithm implementation, not an assumed oracle",
+        "dll_sha256": {
+          "Enigma.dll": "e3a2f71e755b6b347257cc68627b9f962f833558a414944808461a147f3b45f4",
+          "Kosinski.dll": "7bb7d7a8dd7505c5addbeb4cf10f430b95b29ff62857fafd32334346cddd87b2",
+          "Nemesis.dll": "c5a0dcaa50f03c29871697d94d27681c3a425f48d40e9506f1f598778d6b0ea9",
+          "Saxman.dll": "bf39485d13b7a159e7c7b5f1a647593ee369b8af3100dd1ed6778b1a40aa29cb"
+        },
+        "build": "Original 32-bit DLLs; tests/support/original_kens.cs compiled with .NET Framework csc 4.8, /platform:x86"
+      },
+      "binary_sha256": {
+        "kens.exe": "dfa96ae35128c95d13acc22710aa19cca48c9179479566f60b01ab6ca42bdb7a",
+        "Enigma.dll": "e3a2f71e755b6b347257cc68627b9f962f833558a414944808461a147f3b45f4",
+        "Kosinski.dll": "7bb7d7a8dd7505c5addbeb4cf10f430b95b29ff62857fafd32334346cddd87b2",
+        "Nemesis.dll": "c5a0dcaa50f03c29871697d94d27681c3a425f48d40e9506f1f598778d6b0ea9",
+        "Saxman.dll": "bf39485d13b7a159e7c7b5f1a647593ee369b8af3100dd1ed6778b1a40aa29cb"
+      }
+    },
+    "snkrle": {
+      "source_pin": {
+        "source_url": "https://github.com/kirjavascript/m68k-RLE",
+        "commit": "4f4f871d68d7c6736fa404ebbbf342587fc33946",
+        "source_sha256": "0960f7f8fdd603c9e48a0f7d7a603f2702a23e171ec87e0b38b3b1ca85ff93df",
+        "license": "No license specified in repository; source and binaries not vendored",
+        "lineage": "kirjavascript / snkenjoi original C codec reference; decomp.asm not executed in this checkpoint",
+        "build": "Unmodified comp.c, GCC 16.2, -std=c11 -O2",
+        "adaptation": "BE16 tile-count header multiplied/divided by 32 for cross-decodes; token body unchanged"
+      },
+      "binary_sha256": {
+        "rle.exe": "b6e8681416a6e7bdfba62818ee83757fdad4b641cfdb49a64fa7a5938a51c27b"
+      }
+    }
+  },
+  "required_decoder_forms": {
+    "comper": [
+      "external-reference",
+      "module-block"
+    ],
+    "kosinski": [
+      "external-reference",
+      "module-block"
+    ],
+    "kosplus": [
+      "external-reference",
+      "module-block"
+    ],
+    "rocket": [
+      "external-reference",
+      "module-block"
+    ],
+    "saxman": [
+      "external-reference",
+      "module-block"
+    ],
+    "snkrle": [
+      "external-reference",
+      "module-block"
+    ]
+  },
+  "fixtures": {
+    "module-clownlzss-comper-repeat-64": {
+      "codec": "comper",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-64",
+      "recipe": "repeat",
+      "raw_size": 64,
+      "raw_sha256": "d53eda7a637c99cc7fb566d96e9fa109bf15c478410a3f5eb4d4c4e26cd081f6",
+      "compressed_size": 8,
+      "compressed_sha256": "a55b96bbf1a5da3d2529d0d194ca95ee8eb3611692c141e7321ac04a124cc818",
+      "original_compressed_sha256": "a55b96bbf1a5da3d2529d0d194ca95ee8eb3611692c141e7321ac04a124cc818",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-comper-repeat-4096": {
+      "codec": "comper",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-4096",
+      "recipe": "repeat",
+      "raw_size": 4096,
+      "raw_sha256": "6896d9ea3f73a4434f5832bc65714e7d066f177373f36f34dc8a6f735daa41b1",
+      "compressed_size": 22,
+      "compressed_sha256": "54482dc829da8db11413977f987eaf022b6499b00f7f71cd6d61d119cf72d477",
+      "original_compressed_sha256": "54482dc829da8db11413977f987eaf022b6499b00f7f71cd6d61d119cf72d477",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-comper-ascending-64": {
+      "codec": "comper",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 72,
+      "compressed_sha256": "e5114d061918fd93660daeb8e73e17b7ff8b17dd4a2bf987dc5b1eaebdc94874",
+      "original_compressed_sha256": "e5114d061918fd93660daeb8e73e17b7ff8b17dd4a2bf987dc5b1eaebdc94874",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-comper-ascending-4096": {
+      "codec": "comper",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 292,
+      "compressed_sha256": "3a25989d9b7372fb021bb81051fc9206c7d88016eb9a2001cd957569239a9baa",
+      "original_compressed_sha256": "3a25989d9b7372fb021bb81051fc9206c7d88016eb9a2001cd957569239a9baa",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-kosinski-ascending-64": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 77,
+      "compressed_sha256": "142ab4a396a94573a394d71ae25a61bfa921ccbaef78960662ab058783ceebaa",
+      "original_compressed_sha256": "142ab4a396a94573a394d71ae25a61bfa921ccbaef78960662ab058783ceebaa",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-kosinski-ascending-4096": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 342,
+      "compressed_sha256": "bb28e6572ccfa13aa12239a9dde23066c5358a7ecd45d56138e87d9de85d482a",
+      "original_compressed_sha256": "bb28e6572ccfa13aa12239a9dde23066c5358a7ecd45d56138e87d9de85d482a",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-kosplus-ascending-64": {
+      "codec": "kosplus",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 76,
+      "compressed_sha256": "9e6d90f9e706b986df8ca5fd5a45f28b6ab0631a7d0f989780b10a077d03afd9",
+      "original_compressed_sha256": "9e6d90f9e706b986df8ca5fd5a45f28b6ab0631a7d0f989780b10a077d03afd9",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-kosplus-ascending-4096": {
+      "codec": "kosplus",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 340,
+      "compressed_sha256": "39c3f7124edcabbb14ea80e7bf82d64cafe78a228659a2b46f5ab3ea0719c6c3",
+      "original_compressed_sha256": "39c3f7124edcabbb14ea80e7bf82d64cafe78a228659a2b46f5ab3ea0719c6c3",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-rocket-repeat-64": {
+      "codec": "rocket",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-64",
+      "recipe": "repeat",
+      "raw_size": 64,
+      "raw_sha256": "d53eda7a637c99cc7fb566d96e9fa109bf15c478410a3f5eb4d4c4e26cd081f6",
+      "compressed_size": 8,
+      "compressed_sha256": "fd588d077c408787f7a48b2374ad4556a807f6763040a13650cb21f01d14f7ea",
+      "original_compressed_sha256": "fd588d077c408787f7a48b2374ad4556a807f6763040a13650cb21f01d14f7ea",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-rocket-repeat-4096": {
+      "codec": "rocket",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-4096",
+      "recipe": "repeat",
+      "raw_size": 4096,
+      "raw_sha256": "6896d9ea3f73a4434f5832bc65714e7d066f177373f36f34dc8a6f735daa41b1",
+      "compressed_size": 142,
+      "compressed_sha256": "252c35ab486ffbfcbeda3e728a4f55605487a972542233ea2715a8758511927b",
+      "original_compressed_sha256": "252c35ab486ffbfcbeda3e728a4f55605487a972542233ea2715a8758511927b",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-rocket-ascending-64": {
+      "codec": "rocket",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 76,
+      "compressed_sha256": "3b4c43a02f3c6e0d2f6905355d367833c564532ace869eaadc3fdd6e6773fe5c",
+      "original_compressed_sha256": "3b4c43a02f3c6e0d2f6905355d367833c564532ace869eaadc3fdd6e6773fe5c",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-rocket-ascending-4096": {
+      "codec": "rocket",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 420,
+      "compressed_sha256": "c11e76a065b543ab852ba38ab42cb4f8b547852130c22616c533b102e8973cad",
+      "original_compressed_sha256": "c11e76a065b543ab852ba38ab42cb4f8b547852130c22616c533b102e8973cad",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-saxman-repeat-64": {
+      "codec": "saxman",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-64",
+      "recipe": "repeat",
+      "raw_size": 64,
+      "raw_sha256": "d53eda7a637c99cc7fb566d96e9fa109bf15c478410a3f5eb4d4c4e26cd081f6",
+      "compressed_size": 12,
+      "compressed_sha256": "494ecdc9536c65ca3babc0e711e6c1fed54cf07b00220e495e2dc453ccf6b83c",
+      "original_compressed_sha256": "494ecdc9536c65ca3babc0e711e6c1fed54cf07b00220e495e2dc453ccf6b83c",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-saxman-repeat-4096": {
+      "codec": "saxman",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "repeat-4096",
+      "recipe": "repeat",
+      "raw_size": 4096,
+      "raw_sha256": "6896d9ea3f73a4434f5832bc65714e7d066f177373f36f34dc8a6f735daa41b1",
+      "compressed_size": 488,
+      "compressed_sha256": "f8d73a929a9e4efbfa12a1995317e569e4025f89e159ebfc9392ccc6fcf00237",
+      "original_compressed_sha256": "f8d73a929a9e4efbfa12a1995317e569e4025f89e159ebfc9392ccc6fcf00237",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-saxman-ascending-64": {
+      "codec": "saxman",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 74,
+      "compressed_sha256": "147487e702b207c7ca776a626e341b03350598b99750b827e73636316ae16c43",
+      "original_compressed_sha256": "147487e702b207c7ca776a626e341b03350598b99750b827e73636316ae16c43",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-clownlzss-saxman-ascending-4096": {
+      "codec": "saxman",
+      "classification": "reference-generated",
+      "reference": "clownlzss",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 745,
+      "compressed_sha256": "577bcca3985c1603d55ae369bc431fbca177759656b0875e491bb0468cf1fee9",
+      "original_compressed_sha256": "577bcca3985c1603d55ae369bc431fbca177759656b0875e491bb0468cf1fee9",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-kens-kosinski-repeat-64": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "kens-rc3",
+      "case": "repeat-64",
+      "recipe": "repeat",
+      "raw_size": 64,
+      "raw_sha256": "d53eda7a637c99cc7fb566d96e9fa109bf15c478410a3f5eb4d4c4e26cd081f6",
+      "compressed_size": 9,
+      "compressed_sha256": "9a008c4448c5554eefb5b41bc76eea6c1517c8f36fd8144abde358faf0838fb8",
+      "original_compressed_sha256": "9a008c4448c5554eefb5b41bc76eea6c1517c8f36fd8144abde358faf0838fb8",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-kens-kosinski-repeat-4096": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "kens-rc3",
+      "case": "repeat-4096",
+      "recipe": "repeat",
+      "raw_size": 4096,
+      "raw_sha256": "6896d9ea3f73a4434f5832bc65714e7d066f177373f36f34dc8a6f735daa41b1",
+      "compressed_size": 58,
+      "compressed_sha256": "e2ad341d4a56b7a2bae65c10116cd9ab2641c61a1ce9d25ea1153539edd8e985",
+      "original_compressed_sha256": "e2ad341d4a56b7a2bae65c10116cd9ab2641c61a1ce9d25ea1153539edd8e985",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-kens-kosinski-ascending-64": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "kens-rc3",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 77,
+      "compressed_sha256": "142ab4a396a94573a394d71ae25a61bfa921ccbaef78960662ab058783ceebaa",
+      "original_compressed_sha256": "142ab4a396a94573a394d71ae25a61bfa921ccbaef78960662ab058783ceebaa",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-kens-kosinski-ascending-4096": {
+      "codec": "kosinski",
+      "classification": "reference-generated",
+      "reference": "kens-rc3",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 342,
+      "compressed_sha256": "bb28e6572ccfa13aa12239a9dde23066c5358a7ecd45d56138e87d9de85d482a",
+      "original_compressed_sha256": "bb28e6572ccfa13aa12239a9dde23066c5358a7ecd45d56138e87d9de85d482a",
+      "transformation": "none",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-snkrle-snkrle-repeat-64": {
+      "codec": "snkrle",
+      "classification": "reference-generated",
+      "reference": "snkrle",
+      "case": "repeat-64",
+      "recipe": "repeat",
+      "raw_size": 64,
+      "raw_sha256": "d53eda7a637c99cc7fb566d96e9fa109bf15c478410a3f5eb4d4c4e26cd081f6",
+      "compressed_size": 5,
+      "compressed_sha256": "2427977e4b2f6ff4aeb5d1cb7c81f9f0838f22b2cd62cf16ea2b7c6bfce8ec71",
+      "original_compressed_sha256": "8bb7adb0035317a61658f66940aeb0848a819349cfbdaeb2ec31094e3207726b",
+      "transformation": "tile-count header multiplied by 32; token body unchanged",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-snkrle-snkrle-repeat-4096": {
+      "codec": "snkrle",
+      "classification": "reference-generated",
+      "reference": "snkrle",
+      "case": "repeat-4096",
+      "recipe": "repeat",
+      "raw_size": 4096,
+      "raw_sha256": "6896d9ea3f73a4434f5832bc65714e7d066f177373f36f34dc8a6f735daa41b1",
+      "compressed_size": 50,
+      "compressed_sha256": "dc10f1eef63fe8b6fa8d3035553c2d1d5950de643500c1a4ef6a8a5dbfde93bc",
+      "original_compressed_sha256": "7f030bfc7cd1fff57744fed040af332c2c61746415505310beb32ca8c6a56db7",
+      "transformation": "tile-count header multiplied by 32; token body unchanged",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-snkrle-snkrle-ascending-64": {
+      "codec": "snkrle",
+      "classification": "reference-generated",
+      "reference": "snkrle",
+      "case": "ascending-64",
+      "recipe": "ascending",
+      "raw_size": 64,
+      "raw_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "compressed_size": 66,
+      "compressed_sha256": "06e9a6afd6091574deea6a5b775e5ab4693833f86063987262c71fb31cddc522",
+      "original_compressed_sha256": "57da90418cd4ef557a8c331423546000abd2a1a06bb2ec0f1595e06146cf7ab8",
+      "transformation": "tile-count header multiplied by 32; token body unchanged",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    },
+    "module-snkrle-snkrle-ascending-4096": {
+      "codec": "snkrle",
+      "classification": "reference-generated",
+      "reference": "snkrle",
+      "case": "ascending-4096",
+      "recipe": "ascending",
+      "raw_size": 4096,
+      "raw_sha256": "c8f5d0341d54d951a71b136e6e2afcb14d11ed8489a7ae126a8fee0df6ecf193",
+      "compressed_size": 4098,
+      "compressed_sha256": "b5aaf1104fe89d31235ca6457d81a210d9156fbb2c4fb97a39e7194cf635a221",
+      "original_compressed_sha256": "b35dcfb1044fb7795d4830ee957e926f07a79720ce1c4753a81305a5f8b173b3",
+      "transformation": "tile-count header multiplied by 32; token body unchanged",
+      "edges": [
+        "external-reference",
+        "module-block"
+      ],
+      "qualification": "All four self/cross-decodes passed. Container framing is test-owned, not supplied by this reference."
+    }
+  }
+}
