@@ -1,8 +1,8 @@
 {
-  "schema_version": 1,
-  "scope": "Default direct decoder configurations only; no moduled hardware queues or real hardware",
+  "schema_version": 2,
+  "scope": "Direct decoder defaults and declared optimization matrices; no moduled hardware queues or real hardware",
   "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
-  "recorded_cases": 446,
+  "recorded_cases": 3807,
   "failed_cases": [],
   "decoders": [
     {
@@ -13,8 +13,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "Comper.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 7,
+        "optimization-known-answer": 25,
         "external-encoding": 4,
         "cpp-encoding": 17,
         "containment": 1
@@ -25,7 +28,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "Comper.asm": "d919e823f22a593da074f5ae46108f594c0a14bcc98e90377046bdd5f8cd8bb0",
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
         "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
         "comper.driver.asm": "d93224ba46af6ca6c4efb91bdad7e77b6c176f0ab94971a55e106e7ea38a01c6"
       },
@@ -37,7 +40,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "comperx",
@@ -47,8 +50,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "ComperX.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 9,
+        "optimization-known-answer": 48,
         "cpp-encoding": 17,
         "containment": 1
       },
@@ -58,7 +64,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "ComperX.asm": "11b45db4d21945e364acf81cffb32cc7e4d914ce1e8341a4f1bad0d66a233a73",
+        "ComperX.asm": "c7024c0e405d556b968911edc4d5d50bc13d03d6631fb4bdfc737e1aa0bfc819",
         "ComperX_internal.asm": "bd570dc377c8cbd99780a71c10468bb5d5325fa2381cce2c1ba22e8f63ed5eeb",
         "comperx.driver.asm": "a44a4b1a45906e1d3fb18e588d93ab96c50414c00da6c2d65d36e0385acc8e46"
       },
@@ -69,7 +75,7 @@
         "hand-constructed expectations",
         "C++ encoder interoperability"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "kosinski",
@@ -79,8 +85,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "Kosinski.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 14,
+        "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
         "containment": 1
@@ -91,7 +100,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "Kosinski.asm": "3502a2532a8c841077fc6e801fdb21943b554b70a5ecbf95bcb57b1bb87c1f06",
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
         "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
         "kosinski.driver.asm": "9032e3a68f24a6af7c442afac7e9a924349e0f2a2a4d96525f18badb7124cb1a"
       },
@@ -103,7 +112,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "kosplus",
@@ -113,8 +122,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "KosinskiPlus.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 13,
+        "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
         "containment": 1
@@ -125,7 +137,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "KosinskiPlus.asm": "225f609fcd97382dbd8edab81106fc4e800a9edeae0460ea6f18c0a5e9898e8c",
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
         "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
         "kosplus.driver.asm": "531fa863ef3241a91e74de572e360234a9903636acbaec34ea287bdc4c935cc0"
       },
@@ -137,7 +149,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "enigma",
@@ -147,6 +159,8 @@
       "self_modifying": false,
       "readable_padding": 2,
       "source": "Enigma.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 14,
         "external-encoding": 3,
@@ -170,7 +184,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "saxman",
@@ -180,8 +194,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "Saxman.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 6,
+        "optimization-known-answer": 32,
         "external-encoding": 4,
         "cpp-encoding": 17,
         "containment": 1
@@ -192,7 +209,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "Saxman.asm": "77ef08e1237a5772886cf795069352ec71b5e7b2512ea7f0c793e5b4d2b80f39",
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
         "saxman.driver.asm": "8570171c7f6c75461edcea219a3c1356e7394382d0b99e124ce11bc12435b82f"
       },
       "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
@@ -203,7 +220,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "rocket",
@@ -213,8 +230,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "Rocket.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 5,
+        "optimization-known-answer": 126,
         "external-encoding": 2,
         "cpp-encoding": 18,
         "containment": 1
@@ -225,7 +245,7 @@
       "payload": 131072,
       "completion": 256,
       "source_sha256": {
-        "Rocket.asm": "ccf5eda9b73f74a7f3f259ab8043a3faa3f318c0ceee8a9a13648222a3dd2b12",
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
         "rocket.driver.asm": "c6eb00790652e55148d4c4accf2ea1259ffbcaf6f55c9771e10b4028a7b93259"
       },
       "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
@@ -236,7 +256,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "snkrle",
@@ -246,6 +266,8 @@
       "self_modifying": false,
       "readable_padding": 1,
       "source": "SNKRLE.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 2,
         "external-encoding": 6,
@@ -269,7 +291,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "kosinski-z80",
@@ -279,8 +301,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "Kosinski.a80",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 14,
+        "optimization-known-answer": 37,
         "external-encoding": 8,
         "cpp-encoding": 17,
         "containment": 1
@@ -302,7 +327,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "kosplus-z80",
@@ -312,8 +337,11 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "KosinskiPlus.a80",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 13,
+        "optimization-known-answer": 39,
         "external-encoding": 4,
         "cpp-encoding": 17,
         "containment": 1
@@ -335,7 +363,1251 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
+    },
+    {
+      "name": "comper-u0",
+      "codec": "comper",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Comper.asm",
+      "configuration": "unroll=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 7,
+        "optimization-known-answer": 25,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "32f287c9c1892b0fa6d3ebe529ca0c9178be17af3f60f896f9410bf2e7d30698",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "comper-u0.driver.asm": "887cd7cff9d2680a9bba52626a8964da3e88869d52f7c5f623d17b412285184f"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosplus-u0",
+      "codec": "kosplus",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "KosinskiPlus.asm",
+      "configuration": "unroll=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 13,
+        "optimization-known-answer": 39,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "26758f0b2826d27fe8413acfb919446b7ef2de789068e36a7d5a7a337c969a63",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "kosplus-u0.driver.asm": "317ca73f439fde6b70b98404ea0100d1c9287221c5966e4b1057569822250a6f"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u0-lut0",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=0,lut=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "cb2ee14a6f302be28907b6f46ac6d4771348e6c660c6a47c4c94d5b90e5f6f47",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u0-lut0.driver.asm": "a4d37446b928a6f1ed50abc69bbe08606496357b6a05792d3aa4effd896680a3"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u0-lut0-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=0,lut=0,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "6b0016d0684b6d7e6f684c90b1594d73a8a35a522c5109011fbe01c4d35a085f",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u0-lut0-x0.driver.asm": "46aafc4b633970a930d971d2e25ceff8d759ac0c70b2077589d25a2eaad5592b"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u0-lut0-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=0,lut=0,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "e957bdf094a0e3e5b06505958a3244c89345ef5ce187bf39aa958bb1949c6285",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u0-lut0-x1.driver.asm": "a405c4f0f0f16f5c2f1f7512dab5e917205750668de7a60ecf52407b33f1a0e3"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u0-lut1",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=0,lut=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "32ffb92ae7c19aebf45186fd6669b4c73e0c42e59602eb0dacc3861974ae6eb0",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u0-lut1.driver.asm": "0e3ce4e0b62686398d49891b21ca160038aaeda3ee19b81176cecb4a77d2a909"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u0-lut1-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=0,lut=1,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "22f419a3f10fb40e01c9e581885e5337a68971cfa22f2b90d9b93c343346a61e",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u0-lut1-x0.driver.asm": "448d5ee8b56a158f9ef6b7c8731f85310cafb00a5e89b9d51f968ff9ecb17470"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u0-lut1-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=0,lut=1,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "10aef189a17951274bef0467492e1b34ed8fa821f5f45b47a6d1b970390214b3",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u0-lut1-x1.driver.asm": "f1cb6617d8d3699daad7fdb0c1388c16a7b42b6e43affb7d17268565edd6a4bd"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "comper-u1",
+      "codec": "comper",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Comper.asm",
+      "configuration": "unroll=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 7,
+        "optimization-known-answer": 25,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "26db95be33d21e81a65ebbb9c995b2d39b45831fb70c2168a237b181d104ca6c",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "comper-u1.driver.asm": "4f183ed9b229e28b1e5def3c8010a6a444b79364f966ae1c88e1a8baa1d501f4"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosplus-u1",
+      "codec": "kosplus",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "KosinskiPlus.asm",
+      "configuration": "unroll=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 13,
+        "optimization-known-answer": 39,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "7c26e243705deef3cee6bcf8a8ac44d6324c4ca011ae9cd27db0103af2a7614c",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "kosplus-u1.driver.asm": "87228a65821d3b851bbe1a692bde78dd1f8020a2ceeed9d496775fbd980d071a"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u1-lut0",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=1,lut=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "1ff9d8ebe895db96439c7c897f76410eb4377e07afc9b79f6d2fe4b488525c6d",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u1-lut0.driver.asm": "b35ff41fc94c3108a49b378a818732ad6c2b30ffb1168241664732eca73d2187"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u1-lut0-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=1,lut=0,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "f4b341c9a2fbbe959af2ef1363fc77d5fb25d48efc8d2ce82e9aa21960ef077e",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u1-lut0-x0.driver.asm": "6489808c6b3f737cb14107f6ee134780aba6c000b6ac9dee3e5a4d5f61f207ad"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u1-lut0-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=1,lut=0,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "0ca58f72ce49330beda28a2ed6535590c3113bc0c3e939f3825e75a40ad8fc94",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u1-lut0-x1.driver.asm": "287f3f23d204e138babd4d0b6074015c2c2fb72bc33c90c7cd74d09d98f4cb23"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u1-lut1",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=1,lut=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "fd7a51f8fb70de2b94d4d9e345136cdc3f519af93f8584a1eee33e6d1a396f49",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u1-lut1.driver.asm": "2ac5f40be2e572aaae967c4a420ebb1be777aa0528db23e9311c0d90d72e5025"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u1-lut1-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=1,lut=1,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "f13a11b0916738ca5ddf0058f6a9450cfb595b668b08939144e3bc92fd69249d",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u1-lut1-x0.driver.asm": "829b8b8b86baafbda6cfd4102eeab37436bc7f926b847abe0eca96809d392c76"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u1-lut1-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=1,lut=1,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "4f27ef1e50b61781e0c35a8a125548bb1d6dffd254e61a1dcae8a4c0b42a2b02",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u1-lut1-x1.driver.asm": "5a1129170cf1d2da30a28094fe6247179a034a3ec5007e0a8a77efd52a1c3870"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "comper-u2",
+      "codec": "comper",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Comper.asm",
+      "configuration": "unroll=2",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 7,
+        "optimization-known-answer": 25,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "4d0bf9e87c82c5bd69a03e2e6f9a335633a8ec0c97a0ced9eceac0315f4412e2",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Comper.asm": "0e45f4af8333566c615e295c705bf3bb7dfa40b41ace4fab71dba20a8afd1bcc",
+        "Comper_internal.asm": "536a9133791cbd8f80487fb08d28957f09f0793c77410a447f0e109fb5c0863f",
+        "comper-u2.driver.asm": "84537ee74dd732caa9069d85b507afb84f8ffac41769f4b8e5ad2e725cd03677"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosplus-u2",
+      "codec": "kosplus",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "KosinskiPlus.asm",
+      "configuration": "unroll=2",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 13,
+        "optimization-known-answer": 39,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "dbe8ebfc15d215ca9ab136259f21475c34eacdef60366b4bdf36e5e1855323c9",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "KosinskiPlus.asm": "ccedd1ce41b3a5e6ecc2076d2c6b30ee24351cd6f4e3ea75dfeb1d893d16b148",
+        "KosinskiPlus_internal.asm": "8575a3ba5fc5d6379ebcf94b60dc86ee0460cbe1418dbb9f5fcaef7623d32b6e",
+        "kosplus-u2.driver.asm": "f5c63e5e2cced3ebf275aa515810b2d5f4e2f0a33c99afce47116340de7b7da5"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u2-lut0",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=2,lut=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "d6c735eabb9647ff6df0de48fdf65aae520150b177e2ca164035bf1f07c41cb3",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u2-lut0.driver.asm": "3675be17f9d499fe800833862b29c74a62d787d35f9673189b340ee65ce31170"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u2-lut0-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=2,lut=0,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "20035fbd8eee5c24f848d76746cdc3da07557e114a2245c337e25cba1220e502",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u2-lut0-x0.driver.asm": "9dcdd6b33df84d4bb03fa94f73e5c74d70d8e403368b152a1d52802da03da7a6"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u2-lut0-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=2,lut=0,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "4ebd0df952b128e471aadb604475c9ebe9a7e0c954abcafa1707497936d9fbcb",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u2-lut0-x1.driver.asm": "38b0066c28511f7bef4dc8116e17fd8981f8178840b76310373d6500aa35d42b"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u2-lut1",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=2,lut=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "0604c8ba49fdfbdda3db648be9f2d83001bcf81aeab10711c7fc1f9761c1e032",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u2-lut1.driver.asm": "f5d43907fdc93f84a1a026f5c4a8912c44b9f02c28f5b013226573d7aa3bea66"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u2-lut1-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=2,lut=1,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "8dc568ac8aadaf15991bb3964a3172d2b68d9e440ca48cd9f097ab08f70d552c",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u2-lut1-x0.driver.asm": "f4a50a4a9840b03e4f25d00ac71ba8b55d03abb53db7735b4502f8041458ea39"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u2-lut1-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=2,lut=1,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "9fca6272bcb93eaddb6bedc131dc5ac81f4f250b8a7404029f9ab796400510fd",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u2-lut1-x1.driver.asm": "058afbf64471ee01f954e61e4048a8c8866f0f366f80a118e50d11018cc3bc97"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "rocket-u3-lut0",
+      "codec": "rocket",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Rocket.asm",
+      "configuration": "unroll=3,lut=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 5,
+        "optimization-known-answer": 126,
+        "external-encoding": 2,
+        "cpp-encoding": 18,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "6cd162a1c811f5de2e4cb0f719bac9f458c8e1e0b9b622675cabec8578ae752b",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Rocket.asm": "6f9db03b342d9327c539b305cbdbab6cfdf951419d0992185a19117bcc3803f8",
+        "rocket-u3-lut0.driver.asm": "516fc52df747b8aca54fc1c761834d2431a21e04c5110a5c8a5308402df98c3a"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u3-lut0-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=3,lut=0,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "6b9bca0ebcb64013595608859d7f33a3479f258a7b1a124681d503c42b988a75",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u3-lut0-x0.driver.asm": "1f9fd74f45e090d3918e7f92212b56d48b6e942605c1cf79140a4a04ff17ed19"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u3-lut0-x1",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=3,lut=0,extreme=1",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "5b7a09d21b164edc3bd1134e08325972a35ac0f9898e3f2c55b93cfbe8ae1eff",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u3-lut0-x1.driver.asm": "f2ea63e1982abfd7c3105dd1cd8465727ae62d13b8d36a2078e5272446137121"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "kosinski-u3-lut1-x0",
+      "codec": "kosinski",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Kosinski.asm",
+      "configuration": "unroll=3,lut=1,extreme=0",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 14,
+        "optimization-known-answer": 37,
+        "external-encoding": 8,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "404dcf11215a1ed9fb0ff1898debef9b0dddb19da6837f3a8243a3dceec67a15",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Kosinski.asm": "289f6d6f6e7299b7c25202b337383f839bd4d302a42ca790242a7206dd24367e",
+        "_inc/Kosinski_internal.asm": "bb985c3fc9a406d3f1a355863f522b3c01d96c2705da37db5316b402c0bddda4",
+        "kosinski-u3-lut1-x0.driver.asm": "8cda56554b9e7bfbc0c50e63d25dc211cb933ade2a98915311d81ddfb9f3ce0d"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-lut0-aligned0",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "lut=0,aligned=0,source=even",
+      "stack_scratch_bytes": 2,
+      "cases": {
+        "known-answer": 6,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "49abb1142c0b5849947a30a12d76f9a7035dd4ca828cd7242416e2dc5e5ad25c",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-lut0-aligned0.driver.asm": "8d3bba8c2246eac027e4fa2e95a4ae5ebfed74eda4fc168609d49c671f5f660b"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-lut0-aligned1",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "lut=0,aligned=1,source=even",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 6,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "424d867c4b5029ad6bbda97151a6fb032da8dba11901b516fa71a3377bb04e1a",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-lut0-aligned1.driver.asm": "770c9e90353cf994e19c634b6233da749db9b69e4410c4a50a5b741d67b226ca"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-lut0-odd",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "lut=0,aligned=0,source=odd",
+      "stack_scratch_bytes": 2,
+      "cases": {
+        "known-answer": 6,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "b2a654daa3053aa09b3f30a4486b782d23421e023ac55d84b81da0b1765e3105",
+      "entry": 4112,
+      "payload": 131073,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-lut0-odd.driver.asm": "40c90943b4c3e179a75a07a268b0671d2a328b6b04e4bbe6eba9981f7b9552d4"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "odd"
+    },
+    {
+      "name": "saxman-lut1-aligned0",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "lut=1,aligned=0,source=even",
+      "stack_scratch_bytes": 2,
+      "cases": {
+        "known-answer": 6,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "be5736b30b1db2c29b43803c8acf678e281b73100b30eac891eac54286455514",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-lut1-aligned0.driver.asm": "ca7ebe01f69c1b7ec2a120540c4c188885b56f08f1b8bff7512c5d4b7d8eb534"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "even"
+    },
+    {
+      "name": "saxman-lut1-odd",
+      "codec": "saxman",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "Saxman.asm",
+      "configuration": "lut=1,aligned=0,source=odd",
+      "stack_scratch_bytes": 2,
+      "cases": {
+        "known-answer": 6,
+        "optimization-known-answer": 32,
+        "external-encoding": 4,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "1d8a6656ba45580ff05d5dc4e4ea659882f6648a387c4cd9ad71e4fe312c67cf",
+      "entry": 4112,
+      "payload": 131073,
+      "completion": 256,
+      "source_sha256": {
+        "Saxman.asm": "1afb4d2be29883f15eebfea8edae037192e306a6362576cbd6c9db72a1e8e087",
+        "saxman-lut1-odd.driver.asm": "b755eee9ee3887ef3cf14aa36d4f103cb45aaacaadb9dfdd1e6f28c9f2204641"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability",
+        "qualified external encodings; lineage retained in external manifest"
+      ],
+      "source_alignment": "odd"
+    },
+    {
+      "name": "comperx-jump",
+      "codec": "comperx",
+      "architecture": "m68000",
+      "original_derived": false,
+      "self_modifying": false,
+      "readable_padding": 0,
+      "source": "ComperX.asm",
+      "configuration": "return=a5",
+      "stack_scratch_bytes": 0,
+      "cases": {
+        "known-answer": 9,
+        "optimization-known-answer": 48,
+        "cpp-encoding": 17,
+        "containment": 1
+      },
+      "max_read_ahead_observed": 0,
+      "image_sha256": "54d15e47ed61074a37a24ee4f6ca690afd6004537bdea5885348d28b3f0b609a",
+      "entry": 4112,
+      "payload": 131072,
+      "completion": 256,
+      "source_sha256": {
+        "ComperX.asm": "c7024c0e405d556b968911edc4d5d50bc13d03d6631fb4bdfc737e1aa0bfc819",
+        "ComperX_internal.asm": "bd570dc377c8cbd99780a71c10468bb5d5325fa2381cce2c1ba22e8f63ed5eeb",
+        "comperx-jump.driver.asm": "5a5ffd9faedc53cd93ec1e2e968ab5f1abfba7cf7be82b0ca9eec52291c099c4"
+      },
+      "provenance": "hand-crafted/reference-derived mdcomp routine; see source authorship",
+      "deployment": "Not independently surveyed; no new field-use claim",
+      "verification": [
+        "emulator",
+        "hand-constructed expectations",
+        "C++ encoder interoperability"
+      ],
+      "source_alignment": "even"
     },
     {
       "name": "sega-kosinski",
@@ -345,6 +1617,8 @@
       "self_modifying": false,
       "readable_padding": 0,
       "source": "sega-kosinski.source.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 14,
         "external-encoding": 8,
@@ -368,7 +1642,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "sega-enigma",
@@ -378,6 +1652,8 @@
       "self_modifying": false,
       "readable_padding": 2,
       "source": "sega-enigma.source.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 14,
         "external-encoding": 3,
@@ -401,7 +1677,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "sega-nemesis",
@@ -411,6 +1687,8 @@
       "self_modifying": false,
       "readable_padding": 2,
       "source": "sega-nemesis.source.asm",
+      "configuration": "default",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 4,
         "external-encoding": 7,
@@ -434,7 +1712,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "Default shipped settings; word-aligned source/output; see hashed source and wrapper"
+      "source_alignment": "even"
     },
     {
       "name": "sega-saxman-z80",
@@ -444,6 +1722,8 @@
       "self_modifying": true,
       "readable_padding": 0,
       "source": "sega-saxman-z80.source.asm",
+      "configuration": "default; OptimiseDriver=0; only the two exported instruction words are writable",
+      "stack_scratch_bytes": 0,
       "cases": {
         "known-answer": 4,
         "external-encoding": 4,
@@ -471,7 +1751,7 @@
         "C++ encoder interoperability",
         "qualified external encodings; lineage retained in external manifest"
       ],
-      "configuration": "OptimiseDriver=0; only the two exported instruction words are writable"
+      "source_alignment": "even"
     }
   ]
 }

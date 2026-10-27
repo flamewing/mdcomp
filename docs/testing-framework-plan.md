@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 hand-constructed fixtures, 38 qualified external encodings, pinned binary/source comparisons, and default direct MC68000/Z80 decoder execution are implemented. Complete format-edge inventories, encoder-selection coverage, all option combinations, and moduled assembly hardware tests remain pending; the refactor gate remains blocked.
+Status: implementation in progress. Catch2 v3, shared low-level runtime/constexpr regressions, contracts for all ten C++ codecs, moduled boundaries for all eight moduled APIs, 88 saved hand-constructed fixtures, 38 qualified external encodings, pinned binary/source comparisons, and direct MC68000/Z80 decoder execution with a declared optimization matrix are implemented. Complete format-edge inventories, encoder-selection coverage, remaining C++ option combinations, and moduled assembly hardware tests remain pending; the refactor gate remains blocked.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -411,7 +411,9 @@ Checklist:
 
 ## Assembly Decoder Tests
 
-The first executable checkpoint is implemented in [tests/asm](../tests/asm/README.md): pinned ASL builds only M68K/Z80 backends; bounded Musashi and superzazu/z80 harnesses execute ten shipped direct decoders and four optional original-derived Sega routines. The [recorded audit](../tests/references/assembly-audit.json) contains 446 passing executions: 133 known-answer checks, 65 saved external encodings, 233 C++ encoder interoperability checks, and 15 containment checks. Calibration gates bootstrap checks, which gate encoder interoperability. GCC 16.2, Clang 23.1, and MSVC 19.44 pass locally on Windows. With the timing/CLI follow-up, the full suite has 117 CTest entries, or 118 with the optional frozen-master comparison. Fixture TSVs now include formatted timing and modeled 68000 bus transfers; `mdcomp-asm-run` executes supplied files and alternative ASL images with text/JSON timing. Bus counts are explicitly qualified as logical Musashi transfers, not hardware-accurate prefetch/dummy cycles. CI is configured for Linux, macOS, MinGW, and MSVC; remote results remain to be observed.
+The optimization follow-up expands execution to 48 images and 3,807 recorded decoder/case checks: 477 existing known-answer checks, 2,220 additional hand-authored tail checks, 243 external encodings, 818 C++ encoder interoperability checks, and 49 containment checks. The matrix covers unroll levels 0..3, LUT/extreme-unroll choices, Saxman even/odd source and byte-header paths, and ComperX RTS/register-return paths. All fourteen original default images remain byte-identical. The new vectors cover small unroll residues and larger counter boundaries; they are additional to the 88 saved fixture manifest entries. Saxman's legitimate discarded stack-byte read required a narrowly declared scratch word in the harness, validated with two poison patterns; no decoder data defect was exposed by this matrix. See [the matrix and qualifications](../tests/asm/README.md#optimization-configuration-matrix). Deployment research, complete semantic edge inventories, headerless assembly entry coverage, and the moduled hardware shim remain open.
+
+The first executable checkpoint is implemented in [tests/asm](../tests/asm/README.md): pinned ASL builds only M68K/Z80 backends; bounded Musashi and superzazu/z80 harnesses execute ten shipped direct decoders and four optional original-derived Sega routines. The initial audit recorded 446 passing decoder/case checks: 133 known-answer checks, 65 saved external encodings, 233 C++ encoder interoperability checks, and 15 containment checks. Calibration gates bootstrap checks, which gate encoder interoperability. GCC 16.2, Clang 23.1, and MSVC 19.44 pass locally on Windows. With the timing/CLI follow-up, the full suite has 117 CTest entries, or 118 with the optional frozen-master comparison. Fixture TSVs now include formatted timing and modeled 68000 bus transfers; `mdcomp-asm-run` executes supplied files and alternative ASL images with text/JSON timing. Bus counts are explicitly qualified as logical Musashi transfers, not hardware-accurate prefetch/dummy cycles. CI is configured for Linux, macOS, MinGW, and MSVC; remote results remain to be observed.
 
 This checkpoint fixes the duplicate ComperX entry label, Saxman's final-byte accounting, both Z80 Kosinski variants' two-byte short copies, and Rocket's position, seeded-history, and unsigned-length handling. Original Z80 Saxman's initial full-window alias is explicitly rejected as a portable zero-fill fixture because it reads unwritten output. Per-image hashes, configuration, provenance, read-ahead allowances, and observed coverage are retained; deployment history remains unknown. Alternative assembler configurations, complete format-edge coverage, and the moduled queue/DMA/interrupt shim remain outstanding, so the refactor gate stays blocked.
 
@@ -491,10 +493,8 @@ Checklist:
       resolve the absent Nemesis assembly source.
 - [ ] Bootstrap every provisional routine with non-current-encoder vectors
       before treating it as a differential oracle.
-- [ ] Add optimization-boundary cases for every enabled assembly
-      configuration.
-- [ ] Keep field-use evidence distinct from independently verified test
-      evidence in reports and fixture manifests.
+- [x] Add optimization-boundary cases for every enabled assembly configuration in the declared direct-decoder matrix (unroll levels 0..3, LUT/extreme choices, Saxman even/odd sources, and ComperX return modes).
+- [x] Keep field-use evidence distinct from independently verified test evidence in reports and fixture manifests.
 
 ### Toolchain submodule
 
@@ -510,19 +510,19 @@ compressed payload at the harness's exported payload location.
 
 Checklist:
 
-- [ ] Add `asl-releases` below a documented third-party/submodule directory.
-- [ ] Pin an exact reviewed commit rather than following the default branch.
-- [ ] Build the required ASL host tools without installing them globally.
-- [ ] Determine the minimal ASL targets needed, including binary conversion
+- [x] Add `asl-releases` below a documented third-party/submodule directory.
+- [x] Pin an exact reviewed commit rather than following the default branch.
+- [x] Build the required ASL host tools without installing them globally.
+- [x] Determine the minimal ASL targets needed, including binary conversion
       such as `p2bin` if required.
-- [ ] Keep generated object, listing, symbol, and binary files in the build
+- [x] Keep generated object, listing, symbol, and binary files in the build
       directory.
-- [ ] Audit source-specific include paths and stage a build-tree include layout
+- [x] Audit source-specific include paths and stage a build-tree include layout
       where a decoder expects paths such as `_inc/`, without rewriting the
       distributed source for each test.
-- [ ] Make missing/uninitialized submodules produce an actionable CMake error.
-- [ ] Document `git submodule update --init --recursive`.
-- [ ] Record GPL-2.0 tool provenance without changing the license of mdcomp's
+- [x] Make missing/uninitialized submodules produce an actionable CMake error.
+- [x] Document `git submodule update --init --recursive`.
+- [x] Record GPL-2.0 tool provenance without changing the license of mdcomp's
       own 0BSD assembly sources or their generated test payloads.
 
 ### MC68000 emulator
@@ -538,16 +538,16 @@ program, and returns through the proposed sentinel mechanism.
 
 Checklist:
 
-- [ ] Add Musashi as a pinned git submodule after the integration spike passes.
-- [ ] Generate or build Musashi's opcode source as a CMake dependency.
-- [ ] Configure only the MC68000 features required by the decoder sources.
-- [ ] Implement big-endian, bounds-checked memory callbacks.
-- [ ] Support byte, word, and long accesses with explicit alignment checks.
-- [ ] Expose register initialization and inspection to the harness.
-- [ ] Stop on a sentinel return address, invalid access, exception, or
+- [x] Add Musashi as a pinned git submodule after the integration spike passes.
+- [x] Generate or build Musashi's opcode source as a CMake dependency.
+- [x] Configure only the MC68000 features required by the decoder sources.
+- [x] Implement big-endian, bounds-checked memory callbacks.
+- [x] Support byte, word, and long accesses with explicit alignment checks.
+- [x] Expose register initialization and inspection to the harness.
+- [x] Stop on a sentinel return address, invalid access, exception, or
       instruction/cycle budget.
-- [ ] Report PC, registers, and recent memory accesses on failure.
-- [ ] Validate the emulator harness with a tiny hand-written copy routine before
+- [x] Report PC, registers, and recent memory accesses on failure.
+- [x] Validate the emulator harness with a tiny hand-written copy routine before
       running a codec decoder.
 
 ### Z80 emulator
@@ -564,16 +564,16 @@ the sentinel and instruction-budget mechanisms.
 
 Checklist:
 
-- [ ] Add `superzazu/z80` as a pinned git submodule after the integration spike
+- [x] Add `superzazu/z80` as a pinned git submodule after the integration spike
       passes.
-- [ ] Wrap its C99 source in a warning-isolated CMake target.
-- [ ] Implement a bounds-checked 64 KiB memory image.
-- [ ] Provide deterministic memory and inert port callbacks.
-- [ ] Expose register initialization and inspection to the harness.
-- [ ] Stop on a sentinel return address, invalid access, halt, or
+- [x] Wrap its C99 source in a warning-isolated CMake target.
+- [x] Implement a bounds-checked 64 KiB memory image.
+- [x] Provide deterministic memory and inert port callbacks.
+- [x] Expose register initialization and inspection to the harness.
+- [x] Stop on a sentinel return address, invalid access, halt, or
       instruction/cycle budget.
-- [ ] Report PC, registers, and recent memory accesses on failure.
-- [ ] Validate the emulator harness with a tiny hand-written copy routine before
+- [x] Report PC, registers, and recent memory accesses on failure.
+- [x] Validate the emulator harness with a tiny hand-written copy routine before
       running a codec decoder.
 
 ### Architecture-neutral decoder harness
@@ -609,21 +609,21 @@ generated round-trip case.
 
 Checklist:
 
-- [ ] Define architecture-neutral image, register, memory, result, and
+- [x] Define architecture-neutral image, register, memory, result, and
       diagnostic types.
-- [ ] Generate per-decoder ASL wrappers without modifying the distributed
+- [x] Generate per-decoder ASL wrappers without modifying the distributed
       assembly sources.
-- [ ] Export or parse entry, payload, completion, and other required symbol
+- [x] Export or parse entry, payload, completion, and other required symbol
       addresses.
-- [ ] Append or load each compressed payload at the declared payload address.
-- [ ] Poison output memory and add guard regions before execution.
-- [ ] Initialize every register on which a decoder's calling convention relies.
-- [ ] Detect reads beyond the attached compressed payload where the format
+- [x] Append or load each compressed payload at the declared payload address.
+- [x] Poison output memory and add guard regions before execution.
+- [x] Initialize every register on which a decoder's calling convention relies.
+- [x] Detect reads beyond the attached compressed payload where the format
       promises an exact bound.
-- [ ] Detect writes outside the declared output region.
-- [ ] Enforce deterministic instruction or cycle budgets.
-- [ ] Compare exact output length and bytes.
-- [ ] Produce a compact failure dump containing the fixture, architecture,
+- [x] Detect writes outside the declared output region.
+- [x] Enforce deterministic instruction or cycle budgets.
+- [x] Compare exact output length and bytes.
+- [x] Produce a compact failure dump containing the fixture, architecture,
       decoder, PC, registers, and access violation.
 
 ### Assembly test modes
@@ -675,16 +675,13 @@ Checklist:
 
 - [ ] Classify every direct decoder's provenance, authorship/design lineage,
       field-use history, and existing validation evidence.
-- [ ] Locate the original-derived Nemesis routine or document why it remains
-      outside the shipped assembly inventory.
-- [ ] Bootstrap decoders with little or no field use before using their results
-      to audit C++ encoders.
-- [ ] Add C++ encode plus assembly decode tests for every direct MC68000
-      decoder.
-- [ ] Add independent known-answer tests for every direct MC68000 decoder.
-- [ ] Add both test modes for the Kosinski Z80 decoder.
-- [ ] Add both test modes for the Kosinski Plus Z80 decoder.
-- [ ] Run shared Kosinski fixtures through both architectures.
+- [x] Locate the original-derived Nemesis routine or document why it remains outside the shipped assembly inventory.
+- [x] Bootstrap decoders with little or no field use before using their results to audit C++ encoders.
+- [x] Add C++ encode plus assembly decode tests for every direct MC68000 decoder.
+- [x] Add independent known-answer tests for every direct MC68000 decoder.
+- [x] Add both test modes for the Kosinski Z80 decoder.
+- [x] Add both test modes for the Kosinski Plus Z80 decoder.
+- [x] Run shared Kosinski fixtures through both architectures.
 - [ ] Inventory the memory-mapped hardware used by the moduled queue sources.
 - [ ] Implement only the minimal Mega Drive hardware shim needed by those
       sources.
@@ -826,10 +823,10 @@ Checklist:
 - [x] Add reusable MC68000 and Z80 harnesses.
 - [ ] Complete the provenance, deployment, verification, and configuration
       inventory.
-- [ ] Bootstrap every provisional or previously unused routine.
+- [x] Bootstrap every provisional or previously unused direct routine in the declared configuration matrix with non-current-encoder vectors.
 - [x] Add C++-encode/assembly-decode tests.
 - [x] Add independent known-answer assembly tests.
-- [x] Cover every direct decoder in the inventory (shipped default configurations).
+- [x] Cover every direct decoder in the inventory (defaults and the declared direct optimization matrix).
 
 ### 4. Moduled assembly decoders
 
@@ -842,7 +839,7 @@ Checklist:
 - [ ] Run the full baseline suite on the current pre-refactor code.
 - [ ] Complete the reference-encoder audit of the current branch.
 - [ ] Record any known failures explicitly; do not silently bless them.
-- [ ] Enable the suite in CI.
+- [x] Enable the suite in CI (configuration committed; remote runs still need observation).
 - [ ] Mark the buffer refactor unblocked.
 - [ ] Mark codec implementation unblocked once its buffer prerequisites also
       land.
