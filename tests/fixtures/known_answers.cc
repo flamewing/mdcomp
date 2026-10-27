@@ -68,6 +68,36 @@ namespace codec_test {
 
         void comper_vectors(std::vector<fixture>& out, bool x) {
             std::string_view codec = x ? "comperx" : "comper";
+            if (x) {
+                for (bool rle : {false, true}) {
+                    descriptors wire(16, false, false, false);
+                    wire.bit(0);
+                    wire.put_word(0xabcd);
+                    std::string expected = words(1, 0xabcd);
+                    if (!rle) {
+                        wire.bit(0);
+                        wire.put_word(0x1234);
+                        word(expected, 0x1234);
+                    }
+                    wire.bit(1);
+                    wire.put(rle ? 0 : 0xff);
+                    wire.put(0x80);
+                    word(expected, 0xabcd);
+                    size_t const consumed = wire.data.size();
+                    wire.data += "TRAIL";
+                    out.push_back({
+                            std::string("comperx/") + (rle ? "rle" : "dictionary")
+                                    + "-one-and-stop",
+                            codec,
+                            wire.data,
+                            expected,
+                            {"copy-one-and-stop", rle ? "rle" : "dictionary",
+                              "terminator"},
+                            {},
+                            consumed
+                    });
+                }
+            }
             for (unsigned count : {1U, 15U, 16U, 17U}) {
                 descriptors wire(16, false, false, false);
                 std::string expected;

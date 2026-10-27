@@ -2,7 +2,7 @@
   "schema_version": 2,
   "scope": "Direct decoder defaults and declared optimization matrices; no moduled hardware queues or real hardware",
   "qualification": "Emulator verified against hand-constructed expectations, applicable saved external encodings, and C++ encoder output. Not an algorithmic independence claim.",
-  "recorded_cases": 4336,
+  "recorded_cases": 4340,
   "failed_cases": [],
   "decoders": [
     {
@@ -60,7 +60,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 9,
+        "known-answer": 11,
         "optimization-known-answer": 48,
         "cpp-encoding": 17,
         "containment": 1
@@ -2012,7 +2012,7 @@
       "stack_scratch_bytes": 0,
       "headerless": false,
       "cases": {
-        "known-answer": 9,
+        "known-answer": 11,
         "optimization-known-answer": 48,
         "cpp-encoding": 17,
         "containment": 1

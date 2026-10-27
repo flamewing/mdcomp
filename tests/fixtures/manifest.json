@@ -115,6 +115,22 @@
       "raw_size": 514,
       "source": "src/asm/Comper_internal.asm"
     },
+    "comperx/dictionary-one-and-stop": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "2df096eb9448b9feb37d117cbda5363ee3e90ab1097ea1183124fcdadb70f61c",
+      "compressed_size": 13,
+      "edges": [
+        "copy-one-and-stop",
+        "dictionary",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "49f0cb7a1dd49aecf315e2b0d617ecf65b453817eccdd0efa62330eb4e2021c5",
+      "raw_size": 6,
+      "source": "src/asm/ComperX_internal.asm"
+    },
     "comperx/distance-256": {
       "classification": "hand-constructed",
       "codec": "comperx",
@@ -262,6 +278,22 @@
       "license": "LGPL-3.0-or-later",
       "raw_sha256": "e8d2b02c9fe0ad657dd1b89528864698094df98b0e193b2810411fff7a72e28d",
       "raw_size": 8,
+      "source": "src/asm/ComperX_internal.asm"
+    },
+    "comperx/rle-one-and-stop": {
+      "classification": "hand-constructed",
+      "codec": "comperx",
+      "compressed_sha256": "2926afdf3638b15e44ec22ff9a2628c5763b6995473e596c52cccc8ab0f98321",
+      "compressed_size": 11,
+      "edges": [
+        "copy-one-and-stop",
+        "rle",
+        "terminator"
+      ],
+      "expected_source": "synthetic literals, repetitions, or explicit arithmetic sequences",
+      "license": "LGPL-3.0-or-later",
+      "raw_sha256": "035b3e288594ec2e5ff90b0d6e26cd97be160b8e8c3a6134b3c82d5743e7ef4a",
+      "raw_size": 4,
       "source": "src/asm/ComperX_internal.asm"
     },
     "enigma/all-flags": {

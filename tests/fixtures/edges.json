@@ -32,14 +32,16 @@
         "literal",
         "dictionary",
         "rle",
-        "terminator"
+        "terminator",
+        "copy-one-and-stop"
       ],
       "boundary": [
         "descriptor-reload",
         "minimum-length",
         "maximum-length",
         "maximum-distance",
-        "overlap"
+        "overlap",
+        "minimum-tail-length"
       ]
     },
     "kosinski": {

@@ -151,6 +151,12 @@ codec_test::observation codec_test::observe(
                 edge("maximum-distance");
             }
             copy(distance, length, 2);
+            if (codec == "comperx" && count == 128) {
+                edge("copy-one-and-stop");
+                edge("minimum-tail-length");
+                edge("terminator");
+                break;
+            }
         }
     } else if (codec == "kosinski" || codec == "kosplus") {
         bool const  plus = codec == "kosplus";

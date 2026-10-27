@@ -172,9 +172,15 @@ struct comperx_adaptor {
         if (size_t const value = source.get_byte(); value != 0) {
             size_t const length
                     = ((0x100U - 2U * (value & 0x7FU)) & 0xffU) + (value >> 7U);
-            return lzss::dictionary_match<comperx_adaptor>(
+            lzss::dictionary_match<comperx_adaptor>(
                     nodes, output_size, source.tellg(), distance, length,
                     edge_type::dictionary);
+            // 0x80 copies the leading odd word, then enters the zero-length
+            // exit of the assembly copy device (ordinary and RLE paths).
+            if (value == 0x80) {
+                return lzss::terminate<comperx_adaptor>(nodes, output_size);
+            }
+            return true;
         }
         return lzss::terminate<comperx_adaptor>(nodes, output_size);
     }

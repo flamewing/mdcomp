@@ -65,3 +65,9 @@ python tests/support/audit_formats.py --fixture-dir build-tests/tests/fixture-ex
 ```
 
 The fixture export must first be produced with `mdcomp-fixture-export` or the fixture-manifest CTest. Repeat `--comparison-dir` and `--decoder KIND DIRECTORY` for other references. Full traces remain below the build directory; the optional compact summary is suitable for review. The interpreter command fails if published examples or the hand-constructed expectations disagree. Known third-party disagreements remain explicit report results and are not silently turned into passing decoder assertions. No ROM-derived corpus is required for these checks.
+
+## ComperX one-word terminal copy
+
+The shipped ordinary and RLE copy devices accept length code `0x80` as a combined one-word copy and end. Doubling its byte sets carry for the leading odd-word copy and leaves a zero device offset; the ordinary path then enters its RTS/register-return exit, and the RLE path reaches the equivalent exit before its longword copies. This follows the actual [copy devices](../../src/asm/ComperX_internal.asm), not an assumption that every nonzero length code continues.
+
+The hand-authored ordinary-copy and RLE vectors append unread trailer bytes and verify both output and semantic input consumption. Both assembly return configurations pass. The earlier C++ decoder instead continued through the trailer, so it was wrong for this accepted assembly terminal form. It now emits the one-word dictionary edge and terminates. The independent wire observer recognizes the same terminal form; it is a decoder-only obligation, with no assertion that the current encoder selects it. The direct audit increases to 4,340 checks across the same 52 images.

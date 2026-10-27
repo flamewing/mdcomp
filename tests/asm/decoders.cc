@@ -50,6 +50,10 @@ namespace {
                       | (size_t(static_cast<unsigned char>(f.compressed[1])) << 8);
             f.settings.size_header = false;
             f.compressed.erase(0, 2);
+            if (f.consumed) {
+                REQUIRE(*f.consumed >= 2);
+                *f.consumed -= 2;
+            }
         }
         asm_test::settings settings;
         settings.output_size         = f.expected.size();
@@ -65,6 +69,9 @@ namespace {
         INFO(d.name << '/' << f.id << "\n" << result.diagnostic);
         INFO(asm_test::timing(d.architecture, result));
         CHECK((result.completed && result.bytes == f.expected));
+        if (f.consumed) {
+            CHECK(result.input_high_water <= *f.consumed + d.readable_padding);
+        }
         if (d.headerless) {
             CHECK(result.input_high_water <= *settings.body_size);
         }
