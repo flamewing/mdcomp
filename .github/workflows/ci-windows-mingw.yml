@@ -1,0 +1,64 @@
+name: ci-windows-mingw
+
+on:
+  push:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  pull_request:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
+
+jobs:
+  ci-windows-mingw:
+    timeout-minutes: 45
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        msystem: [MINGW32, UCRT64]
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          suppress-deprecation-warnings: msystem-mingw32
+          install: base-devel git
+          pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Import pinned Sega decoders
+        run: python tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/

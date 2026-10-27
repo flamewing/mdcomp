@@ -1,0 +1,36 @@
+name: ci-workflows
+
+on:
+  push:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  pull_request:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
+
+jobs:
+  validate:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Test release and packaging tooling without credentials
+        run: python3 -B -m unittest discover -s .github/scripts/tests -v
+      - name: Download checksum-verified actionlint
+        run: |
+          curl -fL --retry 2 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+      - name: Validate workflow syntax, expressions, actions, and shell
+        run: '"$RUNNER_TEMP/actionlint" -color'

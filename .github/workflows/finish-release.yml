@@ -1,0 +1,64 @@
+name: finish-release
+on:
+  workflow_call:
+    inputs:
+      build_id: {type: string, required: true}
+      sha: {type: string, required: true}
+      tag: {type: string, required: true}
+      kind: {type: string, required: true}
+      release_id: {type: string, required: true}
+      packages_succeeded: {type: boolean, required: true}
+    secrets:
+      VT_API_KEY: {required: false}
+permissions:
+  contents: write
+jobs:
+  finish:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      RELEASE_SHA: ${{ inputs.sha }}
+      RELEASE_KIND: ${{ inputs.kind }}
+      BUILD_ID: ${{ inputs.build_id }}
+      ORIGINAL_RELEASE_ID: ${{ inputs.release_id }}
+      HAS_VT_KEY: ${{ secrets.VT_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+      - name: Recover or validate owned draft
+        id: release
+        if: inputs.packages_succeeded
+        run: python3 .github/scripts/release.py prepare --release-id "$ORIGINAL_RELEASE_ID"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: steps.release.outputs.release_id != ''
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: release-assets
+      - name: Upload complete packages and checksums
+        if: steps.release.outputs.release_id != ''
+        env:
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
+        run: python3 .github/scripts/release.py upload --release-id "$RELEASE_ID"
+      - name: Optional VirusTotal scan
+        if: steps.release.outputs.release_id != '' && env.HAS_VT_KEY == 'true'
+        continue-on-error: true
+        uses: crazy-max/ghaction-virustotal@d34968c958ae283fe976efed637081b9f9dcf74f # v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: release-assets/*.zip
+          update_release_body: false
+      - name: Publish complete release
+        if: steps.release.outputs.release_id != ''
+        env:
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
+        run: python3 .github/scripts/release.py publish --release-id "$RELEASE_ID"
+      - name: Clean up owned draft after failure
+        if: ${{ !cancelled() && (failure() || !inputs.packages_succeeded) }}
+        env:
+          RELEASE_ID: ${{ steps.release.outputs.release_id || inputs.release_id }}
+        run: python3 .github/scripts/release.py cleanup --release-id "$RELEASE_ID"

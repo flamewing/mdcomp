@@ -2,76 +2,66 @@ name: ci-macos
 
 on:
   push:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-macos.yml"
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
   pull_request:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-macos.yml"
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
 
 jobs:
   ci-macos:
-    runs-on: macos-latest
+    timeout-minutes: 45
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        generator: [make, ninja]
-        include:
-          - generator: make
-            cmake_generator: "Unix Makefiles"
-          - generator: ninja
-            cmake_generator: "Ninja"
+        os: [macos-latest, macos-15-intel]
     steps:
-      - name: Install dependencies
-        run: |
-          brew install boost make ninja llvm
-      - name: Checkout code
-        uses: actions/checkout@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-      - name: Install Catch2 v3
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - name: Install dependencies
+        run: brew install boost llvm
+      - name: Select compiler
         run: |
-          git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
-          cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
-          cmake --build "$RUNNER_TEMP/catch-build" -j2
-          cmake --install "$RUNNER_TEMP/catch-build"
-      - name: Import pinned Sega decoder sources
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "$GITHUB_ENV"
+      - name: Install Catch2
+        run: python3 .github/scripts/bootstrap_catch.py
+      - name: Import pinned Sega decoders
         run: python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
       - name: Configure
-        run: |
-          export LDFLAGS="-L$(brew --prefix boost)/lib -L$(brew --prefix llvm)/lib $LDFLAGS"
-          export CFLAGS="-isystem $(brew --prefix boost)/include -isystem $(brew --prefix llvm)/include $CFLAGS"
-          export CXXFLAGS="-isystem $(brew --prefix boost)/include -isystem $(brew --prefix llvm)/include $CXXFLAGS"
-          export CC="$(brew --prefix llvm)/bin/clang"
-          export CXX="$(brew --prefix llvm)/bin/clang++"
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH="$PWD/build-deps/catch-install;$(brew --prefix boost)" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
       - name: Build
-        run: |
-          cmake --build build -j2
+        run: cmake --build build --parallel 2
       - name: Test
         run: ctest --test-dir build --output-on-failure --no-tests=error
-      - name: Preserve assembly failure evidence
+      - name: Preserve failure evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: asm-macos-${{ matrix.generator }}
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
           path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
             build/tests/asm/failures/
             build/tests/asm/*.tsv
             build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/

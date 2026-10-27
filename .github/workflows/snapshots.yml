@@ -1,0 +1,55 @@
+name: snapshots
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-publish
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository_owner == 'flamewing'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      sha: ${{ steps.prepare.outputs.sha }}
+      tag: ${{ steps.prepare.outputs.tag }}
+      build_id: ${{ steps.prepare.outputs.build_id }}
+      kind: ${{ steps.prepare.outputs.kind }}
+      release_id: ${{ steps.prepare.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare owned draft
+        id: prepare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/prepare_release.py snapshot
+  packages:
+    needs: prepare
+    if: needs.prepare.outputs.release_id != ''
+    uses: ./.github/workflows/package-targets.yml
+    with:
+      sha: ${{ needs.prepare.outputs.sha }}
+      build_id: ${{ needs.prepare.outputs.build_id }}
+  finish:
+    needs: [prepare, packages]
+    if: ${{ always() && !cancelled() && needs.prepare.outputs.release_id != '' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/finish-release.yml
+    with:
+      sha: ${{ needs.prepare.outputs.sha }}
+      tag: ${{ needs.prepare.outputs.tag }}
+      kind: ${{ needs.prepare.outputs.kind }}
+      build_id: ${{ needs.prepare.outputs.build_id }}
+      release_id: ${{ needs.prepare.outputs.release_id }}
+      packages_succeeded: ${{ needs.packages.result == 'success' }}
+    secrets:
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}

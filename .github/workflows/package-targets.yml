@@ -1,0 +1,234 @@
+name: package-targets
+on:
+  workflow_call:
+    inputs:
+      build_id: {type: string, required: true}
+      sha: {type: string, required: true}
+permissions:
+  contents: read
+env:
+  BUILD_ID: ${{ inputs.build_id }}
+  RELEASE_SHA: ${{ inputs.sha }}
+  CTEST_PARALLEL_LEVEL: '2'
+jobs:
+  catalog:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.catalog.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+      - id: catalog
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          matrix = {'include': json.loads(Path('.github/packages.json').read_text())['native']}
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('matrix=' + json.dumps(matrix) + '\n')
+          PY
+  native:
+    needs: catalog
+    timeout-minutes: 60
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.catalog.outputs.matrix) }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }} {0}
+    steps:
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        if: matrix.family == 'windows'
+        with:
+          msystem: ${{ matrix.msystem }}
+          suppress-deprecation-warnings: msystem-mingw32
+          install: base-devel git
+          pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        if: matrix.family != 'windows'
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - name: Linux dependencies
+        if: matrix.family == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libboost-all-dev patchelf
+          if [[ '${{ matrix.flags }}' == -m32 ]]; then
+            sudo apt-get install -y g++-multilib
+          fi
+      - name: macOS dependencies
+        if: matrix.family == 'macos'
+        run: |
+          brew install boost llvm
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "$GITHUB_ENV"
+      - name: Install Catch2 for target architecture
+        if: matrix.family != 'windows'
+        env:
+          CFLAGS: ${{ matrix.flags }}
+          CXXFLAGS: ${{ matrix.flags }}
+        run: python3 .github/scripts/bootstrap_catch.py
+      - name: Import pinned originals
+        run: python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
+      - name: Configure
+        env:
+          CFLAGS: ${{ matrix.flags }}
+          CXXFLAGS: ${{ matrix.flags }}
+        run: |
+          rpath='$ORIGIN/../lib'
+          prefix="$PWD/build-deps/catch-install"
+          if [[ '${{ matrix.family }}' == macos ]]; then
+            rpath='@loader_path/../lib'
+            prefix="$prefix;$(brew --prefix boost)"
+          fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_INSTALL_RPATH="$rpath" -DCMAKE_PREFIX_PATH="$prefix" -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Install and package
+        run: |
+          cmake --install build --prefix "$PWD/stage"
+          python3 .github/scripts/package.py --stage stage --target '${{ matrix.id }}' --build-id "$BUILD_ID"
+          python3 .github/scripts/smoke_cli.py stage/bin
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-${{ matrix.id }}
+          path: release-assets/*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/
+  freebsd:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1
+        with:
+          usesh: true
+          sync: rsync
+          copyback: true
+          prepare: |
+            pkg update
+            pkg install -y cmake ninja boost-libs python3 git
+          run: |
+            set -eu
+            python3 .github/scripts/bootstrap_catch.py
+            python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib '-DCMAKE_INSTALL_RPATH=$ORIGIN/../lib' -DCMAKE_PREFIX_PATH="$PWD/build-deps/catch-install" -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+            cmake --build build --parallel 2
+            ctest --test-dir build --parallel 2 --output-on-failure --no-tests=error
+            cmake --install build --prefix "$PWD/stage"
+            python3 .github/scripts/smoke_cli.py stage/bin
+      - name: Package FreeBSD installation
+        run: python3 .github/scripts/package.py --stage stage --target freebsd-x86_64 --build-id "$BUILD_ID"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-freebsd-x86_64
+          path: release-assets/*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/
+  android:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      ANDROID_NDK_VERSION: '30.0.16248370'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - name: Install Boost headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-dev
+          python3 .github/scripts/stage_boost.py /usr/include/boost build-deps/boost
+      - name: Select NDK
+        run: |
+          ndk_home="$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION"
+          if [[ ! -d "$ndk_home" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ANDROID_NDK_VERSION"
+          fi
+          echo "MDCOMP_NDK=$ndk_home" >> "$GITHUB_ENV"
+      - name: Cross-build and package (not device-tested)
+        run: |
+          # shellcheck disable=SC2016
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_LIBDIR=lib '-DCMAKE_INSTALL_RPATH=$ORIGIN/../lib' -DCMAKE_TOOLCHAIN_FILE="$MDCOMP_NDK/build/cmake/android.toolchain.cmake" -DANDROID_STL=c++_shared -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 -DBoost_DIR="$PWD/build-deps/boost"
+          cmake --build build --parallel 2
+          cmake --install build --prefix "$PWD/stage"
+          python3 .github/scripts/package.py --stage stage --target android-aarch64 --build-id "$BUILD_ID"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-android-aarch64
+          path: release-assets/*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/

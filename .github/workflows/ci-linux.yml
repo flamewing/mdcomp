@@ -1,6 +1,10 @@
 name: ci-linux
 
 on:
+  push:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  pull_request:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
   workflow_dispatch:
     inputs:
       coverage:
@@ -8,38 +12,29 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "17 4 * * 1"
-  push:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-linux.yml"
-  pull_request:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-linux.yml"
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
 
 jobs:
   coverage:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.coverage }}
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
       - name: Install coverage dependencies
         run: |
           sudo apt-get update
@@ -47,14 +42,13 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/coverage-venv"
           "$RUNNER_TEMP/coverage-venv/bin/pip" install -r tests/support/coverage-requirements.txt
       - name: Install Catch2 v3
-        run: |
-          git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
-          cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
-          cmake --build "$RUNNER_TEMP/catch-build" -j2
-          cmake --install "$RUNNER_TEMP/catch-build"
+        env:
+          CC: gcc-13
+          CXX: g++-13
+        run: python3 .github/scripts/bootstrap_catch.py --work "$RUNNER_TEMP/coverage-deps"
       - name: Configure coverage
         run: |
-          cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=OFF -DMDCOMP_STRESS_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install"
+          cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=OFF -DMDCOMP_STRESS_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/coverage-deps/catch-install"
       - name: Build
         id: build
         run: cmake --build build -j2
@@ -74,7 +68,7 @@ jobs:
           PY
       - name: Preserve coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gcc-coverage
           path: |
@@ -82,109 +76,80 @@ jobs:
             build/Testing/Temporary/LastTest.log
             build/tests/failures/
   ci-linux:
-    runs-on: ubuntu-latest
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/build-ccache
+    timeout-minutes: 45
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        compiler: [gcc, clang]
-        generator: [make, ninja]
         include:
-          - compiler: gcc
-            cc: gcc-13
-            cxx: g++-13
-          - compiler: clang
-            cc: clang-19
-            cxx: clang++-19
-          - generator: make
-            cmake_generator: "Unix Makefiles"
-          - generator: ninja
-            cmake_generator: "Ninja"
-          - compiler: clang
-            generator: ninja
-            sanitize: true
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, generator: Ninja}
+          - {os: ubuntu-latest, cc: gcc, cxx: g++, generator: Unix Makefiles}
+          - {os: ubuntu-latest, cc: clang-19, cxx: clang++-19, generator: Ninja, sanitize: true}
+          - {os: ubuntu-24.04-arm, cc: gcc, cxx: g++, generator: Ninja}
+          - {os: ubuntu-24.04-arm, cc: clang-19, cxx: clang++-19, generator: Ninja}
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      CCACHE_DIR: ${{ github.workspace }}/build-ccache
     steps:
-      - name: Install dependencies
-        run: |
-          if ! apt-fast -- help &> /dev/null; then
-            sudo add-apt-repository -u -y ppa:apt-fast/stable
-            sudo apt-get update
-            echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
-            echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
-            echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
-            DEBIAN_FRONTEND=noninteractive sudo apt install -y apt-fast
-          else
-            sudo apt-fast update
-          fi
-          sudo apt-fast install -y libboost-all-dev ninja-build ccache
-      - name: Set up GCC
-        if: ${{ matrix.compiler == 'gcc' }}
-        uses: egor-tensin/setup-gcc@v1
-        with:
-          version: 13
-      - name: Set up Clang
-        if: ${{ matrix.compiler == 'clang' }}
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: 19
-      - name: Install Clang sanitizer runtimes
-        if: ${{ matrix.sanitize }}
-        run: sudo apt-fast install -y libclang-rt-19-dev
-      - name: Checkout code
-        uses: actions/checkout@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-      - name: Restore compiler cache
-        uses: actions/cache@v4
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libboost-all-dev ccache python3-venv
+          if [[ "$CXX" == clang* ]]; then
+            sudo apt-get install -y clang-19 libclang-rt-19-dev
+          fi
+      - name: Cache compiler outputs
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: linux-${{ matrix.compiler }}-${{ matrix.generator }}-${{ matrix.sanitize }}-ccache-${{ github.sha }}
-          restore-keys: linux-${{ matrix.compiler }}-${{ matrix.generator }}-${{ matrix.sanitize }}-ccache-
-      - name: Install Catch2 v3
-        run: |
-          git clone --branch v3.8.1 --depth 1 https://github.com/catchorg/Catch2.git "$RUNNER_TEMP/Catch2"
-          cmake -S "$RUNNER_TEMP/Catch2" -B "$RUNNER_TEMP/catch-build" -DCATCH_BUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/catch-install"
-          cmake --build "$RUNNER_TEMP/catch-build" -j2
-          cmake --install "$RUNNER_TEMP/catch-build"
-      - name: Import pinned Sega decoder sources
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.cxx }}-${{ matrix.sanitize }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.cxx }}-${{ matrix.sanitize }}-
+      - name: Install Catch2
+        run: python3 .github/scripts/bootstrap_catch.py
+      - name: Validate CI tooling
+        run: python3 -B -m unittest discover -s .github/scripts/tests -v
+      - name: Import pinned Sega decoders
         run: python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
       - name: Configure
         env:
-          OVERRIDE_CC: ${{ matrix.cc }}
-          OVERRIDE_CXX: ${{ matrix.cxx }}
           SANITIZE: ${{ matrix.sanitize }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
-          export CC=$(which $OVERRIDE_CC)
-          export CXX=$(which $OVERRIDE_CXX)
-          extra_flags=()
-          if [ "$SANITIZE" = true ]; then
-            extra_flags+=(-DCMAKE_BUILD_TYPE=Debug "-DCMAKE_C_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer")
+          flags=()
+          if [[ "$SANITIZE" == true ]]; then
+            flags+=("-DCMAKE_C_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer" "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer")
+            if [[ "$GITHUB_EVENT_NAME" == schedule || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+              flags+=(-DMDCOMP_STRESS_TESTS=ON)
+            fi
           fi
-          if [[ "$SANITIZE" = true && ( "$EVENT_NAME" = schedule || "$EVENT_NAME" = workflow_dispatch ) ]]; then
-            extra_flags+=(-DMDCOMP_STRESS_TESTS=ON)
-          fi
-          git submodule status --recursive
-          "$CXX" --version
-          cmake --version
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DBUILD_TESTING=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders" "${extra_flags[@]}"
+          cmake -S . -B build -G '${{ matrix.generator }}' -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_PREFIX_PATH="$PWD/build-deps/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders" "${flags[@]}"
       - name: Build
-        run: |
-          cmake --build build -j2
+        run: cmake --build build --parallel 2
       - name: Test
         env:
           ASAN_OPTIONS: detect_leaks=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: ctest --test-dir build --output-on-failure --no-tests=error
-      - name: Preserve assembly failure evidence
+      - name: Preserve failure evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: asm-linux-${{ matrix.compiler }}-${{ matrix.generator }}
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
           path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
             build/tests/asm/failures/
             build/tests/asm/*.tsv
             build/tests/asm/decoder_images.json
             build/tests/*-edges.tsv
             build/tests/failures/
-            build/Testing/Temporary/LastTest.log

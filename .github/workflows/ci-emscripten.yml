@@ -1,0 +1,61 @@
+name: ci-emscripten
+
+on:
+  push:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  pull_request:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
+
+jobs:
+  ci-emscripten:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
+        with:
+          version: '6.0.12'
+      - name: Install Boost headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-dev
+          python3 .github/scripts/stage_boost.py /usr/include/boost build-deps/boost
+      - name: Configure WebAssembly build
+        run: emcmake cmake -S . -B build -G Ninja -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DBoost_DIR="$PWD/build-deps/boost"
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/
+      - name: Run all ten WebAssembly codecs under Node
+        run: python3 .github/scripts/smoke_cli.py build --node

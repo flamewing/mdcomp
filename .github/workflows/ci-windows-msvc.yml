@@ -2,68 +2,85 @@ name: ci-windows-msvc
 
 on:
   push:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-windows-msvc.yml"
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
   pull_request:
-    paths:
-      - "**"
-      - "!COPYING"
-      - "!COPYING-asm"
-      - "!INSTALL"
-      - "!**.md"
-      - "!.clang*"
-      - "!.gitignore"
-      - "!.gitattributes"
-      - "!.github/workflows/*"
-      - ".github/workflows/ci-windows-msvc.yml"
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
 
 jobs:
   ci-windows-msvc:
-    # Keep the runner image aligned with the Visual Studio 2022 generator.
-    runs-on: windows-2022
+    timeout-minutes: 60
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: pwsh
     strategy:
+      fail-fast: false
       matrix:
-        generator: [vs2022]
         include:
-          - generator: vs2022
-            cmake_generator: "Visual Studio 17 2022"
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Debug}
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Release}
+          - {os: windows-latest, generator: '', config: Debug}
+          - {os: windows-latest, generator: '', config: Release}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
         with:
-          vcpkgGitCommitId: "5f96cd15fd745122cf27e0524606d6c1efc5fd07"
-          vcpkgDirectory: "${{ github.workspace }}/vcpkg"
-      - name: Configure
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgGitCommitId: '5f96cd15fd745122cf27e0524606d6c1efc5fd07'
+      - name: Select Visual Studio generator
+        shell: pwsh
+        run: |
+          $generator = '${{ matrix.generator }}'
+          if (-not $generator) {
+            $capabilities = cmake -E capabilities | ConvertFrom-Json
+            $generator = $capabilities.generators |
+              Where-Object { $_.name -match '^Visual Studio \d+ \d{4}$' } |
+              Sort-Object { [int]([regex]::Match($_.name, '^Visual Studio (\d+)').Groups[1].Value) } -Descending |
+              Select-Object -ExpandProperty name -First 1
+          }
+          if (-not $generator) { throw 'No Visual Studio generator found.' }
+          "MDCOMP_GENERATOR=$generator" >> $env:GITHUB_ENV
+      - name: Import references
         run: |
           python tests/support/import_reference.py --destination build-reference/published
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
-          cmake -S . -B build -G "${{ matrix.cmake_generator }}" -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON -DMDCOMP_REFERENCE_BIN_DIR=${{ github.workspace }}/build-reference/published -DMDCOMP_REFERENCE_COMMIT=83ddc58527637d193b883606f8b94625574d2e0c -DMDCOMP_ASSEMBLY_TESTS=ON "-DMDCOMP_SEGA_DECODER_DIR=$PWD/build-reference/sega-decoders"
+      - name: Configure
+        run: cmake -S . -B build -A x64 -G "$env:MDCOMP_GENERATOR" "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON "-DMDCOMP_REFERENCE_BIN_DIR=$PWD/build-reference/published" -DMDCOMP_REFERENCE_COMMIT=83ddc58527637d193b883606f8b94625574d2e0c -DMDCOMP_ASSEMBLY_TESTS=ON "-DMDCOMP_SEGA_DECODER_DIR=$PWD/build-reference/sega-decoders"
       - name: Build
-        run: |
-          cmake --build build --config Release -j2
+        run: cmake --build build --config ${{ matrix.config }} --parallel 2
       - name: Test
-        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
-      - name: Preserve assembly failure evidence
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure --no-tests=error
+      - name: Preserve failure evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: asm-msvc
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
           path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
             build/tests/asm/failures/
             build/tests/asm/*.tsv
             build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/

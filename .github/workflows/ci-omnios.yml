@@ -1,0 +1,61 @@
+name: ci-omnios
+
+on:
+  push:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  pull_request:
+    paths-ignore: ['**.md', 'COPYING*', '.clang*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERBOSE: "1"
+  CTEST_PARALLEL_LEVEL: "2"
+
+jobs:
+  ci-omnios:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Build and test in omnios
+        uses: vmactions/omnios-vm@9576f0b6d15e7696548409baa533bc0a339caf42 # v1
+        with:
+          usesh: true
+          sync: rsync
+          copyback: true
+          prepare: |
+            pkg install gcc13 cmake ninja git
+          run: |
+            set -eu
+            export PATH=/opt/gcc-13/bin:/opt/ooce/bin:$PATH
+            export CC=gcc CXX=g++
+            python3 .github/scripts/bootstrap_boost.py
+            python3 .github/scripts/bootstrap_catch.py
+            python3 tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBoost_DIR="$PWD/build-deps/boost" -DCMAKE_PREFIX_PATH="$PWD/build-deps/catch-install" -DMDCOMP_ASSEMBLY_TESTS=ON -DMDCOMP_SEGA_DECODER_DIR="$PWD/build-reference/sega-decoders"
+            cmake --build build --parallel 2
+            ctest --test-dir build --parallel 2 --output-on-failure --no-tests=error
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-${{ github.job }}-${{ strategy.job-index }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
+            build/tests/*-edges.tsv
+            build/tests/failures/

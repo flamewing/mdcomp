@@ -1,18 +1,29 @@
 name: released
-
 on:
   release:
     types: [published]
-
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.id }}
+  cancel-in-progress: false
 jobs:
   virustotal:
+    if: github.repository_owner == 'flamewing'
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HAS_VT_KEY: ${{ secrets.VT_API_KEY != '' }}
     steps:
-      - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v2
+      - name: Scan manually published release assets
+        if: env.HAS_VT_KEY == 'true'
+        uses: crazy-max/ghaction-virustotal@d34968c958ae283fe976efed637081b9f9dcf74f # v4
         with:
           vt_api_key: ${{ secrets.VT_API_KEY }}
           github_token: ${{ github.token }}
           update_release_body: true
           files: |
+            .zip$
             .exe$

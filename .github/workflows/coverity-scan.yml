@@ -5,83 +5,125 @@ on:
     - cron: "0 00 * * *" # Daily at 00:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 env:
-  TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-  EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
   SHA1: ${{ github.sha }}
   FILE: mdcomp-ubuntu-gcc.tgz
   PROJ: flamewing/mdcomp
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   coverity-linux:
+    timeout-minutes: 60
     if: ${{ github.repository_owner == 'flamewing' }}
     runs-on: ubuntu-latest
+    env:
+      CC: gcc-13
+      CXX: g++-13
     steps:
       - name: Activity check
-        id: activity_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATEUTC=$(curl -sL https://api.github.com/repos/flamewing/mdcomp/commits | jq -r '[.[]][0]' | jq -r '.commit.committer.date')
-          TIMESTAMP=$(date --utc -d "$DATEUTC" +%s)
-          DAYS=$(( ($(date --utc -d "0:00" +%s) - $TIMESTAMP) / 86400 ))
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo repo_alive=true >> $GITHUB_OUTPUT
-            echo event is workflow_dispatch. Force building snapshot not doing activity check
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            REPO_ALIVE=true
           else
-            if [ $DAYS -gt 0 ]; then
-              echo repo_alive=false >> $GITHUB_OUTPUT
-              echo "No activity in 24 hours before midnight UTC not running Coverity. Last activity at $DATEUTC."
+            # Only successful runs of this workflow and branch count as processed.
+            LAST_SUCCESSFUL_SHA=$(gh api --method GET \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/coverity-scan.yml/runs" \
+              -f branch="$GITHUB_REF_NAME" -f status=success -F per_page=1 \
+              --jq '.workflow_runs[0].head_sha // ""')
+            if [ "$LAST_SUCCESSFUL_SHA" = "$GITHUB_SHA" ]; then
+              REPO_ALIVE=false
             else
-              echo repo_alive=true >> $GITHUB_OUTPUT
+              REPO_ALIVE=true
             fi
           fi
-      - name: Set up GCC
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
-        uses: egor-tensin/setup-gcc@v1
+          echo "REPO_ALIVE=$REPO_ALIVE" >> "$GITHUB_ENV"
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        if: ${{ env.REPO_ALIVE == 'true' }}
         with:
-          version: 13
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
       - name: Install dependencies
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
-          if ! apt-fast -- help &> /dev/null; then
-            sudo add-apt-repository -u -y ppa:apt-fast/stable
-            sudo apt-get update
-            echo debconf apt-fast/maxdownloads string 16 | sudo debconf-set-selections
-            echo debconf apt-fast/dlflag boolean true | sudo debconf-set-selections
-            echo debconf apt-fast/aptmanager string apt-get | sudo debconf-set-selections
-            DEBIAN_FRONTEND=noninteractive sudo apt install -y apt-fast
-          else
-            sudo apt-fast update
-          fi
-          sudo apt-fast install -y libboost-all-dev
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-dev gcc-13 g++-13
       - name: Download Coverity Build Tool
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           wget -q https://scan.coverity.com/download/Linux --post-data "token=$TOKEN&project=$PROJ" -O /tmp/cov-analysis-linux64.tar.gz
           mkdir /tmp/cov-analysis-linux64
           tar xzf /tmp/cov-analysis-linux64.tar.gz --strip 1 -C /tmp/cov-analysis-linux64
       - name: Checkout code
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
-        uses: actions/checkout@master
+        if: ${{ env.REPO_ALIVE == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Configure
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
-          export CC=gcc-13
-          export CXX=g++-13
-          cmake -S . -B build -G 'Unix Makefiles' -DBUILD_TESTING=OFF
+          cmake -S . -B build -G "Unix Makefiles" -DBUILD_TESTING=OFF
       - name: Build with cov-build
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
           export PATH=/tmp/cov-analysis-linux64/bin:$PATH
-          cov-build --dir cov-int cmake --build build -j2
+          if ! cov-build --version; then
+            echo "Coverity version query unavailable; see the capture banner below."
+          fi
+          cov-build --dir cov-int cmake --build build --parallel
       - name: Submit the result to Coverity Scan
-        if: ${{ steps.activity_check.outputs.repo_alive == 'true' }}
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+        if: ${{ env.REPO_ALIVE == 'true' }}
         run: |
-          tar czvf $FILE cov-int
-          curl \
-            --form project=$PROJ \
-            --form token=$TOKEN \
-            --form email=$EMAIL \
-            --form file=@$FILE \
-            --form version=master \
-            --form description="$SHA1" \
-            https://scan.coverity.com/builds?project=$PROJ
+          tar czvf "$FILE" cov-int
+          response_file="$RUNNER_TEMP/coverity-upload-response.txt"
+          if ! status_code=$(curl --fail-with-body --show-error --silent \
+            --output "$response_file" --write-out '%{http_code}' \
+            --form-string "project=$PROJ" \
+            --form-string "token=$TOKEN" \
+            --form-string "email=$EMAIL" \
+            --form "file=@$FILE" \
+            --form-string "version=$SHA1" \
+            --form-string "description=$SHA1" \
+            https://scan.coverity.com/builds); then
+            echo "Coverity submission failed (HTTP $status_code)." >&2
+            if [ -f "$response_file" ]; then
+              cat "$response_file" >&2
+            fi
+            exit 1
+          fi
+          # Coverity also returns HTTP 200 with an explicit success message,
+          # possibly with CRLF line endings and additional version warnings.
+          # Do not treat an arbitrary HTTP 200 response as an accepted upload.
+          if [ "$status_code" != "201" ] && ! {
+            [ "$status_code" = "200" ] &&
+              grep -Eq '^[[:space:]]*Build successfully submitted\.[[:space:]]*$' "$response_file"
+          }; then
+            echo "Coverity submission was not accepted (HTTP $status_code)." >&2
+            cat "$response_file" >&2
+            exit 1
+          fi
+          cat "$response_file"
+          echo "Coverity accepted the submission for $SHA1."
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-logs-coverity
+          path: |
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            cov-int/build-log.txt
+          retention-days: 7
+          if-no-files-found: ignore
