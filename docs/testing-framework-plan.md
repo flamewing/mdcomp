@@ -1,6 +1,6 @@
 # Testing Framework Plan
 
-Status: the local stream-based regression baseline is implemented and passes on GCC, Clang, MSVC, and Linux ASan/UBSan. It includes 96 hand-constructed fixtures, 38 external basic encodings, 24 external full-block/tail bodies, all initial declared edge obligations, direct MC68000/Z80 matrices, moduled DMA/interrupt checks, option/header/output-failure regressions, installed static/shared consumers, and optional stress/coverage jobs. The [baseline review](../tests/references/baseline.md) records qualifications and remaining gates. Remote CI execution has not yet been observed; the buffer refactor remains blocked on that confirmation. Exhaustive parameter sweeps and checked-memory/constexpr migration tests remain separately scoped follow-ups.
+Status: the local stream-based regression baseline is implemented and passes on GCC, Clang, MSVC, and Linux ASan/UBSan. It includes 96 hand-constructed fixtures, 38 external basic encodings, 24 external full-block/tail bodies, all initial declared edge obligations, direct MC68000/Z80 matrices, moduled DMA/interrupt checks, option/header/output-failure regressions, installed static/shared consumers, and optional stress/coverage jobs. The [baseline review](../tests/references/baseline.md) records qualifications and remaining gates. Remote MSVC CI has passed; MinGW, Linux, and macOS need successful reruns after the first observed failures. The buffer refactor remains blocked on that confirmation. Exhaustive parameter sweeps and checked-memory/constexpr migration tests remain separately scoped follow-ups.
 
 > [!IMPORTANT]
 > This plan blocks implementation of both
@@ -750,7 +750,7 @@ Checklist:
 
 Checklist:
 
-- [x] Configure C++ tests on every supported compiler/platform CI job; remote execution still needs observation.
+- [x] Configure C++ tests on every supported compiler/platform CI job; MSVC has passed remotely, and the other platforms need successful reruns after the initial failures.
 - [x] Configure assembly tests on Linux, Windows, and macOS; Linux/Windows toolchains pass locally, macOS and remote jobs remain unobserved.
 - [x] Add a Linux Clang/Ninja ASan/UBSan job for C++ codecs and emulator harness/cores; local GCC 15.2 qualification passes 134 cases, remote CI still needs observation.
 - [x] Add an optional manual compiler line/branch coverage job, with a locally verified nonempty report.
@@ -818,6 +818,7 @@ Checklist:
 - [x] Record known reference failures and remaining limitations explicitly; do not silently bless them.
 - [x] Enable the suite in CI (configuration committed; remote runs still need observation).
 - [ ] Observe passing remote CI jobs, including macOS, before lifting the baseline gate.
+- [x] Observe the first passing MSVC baseline run; retain MinGW/Linux/macOS failures and fixes in the baseline review until successful reruns confirm them.
 - [ ] Mark the buffer refactor unblocked.
 - [ ] Mark codec implementation unblocked once its buffer prerequisites also
       land.

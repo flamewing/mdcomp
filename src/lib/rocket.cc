@@ -188,10 +188,13 @@ struct rocket_adaptor {
         case dictionary: {
             auto       distance = static_cast<diff_t>(edge.get_distance());
             auto       length   = static_cast<diff_t>(edge.get_length());
-            auto const base     = static_cast<diff_t>(dest.tellp()) - origin;
+            auto const base     = static_cast<std::streamoff>(dest.tellp()) - origin;
             auto const delta    = distance - base;
             if (delta > 0) {
-                diff_t const count = std::min(length, delta);
+                // Compare in the stream-offset domain; the result is bounded by
+                // the short match length before converting back to a byte count.
+                auto const count
+                        = static_cast<diff_t>(std::min<std::streamoff>(length, delta));
                 lzss::fill<rocket_adaptor>(dest, 0x20, count);
                 length -= count;
                 // Advancing both source and destination preserves the distance
