@@ -45,6 +45,7 @@ add_executable(mdcomp-codec-smoke-tests
     codec/external_answers.cc
     codec/moduled.cc
     codec/edge_coverage.cc
+    codec/header_limits.cc
     fixtures/known_answers.cc
     support/codec_api.cc
     support/format_observer.cc)

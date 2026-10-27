@@ -338,16 +338,14 @@ bool saxman::decode(std::istream& source, std::iostream& dest, size_t size) {
 bool saxman::encode(
         std::ostream& dest, std::span<char const> data, bool const with_size) {
     std::stringstream out_buff(std::ios::in | std::ios::out | std::ios::binary);
-    auto const        start = out_buff.tellg();
     saxman_internal::encode(out_buff, data);
+    auto const payload = out_buff.view();
     if (with_size) {
-        out_buff.seekg(start);
-        auto full_size = utils::size(out_buff);
-        little_endian::write2(dest, static_cast<uint16_t>(full_size));
+        if (payload.size() > std::numeric_limits<uint16_t>::max()) {
+            return false;
+        }
+        little_endian::write2(dest, static_cast<uint16_t>(payload.size()));
     }
-    out_buff.seekg(start);
-    if (out_buff.rdbuf()->sgetc() != std::istream::traits_type::eof()) {
-        dest << out_buff.rdbuf();
-    }
-    return true;
+    utils::write_as_bytes(dest, std::span<char const>(payload));
+    return bool(dest);
 }

@@ -347,6 +347,9 @@ bool lzkn1::decode(std::istream& source, std::iostream& dest) {
 }
 
 bool lzkn1::encode(std::ostream& dest, std::span<char const> data) {
+    if (data.size() > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
     lzkn1_internal::encode(dest, data);
     return true;
 }

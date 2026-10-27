@@ -28,14 +28,20 @@
 #include <ios>
 #include <iosfwd>
 #include <limits>
+#include <span>
 #include <sstream>
+#include <stdexcept>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 template <typename Format, size_t ModuleSize, size_t DefaultModulePadding>
 class moduled_adaptor {
     static_assert(ModuleSize > 0, "Module size must be positive");
     static_assert(DefaultModulePadding > 0, "Module padding must be positive");
+    static_assert(
+            std::in_range<std::make_signed_t<size_t>>(DefaultModulePadding),
+            "Default module padding exceeds stream offset range");
     moduled_adaptor() = default;
     friend Format;
 
@@ -121,7 +127,6 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         return false;
     }
 
-    big_endian::write2(dest, full_size & std::numeric_limits<uint16_t>::max());
     std::stringstream buffer(std::ios::in | std::ios::out | std::ios::binary);
     std::span         input_span(data);
     auto              encode_module = [&](std::span<char const> module) {
@@ -144,8 +149,9 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
         return false;
     }
 
-    // Pad to even size.
-    dest << buffer.rdbuf();
+    // Finish format validation before exposing even the outer header.
+    big_endian::write2(dest, static_cast<uint16_t>(full_size));
+    utils::write_as_bytes(dest, std::span<char const>(buffer.view()));
     if (!dest) {
         return false;
     }

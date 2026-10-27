@@ -209,9 +209,8 @@ public:
 
         // Unpack source into array. Along the way, build frequency and presence
         // maps.
-        uint16_t mask_val = 0;
-        source.seekg(0);
-        auto full_size = utils::ssize(source) / 2;
+        uint16_t mask_val  = 0;
+        auto     full_size = utils::ssize(source) / 2;
         for (diff_t loc = 0; loc < full_size; loc++) {
             uint16_t const value = big_endian::read2(source);
             mask_val |= value;
@@ -370,8 +369,11 @@ bool enigma::decode(std::istream& source, std::ostream& dest) {
 }
 
 bool enigma::encode(std::istream& source, std::ostream& dest) {
+    if (!source || !dest || utils::ssize(source) % 2 != 0) {
+        return false;
+    }
     enigma_internal::encode(source, dest);
-    return true;
+    return bool(dest);
 }
 
 bool enigma::encode(std::ostream& dest, std::span<char const> data) {

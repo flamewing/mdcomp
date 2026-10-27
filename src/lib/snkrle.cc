@@ -101,6 +101,9 @@ bool snkrle::decode(std::istream& source, std::ostream& dest) {
 }
 
 bool snkrle::encode(std::ostream& dest, std::span<char const> data) {
+    if (data.size() > std::numeric_limits<uint16_t>::max()) {
+        return false;
+    }
     std::stringstream source(std::ios::in | std::ios::out | std::ios::binary);
     utils::write_as_bytes(source, data);
     source.seekg(0);

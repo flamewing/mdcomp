@@ -1096,7 +1096,7 @@ bool nemesis::decode(std::istream& source, std::ostream& dest) {
 }
 
 bool nemesis::encode(std::istream& source, std::ostream& dest) {
-    if (!source) {
+    if (!source || !dest) {
         return false;
     }
     if (source.rdbuf()->sgetc() == std::istream::traits_type::eof()) {
@@ -1113,6 +1113,9 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
     // Pad source with zeroes until it is a multiple of 32 bytes.
     utils::pad_to_multiple(str_source, 32);
     auto const size = str_source.tellp();
+    if (!str_source || size == std::streampos{-1} || size > std::streamoff{0x7fff * 32}) {
+        return false;
+    }
 
     // Now we will build the alternating bit stream for mode 1 compression.
     std::stringstream source_xor(std::ios::in | std::ios::out | std::ios::binary);
@@ -1139,11 +1142,9 @@ bool nemesis::encode(std::istream& source, std::ostream& dest) {
                     source_xor, nemesis_mode::progressive_xor, size, compare_node2{})};
 
     // Figure out what was the best encoding.
-    auto& best_iter = *std::ranges::min_element(buffers, {}, &std::stringstream::tellp);
-
-    best_iter.seekg(0);
-    dest << best_iter.rdbuf();
-    return true;
+    auto const& best = *std::ranges::min_element(buffers, {}, &std::stringstream::tellp);
+    utils::write_as_bytes(dest, std::span<char const>(best.view()));
+    return bool(dest);
 }
 
 bool nemesis::encode(std::ostream& dest, std::span<char const> data) {
