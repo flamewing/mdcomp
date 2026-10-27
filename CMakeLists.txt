@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.30)
 
 project(mdcomp
     VERSION 0.2.0
@@ -320,6 +320,15 @@ function(define_lib_internal TYPE TARGET_NAME OUTPUT SRC_FILE HDR_FILE)
         add_library("${TARGET_NAME}" STATIC $<TARGET_OBJECTS:${OUTPUT}Obj>)
         set_target_properties(${TARGET_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT}")
     else()
+        get_property(supports_shared GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+        if(NOT supports_shared)
+            # Preserve the public target on static-only platforms without asking
+            # CMake to generate a second archive with the same output filename.
+            add_library("${TARGET_NAME}" INTERFACE)
+            target_link_libraries("${TARGET_NAME}" INTERFACE "${OUTPUT}Static")
+            add_library("mdcomp::${TARGET_NAME}" ALIAS "${TARGET_NAME}")
+            return()
+        endif()
         add_library("${TARGET_NAME}" SHARED $<TARGET_OBJECTS:${OUTPUT}Obj>)
         if(MSVC)
             # A DLL needs exported codec entry points and an import library distinct
@@ -378,6 +387,11 @@ function(define_exe TARGET_NAME SRC_FILE LIB_NAME EXE_NAME)
     add_executable(${TARGET_NAME}
         "${SRC_FILE}"
     )
+    if(EMSCRIPTEN)
+        # These are command-line tools; expose the Node host filesystem instead
+        # of an empty in-memory filesystem, as in the ASL Emscripten build.
+        target_link_options(${TARGET_NAME} PRIVATE "-sNODERAWFS=1" "-sENVIRONMENT=node")
+    endif()
     target_include_directories(${TARGET_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
