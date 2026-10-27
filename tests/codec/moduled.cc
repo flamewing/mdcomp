@@ -4,6 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <limits>
 #include <string>
 
 TEMPLATE_TEST_CASE(
@@ -76,6 +77,17 @@ TEMPLATE_TEST_CASE(
     CHECK_FALSE(invalid_decode.success);
     CHECK(invalid_decode.bytes.empty());
     CHECK_FALSE(invalid_decode.diagnostic.empty());
+
+    settings.module_padding    = std::numeric_limits<size_t>::max();
+    auto const overflow_encode = codec_test::run(codec.moduled_encode, "xx", settings);
+    CHECK_FALSE(overflow_encode.success);
+    CHECK(overflow_encode.bytes.empty());
+    CHECK_FALSE(overflow_encode.diagnostic.empty());
+    auto const overflow_decode
+            = codec_test::run(codec.moduled_decode, valid.bytes, settings);
+    CHECK_FALSE(overflow_decode.success);
+    CHECK(overflow_decode.bytes.empty());
+    CHECK_FALSE(overflow_decode.diagnostic.empty());
 }
 
 TEMPLATE_TEST_CASE(

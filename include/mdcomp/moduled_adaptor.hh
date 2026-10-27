@@ -108,6 +108,10 @@ bool moduled_adaptor<Format, ModuleSize, DefaultModulePadding>::moduled_encode(
     if (module_padding == 0) {
         throw std::invalid_argument("Module padding must be positive");
     }
+    using diff_t = std::make_signed_t<size_t>;
+    if (!std::in_range<diff_t>(module_padding)) {
+        throw std::overflow_error("Module padding exceeds stream offset range");
+    }
     auto full_size = utils::size(source);
     if (full_size > std::numeric_limits<uint16_t>::max()) {
         return false;
