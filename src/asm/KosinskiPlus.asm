@@ -25,7 +25,9 @@
 ; 	a0	Source address
 ; 	a1	Destination address
 ; ---------------------------------------------------------------------------
+	if defined(_KosPlus_LoopUnroll)==0
 _KosPlus_LoopUnroll = 3
+	endif
 
 _KosPlus_ReadBit macro
 	dbra	d2,.skip

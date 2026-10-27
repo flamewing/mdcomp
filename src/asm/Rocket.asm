@@ -21,9 +21,13 @@
 ; 	a0	Source address
 ; 	a1	Destination address
 ; ---------------------------------------------------------------------------
+	if defined(_Rocket_LoopUnroll)==0
 _Rocket_LoopUnroll = 3
+	endif
 
+	if defined(_Rocket_UseLUT)==0
 _Rocket_UseLUT = 1
+	endif
 
 _Rocket_ReadBit macro
 	dbra	d2,.skip

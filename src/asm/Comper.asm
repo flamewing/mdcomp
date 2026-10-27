@@ -22,7 +22,9 @@
 ; 	a0	Source address
 ; 	a1	Destination address
 ; ---------------------------------------------------------------------------
+	if defined(_Comp_LoopUnroll)==0
 _Comp_LoopUnroll = 3
+	endif
 
 _Comp_RunBitStream macro
 	dbra	d3,.mainloop	; if bits counter remains, parse the next word

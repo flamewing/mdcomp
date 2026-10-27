@@ -34,10 +34,14 @@
 ; 	a1	Destination address
 ; 	d6	Length of compressed file
 ; ---------------------------------------------------------------------------
+	if defined(_Sax_UseLUT)==0
 _Sax_UseLUT = 1
+	endif
 
 ; Assume source data is aligned in an even address.
+	if defined(_Sax_AlignedSource)==0
 _Sax_AlignedSource = 1
+	endif
 
 _SaxDec_ReadByte macro dst
 	if "dst"<>""

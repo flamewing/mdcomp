@@ -24,9 +24,15 @@
 ; 	a0	source address
 ; 	a1	destination address
 ; ---------------------------------------------------------------------------
+	if defined(_Kos_UseLUT)==0
 _Kos_UseLUT = 1
+	endif
+	if defined(_Kos_LoopUnroll)==0
 _Kos_LoopUnroll = 3
+	endif
+	if defined(_Kos_ExtremeUnrolling)==0
 _Kos_ExtremeUnrolling = 1
+	endif
 
 _Kos_RunBitStream macro
 	dbra	d2,.skip

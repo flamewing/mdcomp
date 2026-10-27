@@ -21,7 +21,9 @@
 ; USES:
 ;		d0-d4, a2
 ; -----------------------------------------------------------------------------
+	if defined(comperx_jump_to_reg_on_end)==0
 	set comperx_jump_to_reg_on_end,0			; rts on end
+	endif
 	; ComperX_internal.asm defines the public ComperXDec entry label.
 	include "ComperX_internal.asm"
 	; ComperX never returns by falling off the end of ComperX_internal.asm.
