@@ -61,7 +61,7 @@ Snapshots and tagged releases share the following package targets. Each ZIP cont
 | Linux ARM64 | `linux-aarch64` |
 | macOS Intel | `macos-x86_64` |
 | macOS Apple Silicon | `macos-arm64` |
-| Windows x86 / MINGW32 | `windows-i686` |
+| Windows x86 / MSVC Win32 | `windows-i686` |
 | Windows x86-64 / UCRT64 | `windows-x86_64` |
 | FreeBSD x86-64 | `freebsd-x86_64` |
 | Android ARM64 (optional) | `android-aarch64` |

@@ -28,10 +28,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Debug}
-          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Release}
-          - {os: windows-latest, generator: '', config: Debug}
-          - {os: windows-latest, generator: '', config: Release}
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Debug, platform: x64, triplet: x64-windows}
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Release, platform: x64, triplet: x64-windows}
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Debug, platform: Win32, triplet: x86-windows}
+          - {os: windows-2022, generator: 'Visual Studio 17 2022', config: Release, platform: Win32, triplet: x86-windows}
+          - {os: windows-latest, generator: '', config: Debug, platform: x64, triplet: x64-windows}
+          - {os: windows-latest, generator: '', config: Release, platform: x64, triplet: x64-windows}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -64,7 +66,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
       - name: Configure
-        run: cmake -S . -B build -A x64 -G "$env:MDCOMP_GENERATOR" "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON "-DMDCOMP_REFERENCE_BIN_DIR=$PWD/build-reference/published" -DMDCOMP_REFERENCE_COMMIT=83ddc58527637d193b883606f8b94625574d2e0c -DMDCOMP_ASSEMBLY_TESTS=ON "-DMDCOMP_SEGA_DECODER_DIR=$PWD/build-reference/sega-decoders"
+        run: cmake -S . -B build -A ${{ matrix.platform }} -G "$env:MDCOMP_GENERATOR" "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON "-DMDCOMP_REFERENCE_BIN_DIR=$PWD/build-reference/published" -DMDCOMP_REFERENCE_COMMIT=83ddc58527637d193b883606f8b94625574d2e0c -DMDCOMP_ASSEMBLY_TESTS=ON "-DMDCOMP_SEGA_DECODER_DIR=$PWD/build-reference/sega-decoders"
       - name: Build
         run: cmake --build build --config ${{ matrix.config }} --parallel 2
       - name: Test

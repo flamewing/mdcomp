@@ -213,6 +213,9 @@ class PackagingTests(unittest.TestCase):
     def test_catalog_has_eight_required_native_and_one_optional_android(self):
         self.assertEqual(len(required_targets()), 8)
         self.assertNotIn("android-aarch64", required_targets())
+        catalog = json.loads(package.ROOT.joinpath(".github/packages.json").read_text())
+        self.assertIn("windows-i686", catalog["required_msvc"])
+        self.assertNotIn("MINGW32", {item.get("msystem") for item in catalog["native"]})
 
     def test_zip_contains_tools_licenses_and_exact_commit(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -288,6 +291,33 @@ class PackagingTests(unittest.TestCase):
                 with self.subTest(output=output), patch.dict(os.environ, {"SystemRoot": str(stage / "Windows")}), \
                         patch("package.command", return_value=output), self.assertRaises(RuntimeError):
                     package.windows_runtime(stage)
+
+    def test_ntldd_uses_x86_system_directory_for_msvc_win32_packages(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            stage, system = root / "stage", root / "Windows"
+            (stage / "bin").mkdir(parents=True)
+            (stage / "bin/tool.exe").write_bytes(b"app")
+            (system / "SysWOW64").mkdir(parents=True)
+            kernel = system / "SysWOW64/KERNEL32.dll"
+            kernel.write_bytes(b"system")
+            runtime = root / "runtime.dll"
+            runtime.write_bytes(b"runtime")
+
+            def dependencies(*args):
+                self.assertEqual(args[3:5], ("-D", str(system / "SysWOW64")))
+                if Path(args[-1]).name == "tool.exe":
+                    return f"runtime.dll => {runtime} (0x5678)"
+                return f"KERNEL32.dll => {kernel} (0x1234)"
+
+            with patch.dict(os.environ, {"SystemRoot": str(system)}), \
+                    patch("package.command", side_effect=dependencies) as scanner:
+                package.windows_runtime(stage, "windows-i686")
+                self.assertEqual(scanner.call_count, 2)
+                self.assertEqual(scanner.call_args.args,
+                                 ("ntldd", "-D", str(stage / "bin"), "-D", str(system / "SysWOW64"),
+                                  "--", str(stage / "bin/runtime.dll")))
+            self.assertFalse((stage / "bin/KERNEL32.dll").exists())
 
 
 

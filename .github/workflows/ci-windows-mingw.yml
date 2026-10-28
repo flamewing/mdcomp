@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        msystem: [MINGW32, UCRT64]
+        msystem: [UCRT64]
     defaults:
       run:
         shell: msys2 {0}
@@ -32,7 +32,6 @@ jobs:
       - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
         with:
           msystem: ${{ matrix.msystem }}
-          suppress-deprecation-warnings: msystem-mingw32
           install: base-devel git
           pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

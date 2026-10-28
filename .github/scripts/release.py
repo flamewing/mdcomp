@@ -16,7 +16,7 @@ CATALOG = Path(__file__).resolve().parents[1] / "packages.json"
 
 def required_targets():
     data = json.loads(CATALOG.read_text())
-    return {item["id"] for item in data["native"]} | set(data["required_vm"])
+    return {item["id"] for item in data["native"]} | set(data["required_vm"] + data["required_msvc"])
 
 
 class GitHub:

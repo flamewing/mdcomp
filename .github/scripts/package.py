@@ -33,7 +33,7 @@ def windows_dependencies(text):
     return dependencies
 
 
-def windows_runtime(stage):
+def windows_runtime(stage, package_target=None):
     pending = list((stage / "bin").glob("*.exe")) + list((stage / "bin").glob("*.dll"))
     searched = set()
     system = Path(os.environ["SystemRoot"]).resolve()
@@ -44,7 +44,12 @@ def windows_runtime(stage):
         searched.add(binary.name.lower())
         # Traverse application DLLs ourselves so optional dependencies inside
         # Windows system libraries do not enter the package dependency graph.
-        output = command("ntldd", "-D", str(stage / "bin"), "--", str(binary))
+        scanner = ["ntldd", "-D", str(stage / "bin")]
+        if package_target == "windows-i686" and (system / "SysWOW64").is_dir():
+            # A 64-bit ntldd can inspect x86 PE files, but needs the x86
+            # Windows DLL directory when resolving their system imports.
+            scanner += ["-D", str(system / "SysWOW64")]
+        output = command(*scanner, "--", str(binary))
         for name, resolved in windows_dependencies(output):
             if name.lower().startswith(("api-ms-", "ext-ms-")):
                 continue
@@ -115,7 +120,7 @@ def package(stage, output, build_id, target, bundle=True):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.+-]*", build_id):
         raise ValueError("Invalid build identifier")
     catalog = json.loads((ROOT / ".github/packages.json").read_text())
-    allowed = {item["id"] for item in catalog["native"]} | set(catalog["required_vm"] + catalog["optional"])
+    allowed = {item["id"] for item in catalog["native"]} | set(catalog["required_vm"] + catalog["required_msvc"] + catalog["optional"])
     if target not in allowed:
         raise ValueError("Unknown package target")
     suffix = ".exe" if target.startswith("windows-") else ""
@@ -124,7 +129,7 @@ def package(stage, output, build_id, target, bundle=True):
             raise RuntimeError("Missing packaged tool: " + tool)
     if bundle:
         if target.startswith("windows-"):
-            windows_runtime(stage)
+            windows_runtime(stage, target)
         elif target.startswith("linux-"):
             linux_runtime(stage)
         elif target.startswith("macos-"):

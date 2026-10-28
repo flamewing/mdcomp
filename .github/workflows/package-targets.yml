@@ -45,7 +45,6 @@ jobs:
         if: matrix.family == 'windows'
         with:
           msystem: ${{ matrix.msystem }}
-          suppress-deprecation-warnings: msystem-mingw32
           install: base-devel git
           pacboy: toolchain:p binutils:p cmake:p ninja:p boost:p catch:p python:p ntldd:p
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -232,3 +231,67 @@ jobs:
             build/tests/asm/decoder_images.json
             build/tests/*-edges.tsv
             build/tests/failures/
+  msvc-x86:
+    timeout-minutes: 60
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - uses: lukka/get-cmake@da37b03df250c343a90268c30948f7814f31d88e # latest, pinned
+        with:
+          cmakeVersion: '4.2.3'
+          ninjaVersion: '1.13.2'
+      - uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgGitCommitId: '5f96cd15fd745122cf27e0524606d6c1efc5fd07'
+      - name: Install ntldd for DLL discovery
+        id: msys
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        with:
+          msystem: UCRT64
+          pacboy: ntldd:p
+      - name: Import pinned originals
+        run: python tests/support/import_sega_decoders.py --destination build-reference/sega-decoders
+      - name: Configure Win32
+        run: cmake -S . -B build -G 'Visual Studio 17 2022' -A Win32 "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x86-windows -DVCPKG_MANIFEST_FEATURES=tests -DBUILD_TESTING=ON -DMDCOMP_ASSEMBLY_TESTS=ON "-DMDCOMP_SEGA_DECODER_DIR=$PWD/build-reference/sega-decoders" -DMDCOMP_INSTALL_MSVC_RUNTIME=ON -DCMAKE_INSTALL_LIBDIR=lib
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
+      - name: Install, collect DLLs with ntldd, and package
+        run: |
+          cmake --install build --config Release --prefix "$PWD/stage"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $env:PATH = "${{ steps.msys.outputs.msys2-location }}/ucrt64/bin;$PWD/build/Release;$env:PATH"
+          $python = (Get-Command python).Source
+          & $python .github/scripts/package.py --stage stage --target windows-i686 --build-id "$env:BUILD_ID"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $env:PATH = "$env:SystemRoot/System32;$env:SystemRoot"
+          & $python .github/scripts/smoke_cli.py stage/bin
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-windows-i686
+          path: release-assets/*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+      - name: Preserve failure evidence
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-msvc-x86
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/Testing/Temporary/
+            build/CMakeFiles/CMakeConfigureLog.yaml
+            build/tests/asm/failures/
+            build/tests/asm/*.tsv
+            build/tests/asm/decoder_images.json
