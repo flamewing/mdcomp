@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 project(mdcomp_installed_smoke LANGUAGES CXX)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 find_package(mdcomp 0.2 CONFIG REQUIRED PATHS "${PACKAGE_CONFIG_DIR}" NO_DEFAULT_PATH)
 enable_testing()
 foreach(linkage IN ITEMS static shared)

@@ -94,4 +94,33 @@ TEST_CASE(
     ++stream_input;
     CHECK(stream_input == std::default_sentinel);
 }
+
+TEST_CASE("128-bit writes preserve their runtime source values", "[endian][int128]") {
+    auto check = []<typename Endian>(std::array<unsigned char, 16> expected) {
+        std::istringstream input(std::string(big_bytes.begin(), big_bytes.end()));
+        auto               source = big_endian::read16(input);
+        REQUIRE(source == value);
+        std::array<unsigned char, 16> buffer{};
+        auto*                         forward = buffer.data();
+        Endian::write16(forward, source);
+        CHECK(source == value);
+        CHECK(buffer == expected);
+
+        auto reverse = buffer.rbegin();
+        Endian::write16(reverse, source);
+        CHECK(source == value);
+
+        std::ostringstream stream;
+        Endian::write16(stream, source);
+        CHECK(source == value);
+        CHECK(stream.str() == std::string(expected.begin(), expected.end()));
+
+        std::stringbuf streambuf;
+        Endian::write16(streambuf, source);
+        CHECK(source == value);
+        CHECK(streambuf.str() == std::string(expected.begin(), expected.end()));
+    };
+    check.template operator()<big_endian>(big_bytes);
+    check.template operator()<little_endian>(little_bytes);
+}
 #endif

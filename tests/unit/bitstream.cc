@@ -1,5 +1,7 @@
 #include "mdcomp/bitstream.hh"
 
+#include "support/rejecting_output.hh"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
@@ -174,11 +176,11 @@ TEST_CASE(
     CHECK(input.read(8) == 0x12);
     CHECK(input.read(8) == 0x34);
 
-    output.write(1, 1);
-    destination.setstate(std::ios::badbit);
-    try {
-        destination.exceptions(std::ios::badbit);
-    } catch (std::ios_base::failure const&) {
-    }
-    CHECK_THROWS_AS(output.flush(), std::ios_base::failure);
+    test_support::rejecting_output_buffer buffer;
+    std::ostream                          failing_destination(&buffer);
+    failing_destination.exceptions(std::ios::badbit);
+    output_type failing(failing_destination);
+    failing.write(1, 1);
+    CHECK_THROWS_AS(failing.flush(), std::ios_base::failure);
+    CHECK(failing_destination.bad());
 }

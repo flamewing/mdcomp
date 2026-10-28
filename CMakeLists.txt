@@ -28,6 +28,7 @@ option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # This project has no C++ module sources.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # include(CheckIPOSupported)
@@ -59,6 +60,10 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 include(GNUInstallDirs)
+option(MDCOMP_INSTALL_MSVC_RUNTIME "Install MSVC runtime DLLs for binary packages" OFF)
+if(MSVC AND MDCOMP_INSTALL_MSVC_RUNTIME)
+    include(InstallRequiredSystemLibraries)
+endif()
 include(CheckCXXCompilerFlag)
 
 cmake_policy(SET CMP0167 NEW)

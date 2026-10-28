@@ -505,22 +505,18 @@ namespace utils {
         INLINE constexpr static void write_impl(Stream&& output, From value) noexcept(
                 noexcept(std::forward<Stream>(output).write(
                         std::declval<char const*>(), sizeof(From)))) {
-            using buffer_t = std::array<char, sizeof(From)>;
-            if constexpr (endian != std::endian::native) {
-                value = byteswap(value);
-            }
-            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
+            using buffer_t    = std::array<char, sizeof(From)>;
+            From const stored = endian != std::endian::native ? byteswap(value) : value;
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(stored);
             std::forward<Stream>(output).write(buffer.data(), sizeof(From));
         }
 
         template <unsigned_integral From, typename Stream>
         requires detail::is_output_streambuf<Stream>
         INLINE constexpr static void write_impl(Stream&& output, From value) {
-            using buffer_t = std::array<char, sizeof(From)>;
-            if constexpr (endian != std::endian::native) {
-                value = byteswap(value);
-            }
-            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
+            using buffer_t    = std::array<char, sizeof(From)>;
+            From const stored = endian != std::endian::native ? byteswap(value) : value;
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(stored);
             if (std::forward<Stream>(output).sputn(buffer.data(), sizeof(From))
                 != sizeof(From)) {
                 throw std::ios_base::failure("Short endian streambuf write");
@@ -551,15 +547,12 @@ namespace utils {
             using buffer_t = std::array<unsigned char, sizeof(From)>;
             if constexpr (detail::contiguous_reverse_iterator<iterator>) {
                 output += sizeof(From);
-                if constexpr (endian == std::endian::native) {
-                    value = byteswap(value);
-                }
-            } else {
-                if constexpr (endian != std::endian::native) {
-                    value = byteswap(value);
-                }
             }
-            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(value);
+            constexpr bool swap   = detail::contiguous_reverse_iterator<iterator>
+                                            ? endian == std::endian::native
+                                            : endian != std::endian::native;
+            From const     stored = swap ? byteswap(value) : value;
+            alignas(alignof(From)) auto buffer = std::bit_cast<buffer_t>(stored);
             if constexpr (detail::contiguous_reverse_iterator<iterator>) {
                 std::ranges::copy(buffer, std::to_address(output.base()));
             } else if constexpr (std::contiguous_iterator<iterator>) {

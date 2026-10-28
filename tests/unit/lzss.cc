@@ -1,5 +1,7 @@
 #include "mdcomp/lzss.hh"
 
+#include "support/rejecting_output.hh"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
@@ -83,6 +85,7 @@ namespace {
 
     struct supplemental_adaptor : adaptor<> {
         using adj_list_node = lzss::adj_list_node<supplemental_adaptor>;
+
         static bool extra_matches(
                 std::span<uint8_t const> data, size_t position, size_t upper, size_t,
                 std::vector<adj_list_node>& matches) noexcept {
@@ -211,13 +214,11 @@ TEST_CASE(
     std::istringstream source;
     source.exceptions(std::ios::failbit);
     CHECK_THROWS_AS(lzss::istream<adaptor<>>(source), std::ios_base::failure);
-    std::ostringstream       destination;
+    test_support::rejecting_output_buffer buffer;
+    std::ostream                          destination(&buffer);
+    destination.exceptions(std::ios::badbit);
     lzss::ostream<adaptor<>> output(destination);
     output.descriptor_bit(1);
-    destination.setstate(std::ios::badbit);
-    try {
-        destination.exceptions(std::ios::badbit);
-    } catch (std::ios_base::failure const&) {
-    }
     CHECK_THROWS_AS(output.finish(), std::ios_base::failure);
+    CHECK(destination.bad());
 }
