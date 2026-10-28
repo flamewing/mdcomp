@@ -50,7 +50,7 @@ Some IDEs support cmake by default, and you can just ask for the IDE to configur
 
 ## CI and binary packages
 
-[CI and release documentation](.github/README.md) describes the platform matrix, test/sanitizer jobs, release triggers, checksums, and retry behavior. Native CI runs the C++ and assembly suites; Android is a cross-build check and WebAssembly additionally runs all ten CLI codecs under Node. Badges above track `master`; a newly added workflow needs a run there before its badge can report a result.
+[CI and release documentation](.github/CI.md) describes the platform matrix, test/sanitizer jobs, release triggers, checksums, and retry behavior. Native CI runs the C++ and assembly suites; Android is a cross-build check and WebAssembly additionally runs all ten CLI codecs under Node. Badges above track `master`; a newly added workflow needs a run there before its badge can report a result.
 
 Snapshots and tagged releases share the following package targets. Each ZIP contains the ten CLI tools, libraries, headers, build metadata, and licenses. Native packages are tested before upload. Android packages are experimental and have not been device-tested.
 
