@@ -338,10 +338,12 @@ namespace asm_test {
         for (std::istreambuf_iterator<char> it(input), end; it != end; ++it) {
             program.bytes.push_back(static_cast<uint8_t>(*it));
         }
-        auto const width = architecture == cpu::m68000 ? 4U : 2U;
-        auto const magic = architecture == cpu::m68000 ? "MD68" : "MDZ8";
-        program.moduled  = architecture == cpu::m68000 && program.bytes.size() >= 32
-                           && std::equal("MDM6", "MDM6" + 4, program.bytes.begin());
+        auto const     width          = architecture == cpu::m68000 ? 4U : 2U;
+        auto const     magic          = architecture == cpu::m68000 ? "MD68" : "MDZ8";
+        constexpr char module_magic[] = "MDM6";
+        program.moduled
+                = architecture == cpu::m68000 && program.bytes.size() >= 32
+                  && std::equal(module_magic, module_magic + 4, program.bytes.begin());
         if (program.bytes.size() < 4 + 3 * width
             || (!program.moduled
                 && !std::equal(magic, magic + 4, program.bytes.begin()))) {

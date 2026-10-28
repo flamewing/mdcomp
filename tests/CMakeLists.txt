@@ -74,8 +74,20 @@ set(codec_test_libraries Catch2::Catch2WithMain
 target_link_libraries(mdcomp-codec-smoke-tests PRIVATE ${codec_test_libraries})
 catch_discover_tests(mdcomp-codec-smoke-tests
     TEST_PREFIX "codec::"
+    TEST_SPEC "~[slow]"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     PROPERTIES LABELS "codec" TIMEOUT 30
+    DISCOVERY_MODE PRE_TEST
+    ADD_TAGS_AS_LABELS
+)
+# Full-size and module cross-product cases also run in unoptimized Debug builds.
+# Keep their wall-clock allowance separate from the small codec cases; emulator
+# instruction budgets and codec assertions are unchanged.
+catch_discover_tests(mdcomp-codec-smoke-tests
+    TEST_PREFIX "codec::"
+    TEST_SPEC "[slow]"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    PROPERTIES LABELS "codec" TIMEOUT 180
     DISCOVERY_MODE PRE_TEST
     ADD_TAGS_AS_LABELS
 )

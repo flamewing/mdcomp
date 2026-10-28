@@ -178,7 +178,7 @@ TEST_CASE(
 
 TEST_CASE(
         "Moduled encoder payloads obey independent wire and padding rules",
-        "[codec][edges][moduled]") {
+        "[codec][edges][moduled][slow]") {
     for (auto const& api : codec_test::codecs()) {
         if (!api.moduled_encode) {
             continue;
